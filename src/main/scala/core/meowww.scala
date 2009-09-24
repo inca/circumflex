@@ -35,8 +35,8 @@ class CircumflexFilter extends Filter {
     case (req: HttpServletRequest, res: HttpServletResponse) => {
       if (config.mode == Development) println(req)
       // Serve static content
-      if (config.staticRegex pattern matcher(req.getRequestURI) matches) {
-        chain(req,res)
+      if (config.staticRegex.pattern.matcher(req.getRequestURI).matches) {
+        chain.doFilter(req,res)
         return
       }
       // Process request with router
