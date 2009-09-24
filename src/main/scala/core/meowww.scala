@@ -40,6 +40,7 @@ class CircumflexFilter extends Filter {
       }
       // Process request with router
       if (config.mode == Development) println(req)
+      req.setCharacterEncoding("UTF-8")
       try {
         config.routerConstructor.newInstance(req, config)
         ErrorResponse(404)(res)

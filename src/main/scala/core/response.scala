@@ -44,7 +44,7 @@ case class EmptyResponse extends HttpResponse {
 case class FreemarkerTemplateResponse(val template:Template, val context:Map[String, Any]) extends HttpResponse {
   def apply(response: HttpServletResponse) = {
     response.setCharacterEncoding("UTF-8")
-    response.setContentType("text/html")    //TODO fixme
+    response.setContentType("text/html")
     // We add ctx variable for conveniance
     template.process(context + ("ctx" -> context), response.getWriter)
   }
