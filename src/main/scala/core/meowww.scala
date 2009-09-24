@@ -33,13 +33,13 @@ class CircumflexFilter extends Filter {
 
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit = (req, res) match {
     case (req: HttpServletRequest, res: HttpServletResponse) => {
-      if (config.mode == Development) println(req)
       // Serve static content
       if (config.staticRegex.pattern.matcher(req.getRequestURI).matches) {
         chain.doFilter(req,res)
         return
       }
       // Process request with router
+      if (config.mode == Development) println(req)
       try {
         config.routerConstructor.newInstance(req, config)
         ErrorResponse(404)(res)
