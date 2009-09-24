@@ -8,6 +8,7 @@ import java.util.Enumeration
 import javax.servlet._
 import http.{HttpServletResponse, HttpServletRequest}
 import freemarker._
+import util.matching.Regex
 
 class CircumflexFilter extends Filter {
 
@@ -30,9 +31,15 @@ class CircumflexFilter extends Filter {
 
   def destroy = {}
 
-  def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain) = (req, res) match {
+  def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit = (req, res) match {
     case (req: HttpServletRequest, res: HttpServletResponse) => {
       if (config.mode == Development) println(req)
+      // Serve static content
+      if (config.staticRegex pattern matcher(req.getRequestURI) matches) {
+        chain(req,res)
+        return
+      }
+      // Process request with router
       try {
         config.routerConstructor.newInstance(req, config)
         ErrorResponse(404)(res)
@@ -50,16 +57,26 @@ class CircumflexFilter extends Filter {
 }
 
 class Config(val params: Map[String, String]) {
+
   val mode: Mode = params.get("mode") match {
     case Some(m) if m.toLowerCase.matches("dev.*") => Development
     case _ => Production;
   }
+
   val routerConstructor: Constructor[RequestRouter] = Class.forName(params("router"))
       .getConstructor(classOf[HttpServletRequest], classOf[Config])
       .asInstanceOf[Constructor[RequestRouter]]
+
   val freemarkerConf = new Configuration();
   freemarkerConf.setTemplateLoader(new ClassTemplateLoader(getClass, "/"))
   freemarkerConf.setObjectWrapper(new ScalaObjectWrapper())
+
+  val staticRegex: Regex = params.get("staticRegex") match {
+    case Some(sr) => sr.r
+    case _ => "/static/.*".r
+  }
+
+
 }
 
 trait Mode

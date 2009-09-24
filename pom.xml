@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>circumflex</groupId>
   <artifactId>circumflex</artifactId>
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
   <version>0.1</version>
   <name>Circumflex</name>
 
@@ -54,67 +54,5 @@
   </dependencies>
   <build>
     <finalName>circumflex</finalName>
-    <plugins>
-      <plugin>
-        <groupId>org.scala-tools</groupId>
-        <artifactId>maven-scala-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>scala-add-sources</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sourceDir>src/main/scala</sourceDir>
-            </configuration>
-          </execution>
-          <execution>
-            <id>scala-compile</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>compile</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <scalaVersion>${scala.version}</scalaVersion>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <encoding>UTF-8</encoding>
-          <source>1.5</source>
-          <target>1.5</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>maven-jetty-plugin</artifactId>
-        <version>6.1.2rc5</version>
-        <inherited>true</inherited>
-        <configuration>
-          <classesDirectory>${project.build.outputDirectory}</classesDirectory>
-          <webAppSourceDirectory>target/${project.build.finalName}</webAppSourceDirectory>
-          <scanIntervalSeconds>5</scanIntervalSeconds>
-          <contextPath>/</contextPath>
-          <connectors>
-            <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
-              <port>${port}</port>
-              <maxIdleTime>60000</maxIdleTime>
-            </connector>
-          </connectors>
-        </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.5</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-    </plugins>
   </build>
 </project>
