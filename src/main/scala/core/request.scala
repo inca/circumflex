@@ -1,4 +1,4 @@
-package org.meowww.core
+package circumflex.core
 
 import javax.servlet.http.HttpServletRequest
 import HttpRequest._

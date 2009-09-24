@@ -1,8 +1,8 @@
-package org.meowww.core.freemarker
+package circumflex.core.freemarker
 
 import _root_.freemarker.ext.beans.BeansWrapper
 import _root_.freemarker.template._
-import apache.commons.beanutils.{MethodUtils, PropertyUtils}
+import org.apache.commons.beanutils.{MethodUtils, PropertyUtils}
 import java.lang.reflect.{Field, Method}
 import java.lang.String
 import java.util.Date

@@ -1,4 +1,4 @@
-package org.meowww.core
+package circumflex.core
 
 import _root_.freemarker.cache.ClassTemplateLoader
 import _root_.freemarker.template.Configuration
@@ -9,7 +9,7 @@ import javax.servlet._
 import http.{HttpServletResponse, HttpServletRequest}
 import freemarker._
 
-class MeowwwFilter extends Filter {
+class CircumflexFilter extends Filter {
 
   var config: Config = null;
 

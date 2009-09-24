@@ -1,4 +1,4 @@
-package org.meowww.core
+package circumflex.core
 
 import _root_.freemarker.template.Template
 import java.util.HashMap

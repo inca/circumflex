@@ -1,7 +1,7 @@
 package myapp
 
 import javax.servlet.http.HttpServletRequest
-import org.meowww.core._
+import circumflex.core._
 
 /**
  * Author: incarnate
