@@ -42,12 +42,15 @@ class CircumflexFilter extends Filter {
       if (config.mode == Development) println(req)
       req.setCharacterEncoding("UTF-8")
       try {
-        config.routerConstructor.newInstance(req, config)
+        config.routerConstructor.newInstance(req, res, config)
         ErrorResponse(404)(res)
       } catch {
         case e: InvocationTargetException if e.getCause.isInstanceOf[RouteMatchedException] => {
-          e.getCause.asInstanceOf[RouteMatchedException].response(res)
-          if (config.mode == Development) println(res)
+          e.getCause.asInstanceOf[RouteMatchedException].response match {
+            case Some(response) => {
+              response(res)
+              if (config.mode == Development) println(res)
+            } case _ => }
         } case e => {
           ErrorResponse(500, e.getMessage)(res)
           e.printStackTrace
@@ -65,7 +68,7 @@ class Config(val params: Map[String, String]) {
   }
 
   val routerConstructor: Constructor[RequestRouter] = Class.forName(params("router"))
-      .getConstructor(classOf[HttpServletRequest], classOf[Config])
+      .getConstructor(classOf[HttpServletRequest], classOf[HttpServletResponse], classOf[Config])
       .asInstanceOf[Constructor[RequestRouter]]
 
   val freemarkerConf = new Configuration();
