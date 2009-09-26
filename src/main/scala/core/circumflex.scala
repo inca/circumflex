@@ -74,7 +74,7 @@ class Config(val params: Map[String, String]) {
   val freemarkerConf = new Configuration();
   freemarkerConf.setTemplateLoader(new ClassTemplateLoader(getClass, "/"))
   freemarkerConf.setObjectWrapper(new ScalaObjectWrapper())
-
+  freemarkerConf.setDefaultEncoding("utf-8")
   val staticRegex: Regex = params.get("staticRegex") match {
     case Some(sr) => sr.r
     case _ => "/static/.*".r
