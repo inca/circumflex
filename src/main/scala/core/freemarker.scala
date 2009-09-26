@@ -15,8 +15,9 @@ class ScalaObjectWrapper extends ObjectWrapper {
       case _ => wrap("")
     }
     case model:TemplateModel => model
-    case seq:Seq[Any] => new ScalaSeqWrapper(seq,this)
-    case map:Map[Any, Any] => new ScalaMapWrapper(map,this)
+    case ctx:RequestContext => new ScalaRequestContextWrapper(ctx, this)
+    case seq:Seq[Any] => new ScalaSeqWrapper(seq, this)
+    case map:Map[Any, Any] => new ScalaMapWrapper(map, this)
     case it:Iterable[Any] => new ScalaIterableWrapper(it, this)
     case it:Iterator[Any] => new ScalaIteratorWrapper(it, this)
     case str:String => new SimpleScalar(str)
@@ -27,12 +28,14 @@ class ScalaObjectWrapper extends ObjectWrapper {
   }
 }
 
-class ScalaSeqWrapper[T](val seq: Seq[T], override val wrapper: ObjectWrapper) extends ScalaBaseWrapper(seq, wrapper) with TemplateSequenceModel {
+class ScalaSeqWrapper[T](val seq: Seq[T], wrapper: ObjectWrapper)
+    extends ScalaBaseWrapper(seq, wrapper) with TemplateSequenceModel {
   def get(index: Int) = wrapper.wrap(seq(index))
   def size = seq.size
 }
 
-class ScalaMapWrapper[String,V](val map: Map[String,V], override val wrapper: ObjectWrapper) extends ScalaBaseWrapper(map, wrapper) {
+class ScalaMapWrapper[String,V](val map: Map[String,V], wrapper: ObjectWrapper)
+    extends ScalaBaseWrapper(map, wrapper) {
   override def get(key: java.lang.String) = wrapper.wrap(
     map.get(key.asInstanceOf[String])
         orElse map.get(key.replaceAll("\\$","_").asInstanceOf[String])
@@ -40,18 +43,20 @@ class ScalaMapWrapper[String,V](val map: Map[String,V], override val wrapper: Ob
   override def isEmpty = map.isEmpty
 }
 
-class ScalaIterableWrapper[T](val it: Iterable[T], override val wrapper: ObjectWrapper) extends ScalaBaseWrapper(it, wrapper) with TemplateCollectionModel {
+class ScalaIterableWrapper[T](val it: Iterable[T], wrapper: ObjectWrapper)
+    extends ScalaBaseWrapper(it, wrapper) with TemplateCollectionModel {
   def iterator = new ScalaIteratorWrapper(it.elements, wrapper)
 }
             
-class ScalaIteratorWrapper[T](val it: Iterator[T], override val wrapper: ObjectWrapper)
+class ScalaIteratorWrapper[T](val it: Iterator[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(it, wrapper) with TemplateModelIterator with TemplateCollectionModel {
   def next = wrapper.wrap(it.next)
   def hasNext = it.hasNext
   def iterator = this
 }
 
-class ScalaMethodWrapper(val target: Any, val methodName: String, val wrapper: ObjectWrapper) extends TemplateMethodModel {
+class ScalaMethodWrapper(val target: Any, val methodName: String, val wrapper: ObjectWrapper)
+    extends TemplateMethodModel {
   def exec(arguments: java.util.List[_]) = wrapper.wrap(MethodUtils.invokeMethod(target, methodName, arguments.toArray))
 }
 
@@ -90,4 +95,10 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
     throw new TemplateModelException("Could not resolve " + key + " of object type " + obj.asInstanceOf[Object].getClass + ".")
   }
   def isEmpty = false
+}
+
+class ScalaRequestContextWrapper(val ctx: RequestContext, wrapper: ObjectWrapper)
+    extends ScalaBaseWrapper(ctx, wrapper) with TemplateHashModel {
+  override def get(key: String) = wrapper.wrap(ctx(key))
+  override def isEmpty = ctx.params.isEmpty
 }

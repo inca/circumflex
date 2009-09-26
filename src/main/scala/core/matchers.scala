@@ -43,15 +43,16 @@ import MatchingUtils._
 
 trait RequestMatcher {
 
-  def matchRequest(request: HttpServletRequest): Option[Map[String,String]]
+  def matchRequest(request: HttpServletRequest): Option[Map[String, Object]]
 
-  def apply(request: HttpServletRequest) = matchRequest(request) match {
-    case Some(params) => Some(new HttpRequest(request, params))
+  def apply(request: HttpServletRequest): Option[RequestContext] = matchRequest(request) match {
+    case Some(params) => Some(new RequestContext(request, params))
     case _ => None
   }
 
-  def apply(request: HttpRequest): Option[HttpRequest] = this(request.request) match {
-    case Some(matchedRequest: HttpRequest) => Some(new HttpRequest(request.request, request.params ++ matchedRequest.params))
+  def apply(request: RequestContext): Option[RequestContext] = this(request.request) match {
+    case Some(matchedRequest: RequestContext) =>
+      Some(new RequestContext(request.request) ++ request.params ++ matchedRequest.params)
     case _ => None
   }
 

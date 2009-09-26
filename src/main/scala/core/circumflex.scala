@@ -43,7 +43,7 @@ class CircumflexFilter extends Filter {
       req.setCharacterEncoding("UTF-8")
       try {
         config.routerConstructor.newInstance(req, res, config)
-        ErrorResponse(404)(res)
+        ErrorResponse(new RequestContext(req), 404, req.getRequestURI)(res)
       } catch {
         case e: InvocationTargetException if e.getCause.isInstanceOf[RouteMatchedException] => {
           e.getCause.asInstanceOf[RouteMatchedException].response match {
@@ -52,7 +52,7 @@ class CircumflexFilter extends Filter {
               if (config.mode == Development) println(res)
             } case _ => }
         } case e => {
-          ErrorResponse(500, e.getMessage)(res)
+          ErrorResponse(new RequestContext(req), 500, e.getMessage)(res)
           e.printStackTrace
         }
       }
