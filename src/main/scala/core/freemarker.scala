@@ -1,11 +1,16 @@
 package circumflex.core.freemarker
 
+import _root_.freemarker.core.Environment
+import java.io.StringWriter
 import _root_.freemarker.ext.beans.BeansWrapper
 import _root_.freemarker.template._
+import java.util.Date
+import net.java.textilej.parser.builder.HtmlDocumentBuilder
+import net.java.textilej.parser.markup.textile.TextileDialect
+import net.java.textilej.parser.MarkupParser
 import org.apache.commons.beanutils.{MethodUtils, PropertyUtils}
 import java.lang.reflect.{Field, Method}
 import java.lang.String
-import java.util.Date
 import scala.collection.jcl.Conversions._
 
 class ScalaObjectWrapper extends ObjectWrapper {
@@ -101,4 +106,16 @@ class ScalaRequestContextWrapper(val ctx: RequestContext, wrapper: ObjectWrapper
     extends ScalaBaseWrapper(ctx, wrapper) with TemplateHashModel {
   override def get(key: String) = wrapper.wrap(ctx(key))
   override def isEmpty = ctx.params.isEmpty
+}
+
+class TextileDirective extends TemplateDirectiveModel {
+  def execute(env: Environment, params: java.util.Map[_, _], loopVars: Array[TemplateModel], body: TemplateDirectiveBody) = {
+    val nested = new StringWriter
+    body.render(nested)
+    val builder = new HtmlDocumentBuilder(env.getOut)
+    builder.setEmitAsDocument(false)
+    val parser = new MarkupParser(new TextileDialect)
+    parser.setBuilder(builder)
+    parser.parse(nested.toString)
+  }
 }

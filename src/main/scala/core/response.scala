@@ -1,5 +1,6 @@
 package circumflex.core
 
+import freemarker._
 import _root_.freemarker.template.Template
 import java.util.HashMap
 import javax.servlet.http.HttpServletResponse
@@ -38,7 +39,10 @@ case class EmptyResponse(ctx: RequestContext) extends HttpResponse(ctx) {
 
 case class FreemarkerResponse(ctx: RequestContext, val template:Template) extends HttpResponse(ctx) {
   override def apply(response: HttpServletResponse) = {
+    var ftlCtx = ctx;
+    ftlCtx += "ctx" -> ctx;
+    ftlCtx += "textile" -> new TextileDirective
     super.apply(response)
-    template.process(ctx + ("ctx" -> ctx), response.getWriter)
+    template.process(ftlCtx, response.getWriter)
   }
 }
