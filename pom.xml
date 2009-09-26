@@ -14,6 +14,14 @@
     <port>8888</port>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>scala-tools</id>
+      <name>Scala Tools Repository</name>
+      <url>http://www.scala-tools.org/repo-releases</url>
+    </repository>
+  </repositories>
+
   <dependencies>
     <dependency>
       <groupId>org.scala-lang</groupId>
@@ -50,6 +58,11 @@
       <groupId>commons-beanutils</groupId>
       <artifactId>commons-beanutils</artifactId>
       <version>1.8.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.mylyn.wikitext</groupId>
+      <artifactId>wikitext</artifactId>
+      <version>[0.9,)</version>
     </dependency>
   </dependencies>
   <build>
