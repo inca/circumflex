@@ -5,49 +5,43 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>circumflex</groupId>
   <artifactId>circumflex-hibernate</artifactId>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
   <version>0.1</version>
   <name>Circumflex Hibernate</name>
 
-  <modules>
-    <module>circumflex-core</module>
-    <module>circumflex-hibernate</module>
-  </modules>
-
-  <properties>
-    <scala.version>2.7.5</scala.version>
-  </properties>
-
-  <repositories>
-    <repository>
-      <id>scala-tools</id>
-      <name>Scala Tools Repository</name>
-      <url>http://www.scala-tools.org/repo-releases</url>
-    </repository>
-    <repository>
-      <id>dev.java.net</id>
-      <name>Java.net Repository</name>
-      <url>http://download.java.net/maven/2/</url>
-    </repository>
-  </repositories>
+  <parent>
+    <groupId>circumflex</groupId>
+    <artifactId>circumflex-parent</artifactId>
+    <version>0.1</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
 
   <dependencies>
-    <!-- Scala -->
     <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-      <version>${scala.version}</version>
+      <groupId>circumflex</groupId>
+      <artifactId>circumflex-core</artifactId>
+      <version>0.1</version>
+    </dependency>
+    <!-- Hibernate -->
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>persistence-api</artifactId>
+      <version>1.0</version>
     </dependency>
     <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-compiler</artifactId>
-      <version>${scala.version}</version>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-core</artifactId>
+      <version>3.3.2.GA</version>
     </dependency>
-    <!-- Commons -->
     <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
-      <version>1.8.0</version>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-annotations</artifactId>
+      <version>3.4.0.GA</version>
+    </dependency>
+    <dependency>
+      <groupId>javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <version>3.8.0.GA</version>
     </dependency>
   </dependencies>
 

@@ -10,26 +10,30 @@ import http.{HttpServletResponse, HttpServletRequest}
 import freemarker._
 import util.matching.Regex
 
-class CircumflexFilter extends Filter {
+abstract class AbstractFilter extends Filter {
 
-  var config: Config = null;
+  var params: Map[String, String] = Map();
 
   def init(cfg: FilterConfig) = {
     val paramNames = cfg.getInitParameterNames.asInstanceOf[Enumeration[String]]
-    def extractInitParameters(map: Map[String, String]): Map[String, String] = {
-      paramNames.hasMoreElements match {
-        case true => {
-          val name = paramNames.nextElement
-          val value = cfg.getInitParameter(name)
-          extractInitParameters(map + (name -> value))
-        }
-        case false => map
-      }
+    while(paramNames.hasMoreElements) {
+      val name = paramNames.nextElement
+      val value = cfg.getInitParameter(name)
+      params += name -> value
     }
-    config = new Config(extractInitParameters(Map()))
   }
 
   def destroy = {}
+}
+
+class CircumflexFilter extends AbstractFilter {
+
+  var config: Config = null;
+
+  override def init(cfg: FilterConfig) = {
+    super.init(cfg)
+    config = new Config(params)
+  }
 
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit = (req, res) match {
     case (req: HttpServletRequest, res: HttpServletResponse) => {
@@ -75,6 +79,7 @@ class Config(val params: Map[String, String]) {
   freemarkerConf.setTemplateLoader(new ClassTemplateLoader(getClass, "/"))
   freemarkerConf.setObjectWrapper(new ScalaObjectWrapper())
   freemarkerConf.setDefaultEncoding("utf-8")
+  
   val staticRegex: Regex = params.get("staticRegex") match {
     case Some(sr) => sr.r
     case _ => "/static/.*".r
