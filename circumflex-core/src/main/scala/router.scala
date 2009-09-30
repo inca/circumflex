@@ -6,11 +6,13 @@ import scala.util.matching.Regex
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
-class RequestRouter(val request: HttpServletRequest, val response: HttpServletResponse, val config: Config) {
+class RequestRouter(val request: HttpServletRequest,
+                    val response: HttpServletResponse,
+                    val config: Config,
+                    var ctx: RequestContext) {
 
-  implicit def textResponse(text: String) = TextResponse(ctx, text) 
+  implicit def textResponse(text: String) = TextResponse(ctx, text)
 
-  var ctx: RequestContext = new RequestContext(request);
   val get = new RequestDispatcher("get")
   val getOrPost = new RequestDispatcher("get", "post")
   val getOrHead = new RequestDispatcher("get", "head")
@@ -32,14 +34,13 @@ class RequestRouter(val request: HttpServletRequest, val response: HttpServletRe
     new FreemarkerResponse(ctx, template)
   }
 
-
   class RequestDispatcher(val matchingMethods: String*) {
 
     protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*) =
       matchingMethods.find(request.getMethod.equalsIgnoreCase(_)) match {
         case Some(_) => matchRequest(Some(new RequestContext(request)), matchers.toList) match {
           case Some(c: RequestContext) => {
-            ctx = c;
+            ctx ++= c;
             throw RouteMatchedException(Some(response))
           } case _ =>
         } case _ =>

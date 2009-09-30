@@ -10,6 +10,8 @@ class RequestContext(val request: HttpServletRequest, val params: Map[String, Ob
 
   def ++(map: Map[String, Object]) = new RequestContext(request, params ++ map)
 
+  def ++(ctx: RequestContext) = new RequestContext(request, params ++ ctx.params)
+
   def apply(key: String):Option[Object] = params.get(key)
 
 }

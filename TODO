@@ -1,11 +1,8 @@
-[+] get, post, put, delete, head с параметрами заголовком
 [ ] put, delete POST[_method] wrap
 [ ] управление заголовками из контроллера
 [ ] helpers: redirect, sendfile (disposition, length, name), status, error (code, body), media_type, content_type, attachment, last_modified, etag
-[ ] templates
 [ ] опции, конфигурация по environmentам (production, development, test)
 [ ] обработка ошибок: свои обработчики (например, на исключения), стандартный со стектрейсом и прочим дампом 
 [ ] сессии
-[_] риальни helpers (from da controllaz to da viewz)
 [_] обработка статики
 [ ] тесты
