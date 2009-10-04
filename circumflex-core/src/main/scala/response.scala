@@ -21,6 +21,8 @@ abstract class HttpResponse(val context: RouteContext) {
   }
 }
 
+case class EmptyResponse(ctx: RouteContext) extends HttpResponse(ctx)
+
 case class ErrorResponse(ctx: RouteContext, val errorCode: Int, val msg: String) extends HttpResponse(ctx) {
   override def apply(response: HttpServletResponse) = response.sendError(errorCode, msg)
 }
@@ -34,10 +36,6 @@ case class TextResponse(ctx: RouteContext, val text: String) extends HttpRespons
     super.apply(response)
     response.getWriter.print(text)
   }
-}
-
-case class EmptyResponse(ctx: RouteContext) extends HttpResponse(ctx) {
-  override def apply(response: HttpServletResponse) = {}
 }
 
 case class FreemarkerResponse(ctx: RouteContext, val template:Template) extends HttpResponse(ctx) {

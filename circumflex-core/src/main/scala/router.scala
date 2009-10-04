@@ -45,13 +45,20 @@ class RequestRouter(val request: HttpServletRequest,
     }
   }
 
-  def param(key: String, default: String): String = param(key) match {
-    case Some(value) => value
-    case _ => default
+  def method = param("_method").getOrElse(request.getMethod)
+
+  def error(errorCode: Int, message: String) = ErrorResponse(ctx, errorCode, message)
+
+  def done: HttpResponse = done(200)
+  def done(statusCode: Int): HttpResponse = {
+    ctx.statusCode = statusCode
+    EmptyResponse(ctx)
   }
 
-  def method = param("_method", request.getMethod)
-
+  def requireParams(names: String*) = names.toList.foreach(name => {
+    if (param(name) == None)
+      throw new RouteMatchedException(Some(error(400, "Missing " + name + " parameter.")))
+  })
 
   class RequestDispatcher(val matchingMethods: String*) {
 
@@ -93,11 +100,6 @@ class RequestRouter(val request: HttpServletRequest,
       val value = request.getHeader(name)
       if (value == null) None
       else Some(value)
-    }
-
-    def apply(name: String, default: String): String = apply(name) match {
-      case Some(value) => value
-      case _ => default
     }
 
     def update(name: String, value: String) = ctx.stringHeaders += name -> value
