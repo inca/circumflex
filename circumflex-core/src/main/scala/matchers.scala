@@ -45,14 +45,14 @@ trait RequestMatcher {
 
   def matchRequest(request: HttpServletRequest): Option[Map[String, Object]]
 
-  def apply(request: HttpServletRequest): Option[RequestContext] = matchRequest(request) match {
-    case Some(params) => Some(new RequestContext(request, params))
+  def apply(request: HttpServletRequest): Option[RouteContext] = matchRequest(request) match {
+    case Some(params) => Some(new RouteContext(request, params))
     case _ => None
   }
 
-  def apply(request: RequestContext): Option[RequestContext] = this(request.request) match {
-    case Some(matchedRequest: RequestContext) =>
-      Some(new RequestContext(request.request) ++ request.params ++ matchedRequest.params)
+  def apply(request: RouteContext): Option[RouteContext] = this(request.request) match {
+    case Some(matchedRequest: RouteContext) =>
+      Some(new RouteContext(request.request) ++ request.params ++ matchedRequest.params)
     case _ => None
   }
 

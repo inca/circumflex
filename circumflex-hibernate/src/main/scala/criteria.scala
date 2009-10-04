@@ -112,7 +112,7 @@ class HibernateCriteria[T](val criteria: Criteria) {
 
   def list: Seq[T] = criteria.list.toArray.map(_.asInstanceOf[T])
 
-  def unqiueResult: Option[T] = {
+  def uniqueResult: Option[T] = {
     val obj = criteria.uniqueResult
     if (obj == null) None
     else Some(obj.asInstanceOf[T])

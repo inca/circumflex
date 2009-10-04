@@ -20,7 +20,7 @@ class ScalaObjectWrapper extends ObjectWrapper {
       case _ => wrap("")
     }
     case model:TemplateModel => model
-    case ctx:RequestContext => new ScalaRequestContextWrapper(ctx, this)
+    case ctx:RouteContext => new ScalaRequestContextWrapper(ctx, this)
     case seq:Seq[Any] => new ScalaSeqWrapper(seq, this)
     case map:Map[Any, Any] => new ScalaMapWrapper(map, this)
     case it:Iterable[Any] => new ScalaIterableWrapper(it, this)
@@ -102,7 +102,7 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
   def isEmpty = false
 }
 
-class ScalaRequestContextWrapper(val ctx: RequestContext, wrapper: ObjectWrapper)
+class ScalaRequestContextWrapper(val ctx: RouteContext, wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(ctx, wrapper) with TemplateHashModel {
   override def get(key: String) = wrapper.wrap(ctx(key))
   override def isEmpty = ctx.params.isEmpty

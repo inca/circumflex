@@ -9,7 +9,7 @@ case class RouteMatchedException(val response: Option[HttpResponse]) extends Exc
 class RequestRouter(val request: HttpServletRequest,
                     val response: HttpServletResponse,
                     val config: Config,
-                    var ctx: RequestContext) {
+                    var ctx: RouteContext) {
 
   implicit def textResponse(text: String) = TextResponse(ctx, text)
 
@@ -20,6 +20,8 @@ class RequestRouter(val request: HttpServletRequest,
   val put = new RequestDispatcher("put")
   val delete = new RequestDispatcher("delete")
   val head = new RequestDispatcher("head")
+
+  val header = new HeadersHelper
 
   def rewrite(target: String): Nothing = {
     request.getRequestDispatcher(target).forward(request, response)
@@ -34,19 +36,37 @@ class RequestRouter(val request: HttpServletRequest,
     new FreemarkerResponse(ctx, template)
   }
 
+  def param(key: String): Option[String] = ctx.params.get(key) match {
+    case Some(value: String) => Some(value)
+    case _ => {
+      val value = request.getParameter(key)
+      if (value == null) None
+      else Some(value)
+    }
+  }
+
+  def param(key: String, default: String): String = param(key) match {
+    case Some(value) => value
+    case _ => default
+  }
+
+  def method = param("_method", request.getMethod)
+
+
   class RequestDispatcher(val matchingMethods: String*) {
 
     protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*) =
-      matchingMethods.find(request.getMethod.equalsIgnoreCase(_)) match {
-        case Some(_) => matchRequest(Some(new RequestContext(request)), matchers.toList) match {
-          case Some(c: RequestContext) => {
+      matchingMethods.find(method.equalsIgnoreCase(_)) match {
+        case Some(_) => matchRequest(Some(new RouteContext(request)), matchers.toList) match {
+          case Some(c: RouteContext) => {
             ctx ++= c;
             throw RouteMatchedException(Some(response))
           } case _ =>
         } case _ =>
       }
 
-    private def matchRequest(context: Option[RequestContext], matchers: List[RequestMatcher]): Option[RequestContext] =
+    private def matchRequest(context: Option[RouteContext],
+                             matchers: List[RequestMatcher]): Option[RouteContext] =
       context match {
         case Some(c) if matchers == Nil => Some(c)
         case Some(c) => matchRequest(matchers.head(c), matchers.tail)
@@ -64,6 +84,28 @@ class RequestRouter(val request: HttpServletRequest,
 
     def update(uriPattern: String, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
       dispatch(response, new UriPatternMatcher(uriPattern), matcher1)
+  }
+
+
+  class HeadersHelper {
+
+    def apply(name: String): Option[String] = {
+      val value = request.getHeader(name)
+      if (value == null) None
+      else Some(value)
+    }
+
+    def apply(name: String, default: String): String = apply(name) match {
+      case Some(value) => value
+      case _ => default
+    }
+
+    def update(name: String, value: String) = ctx.stringHeaders += name -> value
+
+    def update(name: String, value: Long) = ctx.dateHeaders += name -> value
+
+    def update(name: String, value: java.util.Date) = ctx.dateHeaders += name -> value.getTime
+
   }
 
 }
