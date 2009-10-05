@@ -40,6 +40,8 @@ class CircumflexFilter extends AbstractFilter {
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
     (req, res) match {
       case (req: HttpServletRequest, res: HttpServletResponse) => {
+        // Set X-Powered-By header
+        res.setHeader("X-Powered-By", "Circumflex v.0.1")
         // Serve static content
         if (config.staticRegex.pattern.matcher(req.getRequestURI).matches) {
           chain.doFilter(req,res)
