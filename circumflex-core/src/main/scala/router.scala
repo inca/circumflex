@@ -23,6 +23,11 @@ class RequestRouter(val request: HttpServletRequest,
 
   val header = new HeadersHelper
 
+  def isXhr = header("X-Requested-With") match {
+    case Some("XMLHttpRequest") => true
+    case _ => false
+  }
+
   def rewrite(target: String): Nothing = {
     request.getRequestDispatcher(target).forward(request, response)
     throw RouteMatchedException(None)
