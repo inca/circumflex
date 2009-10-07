@@ -48,7 +48,7 @@ class RequestRouter(val request: HttpServletRequest,
   def method = param("_method").getOrElse(request.getMethod)
 
   def error(errorCode: Int, message: String) = ErrorResponse(ctx, errorCode, message)
-
+  def redirect(location: String) = RedirectResponse(ctx, location)
   def done: HttpResponse = done(200)
   def done(statusCode: Int): HttpResponse = {
     ctx.statusCode = statusCode
