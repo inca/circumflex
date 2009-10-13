@@ -13,14 +13,14 @@ import util.matching.Regex
 
 abstract class AbstractFilter extends Filter {
 
-  var params: Map[String, String] = Map();
+  var initParams: Map[String, String] = Map();
 
   def init(cfg: FilterConfig) = {
     val paramNames = cfg.getInitParameterNames.asInstanceOf[Enumeration[String]]
     while(paramNames.hasMoreElements) {
       val name = paramNames.nextElement
       val value = cfg.getInitParameter(name)
-      params += name -> value
+      initParams += name -> value
     }
   }
 
@@ -34,12 +34,14 @@ class CircumflexFilter extends AbstractFilter {
 
   override def init(cfg: FilterConfig) = {
     super.init(cfg)
-    config = new Config(params)
+    config = new Config(initParams)
   }
 
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
     (req, res) match {
       case (req: HttpServletRequest, res: HttpServletResponse) => {
+        // Instantiate a context
+        val ctx = new RouteContext(req, res, config, Map())
         // Set X-Powered-By header
         res.setHeader("X-Powered-By", "Circumflex v.0.1")
         // Serve static content
@@ -51,8 +53,8 @@ class CircumflexFilter extends AbstractFilter {
         if (config.mode == Development) println(req)
         req.setCharacterEncoding("UTF-8")
         try {
-          config.routerConstructor.newInstance(req, res, config, new RouteContext(req))
-          ErrorResponse(new RouteContext(req), 404, req.getRequestURI)(res)
+          config.routerConstructor.newInstance(ctx)
+          ErrorResponse(ctx, 404, req.getRequestURI)(res)
         } catch {
           case e: InvocationTargetException if e.getCause.isInstanceOf[RouteMatchedException] => {
             e.getCause.asInstanceOf[RouteMatchedException].response match {
@@ -61,7 +63,7 @@ class CircumflexFilter extends AbstractFilter {
                 if (config.mode == Development) println(res)
               } case _ => }
           } case e => {
-            ErrorResponse(new RouteContext(req), 500, e.getMessage)(res)
+            ErrorResponse(ctx, 500, e.getMessage)(res)
             log.error("Controller threw an exception, see stack trace for details.", e)
           }
         }
@@ -77,10 +79,7 @@ class Config(val params: Map[String, String]) {
   }
 
   val routerConstructor: Constructor[RequestRouter] = Class.forName(params("router"))
-      .getConstructor(classOf[HttpServletRequest],
-    classOf[HttpServletResponse],
-    classOf[Config],
-    classOf[RouteContext])
+      .getConstructor(classOf[RouteContext])
       .asInstanceOf[Constructor[RequestRouter]]
 
   val freemarkerConf = new Configuration();

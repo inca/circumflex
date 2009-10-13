@@ -6,7 +6,7 @@
   <groupId>circumflex</groupId>
   <artifactId>circumflex-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.1</version>
+  <version>0.2</version>
   <name>Circumflex Project</name>
 
   <modules>

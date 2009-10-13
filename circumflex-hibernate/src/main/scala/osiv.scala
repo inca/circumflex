@@ -12,7 +12,7 @@ abstract class HibernateFilter extends AbstractFilter {
   var staticRegex: Regex = null;
 
   override def init(filterConfig: FilterConfig) = {
-    staticRegex = params.get("staticRegex") match {
+    staticRegex = initParams.get("staticRegex") match {
       case Some(sr) => sr.r
       case _ => "/static/.*".r
     }
