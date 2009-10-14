@@ -15,21 +15,18 @@ trait DAO[T] {
 
   def refresh(entity: T) = sessionContext.currentSession.refresh(entity)
 
-  def transaction[R](actions: HibernateSession => R)(error: HibernateException => R): R = {
+  def transaction[R](actions: HibernateSession => R)(error: Throwable => R): R = {
     val session = sessionContext.openSession
-    var blockResult: R = null
     session.begin
     try {
-      blockResult = actions(session)
+      val r = actions(session)
       session.commit
+      r
     } catch {
-      case e: HibernateException => {
-        blockResult = error(e)
-        session.rollback
-      }
       case e => {
+        val r = error(e)
         session.rollback
-        throw e
+        r
       }
     } finally {
       if (session.isOpen) session.close
