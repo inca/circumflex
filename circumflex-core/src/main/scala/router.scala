@@ -41,8 +41,12 @@ class RequestRouter(var ctx: RouteContext) {
   def method = param("_method").getOrElse(ctx.request.getMethod)
 
   def error(errorCode: Int, message: String) = ErrorResponse(ctx, errorCode, message)
+  def error(errorCode: Int) = ErrorResponse(ctx, errorCode, "")
+
   def redirect(location: String) = RedirectResponse(ctx, location)
+
   def done: HttpResponse = done(200)
+
   def done(statusCode: Int): HttpResponse = {
     ctx.statusCode = statusCode
     EmptyResponse(ctx)
