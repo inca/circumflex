@@ -2,9 +2,14 @@ package circumflex.hibernate
 
 import java.io.Serializable
 import org.hibernate.cfg.{AnnotationConfiguration, Configuration}
+import org.hibernate.dialect.Dialect
 import org.hibernate.{LockMode, SessionFactory}
 
-class HibernateUtil(val sessionFactory: SessionFactory) {
+class HibernateUtil(val configuration: Configuration) {
+
+  val sessionFactory = configuration.buildSessionFactory;
+  val dialect = Dialect.getDialect(configuration.getProperties);
+
   def currentSession = new HibernateSession(sessionFactory.getCurrentSession)
   def openSession = new HibernateSession(sessionFactory.openSession)
   // convenience methods (applied to current session)
@@ -20,6 +25,6 @@ class HibernateUtil(val sessionFactory: SessionFactory) {
   def refresh(obj: Object, lockMode: LockMode) = currentSession.refresh(obj, lockMode)
 }
 
-object HUtil extends HibernateUtil(new Configuration().configure.buildSessionFactory)
+object HUtil extends HibernateUtil(new Configuration().configure)
 
-object HAUtil extends HibernateUtil(new AnnotationConfiguration().configure.buildSessionFactory)
+object HAUtil extends HibernateUtil(new AnnotationConfiguration().configure)

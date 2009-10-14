@@ -1,30 +1,12 @@
 package circumflex.hibernate
 
+import java.sql.BatchUpdateException
 import circumflex.core.HttpResponse
+import org.hibernate.exception.ConstraintViolationException
 
 
 trait TransactionContext {
-
   def sessionContext: HibernateUtil
-
-  def transaction[R](actions: HibernateSession => R)(error: Throwable => R): R = {
-    val session = sessionContext.openSession
-    session.begin
-    try {
-      val r = actions(session)
-      session.commit
-      r
-    } catch {
-      case e => {
-        val r = error(e)
-        session.rollback
-        r
-      }
-    } finally {
-      if (session.isOpen) session.close
-    }
-  }
-
 }
 
 
@@ -41,9 +23,56 @@ trait DAO[T] extends TransactionContext {
 }
 
 
-trait TransactionHelper extends TransactionContext {
+class TransactionHelper[R](val sessionContext: HibernateUtil,
+                           val actions: HibernateSession => R,
+                           var errorHandler: Throwable => R) {
 
-  def tx(actions: HibernateSession => HttpResponse)(error: Throwable => HttpResponse): HttpResponse =
-    transaction(actions)(error)
+  private var constraintViolationHandlers: Map[String, () => R] = Map()
+
+  def constraintViolation(constraintName: String, handler: =>R): TransactionHelper[R] = {
+    constraintViolationHandlers += (constraintName -> (() => handler))
+    return this
+  }
+
+  def execute(): R = {
+    val session = sessionContext.openSession
+    session.begin
+    try {
+      val r = actions(session)
+      session.commit
+      return r
+    } catch {
+      case e: ConstraintViolationException => {
+        var constraintName = e.getConstraintName
+        if (constraintName == null && e.getCause.isInstanceOf[BatchUpdateException]) {
+          val sqle = e.getCause.asInstanceOf[BatchUpdateException].getNextException
+          constraintName = sessionContext.dialect.buildSQLExceptionConverter().convert(sqle, "", "")
+              .asInstanceOf[ConstraintViolationException].getConstraintName
+        }
+        val r = constraintViolationHandlers.get(constraintName) match {
+          case Some(handler) => handler()
+          case None => errorHandler(e)
+        }
+        session.rollback
+        return r
+      } case e => {
+        val r = errorHandler(e)
+        session.rollback
+        return r
+      }
+    } finally {
+      if (session.isOpen) session.close
+    }
+  }
 
 }
+
+
+trait TxHelper extends TransactionContext {
+
+  def tx(actions: HibernateSession => HttpResponse)
+        (errorHandler: Throwable => HttpResponse) =
+    new TransactionHelper[HttpResponse](sessionContext, actions, errorHandler)
+
+}
+
