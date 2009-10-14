@@ -27,7 +27,12 @@
     <repository>
       <id>dev.java.net</id>
       <name>Java.net Repository</name>
-      <url>http://download.java.net/maven/2/</url>
+      <url>http://download.java.net/maven/2</url>
+    </repository>
+    <repository>
+      <id>JBoss Repository</id>
+      <name>JBoss Repository</name>
+      <url>http://repository.jboss.com/maven2</url>
     </repository>
   </repositories>
 

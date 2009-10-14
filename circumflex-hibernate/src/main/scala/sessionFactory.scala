@@ -1,14 +1,21 @@
 package circumflex.hibernate
 
 import java.io.Serializable
+import javax.validation.{ValidatorFactory, Validation}
 import org.hibernate.cfg.{AnnotationConfiguration, Configuration}
 import org.hibernate.dialect.Dialect
-import org.hibernate.{LockMode, SessionFactory}
+import org.hibernate.LockMode
 
-class HibernateUtil(val configuration: Configuration) {
+class HibernateConfigurationProvider(val configuration: Configuration,
+                                     val validationFactory: ValidatorFactory) {
+
+  def this(conf: Configuration) =
+    this(conf, Validation.buildDefaultValidatorFactory)
 
   val sessionFactory = configuration.buildSessionFactory;
   val dialect = Dialect.getDialect(configuration.getProperties);
+
+  def validator = validationFactory.getValidator
 
   def currentSession = new HibernateSession(sessionFactory.getCurrentSession)
   def openSession = new HibernateSession(sessionFactory.openSession)
@@ -25,6 +32,6 @@ class HibernateUtil(val configuration: Configuration) {
   def refresh(obj: Object, lockMode: LockMode) = currentSession.refresh(obj, lockMode)
 }
 
-object HUtil extends HibernateUtil(new Configuration().configure)
+object HUtil extends HibernateConfigurationProvider(new Configuration().configure)
 
-object HAUtil extends HibernateUtil(new AnnotationConfiguration().configure)
+object HAUtil extends HibernateConfigurationProvider(new AnnotationConfiguration().configure)

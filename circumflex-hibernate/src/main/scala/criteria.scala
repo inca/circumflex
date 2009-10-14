@@ -4,8 +4,6 @@ import org.hibernate._
 import org.hibernate.criterion.{Criterion, Order, Projection}
 import org.hibernate.transform.ResultTransformer
 
-import scala.collection.jcl.Conversions._
-
 class HibernateCriteria[T](val criteria: Criteria) {
 
   def add(criterion: Criterion): HibernateCriteria[T] = {

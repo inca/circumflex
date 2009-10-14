@@ -20,7 +20,7 @@ abstract class HibernateFilter extends AbstractFilter {
     log.debug("staticRegex is {}", staticRegex);
   }
 
-  def hibernateUtil: HibernateUtil
+  def hibernateUtil: HibernateConfigurationProvider
 
   def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain): Unit = {
     val req = request.asInstanceOf[HttpServletRequest]
