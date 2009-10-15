@@ -1,5 +1,6 @@
-package circumflex.core.freemarker
+package circumflex.freemarker
 
+import core.RouteContext
 import _root_.freemarker.core.Environment
 import java.io.StringWriter
 import _root_.freemarker.ext.beans.BeansWrapper

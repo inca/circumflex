@@ -7,11 +7,19 @@
   <artifactId>circumflex-parent</artifactId>
   <packaging>pom</packaging>
   <version>0.2</version>
-  <name>Circumflex Project</name>
+  <name>Circumflex</name>
+  <description>
+    Circumflex is a set of tiny helpers for quick Web application development
+    using Scala programming language.
+    It's core implements a Front Controller pattern on top of the Java Servlet
+    Technology, allowing the developers to choose tools and frameworks that suit
+    their particular needs.
+  </description>
 
   <modules>
     <module>circumflex-core</module>
     <module>circumflex-hibernate</module>
+    <module>circumflex-ftl</module>
   </modules>
 
   <properties>
@@ -129,4 +137,14 @@
       </plugins>
     </pluginManagement>
   </build>
+  <developers>
+    <developer>
+      <id>inca</id>
+      <name>Boris Okunskiy</name>
+      <email>incarnate@whiteants.net</email>
+      <organization>wbt</organization>
+      <timezone>+3</timezone>
+    </developer>
+  </developers>
+
 </project>

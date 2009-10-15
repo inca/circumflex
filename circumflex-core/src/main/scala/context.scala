@@ -5,7 +5,7 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
 class RouteContext(val request: HttpServletRequest,
                    val response: HttpServletResponse,
-                   val config: Config,
+                   val filter: AbstractCircumflexFilter,
                    val params: Map[String, Object]) {
 
   var stringHeaders: Map[String, String] = Map()
@@ -22,9 +22,9 @@ class RouteContext(val request: HttpServletRequest,
     }
   }
 
-  def +(pair: Pair[String, Object]) = new RouteContext(request, response, config, params + pair)
+  def +(pair: Pair[String, Object]) = new RouteContext(request, response, filter, params + pair)
 
-  def ++(map: Map[String, Object]) = new RouteContext(request, response, config, params ++ map)
+  def ++(map: Map[String, Object]) = new RouteContext(request, response, filter, params ++ map)
 
   def apply(key: String):Option[Object] = params.get(key)
 

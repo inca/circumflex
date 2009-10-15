@@ -1,13 +1,19 @@
 package circumflex.core
 
-import _root_.freemarker.template.Template
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
-class RequestRouter(var ctx: RouteContext) {
+trait ContextAware {
+  def routeContext: RouteContext
+}
+
+
+class RequestRouter(var ctx: RouteContext) extends ContextAware {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(ctx, text)
+
+  def routeContext = ctx
 
   val get = new RequestDispatcher("get")
   val getOrPost = new RequestDispatcher("get", "post")
@@ -30,11 +36,6 @@ class RequestRouter(var ctx: RouteContext) {
   }
 
   def headers(crit: (String, String)*) = new HeadersRegexMatcher(crit : _*)
-
-  def ftl(templateName:String) = {
-    val template = ctx.config.freemarkerConf.getTemplate(templateName);
-    new FreemarkerResponse(ctx, template)
-  }
 
   def param(key: String) = ctx.stringParam(key)
 

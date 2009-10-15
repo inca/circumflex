@@ -7,9 +7,9 @@ trait TransactionContext {
 
   def provider: HibernateConfigurationProvider
 
-  def transaction[R](actions: HibernateSession => R)
+  def transaction[R](session: HibernateSession)
+                    (actions: HibernateSession => R)
                     (errorHandler: Throwable => R): R = {
-    val session = provider.openSession
     session.begin
     try {
       val r = actions(session)
@@ -25,6 +25,10 @@ trait TransactionContext {
       if (session.isOpen) session.close
     }
   }
+
+  def transaction[R](actions: HibernateSession => R)
+                    (errorHandler: Throwable => R): R =
+    transaction(provider.openSession)(actions)(errorHandler)
 
 }
 
