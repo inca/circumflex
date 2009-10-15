@@ -73,11 +73,11 @@ abstract class AbstractCircumflexFilter extends Filter {
  * Only <code>routerClass</code> method is required for implementation, all other methods have their sensible
  * defaults in place -- you are welcome to override them if your webapp needs it.
  */
-abstract class CircumflexFilter extends AbstractCircumflexFilter {
+abstract class CircumflexFilter[T <: RequestRouter] extends AbstractCircumflexFilter {
 
   val log = LoggerFactory.getLogger("circumflex.core.filter")
 
-  def routerClass[T <: RequestRouter]: Class[T]
+  def routerClass: Class[T]
 
   def onNoMatch(ctx: RouteContext, chain: FilterChain) =
     chain.doFilter(ctx.request, ctx.response)
