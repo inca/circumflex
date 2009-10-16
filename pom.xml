@@ -23,7 +23,7 @@
   </modules>
 
   <properties>
-    <scala.version>2.7.5</scala.version>
+    <scala.version>2.7.7.RC1</scala.version>
   </properties>
 
   <repositories>
