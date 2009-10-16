@@ -1,6 +1,8 @@
 package circumflex.hibernate
 
 import circumflex.core.HttpResponse
+import java.io.Serializable
+import org.hibernate.criterion.Restrictions
 
 
 trait TransactionContext {
@@ -33,7 +35,7 @@ trait TransactionContext {
 }
 
 
-trait DAO[T] extends TransactionContext {
+trait DAO[T, ID <: Serializable] extends TransactionContext {
 
   def persistentClass: Class[T]
 
@@ -41,6 +43,18 @@ trait DAO[T] extends TransactionContext {
 
   def findAll = createCriteria.list
 
-  def refresh(entity: T) = provider.currentSession.refresh(entity)
+  def refresh(entity: T) = provider.refresh(entity)
+
+  def findById(id: ID): Option[T] = provider.get(persistentClass, id)
+
+  def createAndApply(params: Map[String, Object]): Option[T] =
+    apply(persistentClass.getConstructor().newInstance().asInstanceOf[T], params)
+
+  def getAndApply(id: ID, params: Map[String, Object]): Option[T] = findById(id) match {
+    case Some(entity) => apply(entity, params)
+    case _ => None
+  }
+
+  def apply(entity: T, params: Map[String, Object]): Option[T] = Some(entity)
 
 }

@@ -19,7 +19,7 @@ class HibernateConfigurationProvider(val configuration: Configuration,
 
   def currentSession = new HibernateSession(sessionFactory.getCurrentSession)
   def openSession = new HibernateSession(sessionFactory.openSession)
-  // convenience methods (applied to current session)
+  // convenience methods (delegated to current session)
   def createCriteria[T](persistentClass: Class[T]): HibernateCriteria[T] =
     currentSession.createCriteria(persistentClass)
   def createCriteria[T](persistentClass: Class[T], alias: String): HibernateCriteria[T] =
@@ -28,8 +28,8 @@ class HibernateConfigurationProvider(val configuration: Configuration,
     currentSession.get(persistentClass, id)
   def get[E, I <: Serializable](persistentClass: Class[E], id: I, lockMode: LockMode): Option[E] =
     currentSession.get(persistentClass, id, lockMode)
-  def refresh(obj: Object) = currentSession.refresh(obj)
-  def refresh(obj: Object, lockMode: LockMode) = currentSession.refresh(obj, lockMode)
+  def refresh(obj: Any) = currentSession.refresh(obj)
+  def refresh(obj: Any, lockMode: LockMode) = currentSession.refresh(obj, lockMode)
 }
 
 object HUtil extends HibernateConfigurationProvider(new Configuration().configure)
