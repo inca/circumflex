@@ -16,9 +16,10 @@ import scala.collection.jcl.Conversions._
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any) = obj match {
+    case null => null
     case option:Option[Any] => option match {
       case Some(o) => wrap(o)
-      case _ => wrap("")
+      case _ => null
     }
     case model:TemplateModel => model
     case ctx:RouteContext => new ScalaRequestContextWrapper(ctx, this)
