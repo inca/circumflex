@@ -32,8 +32,6 @@ abstract class HibernateProvider(val configuration: Configuration,
   def refresh(obj: Any, lockMode: LockMode) = currentSession.refresh(obj, lockMode)
 }
 
-class DefaultHibernateProvider
-
 object HUtil extends HibernateProvider(new Configuration().configure)
 
 object HAUtil extends HibernateProvider(new AnnotationConfiguration().configure)
