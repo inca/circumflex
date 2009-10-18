@@ -6,7 +6,7 @@
   <groupId>circumflex</groupId>
   <artifactId>circumflex-parent</artifactId>
   <packaging>pom</packaging>
-  <version>${circumflex.version}</version>
+  <version>0.2</version>
   <name>Circumflex</name>
   <description>
     Circumflex is a set of tiny helpers for quick Web application development
@@ -24,7 +24,6 @@
   </modules>
 
   <properties>
-    <circumflex.version>0.2</circumflex.version>
     <scala.version>2.7.7.RC1</scala.version>
   </properties>
 
