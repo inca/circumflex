@@ -17,8 +17,8 @@ abstract class HibernateProvider(val configuration: Configuration,
 
   def validator = validationFactory.getValidator
 
-  def currentSession: HibernateSession = sessionFactory.getCurrentSession
-  def openSession: HibernateSession = sessionFactory.openSession
+  def currentSession: HibernateSession = new HibernateSession(sessionFactory.getCurrentSession)
+  def openSession: HibernateSession = new HibernateSession(sessionFactory.openSession)
   // convenience methods (delegated to current session)
   def createCriteria[T](persistentClass: Class[T]): HibernateCriteria[T] =
     currentSession.createCriteria(persistentClass)
