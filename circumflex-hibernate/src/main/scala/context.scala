@@ -7,7 +7,7 @@ import org.hibernate.criterion.Restrictions
 
 trait TransactionContext {
 
-  def provider: HibernateConfigurationProvider
+  def provider: HibernateProvider
 
   def transaction[R](session: HibernateSession)
                     (actions: HibernateSession => R)

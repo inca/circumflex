@@ -34,11 +34,16 @@ abstract class AbstractCircumflexFilter extends Filter {
   /**
    * Determines, if a filter should process the request.
    * Used primarily for static resources, where no processing is required.
+   * Default behavior is to match requestUri against following regex:
+   * <code>(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js))</code>
    * @param req   the request instance
-   * @returns     <b>true</b> if the request should be processed;
-   *              <b>false</b> if the processing should be skipped.
+   * @returns     <b>true</b> if the request should be processed
+   *              <b>false</b> if the processing should be skipped
    */
-  def isProcessed(req: HttpServletRequest): Boolean = !req.getRequestURI.matches("/static/.*")
+  def isProcessed(req: HttpServletRequest): Boolean
+    = !req.getRequestURI
+      .toLowerCase
+      .matches("(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js))")
 
   /**
    * Instantiates a {@link RouteContext} object, binds it to current request,
@@ -62,6 +67,12 @@ abstract class AbstractCircumflexFilter extends Filter {
       } case _ =>
     }
 
+  /**
+   * Implementing classes should provide their filtering logic for processed requests.
+   * @param ctx    Route Context passed to this filter
+   * @param chain  filter chain to delegate calls to if necessary
+   *
+   */
   def doFilter(ctx: RouteContext, chain: FilterChain): Unit
 
 }
@@ -75,21 +86,47 @@ abstract class AbstractCircumflexFilter extends Filter {
  */
 abstract class CircumflexFilter[T <: RequestRouter] extends AbstractCircumflexFilter {
 
+  /**
+   * A logger instance
+   */
   val log = LoggerFactory.getLogger("circumflex.core.filter")
 
+  /**
+   * Specifies a {@link RequestRouter} implementation that will be instantiated for
+   * every processed request.
+   */
   def routerClass: Class[T]
 
+  /**
+   * Executed when no routes match current request.
+   * Default behavior is to call <code>chain.doFilter</code> to pass request along the chain.
+   * @param ctx    Route Context passed to this filter
+   * @param chain  filter chain to delegate calls to if necessary
+   */
   def onNoMatch(ctx: RouteContext, chain: FilterChain) =
     chain.doFilter(ctx.request, ctx.response)
 
+  /**
+   * Executed when router throws an exception.
+   * Default behavior is to send the 500 status code to client.
+   * @param e      the router's exception
+   * @param ctx    Route Context passed to this filter
+   * @param chain  filter chain to delegate calls to if necessary
+   */
   def onRouterError(e: Throwable, ctx: RouteContext, chain: FilterChain) = {
     log.error("Controller threw an exception, see stack trace for details.", e)
     ErrorResponse(ctx, 500, e.getMessage)(ctx.response)
   }
 
+  /**
+   * Instantiates a router that processes current request.
+   * @param ctx    Route Context passed to this filter
+   * @param chain  filter chain to delegate calls to if necessary
+   */
   def doFilter(ctx: RouteContext, chain: FilterChain): Unit = {
+    log.debug(ctx.request.toString)
     // Set X-Powered-By header
-    ctx.response.setHeader("X-Powered-By", "Circumflex v.0.2")
+    ctx.response.setHeader("X-Powered-By", "Circumflex v. 0.2")
     // Set character encoding
     ctx.request.setCharacterEncoding("UTF-8")
     try {
@@ -108,4 +145,13 @@ abstract class CircumflexFilter[T <: RequestRouter] extends AbstractCircumflexFi
       }
     }
   }
+
+  /**
+   * Called when a filter instance is instantiated by Servlet Container.
+   * @param cfg    filter configuration
+   */
+  override def init(cfg: FilterConfig) = {
+    log.info("Circumflex v. 0.2")
+  }
+
 }

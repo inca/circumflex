@@ -8,13 +8,16 @@ import org.slf4j.LoggerFactory
 import util.matching.Regex
 
 abstract class HibernateCircumflexFilter extends AbstractCircumflexFilter with TransactionContext {
-  val log = LoggerFactory.getLogger("circumflex.hibernate")
+  val log = LoggerFactory.getLogger("circumflex.hibernate.filter")
 
   def doFilter(ctx: RouteContext, chain: FilterChain) = {
+    log.debug("About to wrap a request into a contextual transaction.")
     transaction(provider.currentSession)(sess => {
       chain.doFilter(ctx.request, ctx.response)
+      log.debug("About to commit a contextual transaction.")
     })(e => {
       log.error("Failed to commit current transaction.", e)
+      log.debug("About to rollback a contextual transaction.")
     })
   }
 

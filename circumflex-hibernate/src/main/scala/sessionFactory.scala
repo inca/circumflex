@@ -6,8 +6,8 @@ import org.hibernate.cfg.{AnnotationConfiguration, Configuration}
 import org.hibernate.dialect.Dialect
 import org.hibernate.LockMode
 
-class HibernateConfigurationProvider(val configuration: Configuration,
-                                     val validationFactory: ValidatorFactory) {
+abstract class HibernateProvider(val configuration: Configuration,
+                        val validationFactory: ValidatorFactory) {
 
   def this(conf: Configuration) =
     this(conf, Validation.buildDefaultValidatorFactory)
@@ -17,8 +17,8 @@ class HibernateConfigurationProvider(val configuration: Configuration,
 
   def validator = validationFactory.getValidator
 
-  def currentSession = new HibernateSession(sessionFactory.getCurrentSession)
-  def openSession = new HibernateSession(sessionFactory.openSession)
+  def currentSession: HibernateSession = sessionFactory.getCurrentSession
+  def openSession: HibernateSession = sessionFactory.openSession
   // convenience methods (delegated to current session)
   def createCriteria[T](persistentClass: Class[T]): HibernateCriteria[T] =
     currentSession.createCriteria(persistentClass)
@@ -32,6 +32,8 @@ class HibernateConfigurationProvider(val configuration: Configuration,
   def refresh(obj: Any, lockMode: LockMode) = currentSession.refresh(obj, lockMode)
 }
 
-object HUtil extends HibernateConfigurationProvider(new Configuration().configure)
+class DefaultHibernateProvider
 
-object HAUtil extends HibernateConfigurationProvider(new AnnotationConfiguration().configure)
+object HUtil extends HibernateProvider(new Configuration().configure)
+
+object HAUtil extends HibernateProvider(new AnnotationConfiguration().configure)
