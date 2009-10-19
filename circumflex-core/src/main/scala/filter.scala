@@ -21,7 +21,7 @@ abstract class AbstractCircumflexFilter extends Filter {
 
   /**
    * Place your application initialization code here.
-   * Does nothing by deault.
+   * Does nothing by default.
    */
   def init(filterConfig: FilterConfig) = {}
 
