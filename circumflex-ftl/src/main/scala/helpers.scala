@@ -1,4 +1,4 @@
-package circumflex.freemarker
+package ru.circumflex.freemarker
 
 import core.{HttpResponse, RouteContext, ContextAware}
 import _root_.freemarker.cache.ClassTemplateLoader

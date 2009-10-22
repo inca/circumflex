@@ -1,4 +1,4 @@
-package circumflex.springsecurity
+package ru.circumflex.springsecurity
 
 trait SpringSecurityHelper {
 

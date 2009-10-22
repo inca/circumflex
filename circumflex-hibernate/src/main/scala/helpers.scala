@@ -1,6 +1,6 @@
-package circumflex.hibernate
+package ru.circumflex.hibernate
 
-import circumflex.core.{HttpResponse,GroupBy}
+import core.{HttpResponse,GroupBy}
 import javax.validation.ConstraintViolation
 
 

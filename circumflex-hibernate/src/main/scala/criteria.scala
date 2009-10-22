@@ -1,4 +1,4 @@
-package circumflex.hibernate
+package ru.circumflex.hibernate
 
 import org.hibernate._
 import org.hibernate.criterion.{Criterion, Order, Projection}

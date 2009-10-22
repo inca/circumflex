@@ -3,14 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>circumflex</groupId>
+  <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-ftl</artifactId>
   <packaging>jar</packaging>
   <version>0.2</version>
   <name>Circumflex Freemarker Views</name>
 
   <parent>
-    <groupId>circumflex</groupId>
+    <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
     <version>0.2</version>
     <relativePath>../pom.xml</relativePath>
@@ -18,7 +18,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>circumflex</groupId>
+      <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-core</artifactId>
       <version>0.2</version>
     </dependency>

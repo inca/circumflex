@@ -1,4 +1,4 @@
-package circumflex.hibernate
+package ru.circumflex.hibernate
 
 import java.io.Serializable
 import javax.validation.{ValidatorFactory, Validation}

@@ -1,9 +1,8 @@
-package circumflex.hibernate
+package ru.circumflex.hibernate
 
 import java.io.Serializable
 import java.sql.Connection
 import org.hibernate._
-import org.hibernate.cfg.AnnotationConfiguration
 
 class HibernateSession(val session: Session) {
   // mail lifecycle methods

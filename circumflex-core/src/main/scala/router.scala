@@ -1,4 +1,4 @@
-package circumflex.core
+package ru.circumflex.core
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 

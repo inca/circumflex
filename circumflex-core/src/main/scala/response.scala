@@ -1,4 +1,4 @@
-package circumflex.core
+package ru.circumflex.core
 
 import java.util.HashMap
 import javax.servlet.http.HttpServletResponse

@@ -1,11 +1,8 @@
-package circumflex.hibernate
+package ru.circumflex.hibernate
 
 import core.{RouteContext, AbstractCircumflexFilter}
 import javax.servlet._
-import http.{HttpServletRequest, HttpServletResponse}
-
 import org.slf4j.LoggerFactory
-import util.matching.Regex
 
 abstract class HibernateCircumflexFilter extends AbstractCircumflexFilter with TransactionContext {
   val log = LoggerFactory.getLogger("circumflex.hibernate.filter")

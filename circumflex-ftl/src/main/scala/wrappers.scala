@@ -1,4 +1,4 @@
-package circumflex.freemarker
+package ru.circumflex.freemarker
 
 import core.RouteContext
 import _root_.freemarker.core.Environment

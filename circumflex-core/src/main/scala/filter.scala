@@ -1,4 +1,4 @@
-package circumflex.core
+package ru.circumflex.core
 
 import java.io.File
 import java.lang.reflect.{InvocationTargetException, Constructor}
