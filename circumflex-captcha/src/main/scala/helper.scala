@@ -6,17 +6,11 @@ import core.{ContextAware, HttpResponse, DirectStreamResponse}
 import java.util.Properties
 import javax.imageio.ImageIO
 
-trait CaptchaService {
-  def getService: ImageCaptchaService
-}
-
-object DefaultCaptchaService extends CaptchaService {
-  def getService = new DefaultManageableImageCaptchaService
-}
+object CaptchaService extends DefaultManageableImageCaptchaService
 
 trait CaptchaHelper extends ContextAware {
 
-  def captchaService: CaptchaService = DefaultCaptchaService
+  def captchaService: DefaultManageableImageCaptchaService = CaptchaService
 
   def captchaId = routeContext.request.getSession.getId
 
