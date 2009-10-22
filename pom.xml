@@ -21,6 +21,7 @@
     <module>circumflex-hibernate</module>
     <module>circumflex-ftl</module>
     <module>circumflex-spring-security</module>
+    <module>circumflex-captcha</module>
   </modules>
 
   <properties>
