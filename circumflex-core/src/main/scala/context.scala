@@ -22,6 +22,12 @@ class RouteContext(val request: HttpServletRequest,
     }
   }
 
+  def noCache() = {
+    stringHeaders += "Pragma" -> "no-cache"
+    stringHeaders += "Cache-Control" -> "no-store"
+    dateHeaders += "Expires" -> 0l
+  }
+
   def +(pair: Pair[String, Object]) = new RouteContext(request, response, filter, params + pair)
 
   def ++(map: Map[String, Object]) = new RouteContext(request, response, filter, params ++ map)

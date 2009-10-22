@@ -1,5 +1,6 @@
 package ru.circumflex.core
 
+import java.io.{OutputStream, InputStream}
 import java.util.HashMap
 import javax.servlet.http.HttpServletResponse
 
@@ -33,5 +34,20 @@ case class TextResponse(ctx: RouteContext, val text: String) extends HttpRespons
   override def apply(response: HttpServletResponse) = {
     super.apply(response)
     response.getWriter.print(text)
+  }
+}
+
+case class BinaryResponse(ctx: RouteContext, val data: Array[Byte]) extends HttpResponse(ctx) {
+  override def apply(response: HttpServletResponse) = {
+    super.apply(response)
+    response.getOutputStream.write(data)
+  }
+}
+
+case class DirectStreamResponse(ctx: RouteContext, val streamingFunc: OutputStream => Unit)
+    extends HttpResponse(ctx) {
+  override def apply(response: HttpServletResponse) = {
+    super.apply(response)
+    streamingFunc(response.getOutputStream)
   }
 }
