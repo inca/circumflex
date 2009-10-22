@@ -112,6 +112,13 @@
                 <goal>compile</goal>
               </goals>
             </execution>
+            <execution>
+              <id>scala-doc</id>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>doc</goal>
+              </goals>
+            </execution>
           </executions>
           <configuration>
             <scalaVersion>${scala.version}</scalaVersion>
@@ -143,6 +150,7 @@
       </plugins>
     </pluginManagement>
   </build>
+
   <developers>
     <developer>
       <id>inca</id>

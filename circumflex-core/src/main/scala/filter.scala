@@ -1,13 +1,9 @@
 package ru.circumflex.core
 
-import java.io.File
-import java.lang.reflect.{InvocationTargetException, Constructor}
-import java.util.Enumeration
+import java.lang.reflect.InvocationTargetException
 import javax.servlet._
 import http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
-import util.matching.Regex
-
 
 /**
  * Provides a base class for Circumflex filter implementations.
@@ -27,7 +23,7 @@ abstract class AbstractCircumflexFilter extends Filter {
 
   /**
    * Place your application shutdown code here.
-   * Does nothing by deault.
+   * Does nothing by default.
    */
   def destroy = {}
 
@@ -46,9 +42,10 @@ abstract class AbstractCircumflexFilter extends Filter {
       .matches("(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js))")
 
   /**
-   * Instantiates a {@link RouteContext} object, binds it to current request,
+   * Instantiates a RouteContext object, binds it to current request,
    * consults <code>isProcessed</code>, whether the request should be processed
-   * and delegates to abstract <code>doFilter(RouteContext, FilterChain)</code> if necessary.
+   * and delegates to high-level equivalent <code>doFilter(RouteContext, FilterChain)</code>
+   * if necessary.
    */
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
     (req, res) match {
@@ -71,18 +68,58 @@ abstract class AbstractCircumflexFilter extends Filter {
    * Implementing classes should provide their filtering logic for processed requests.
    * @param ctx    Route Context passed to this filter
    * @param chain  filter chain to delegate calls to if necessary
-   *
    */
   def doFilter(ctx: RouteContext, chain: FilterChain): Unit
 
 }
 
 /**
- * Configures Circumflex-based web application and serves it's requests. Web application should provide an
+ * Configures Circumflex-based web application and serves it's requests.
+ * Web application should provide an
  * implementation of this filter and configure it according to JSR-154 (Java Servlet Specification) via
  * <code>your_webapp_root/WEB-INF/web.xml</code> (also known as Deployment Descriptor).
- * Only <code>routerClass</code> method is required for implementation, all other methods have their sensible
- * defaults in place -- you are welcome to override them if your webapp needs it.
+ * <p>Only <code>routerClass</code> method is required for implementation,
+ * all other methods have their sensible
+ * defaults in place -- you are welcome to override them if your webapp needs it.</p>
+ *
+ * <p>Following example demonstrates minimal Circumflex-based webapp:</p>
+ * <pre>
+ * // src/main/scala/myapp.scala
+ * package mydomain
+ *
+ * import ru.circumflex.core.{CircumflexFilter, RequestContext}
+ *
+ * class MyFilter extends CircumflexFilter[Main] {
+ *   def routerClass = classOf[Main]
+ * }
+ *
+ * class Main(c: RequestContext) extends RequestRouter(c) {
+ *   get("/") => "Hello world!"
+ * }
+ *
+ * // src/main/webapp/WEB-INF/web.xml
+ * &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+ * &lt;web-app version="2.5"
+ *          xmlns="http://java.sun.com/xml/ns/javaee"
+ *          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ *          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+ *                              http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"&gt;
+ *   &lt;filter&gt;
+ *     &lt;filter-name&gt;My Circumflex Filter&lt;/filter-name&gt;
+ *     &lt;filter-class&gt;mydomain.MyFilter&lt;/filter-class&gt;
+ *   &lt;/filter&gt;
+ *   &lt;filter-mapping&gt;
+ *     &lt;filter-name&gt;My Circumflex Filter&lt;/filter-name&gt;
+ *     &lt;url-pattern&gt;*&lt;/url-pattern&gt;
+ *     &lt;dispatcher&gt;REQUEST&lt;/dispatcher&gt;
+ *     &lt;dispatcher&gt;FORWARD&lt;/dispatcher&gt;
+ *     &lt;dispatcher&gt;INCLUDE&lt;/dispatcher&gt;
+ *     &lt;dispatcher&gt;ERROR&lt;/dispatcher&gt;
+ *   &lt;/filter-mapping&gt;
+ * &lt;/web-app&gt;
+ * </pre>
+ *
+ * @see ru.circumflex.core.RequestRouter
  */
 abstract class CircumflexFilter[T <: RequestRouter] extends AbstractCircumflexFilter {
 
@@ -92,7 +129,7 @@ abstract class CircumflexFilter[T <: RequestRouter] extends AbstractCircumflexFi
   val log = LoggerFactory.getLogger("circumflex.core.filter")
 
   /**
-   * Specifies a {@link RequestRouter} implementation that will be instantiated for
+   * Specifies a RequestRouter implementation class that will be instantiated for
    * every processed request.
    */
   def routerClass: Class[T]
