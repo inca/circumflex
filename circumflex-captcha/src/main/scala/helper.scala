@@ -17,7 +17,7 @@ trait CaptchaHelper extends ContextAware {
   def captchaFormat = "jpg";
 
   def renderCaptcha: HttpResponse = {
-    val img = captchaService.getService.getImageChallengeForID(captchaId, routeContext.request.getLocale)
+    val img = captchaService.getImageChallengeForID(captchaId, routeContext.request.getLocale)
     routeContext.statusCode = 200
     routeContext.noCache()
     routeContext.contentType = "image/" + captchaFormat
@@ -26,7 +26,7 @@ trait CaptchaHelper extends ContextAware {
 
   def captchaParamName = "_captcha"
 
-  def captchaPassed: Boolean = captchaService.getService
+  def captchaPassed: Boolean = captchaService
       .validateResponseForID(captchaId, routeContext.stringParam(captchaParamName))
       .asInstanceOf[Boolean]
 }
