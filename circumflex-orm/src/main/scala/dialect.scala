@@ -17,3 +17,5 @@ object DialectInterpolations {
 trait Dialect {
 
 }
+
+object DefaultDialect extends Dialect

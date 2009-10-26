@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 trait ConnectionProvider {
   /**
    * Returns a JDBC connection.
-   * @returns JDBC connection
+   * @return JDBC connection
    */
   def getConnection: Connection
 
@@ -30,7 +30,7 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
 
   /**
    * Opens new JDBC connection.
-   * @returns new JDBC connection
+   * @return new JDBC connection
    */
   def openConnection: Connection
 
@@ -42,7 +42,7 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
 
   /**
    * Returns live JDBC connection or opens a new one and binds it to thread local.
-   * @returns JDBC connection
+   * @return JDBC connection
    */
   def getConnection: Connection = {
     if (!hasLiveConnection) threadLocalContext.set(openConnection)
@@ -157,3 +157,25 @@ class ORMFilter extends AbstractCircumflexFilter {
     }
   }
 }
+
+/**
+ * Aggregates all ORM-related interfaces into configuration object.
+ * You may want to provide your own implementation of all these methods if you are not satisfied with
+ * default ones.
+ */
+trait Configuration {
+  def connectionProvider: ConnectionProvider
+  def dialect: Dialect
+}
+
+/**
+ * Aggregates default implementations of ORM-related interfaces.
+ */
+object DefaultConfiguration extends Configuration {
+
+  def connectionProvider = DefaultConnectionProvider
+
+  def dialect = DefaultDialect
+
+}
+

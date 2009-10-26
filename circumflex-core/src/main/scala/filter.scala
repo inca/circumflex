@@ -33,7 +33,7 @@ abstract class AbstractCircumflexFilter extends Filter {
    * Default behavior is to match requestUri against following regex:
    * <code>(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js))</code>
    * @param req   the request instance
-   * @returns     <b>true</b> if the request should be processed
+   * @return     <b>true</b> if the request should be processed
    *              <b>false</b> if the processing should be skipped
    */
   def isProcessed(req: HttpServletRequest): Boolean
