@@ -3,7 +3,7 @@ package ru.circumflex.orm
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import core.{RouteContext, AbstractCircumflexFilter}
 import javax.servlet.FilterChain
-import java.sql.{DriverManager, Connection}
+import java.sql.Connection
 import java.util.{MissingResourceException, ResourceBundle}
 import javax.naming.InitialContext
 import javax.sql.DataSource
@@ -131,8 +131,9 @@ class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
 object DefaultConnectionProvider extends DefaultConnectionProvider
 
 /**
- * Use this filter to autocommit current transaction at the end of request processing cycle.
- * This filter should be the first in chain in order to prevent connection leaks.
+ * Ensures that current transaction is commited and that contextual connection is closed
+ * at the end of request processing cycle.
+ * This filter should be the first in chain.
  */
 class ORMFilter extends AbstractCircumflexFilter {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm.filter")
