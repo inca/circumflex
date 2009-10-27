@@ -120,6 +120,9 @@ class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
 
   private val ds = dataSource
 
+  /**
+   * Opens a new JDBC connection.
+   */
   def openConnection: Connection = {
     val conn = ds.getConnection
     conn.setTransactionIsolation(isolation)

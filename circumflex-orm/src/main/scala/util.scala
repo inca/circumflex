@@ -6,7 +6,7 @@ import java.text.MessageFormat
  * Utility class to combine StringBuilder with MessageFormat and
  * some other useful String utils
  */
-class StringBuilderEx {
+class StringEx {
 
   def this(value: String) = {
     this()
@@ -20,7 +20,7 @@ class StringBuilderEx {
 
   private val builder = new StringBuilder
 
-  def append(value: String, args: Object*): StringBuilderEx = {
+  def append(value: String, args: Object*): StringEx = {
     val argsList: List[Object] = args.toList
     if (argsList.size > 0)
       builder.append(MessageFormat.format(value.replaceAll("'","''"), argsList: _*))
@@ -28,7 +28,7 @@ class StringBuilderEx {
     return this
   }
 
-  def backspace(times: Int): StringBuilderEx = {
+  def backspace(times: Int): StringEx = {
     builder.delete(builder.length - times, builder.length)
     return this
   }

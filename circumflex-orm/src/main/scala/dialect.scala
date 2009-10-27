@@ -24,7 +24,7 @@ trait Dialect {
    * Produces SQL definition for a column (e.q. "mycolumn varchar not null unique").
    * @return SQL column definition
    */
-  def columnDefinition(col: Column[_]) = new StringBuilderEx("{0} {1} {2} {3}",
+  def columnDefinition(col: Column[_]) = new StringEx("{0} {1} {2} {3}",
     col.name,
     col.sqlType,
     if (!col.nullable) "NOT NULL" else "",

@@ -39,15 +39,13 @@ abstract class Column[T](val table: Table,
    * Implementation should return column-specific field instance.
    * @return Field instance for this column
    */
-  def apply(): Field[T]
+  def apply(): Field[T] = new Field[T](this)
 
 }
 
 class StringColumn(table: Table, name: String) extends Column[String](table, name) {
 
   def sqlType = "varchar"
-
-  def apply() = new Field[String](this)
 
 }
 
