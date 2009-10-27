@@ -7,8 +7,8 @@ package ru.circumflex.orm
  * In general there should be only one table instance per record class
  * (a singleton object, or, more conveniantly, the companion object).
  */
-abstract class Table(val schema: String,
-                     val name: String) {
+abstract class Table(val schemaName: String,
+                     val tableName: String) {
   /**
    * Configuration object is used for all persistence-related stuff.
    * Override it if you want to use your own configuration implementation.
@@ -18,12 +18,6 @@ abstract class Table(val schema: String,
 
 }
 
-abstract class Column(val table: Table,
-                      val name: String,
-                      val sqlType: String,
-                      val nullable: Boolean,
-                      val misc: String) {
-  
-}
+
 
 

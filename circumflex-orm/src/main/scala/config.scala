@@ -160,8 +160,9 @@ class ORMFilter extends AbstractCircumflexFilter {
 
 /**
  * Aggregates all ORM-related interfaces into configuration object.
- * You may want to provide your own implementation of all these methods if you are not satisfied with
- * default ones.
+ * We use configuration object with Table objects.
+ * You may want to provide your own implementation of all these methods
+ * if you are not satisfied with default ones.
  */
 trait Configuration {
   def connectionProvider: ConnectionProvider
@@ -170,11 +171,11 @@ trait Configuration {
 
 /**
  * Aggregates default implementations of ORM-related interfaces.
+ * It serves as default configuration for all Table objects
+ * unless their <code>configuration</code> method is overriden.
  */
 object DefaultConfiguration extends Configuration {
-
   def connectionProvider = DefaultConnectionProvider
-
   def dialect = DefaultDialect
 
 }
