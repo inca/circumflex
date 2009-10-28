@@ -4,7 +4,8 @@ package ru.circumflex.orm
  * Represents an abstract backend-specific column.
  */
 abstract class Column[T](val table: Table,
-                         val name: String) {
+                         val columnName: String,
+                         val sqlType: String) {
 
   /**
    * Specifies SQL type of this column.
@@ -12,19 +13,24 @@ abstract class Column[T](val table: Table,
    */
   def sqlType: String
 
-  /**
-   * Specifies whether NOT NULL constraint is applied to this column.
-   * @return <code>false</code> if NOT NULL constraint is applied;
-   *         <code>true</code> otherwise
-   */
-  def nullable: Boolean = false;
+  private var nullable = true;
+  private var unique = false;
 
   /**
-   * Specifies whether UNIQUE constraint is applied to this column.
-   * @return <code>false</code> if UNIQUE constraint is applied;
-   *         <code>true</code> otherwise
+   * DSL-like way to qualify a column with NOT NULL constraint.
    */
-  def unique: Boolean = false;
+  def notNull: Column[T] = {
+    this.nullable = false
+    return this
+  }
+
+  /**
+   * DSL-like way to qualify a column with UNIQUE constraint.
+   */
+  def unique: Column[T] = {
+    this.unique = false
+    return this
+  }
 
   /**
    * Produces SQL definition for a column (e.q. "mycolumn varchar not null unique")
@@ -43,22 +49,8 @@ abstract class Column[T](val table: Table,
 
 }
 
-class StringColumn(table: Table, name: String) extends Column[String](table, name) {
+class StringColumn(table: Table, name: String) extends Column[String](table, name, "varchar")
 
-  def sqlType = "varchar"
+class BigintColumn(table: Table, name: String) extends Column[Long](table, name, "int8")
 
-}
-
-//class Person extends Record {
-//  val name = Person.name()
-//}
-//
-//object Person extends Table("public", "person") {
-//  val name = new StringColumn(this, "name");
-//}
-//
-//object Test extends Application {
-//  val p = new Person()
-//  println(p.getClass.getMethods.toList)
-//}
 

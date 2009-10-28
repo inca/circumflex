@@ -9,12 +9,22 @@ package ru.circumflex.orm
  */
 abstract class Table(val schemaName: String,
                      val tableName: String) {
+
+  //TODO how to organize columns, constraints and primary keys?
+
   /**
    * Configuration object is used for all persistence-related stuff.
    * Override it if you want to use your own configuration implementation.
    * @return DefaultConfiguration by default
    */
   def configuration: Configuration = DefaultConfiguration
+
+  /**
+   * Returns dialect-specific qualified name of a table.
+   */
+  def qualifiedName: String = configuration.dialect.tableQualifiedName(this)
+
+
 
 }
 
