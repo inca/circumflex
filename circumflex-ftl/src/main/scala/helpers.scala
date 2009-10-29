@@ -1,9 +1,8 @@
 package ru.circumflex.freemarker
 
+import _root_.freemarker.template.{TemplateExceptionHandler, Template, Configuration}
 import core.{HttpResponse, RouteContext, ContextAware}
 import _root_.freemarker.cache.ClassTemplateLoader
-import _root_.freemarker.template.{Template, Configuration}
-
 import javax.servlet.http.HttpServletResponse
 
 trait FreemarkerHelper extends ContextAware {
@@ -11,6 +10,7 @@ trait FreemarkerHelper extends ContextAware {
   private val ftlCfg: Configuration = new Configuration();
   ftlCfg.setTemplateLoader(new ClassTemplateLoader(getClass, "/"))
   ftlCfg.setObjectWrapper(new ScalaObjectWrapper())
+  ftlCfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER)
   ftlCfg.setDefaultEncoding("utf-8")
 
   def freemarkerConf: Configuration = ftlCfg
