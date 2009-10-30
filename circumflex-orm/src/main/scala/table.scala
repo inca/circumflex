@@ -25,7 +25,12 @@ abstract class Table[R <: Record](val schemaName: String,
   def configuration: Configuration = DefaultConfiguration
 
   /**
-   * Returns dialect-specific qualified name of a table.
+   * Proxy to fast-retrieve dialect.
+   */
+  def dialect: Dialect = configuration.dialect
+
+  /**
+   *  Returns dialect-specific qualified name of a table.
    */
   def qualifiedName: String = configuration.dialect.tableQualifiedName(this)
 
@@ -37,7 +42,7 @@ abstract class Table[R <: Record](val schemaName: String,
 
 
 
-  // HELPERS
+  /* HELPERS */
 
   /**
    * Helper method to create primary key constraint.
@@ -48,8 +53,8 @@ abstract class Table[R <: Record](val schemaName: String,
   /**
    * Helper method to create a bigint column.
    */
-  def bigintColumn(name: String): BigintColumn[R] = {
-    val col = new BigintColumn(this, name)
+  def longColumn(name: String): LongColumn[R] = {
+    val col = new LongColumn(this, name)
     columns ++= List(col)
     return col
   }

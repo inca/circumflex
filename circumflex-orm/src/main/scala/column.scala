@@ -33,7 +33,7 @@ abstract class Column[T, R <: Record](val table: Table[R],
    * table's configuration.
    * @return SQL column definition
    */
-  def sqlDefinition: String = table.configuration.dialect.columnDefinition(this)
+  def sqlDefinition: String = table.dialect.columnDefinition(this)
 
   /**
    * Instantiates a field instance for the record.
@@ -44,8 +44,8 @@ abstract class Column[T, R <: Record](val table: Table[R],
 
 }
 
-class StringColumn[R <: Record](table: Table[R], name: String) extends Column[String, R](table, name, "varchar")
+class StringColumn[R <: Record](table: Table[R], name: String) extends Column[String, R](table, name, table.dialect.stringType)
 
-class BigintColumn[R <: Record](table: Table[R], name: String) extends Column[Long, R](table, name, "int8")
+class LongColumn[R <: Record](table: Table[R], name: String) extends Column[Long, R](table, name, table.dialect.longType)
 
 
