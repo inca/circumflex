@@ -52,22 +52,29 @@ trait Dialect {
     tab.schemaName + "." + tab.tableName
 
   /**
+   * Used to group common parts for constraint names (concatenate table and column names,
+   * separated by underscore).
+   */
+  protected def constraintBaseName(constr: Constraint[_]) =
+    constr.table.tableName + "_" + constr.columns.map(_.columnName).mkString("_")
+
+  /**
    * Produces PK name (e.g. mytable_pkey).
    */
   def primaryKeyName(pk: PrimaryKey[_]) =
-    pk.table.tableName + "_pkey"
+    constraintBaseName(pk) + "_pkey"
 
   /**
    * Produces unique constraint name (e.g. mytable_name_value_key).
    */
   def uniqueKeyName(uniq: UniqueKey[_]) =
-    uniq.table.tableName + "_" + uniq.columns.map(_.columnName).mkString("_") + "_key"
+    constraintBaseName(uniq) + "_key"
 
   /**
    * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
    */
   def foreignKeyName(fk: ForeignKey[_, _]) =
-    fk.table.tableName + "_" + fk.referenceTable.tableName + "_fkey"
+    constraintBaseName(fk) + "_fkey"
 
   /* DEFINITIONS */
 
@@ -97,15 +104,16 @@ trait Dialect {
   def foreignKeyDefinition(fk: ForeignKey[_, _]) =
     "foreign key (" + fk.columns.map(_.columnName).mkString(",") +
         ") references " + tableQualifiedName(fk.referenceTable) + " (" +
-        fk.referenceTable.columns.map(_.columnName).mkString(",") + ") on delete " +
-        foreignKeyAction(fk.onDelete) + " on update " + foreignKeyAction(fk.onUpdate)
+        fk.referenceTable.primaryKey.columns.map(_.columnName).mkString(",") + ")\n\t\t" +
+        "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +
+        "on update " + foreignKeyAction(fk.onUpdate)
         
 
   /**
    * Produces constraint definition (e.g. "constraint mytable_pkey primary key(id)").
    */
   def constraintDefinition(constraint: Constraint[_]) =
-    "constraint " + constraint.constraintName + " " + constraint.sqlDefinition
+    "constraint " + constraint.constraintName + "\n\t\t" + constraint.sqlDefinition
 
   /* CREATE TABLE */
 
