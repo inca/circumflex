@@ -72,13 +72,15 @@ trait Dialect {
     "constraint " + constraint.constraintName + " " + constraint.sqlDefinition
 
   /* CREATE TABLE */
+
+  /**
+   * Produces CREATE TABLE statement without constraints.
+   */
   def createTable(tab: Table[_]): String = {
     var buf = "create table " + tableQualifiedName(tab) + " (\n\t" +
         tab.columns.map(_.sqlDefinition).mkString(",\n\t") + ",\n\t" +
         tab.primaryKey.sqlFullDefinition
-    if (tab.constraints.size > 0)
-      buf += ",\n\t" + tab.constraints.map(_.sqlFullDefinition).mkString(",\n\t")
-    return buf + ")"
+    return buf + "\n)"
   }
 
   /* ALTER TABLE */
@@ -92,14 +94,14 @@ trait Dialect {
   /**
    * Produces ALTER TABLE statement with ADD CONSTRAINT action.
    */
-  def alterTableAddConstraint(tab: Table[_], constraint: Constraint[_]) =
-    alterTable(tab, "add " + constraintDefinition(constraint));
+  def alterTableAddConstraint(constraint: Constraint[_]) =
+    alterTable(constraint.table, "add " + constraintDefinition(constraint));
 
   /**
    * Produces ALTER TABLE statement with DROP CONSTRAINT action.
    */
-  def alterTableDropConstraint(tab: Table[_], constraint: Constraint[_]) =
-    alterTable(tab, "drop constraint " + constraint.constraintName);
+  def alterTableDropConstraint(constraint: Constraint[_]) =
+    alterTable(constraint.table, "drop constraint " + constraint.constraintName);
 
 
 }

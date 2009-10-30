@@ -7,9 +7,9 @@ abstract class Constraint[R <: Record](val table: Table[R],
 
   def constraintName: String
 
-  def sqlCreate: String = table.dialect.alterTableAddConstraint(table, this)
+  def sqlCreate: String = table.dialect.alterTableAddConstraint(this)
 
-  def sqlDrop: String = table.dialect.alterTableDropConstraint(table, this)
+  def sqlDrop: String = table.dialect.alterTableDropConstraint(this)
 
   def sqlDefinition: String
 
