@@ -1,19 +1,22 @@
 package ru.circumflex.orm
 
-class Test extends Record {
+class Person extends Record {
 
 }
 
-object Test extends Table[Test]("public", "test") {
-
-  val id = longColumn("id").notNull
-  val name = stringColumn("name").notNull.unique
+object Person extends Table[Person]("public", "person") {
 
   def primaryKey = pk(id)
+
+  val id = longColumn("id").notNull
+  val login = stringColumn("login").notNull.unique
+
 }
+
+
 
 object Main extends Application {
 
-  println(Test.dialect.createTable(Test))
+  println(Person.dialect.createTable(Person))
 
 }

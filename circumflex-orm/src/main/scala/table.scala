@@ -15,7 +15,7 @@ abstract class Table[R <: Record](val schemaName: String,
 
   //TODO make em private
   var columns: Seq[Column[_, R]] = Nil
-  var constraints: Seq[Constraint[R]] = Nil
+  var constraints: Seq[Constraint[_]] = Nil     // TODO ???????
 
   /**
    * Configuration object is used for all persistence-related stuff.
@@ -49,6 +49,15 @@ abstract class Table[R <: Record](val schemaName: String,
    */
   def pk(columns: Column[_, R]*) =
     new PrimaryKey(this, columns.toList)
+
+  /**
+   * Helper method to create unique constraint (return table instance for chaining).
+   */
+  def unique(columns: Column[_, R]*): Table[R] = {
+    val constr = new UniqueKey(this, columns.toList)
+    constraints ++= List(constr)
+    return this
+  }
 
   /**
    * Helper method to create a bigint column.

@@ -38,6 +38,12 @@ trait Dialect {
   def primaryKeyName(pk: PrimaryKey[_]) =
     pk.table.tableName + "_pkey"
 
+  /**
+   * Produces unique constraint name (e.g. mytable_name_value_key).
+   */
+  def uniqueKeyName(uniq: UniqueKey[_]) =
+    uniq.table.tableName + "_" + uniq.columns.map(_.columnName).mkString("_") + "_key"
+
   /* DEFINITIONS */
 
   /**
@@ -45,13 +51,19 @@ trait Dialect {
    * (e.g. "mycolumn varchar not null unique").
    */
   def columnDefinition(col: Column[_, _]) =
-      col.columnName + " " + col.sqlType + (if (!col.isNullable) " NOT NULL" else "")
+    col.columnName + " " + col.sqlType + (if (!col.isNullable) " not null" else "")
 
   /**
-   * Produces PK definition (e.g. "primary key(id)").
+   * Produces PK definition (e.g. "primary key (id)").
    */
   def primaryKeyDefinition(pk: PrimaryKey[_]) =
-    "primary key(" + pk.columns.map(_.columnName).mkString(",") + ")"
+    "primary key (" + pk.columns.map(_.columnName).mkString(",") + ")"
+
+  /**
+   * Produces unique constraint definition (e.g. "unique (name, value)").
+   */
+  def uniqueKeyDefinition(uniq: UniqueKey[_]) =
+    "unique (" + uniq.columns.map(_.columnName).mkString(",") + ")"
 
   /**
    * Produces constraint definition (e.g. "constraint mytable_pkey primary key(id)").
@@ -60,8 +72,14 @@ trait Dialect {
     "constraint " + constraint.constraintName + " " + constraint.sqlDefinition
 
   /* CREATE TABLE */
-  def createTable(tab: Table[_]) = "create table " + tableQualifiedName(tab) + " (\n\t" +
-    tab.columns.map(_.sqlDefinition).mkString(",\n\t") + ")";
+  def createTable(tab: Table[_]): String = {
+    var buf = "create table " + tableQualifiedName(tab) + " (\n\t" +
+        tab.columns.map(_.sqlDefinition).mkString(",\n\t") + ",\n\t" +
+        tab.primaryKey.sqlFullDefinition
+    if (tab.constraints.size > 0)
+      buf += ",\n\t" + tab.constraints.map(_.sqlFullDefinition).mkString(",\n\t")
+    return buf + ")"
+  }
 
   /* ALTER TABLE */
 

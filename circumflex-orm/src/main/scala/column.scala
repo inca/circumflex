@@ -23,7 +23,7 @@ abstract class Column[T, R <: Record](val table: Table[R],
    * DSL-like way to qualify a column with UNIQUE constraint.
    */
   def unique: Column[T, R] = {
-    //TODO add unique constraint to table
+    table.unique(this)
     return this
   }
 
