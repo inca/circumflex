@@ -42,11 +42,8 @@ abstract class Constraint[R <: Record](val table: Table[R],
  */
 class PrimaryKey[R <: Record](table: Table[R],
                               columns: Seq[Column[_, R]]) extends Constraint[R](table, columns) {
-
   def constraintName = table.dialect.primaryKeyName(this)
-
   def sqlDefinition = table.dialect.primaryKeyDefinition(this)
-
 }
 
 /**
@@ -54,9 +51,33 @@ class PrimaryKey[R <: Record](table: Table[R],
  */
 class UniqueKey[R <: Record](table: Table[R],
                              columns: Seq[Column[_, R]]) extends Constraint[R](table, columns) {
-
   def constraintName = table.dialect.uniqueKeyName(this)
-
   def sqlDefinition = table.dialect.uniqueKeyDefinition(this)
+}
+
+/**
+ * Marker interface for foreign key's ON DELETE and ON UPDATE actions.
+ */
+trait ForeignKeyAction
+
+object NoAction extends ForeignKeyAction
+object CascadeAction extends ForeignKeyAction
+object RestrictAction extends ForeignKeyAction
+object SetNullAction extends ForeignKeyAction
+object SetDefaultAction extends ForeignKeyAction
+
+/**
+ * Foreign key constraint.
+ */
+class ForeignKey[C <: Record, P <: Record](table: Table[C],
+                                           val referenceTable: Table[P],
+                                           columns: Seq[Column[_, C]])
+    extends Constraint[C](table, columns) {
+
+  var onDelete: ForeignKeyAction = NoAction
+  var onUpdate: ForeignKeyAction = NoAction
+
+  def constraintName = table.dialect.foreignKeyName(this)
+  def sqlDefinition = table.dialect.foreignKeyDefinition(this)
 
 }

@@ -31,6 +31,14 @@ abstract class Column[T, R <: Record](val table: Table[R],
   }
 
   /**
+   * DSL-like way to transform a column to association.
+   */
+  def references[P <: Record](referenceTable: Table[P]): Association[R, P] = {
+    val fk = table.foreignKey(referenceTable, this)
+    return new Association(fk)
+  }
+
+  /**
    * Produces SQL definition for a column (e.q. "mycolumn varchar not null unique")
    * for schema generation purposes using Dialect object provided by
    * table's configuration.

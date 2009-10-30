@@ -33,6 +33,15 @@ trait Dialect {
   def longType = "int8"
   def stringType = "text"
 
+  /* FOREIGN KEY ACTIONS */
+  def foreignKeyAction(action: ForeignKeyAction) = action match {
+    case NoAction => "no action"
+    case CascadeAction => "cascade"
+    case RestrictAction => "restrict"
+    case SetNullAction => "set null"
+    case SetDefaultAction => "set default"
+  }
+
   /* GENERATED NAMES */
 
   /**
@@ -54,6 +63,12 @@ trait Dialect {
   def uniqueKeyName(uniq: UniqueKey[_]) =
     uniq.table.tableName + "_" + uniq.columns.map(_.columnName).mkString("_") + "_key"
 
+  /**
+   * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
+   */
+  def foreignKeyName(fk: ForeignKey[_, _]) =
+    fk.table.tableName + "_" + fk.referenceTable.tableName + "_fkey"
+
   /* DEFINITIONS */
 
   /**
@@ -74,6 +89,17 @@ trait Dialect {
    */
   def uniqueKeyDefinition(uniq: UniqueKey[_]) =
     "unique (" + uniq.columns.map(_.columnName).mkString(",") + ")"
+
+  /**
+   * Produces foreign key constraint definition
+   * (e.g. "foreign key (ref_id) references public.ref(id) on delete cascade on update no action").
+   */
+  def foreignKeyDefinition(fk: ForeignKey[_, _]) =
+    "foreign key (" + fk.columns.map(_.columnName).mkString(",") +
+        ") references " + tableQualifiedName(fk.referenceTable) + " (" +
+        fk.referenceTable.columns.map(_.columnName).mkString(",") + ") on delete " +
+        foreignKeyAction(fk.onDelete) + " on update " + foreignKeyAction(fk.onUpdate)
+        
 
   /**
    * Produces constraint definition (e.g. "constraint mytable_pkey primary key(id)").

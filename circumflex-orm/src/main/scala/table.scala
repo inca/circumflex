@@ -64,16 +64,27 @@ abstract class Table[R <: Record](val schemaName: String,
   /**
    * Helper method to create primary key constraint.
    */
-  def pk(columns: Column[_, R]*) =
-    new PrimaryKey(this, columns.toList)
+  def pk(columns: Column[_, R]*): PrimaryKey[R] = {
+    val pk = new PrimaryKey(this, columns.toList)
+    return pk;
+  }
 
   /**
-   * Helper method to create unique constraint (return table instance for chaining).
+   * Helper method to create unique constraint.
    */
-  def unique(columns: Column[_, R]*): Table[R] = {
+  def unique(columns: Column[_, R]*): UniqueKey[R] = {
     val constr = new UniqueKey(this, columns.toList)
     addConstraint(constr)
-    return this
+    return constr
+  }
+
+  /**
+   * Helper method to create a foreign key constraint.
+   */
+  def foreignKey[T <: Record](referenceTable: Table[T], columns: Column[_, R]*): ForeignKey[R, T] = {
+    val fk = new ForeignKey(this, referenceTable, columns.toList)
+    addConstraint(fk)
+    return fk
   }
 
   /**
@@ -119,6 +130,15 @@ abstract class Table[R <: Record](val schemaName: String,
   def sqlDropConstraints: Seq[String] =
     constraints.map(_.sqlDrop)
 
+}
+
+/**
+ * A helper class that simply defines an "id bigint primary key" column.
+ */
+abstract class GenericTable[R <: Record](schemaName: String, tableName: String)
+    extends Table[R](schemaName, tableName) {
+  def primaryKey = pk(id)
+  val id = longColumn("id").notNull
 }
 
 

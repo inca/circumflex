@@ -1,25 +1,36 @@
 package ru.circumflex.orm
 
-class Person extends Record {
+class Category extends Record {
 
 }
 
-object Person extends Table[Person]("public", "person") {
+object Category extends GenericTable[Category]("public", "category") {
+  val name = stringColumn("name").notNull.unique
+}
 
-  def primaryKey = pk(id)
+class Book extends Record {
 
-  val id = longColumn("id").notNull
-  val login = stringColumn("login").notNull.unique
+}
 
+object Book extends GenericTable[Book]("public", "book") {
+  val title = stringColumn("title").notNull
+  val category = longColumn("category_id").notNull
+      .references(Category)
+      .onDeleteRestrict
+      .onUpdateCascade
 }
 
 
 
 object Main extends Application {
 
-  println(Person.sqlCreate)
-  Person.sqlCreateConstraints.foreach(println(_))
-  Person.sqlDropConstraints.foreach(println(_))
-  println(Person.sqlDrop)
+  println(Category.sqlCreate)
+  println(Book.sqlCreate)
+  Category.sqlCreateConstraints.foreach(println(_))
+  Book.sqlCreateConstraints.foreach(println(_))
+  Book.sqlDropConstraints.foreach(println(_))
+  Category.sqlDropConstraints.foreach(println(_))
+  println(Book.sqlDrop)
+  println(Category.sqlDrop)
 
 }
