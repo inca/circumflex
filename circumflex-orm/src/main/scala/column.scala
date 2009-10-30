@@ -1,23 +1,26 @@
 package ru.circumflex.orm
 
 /**
- * Represents an abstract backend-specific column.
+ * Base functionality for columns.
  */
 abstract class Column[T, R <: Record](val table: Table[R],
                                       val columnName: String,
                                       val sqlType: String) {
 
-  private var nullable = true;
+  private var _nullable = true;
 
   /**
    * DSL-like way to qualify a column with NOT NULL constraint.
    */
   def notNull: Column[T, R] = {
-    this.nullable = false
+    _nullable = false
     return this
   }
 
-  def isNullable: Boolean = nullable
+  /**
+   * Is this column nullable?
+   */
+  def nullable: Boolean = _nullable
 
   /**
    * DSL-like way to qualify a column with UNIQUE constraint.
@@ -44,8 +47,16 @@ abstract class Column[T, R <: Record](val table: Table[R],
 
 }
 
-class StringColumn[R <: Record](table: Table[R], name: String) extends Column[String, R](table, name, table.dialect.stringType)
+/**
+ * String column (varchar-typed).
+ */
+class StringColumn[R <: Record](table: Table[R], name: String)
+    extends Column[String, R](table, name, table.dialect.stringType)
 
-class LongColumn[R <: Record](table: Table[R], name: String) extends Column[Long, R](table, name, table.dialect.longType)
+/**
+ * Long column (bigint-typed).
+ */
+class LongColumn[R <: Record](table: Table[R], name: String)
+    extends Column[Long, R](table, name, table.dialect.longType)
 
 

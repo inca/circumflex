@@ -14,8 +14,18 @@ object DialectInterpolations {
   val valuesClause = "{values_clause}"
 }
 
+/**
+ * A default dialect singleton.
+ * If you feel that some of the statements do not work
+ * with your RDBMS vendor, trace the exact method and provide it's
+ * implementation in your object. Of course, you should override the
+ * default configuration with your dialect object in that case.
+ */
 object DefaultDialect extends Dialect
 
+/**
+ * This little thingy does all dirty SQL stuff.
+ */
 trait Dialect {
 
   /* SQL TYPES */
@@ -51,7 +61,7 @@ trait Dialect {
    * (e.g. "mycolumn varchar not null unique").
    */
   def columnDefinition(col: Column[_, _]) =
-    col.columnName + " " + col.sqlType + (if (!col.isNullable) " not null" else "")
+    col.columnName + " " + col.sqlType + (if (!col.nullable) " not null" else "")
 
   /**
    * Produces PK definition (e.g. "primary key (id)").
@@ -103,6 +113,13 @@ trait Dialect {
   def alterTableDropConstraint(constraint: Constraint[_]) =
     alterTable(constraint.table, "drop constraint " + constraint.constraintName);
 
+  /* DROP TABLE */
+
+  /**
+   * Produces DROP TABLE statement
+   */
+  def dropTable(tab: Table[_]) =
+    "drop table " + tableQualifiedName(tab)
 
 }
 

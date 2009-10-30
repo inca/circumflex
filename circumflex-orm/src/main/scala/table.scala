@@ -1,6 +1,5 @@
 package ru.circumflex.orm
 
-
 import collection.mutable.Buffer
 
 /**
@@ -13,9 +12,8 @@ import collection.mutable.Buffer
 abstract class Table[R <: Record](val schemaName: String,
                                   val tableName: String) {
 
-  //TODO make em private
-  var columns: Seq[Column[_, R]] = Nil
-  var constraints: Seq[Constraint[_]] = Nil     // TODO ???????
+  private var _columns: Seq[Column[_, R]] = Nil
+  private var _constraints: Seq[Constraint[R]] = Nil
 
   /**
    * Configuration object is used for all persistence-related stuff.
@@ -30,17 +28,36 @@ abstract class Table[R <: Record](val schemaName: String,
   def dialect: Dialect = configuration.dialect
 
   /**
-   *  Returns dialect-specific qualified name of a table.
+   *  Dialect-specific qualified name of a table.
    */
   def qualifiedName: String = configuration.dialect.tableQualifiedName(this)
 
   /**
-   * Returns a mandatory primary key constraint for this table.
+   * The mandatory primary key constraint for this table.
    */
   def primaryKey: PrimaryKey[R];
 
+  /**
+   * Table's column list.
+   */
+  def columns = _columns
 
+  /**
+   * Table's constraint list.
+   */
+  def constraints = _constraints
 
+  /**
+   * Adds some columns to this table.
+   */
+  def addColumn(cols: Column[_, R]*) =
+    _columns ++= cols.toList
+
+  /**
+   * Adds some constraints to this table.
+   */
+  def addConstraint(constrs: Constraint[R]*) =
+    _constraints ++= constrs.toList
 
   /* HELPERS */
 
@@ -55,7 +72,7 @@ abstract class Table[R <: Record](val schemaName: String,
    */
   def unique(columns: Column[_, R]*): Table[R] = {
     val constr = new UniqueKey(this, columns.toList)
-    constraints ++= List(constr)
+    addConstraint(constr)
     return this
   }
 
@@ -64,7 +81,7 @@ abstract class Table[R <: Record](val schemaName: String,
    */
   def longColumn(name: String): LongColumn[R] = {
     val col = new LongColumn(this, name)
-    columns ++= List(col)
+    addColumn(col)
     return col
   }
 
@@ -73,9 +90,34 @@ abstract class Table[R <: Record](val schemaName: String,
    */
   def stringColumn(name: String): StringColumn[R] = {
     val col = new StringColumn(this, name)
-    columns ++= List(col)
+    addColumn(col)
     return col
   }
+
+  /* DDL */
+
+  /**
+   * Produces SQL CREATE TABLE statement for this table.
+   * Constraints are not included there.
+   */
+  def sqlCreate = dialect.createTable(this)
+
+  /**
+   * Produces SQL DROP TABLE statement.
+   */
+  def sqlDrop = dialect.dropTable(this)
+
+  /**
+   * Produces a list of SQL ALTER TABLE ADD CONSTRAINT statements.
+   */
+  def sqlCreateConstraints: Seq[String] =
+    constraints.map(_.sqlCreate)
+
+  /**
+   * Produces a list of SQL ALTER TABLE DROP CONSTRAINT statements.
+   */
+  def sqlDropConstraints: Seq[String] =
+    constraints.map(_.sqlDrop)
 
 }
 

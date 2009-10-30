@@ -17,6 +17,9 @@ object Person extends Table[Person]("public", "person") {
 
 object Main extends Application {
 
-  println(Person.dialect.createTable(Person))
+  println(Person.sqlCreate)
+  Person.sqlCreateConstraints.foreach(println(_))
+  Person.sqlDropConstraints.foreach(println(_))
+  println(Person.sqlDrop)
 
 }
