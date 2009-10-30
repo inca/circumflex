@@ -20,9 +20,6 @@ object DefaultDialect extends Dialect
 
 trait Dialect {
 
-  implicit def strToEx(str: String): StringEx = new StringEx(str)
-  implicit def exToStr(ex: StringEx): String = ex.toString
-
   /* GENERATED NAMES */
 
   /**
@@ -30,13 +27,13 @@ trait Dialect {
    * (e.g. "myschema.mytable")
    */
   def tableQualifiedName(tab: Table[_]): String =
-    tab.schemaName.append(".").append(tab.tableName)
+    tab.schemaName + "." + tab.tableName
 
   /**
    * Produces PK name (e.g. mytable_pkey).
    */
-  def primaryKeyName(pk: PrimaryKey): String =
-    tableQualifiedName(pk.table).append("_pkey")
+  def primaryKeyName(pk: PrimaryKey[_]): String =
+    tableQualifiedName(pk.table) + "_pkey"
 
   /* DEFINITIONS */
 
@@ -44,18 +41,14 @@ trait Dialect {
    * Produces SQL definition for a column
    * (e.g. "mycolumn varchar not null unique").
    */
-  def columnDefinition(col: Column[_]): String =
-    new StringEx("{0} {1} {2} {3}",
-      col.name,
-      col.sqlType,
-      if (!col.nullable) "NOT NULL" else "",
-      if (col.unique) "UNIQUE" else "")
+  def columnDefinition(col: Column[_, _]): String =
+      col.columnName + " " + col.sqlType + (if (!col.isNullable) " NOT NULL" else "")
 
   /**
    * Produces PK definition (e.g. "primary key(id)").
    */
-  def primaryKeyDefinition(pk: PrimaryKey): String =
-    new StringEx("primary key({0})", pk.columns.map(_.columnName).mkString(","))
+  def primaryKeyDefinition(pk: PrimaryKey[_]): String =
+    "primary key(" + pk.columns.map(_.columnName).mkString(",") + ")"
 
   /* ALTER TABLE */
 
@@ -63,19 +56,19 @@ trait Dialect {
    * Produces ALTER TABLE statement with abstract action.
    */
   def alterTable(tab: Table[_], action: String): String =
-    "alter table ".append(tableQualifiedName(tab)).append(" {0}", action)
+    "alter table " + tableQualifiedName(tab) + " " + action
 
   /**
    * Produces ALTER TABLE statement with ADD CONSTRAINT action.
    */
   def alterTableAddConstraint(tab: Table[_], constraintName: String, constaintDefinition: String): String =
-    alterTable(tab, "add constraint ".append(constraintName).append(" {0}", constaintDefinition));
+    alterTable(tab, "add constraint " + constraintName  + " " +constaintDefinition);
 
   /**
    * Produces ALTER TABLE statement with DROP CONSTRAINT action.
    */
   def alterTableDropConstraint(tab: Table[_], constraintName: String): String =
-    alterTable(tab, "drop constraint ".append(constraintName));
+    alterTable(tab, "drop constraint " + constraintName);
 
 
 }

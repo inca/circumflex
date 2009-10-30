@@ -2,9 +2,8 @@ package ru.circumflex.orm
 
 
 
-abstract class Constraint (val table: Table) {
-
-  var columns: Seq[Column[_]] = Nil
+abstract class Constraint[R <: Record](val table: Table[R],
+                                       val columns: Seq[Column[_, R]]) {
 
   def constraintName: String
 
@@ -19,7 +18,8 @@ abstract class Constraint (val table: Table) {
 }
 
 
-class PrimaryKey(table: Table) extends Constraint(table, name) {
+class PrimaryKey[R <: Record](table: Table[R],
+                              columns: Seq[Column[_, R]]) extends Constraint[R](table, columns) {
 
   def constraintName = dialect.primaryKeyName(this)
 

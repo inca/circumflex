@@ -1,6 +1,6 @@
 package ru.circumflex.orm
 
-class Field[T](val column: Column[T]) {
+class Field[T, R <: Record](val column: Column[T, R]) {
 
   var value: Option[T] = None
   

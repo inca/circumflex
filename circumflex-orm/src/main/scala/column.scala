@@ -3,32 +3,27 @@ package ru.circumflex.orm
 /**
  * Represents an abstract backend-specific column.
  */
-abstract class Column[T](val table: Table,
-                         val columnName: String,
-                         val sqlType: String) {
-
-  /**
-   * Specifies SQL type of this column.
-   * @return column SQL type (e.q. "VARCHAR" or "INT8"); case is ignored.
-   */
-  def sqlType: String
+abstract class Column[T, R <: Record](val table: Table[R],
+                                      val columnName: String,
+                                      val sqlType: String) {
 
   private var nullable = true;
-  private var unique = false;
 
   /**
    * DSL-like way to qualify a column with NOT NULL constraint.
    */
-  def notNull: Column[T] = {
+  def notNull: Column[T, R] = {
     this.nullable = false
     return this
   }
 
+  def isNullable: Boolean = nullable
+
   /**
    * DSL-like way to qualify a column with UNIQUE constraint.
    */
-  def unique: Column[T] = {
-    this.unique = false
+  def unique: Column[T, R] = {
+    //TODO add unique constraint to table
     return this
   }
 
@@ -45,12 +40,12 @@ abstract class Column[T](val table: Table,
    * Implementation should return column-specific field instance.
    * @return Field instance for this column
    */
-  def apply(): Field[T] = new Field[T](this)
+  def apply(): Field[T, R] = new Field[T, R](this)
 
 }
 
-class StringColumn(table: Table, name: String) extends Column[String](table, name, "varchar")
+class StringColumn[R <: Record](table: Table[R], name: String) extends Column[String, R](table, name, "varchar")
 
-class BigintColumn(table: Table, name: String) extends Column[Long](table, name, "int8")
+class BigintColumn[R <: Record](table: Table[R], name: String) extends Column[Long, R](table, name, "int8")
 
 
