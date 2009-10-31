@@ -73,7 +73,7 @@ trait Dialect {
   /**
    * Produces qualified sequence name (e.g. public.mytable_id_seq).
    */
-  def sequenceName(seq: Sequence[_, _]) =
+  def sequenceName(seq: Sequence[_]) =
     seq.table.tableName + "_" + seq.column.columnName + "_seq"
 
   /**
@@ -132,7 +132,7 @@ trait Dialect {
   /**
    * Produces CREATE SEQUENCE statement.
    */
-  def createSequence(seq: Sequence[_, _]) =
+  def createSequence(seq: Sequence[_]) =
     "create sequence " + sequenceName(seq) + "\n\tstart with 1 increment by 1"
 
   /**
@@ -182,7 +182,7 @@ trait Dialect {
   /**
    * Produces DROP SEQUENCE statement.
    */
-  def dropSequence(seq: Sequence[_, _]) =
+  def dropSequence(seq: Sequence[_]) =
     "drop sequence " + sequenceName(seq)
 
   /**
@@ -196,7 +196,7 @@ trait Dialect {
   /**
    * Produces a statement to select a single next sequence value.
    */
-  def selectSequenceNextVal(seq: Sequence[_, _]) =
+  def selectSequenceNextVal(seq: Sequence[_]) =
     "select nextval('" + sequenceName(seq) + "')"
 
 }
