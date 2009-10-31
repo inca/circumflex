@@ -6,22 +6,17 @@ package ru.circumflex.orm
  * and to the list of columns. It is responsible for DDL generation.
  */
 abstract class Constraint[R <: Record](val table: Table[R],
-                                       val columns: Seq[Column[_, R]]) {
+                                       val columns: Seq[Column[_, R]])
+    extends SchemaObject {
 
   /**
    * Constraint name (should be dialect-specific).
    */
   def constraintName: String
 
-  /**
-   * SQL ALTER TABLE statement to create a constraint (dialect-specific).
-   */
-  def sqlCreate: String = table.dialect.alterTableAddConstraint(this)
-
-  /**
-   * SQL ALTER TABLE statement to drop a constraint (dialect-specific).
-   */
-  def sqlDrop: String = table.dialect.alterTableDropConstraint(this)
+  def dialect = table.dialect
+  def sqlCreate: String = dialect.alterTableAddConstraint(this)
+  def sqlDrop: String = dialect.alterTableDropConstraint(this)
 
   /**
    * A "short" constraint definition (constraint-specific part only,
@@ -33,7 +28,7 @@ abstract class Constraint[R <: Record](val table: Table[R],
    * Full SQL definition statement (should be dialect-specific,
    * e.g. "CONSTRAINT mytable_pkey PRIMARY KEY (id)".
    */
-  def sqlFullDefinition: String = table.dialect.constraintDefinition(this)
+  def sqlFullDefinition: String = dialect.constraintDefinition(this)
 
 }
 
@@ -41,7 +36,8 @@ abstract class Constraint[R <: Record](val table: Table[R],
  * Primary key constraint.
  */
 class PrimaryKey[R <: Record](table: Table[R],
-                              columns: Seq[Column[_, R]]) extends Constraint[R](table, columns) {
+                              columns: Seq[Column[_, R]])
+    extends Constraint[R](table, columns) {
   def constraintName = table.dialect.primaryKeyName(this)
   def sqlDefinition = table.dialect.primaryKeyDefinition(this)
 }
@@ -50,7 +46,8 @@ class PrimaryKey[R <: Record](table: Table[R],
  * Unique constraint.
  */
 class UniqueKey[R <: Record](table: Table[R],
-                             columns: Seq[Column[_, R]]) extends Constraint[R](table, columns) {
+                             columns: Seq[Column[_, R]])
+    extends Constraint[R](table, columns) {
   def constraintName = table.dialect.uniqueKeyName(this)
   def sqlDefinition = table.dialect.uniqueKeyDefinition(this)
 }
@@ -79,5 +76,4 @@ class ForeignKey[C <: Record, P <: Record](table: Table[C],
 
   def constraintName = table.dialect.foreignKeyName(this)
   def sqlDefinition = table.dialect.foreignKeyDefinition(this)
-
 }

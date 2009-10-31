@@ -48,7 +48,7 @@ trait Dialect {
    * Produces qualified name of a table
    * (e.g. "myschema.mytable")
    */
-  def tableQualifiedName(tab: Table[_]) =
+  def tableName(tab: Table[_]) =
     tab.schemaName + "." + tab.tableName
 
   /**
@@ -69,6 +69,12 @@ trait Dialect {
    */
   def uniqueKeyName(uniq: UniqueKey[_]) =
     constraintBaseName(uniq) + "_key"
+
+  /**
+   * Produces qualified sequence name (e.g. public.mytable_id_seq).
+   */
+  def sequenceName(seq: Sequence[_, _]) =
+    seq.table.tableName + "_" + seq.column.columnName + "_seq"
 
   /**
    * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
@@ -103,11 +109,11 @@ trait Dialect {
    */
   def foreignKeyDefinition(fk: ForeignKey[_, _]) =
     "foreign key (" + fk.columns.map(_.columnName).mkString(",") +
-        ") references " + tableQualifiedName(fk.referenceTable) + " (" +
+        ") references " + tableName(fk.referenceTable) + " (" +
         fk.referenceTable.primaryKey.columns.map(_.columnName).mkString(",") + ")\n\t\t" +
         "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +
         "on update " + foreignKeyAction(fk.onUpdate)
-        
+
 
   /**
    * Produces constraint definition (e.g. "constraint mytable_pkey primary key(id)").
@@ -115,25 +121,33 @@ trait Dialect {
   def constraintDefinition(constraint: Constraint[_]) =
     "constraint " + constraint.constraintName + "\n\t\t" + constraint.sqlDefinition
 
-  /* CREATE TABLE */
+  /* CREATE/ALTER/DROP STATEMENTS */
+
+  /**
+   * Produces CREATE SCHEMA statement.
+   */
+  def createSchema(schema: Schema) =
+    "create schema " + schema.schemaName
+
+  /**
+   * Produces CREATE SEQUENCE statement.
+   */
+  def createSequence(seq: Sequence[_, _]) =
+    "create sequence " + sequenceName(seq) + "\n\tstart with 1 increment by 1"
 
   /**
    * Produces CREATE TABLE statement without constraints.
    */
-  def createTable(tab: Table[_]): String = {
-    var buf = "create table " + tableQualifiedName(tab) + " (\n\t" +
+  def createTable(tab: Table[_]) =
+    "create table " + tableName(tab) + " (\n\t" +
         tab.columns.map(_.sqlDefinition).mkString(",\n\t") + ",\n\t" +
-        tab.primaryKey.sqlFullDefinition
-    return buf + "\n)"
-  }
-
-  /* ALTER TABLE */
+        tab.primaryKey.sqlFullDefinition + "\n)"
 
   /**
    * Produces ALTER TABLE statement with abstract action.
    */
   def alterTable(tab: Table[_], action: String) =
-    "alter table " + tableQualifiedName(tab) + "\n\t" + action
+    "alter table " + tableName(tab) + "\n\t" + action
 
   /**
    * Produces ALTER TABLE statement with ADD CONSTRAINT action.
@@ -142,18 +156,48 @@ trait Dialect {
     alterTable(constraint.table, "add " + constraintDefinition(constraint));
 
   /**
+   * Produces ALTER TABLE statement with ADD COLUMN action.
+   */
+  def alterTableAddColumn(column: Column[_, _]) =
+    alterTable(column.table, "add column " + columnDefinition(column));
+
+  /**
    * Produces ALTER TABLE statement with DROP CONSTRAINT action.
    */
   def alterTableDropConstraint(constraint: Constraint[_]) =
     alterTable(constraint.table, "drop constraint " + constraint.constraintName);
 
-  /* DROP TABLE */
+  /**
+   * Produces ALTER TABLE statement with DROP COLUMN action.
+   */
+  def alterTableDropColumn(column: Column[_, _]) =
+    alterTable(column.table, "drop column " + column.columnName);
 
   /**
    * Produces DROP TABLE statement
    */
   def dropTable(tab: Table[_]) =
-    "drop table " + tableQualifiedName(tab)
+    "drop table " + tableName(tab)
+
+  /**
+   * Produces DROP SEQUENCE statement.
+   */
+  def dropSequence(seq: Sequence[_, _]) =
+    "drop sequence " + sequenceName(seq)
+
+  /**
+   * Produces DROP SCHEMA statement.
+   */
+  def dropSchema(schema: Schema) =
+    "drop schema " + schema.schemaName
+  
+  /* SELECT STATEMENTS */
+
+  /**
+   * Produces a statement to select a single next sequence value.
+   */
+  def selectSequenceNextVal(seq: Sequence[_, _]) =
+    "select nextval('" + sequenceName(seq) + "')"
 
 }
 

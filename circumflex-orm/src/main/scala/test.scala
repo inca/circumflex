@@ -23,18 +23,3 @@ object Book extends GenericTable[Book] {
       .onDeleteRestrict
       .onUpdateCascade
 }
-
-
-
-object Main extends Application {
-
-  println(Category.sqlCreate)
-  println(Book.sqlCreate)
-  Category.sqlCreateConstraints.foreach(println(_))
-  Book.sqlCreateConstraints.foreach(println(_))
-  Book.sqlDropConstraints.foreach(println(_))
-  Category.sqlDropConstraints.foreach(println(_))
-  println(Book.sqlDrop)
-  println(Category.sqlDrop)
-
-}

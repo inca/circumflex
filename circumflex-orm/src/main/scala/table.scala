@@ -10,32 +10,21 @@ import reflect.Manifest
  * In general there should be only one table instance per record class
  * (a singleton object, or, more conveniantly, the companion object).
  */
-abstract class Table[R <: Record](implicit recordType: Manifest[R]) {
+abstract class Table[R <: Record](implicit recordType: Manifest[R]) extends SchemaObject {
 
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
 
   /**
-   * Configuration object is used for all persistence-related stuff.
-   * Override it if you want to use your own configuration implementation.
-   * @return DefaultConfiguration by default
+   * Returns Schema object, that will containt specified table.
+   * Defaults to DefaultSchema singleton.
    */
-  def configuration: Configuration = DefaultConfiguration
+  def schema: Schema = DefaultSchema
 
   /**
-   * Proxy to fast-retrieve dialect.
+   * Returns schema name.
    */
-  def dialect: Dialect = configuration.dialect
-
-  /**
-   * A record class recovered from type parameter.
-   */
-  def recordClass: Class[R] = Class.forName(recordType.toString).asInstanceOf[Class[R]]
-
-  /**
-   * Returns schema name. Defaults to "public".
-   */
-  def schemaName: String = "public"
+  def schemaName: String = schema.schemaName
 
   /**
    * Returns table name. Defaults to unqualified record class name.
@@ -43,9 +32,9 @@ abstract class Table[R <: Record](implicit recordType: Manifest[R]) {
   def tableName: String = recordClass.getSimpleName.toLowerCase
 
   /**
-   * Dialect-specific qualified name of a table.
+   * A record class recovered from type parameter.
    */
-  def qualifiedName: String = configuration.dialect.tableQualifiedName(this)
+  def recordClass: Class[R] = Class.forName(recordType.toString).asInstanceOf[Class[R]]
 
   /**
    * The mandatory primary key constraint for this table.
@@ -122,6 +111,8 @@ abstract class Table[R <: Record](implicit recordType: Manifest[R]) {
 
   /* DDL */
 
+  def dialect: Dialect = schema.dialect
+
   /**
    * Produces SQL CREATE TABLE statement for this table.
    * Constraints are not included there.
@@ -155,7 +146,4 @@ abstract class GenericTable[R <: Record](implicit recordType: Manifest[R])
   def primaryKey = pk(id)
   val id = longColumn("id").notNull
 }
-
-
-
 

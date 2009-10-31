@@ -5,7 +5,8 @@ package ru.circumflex.orm
  */
 abstract class Column[T, R <: Record](val table: Table[R],
                                       val columnName: String,
-                                      val sqlType: String) {
+                                      val sqlType: String)
+    extends SchemaObject {
 
   private var _nullable = true;
 
@@ -39,19 +40,22 @@ abstract class Column[T, R <: Record](val table: Table[R],
   }
 
   /**
-   * Produces SQL definition for a column (e.q. "mycolumn varchar not null unique")
-   * for schema generation purposes using Dialect object provided by
-   * table's configuration.
-   * @return SQL column definition
-   */
-  def sqlDefinition: String = table.dialect.columnDefinition(this)
-
-  /**
    * Instantiates a field instance for the record.
    * Implementation should return column-specific field instance.
    * @return Field instance for this column
    */
   def apply(): Field[T, R] = new Field[T, R](this)
+
+  /* DDL */
+
+  /**
+   * Produces SQL definition for a column (e.q. "mycolumn varchar not null unique")
+   */
+  def sqlDefinition: String = dialect.columnDefinition(this)
+
+  def dialect = table.dialect
+  def sqlCreate = dialect.alterTableAddColumn(this)
+  def sqlDrop = dialect.alterTableDropColumn(this)
 
 }
 
