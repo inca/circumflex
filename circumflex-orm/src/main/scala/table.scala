@@ -1,6 +1,7 @@
 package ru.circumflex.orm
 
 import collection.mutable.Buffer
+import reflect.Manifest
 
 /**
  * Provides base functionality for generating domain model schema,
@@ -9,8 +10,7 @@ import collection.mutable.Buffer
  * In general there should be only one table instance per record class
  * (a singleton object, or, more conveniantly, the companion object).
  */
-abstract class Table[R <: Record](val schemaName: String,
-                                  val tableName: String) {
+abstract class Table[R <: Record](implicit recordType: Manifest[R]) {
 
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
@@ -28,7 +28,22 @@ abstract class Table[R <: Record](val schemaName: String,
   def dialect: Dialect = configuration.dialect
 
   /**
-   *  Dialect-specific qualified name of a table.
+   * A record class recovered from type parameter.
+   */
+  def recordClass: Class[R] = Class.forName(recordType.toString).asInstanceOf[Class[R]]
+
+  /**
+   * Returns schema name. Defaults to "public".
+   */
+  def schemaName: String = "public"
+
+  /**
+   * Returns table name. Defaults to unqualified record class name.
+   */
+  def tableName: String = recordClass.getSimpleName.toLowerCase
+
+  /**
+   * Dialect-specific qualified name of a table.
    */
   def qualifiedName: String = configuration.dialect.tableQualifiedName(this)
 
@@ -135,8 +150,8 @@ abstract class Table[R <: Record](val schemaName: String,
 /**
  * A helper class that simply defines an "id bigint primary key" column.
  */
-abstract class GenericTable[R <: Record](schemaName: String, tableName: String)
-    extends Table[R](schemaName, tableName) {
+abstract class GenericTable[R <: Record](implicit recordType: Manifest[R])
+    extends Table[R] {
   def primaryKey = pk(id)
   val id = longColumn("id").notNull
 }
