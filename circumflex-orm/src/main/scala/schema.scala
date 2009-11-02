@@ -1,14 +1,26 @@
 package ru.circumflex.orm
 
 /**
+ * Configuration is propagated to whatever extends this.
+ */
+trait Configurable {
+  /**
+   * Configuration object is used for all persistence-related stuff.
+   * Override it if you want to use your own configuration implementation.
+   * @return DefaultConfiguration by default
+   */
+  def configuration: Configuration = DefaultConfiguration
+}
+
+/**
  * Defines a contract for database schema objects.
  * They must provide SQL statement to create them and to drop them.
  */
-trait SchemaObject {
+trait SchemaObject extends Configurable {
   /**
    * Dialect object that is used to generate SQL statements.
    */
-  def dialect: Dialect
+  def dialect: Dialect = configuration.dialect
   /**
    * SQL statement to create this database object.
    */
@@ -23,14 +35,6 @@ trait SchemaObject {
  * Base functionality for SQL schema.
  */
 class Schema(val schemaName: String) extends SchemaObject {
-  /**
-   * Configuration object is used for all persistence-related stuff.
-   * Override it if you want to use your own configuration implementation.
-   * @return DefaultConfiguration by default
-   */
-  def configuration: Configuration = DefaultConfiguration
-
-  def dialect = configuration.dialect
   def sqlCreate = dialect.createSchema(this)
   def sqlDrop = dialect.dropSchema(this)
 }

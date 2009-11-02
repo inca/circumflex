@@ -111,8 +111,6 @@ abstract class Table[R <: Record](implicit recordType: Manifest[R]) extends Sche
 
   /* DDL */
 
-  def dialect: Dialect = schema.dialect
-
   /**
    * Produces SQL CREATE TABLE statement for this table.
    * Constraints are not included there.
