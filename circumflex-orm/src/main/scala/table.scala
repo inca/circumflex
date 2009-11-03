@@ -3,6 +3,28 @@ package ru.circumflex.orm
 import reflect.Manifest
 
 /**
+ * Designates a relation that can be used to recover certain type of records.
+ * It can be considered a table, a virtual table, a view, a subquery or everything
+ * that may participate in FROM clause.
+ */
+abstract class Relation[R <: Record](implicit recordType: Manifest[R]) {
+  /**
+   * A record class recovered from type parameter.
+   */
+  def recordClass: Class[R] = Class.forName(recordType.toString).asInstanceOf[Class[R]]
+
+  /**
+   * The mandatory primary key constraint for this relation.
+   */
+  def primaryKey: PrimaryKey[R];
+
+  /**
+   * Qualified relation name for use in SQL statements.
+   */
+  def qualifiedName: String
+}
+
+/**
  * Provides base functionality for generating domain model schema,
  * as well as validating, quering, inserting, deleting and updating
  * domain model objects (a.k.a. <code>records</code>).
@@ -31,10 +53,7 @@ abstract class Table[R <: Record](implicit recordType: Manifest[R])
    */
   def tableName: String = recordClass.getSimpleName.toLowerCase
 
-  /**
-   * The mandatory primary key constraint for this table.
-   */
-  def primaryKey: PrimaryKey[R];
+  def qualifiedName = dialect.tableName(this)
 
   /**
    * Table's column list.

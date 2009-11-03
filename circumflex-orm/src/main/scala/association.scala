@@ -14,6 +14,12 @@ trait Association[C <: Record, P <: Record] {
    * Returns child relation.
    */
   def childRelation: Relation[C]
+
+  /**
+   * Returns columns pairs to use in joining operations.
+   * The first column in pair is from parent table, the second a matching one from child table.
+   */
+  def columnPairs: Seq[Pair[Column[_, P], Column[_, C]]]
 }
 
 /**
@@ -24,6 +30,24 @@ class ForeignKeyAssociation[C <: Record, P <: Record](val foreignKey: ForeignKey
 
   def parentRelation: Relation[P] = foreignKey.referenceTable
   def childRelation: Relation[C] = foreignKey.table
+
+  private var _columnPairs: Seq[Pair[Column[_, P], Column[_, C]]] = Nil
+
+  { // Initialize column pairs
+    val localColSize = foreignKey.columns.size
+    if (localColSize == 0)
+      throw new IllegalArgumentException("Failed to initialize association " + foreignKey.constraintName +
+          ": no local columns specified.")
+    if (localColSize != foreignKey.referenceTable.primaryKey.columns.size)
+      throw new IllegalArgumentException("Failed to initialize association " +
+          foreignKey.constraintName + ": local columns count do not match referenced.")
+    (0 until localColSize).foreach(i => {
+      val pair: Pair[Column[_, P], Column[_, C]] = (foreignKey.columns(i),foreignKey.referenceTable.primaryKey.columns(i))
+      _columnPairs ++= List(pair)
+    })
+  }
+
+  def columnPairs = _columnPairs
 
   def onDeleteNoAction: ForeignKeyAssociation[C, P] = {
     foreignKey.onDelete = NoAction

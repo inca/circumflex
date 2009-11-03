@@ -42,11 +42,17 @@ trait Dialect {
     case SetDefaultAction => "set default"
   }
 
+  /* JOIN KEYWORDS */
+  def innerJoin = "inner join"
+  def leftJoin = "left join"
+  def rightJoin = "right join"
+  def fullJoin = "full join"
+
   /* GENERATED NAMES */
 
   /**
    * Produces qualified name of a table
-   * (e.g. "myschema.mytable")
+   * (e.g. "myschema.mytable").
    */
   def tableName(tab: Table[_]) =
     tab.schemaName + "." + tab.tableName
@@ -190,14 +196,39 @@ trait Dialect {
    */
   def dropSchema(schema: Schema) =
     "drop schema " + schema.schemaName
-  
-  /* SELECT STATEMENTS */
+
+  /* SELECT STATEMENTS AND RELATED */
 
   /**
    * Produces a statement to select a single next sequence value.
    */
   def selectSequenceNextVal(seq: Sequence[_]) =
     "select nextval('" + sequenceName(seq) + "')"
+
+  /* FROM CLAUSE */
+
+  /**
+   * Produces table with alias (e.g. "public.mytable my").
+   */
+  def tableAlias(tab: Table[_], alias: String) = tab.qualifiedName + " " + alias
+
+  /**
+   * Qualifies a column with table alias (e.g. "p.id")
+   */
+  def qualifyColumn(col: Column[_, _], tableAlias: String) = tableAlias + "." + col
+
+  /**
+   * Produces join node sql representation (e.g. person p left join address a on p.id = a.person_id)
+   */
+  def join(joinNode: JoinNode[_]): String =
+    if (joinNode.childrenAssociations.size == 0)  // no join -- simply emit parent relation
+      return joinNode.parentRelation.sqlFrom
+    else joinNode.parentRelation.sqlFrom + joinNode.childrenAssociations.map(child => {
+      joinNode.sqlJoinType + " " + child.sqlFrom + "\n\t\t\ton (" +
+          child.columnPairs.map(p => {
+            qualifyColumn(p._1, joinNode.alias) + " = " + qualifyColumn(p._2, child.alias)
+          }).mkString("\n\t\t\t\tand")
+    }).mkString("\n\t\t")
 
 }
 
