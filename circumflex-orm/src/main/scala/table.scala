@@ -10,7 +10,8 @@ import reflect.Manifest
  * In general there should be only one table instance per record class
  * (a singleton object, or, more conveniantly, the companion object).
  */
-abstract class Table[R <: Record](implicit recordType: Manifest[R]) extends SchemaObject {
+abstract class Table[R <: Record](implicit recordType: Manifest[R])
+    extends Relation[R] with SchemaObject {
 
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
@@ -22,19 +23,14 @@ abstract class Table[R <: Record](implicit recordType: Manifest[R]) extends Sche
   def schema: Schema = DefaultSchema
 
   /**
-   * Returns schema name.
+   * Provides schema name.
    */
   def schemaName: String = schema.schemaName
 
   /**
-   * Returns table name. Defaults to unqualified record class name.
+   * Provides table name. Defaults to unqualified record class name.
    */
   def tableName: String = recordClass.getSimpleName.toLowerCase
-
-  /**
-   * A record class recovered from type parameter.
-   */
-  def recordClass: Class[R] = Class.forName(recordType.toString).asInstanceOf[Class[R]]
 
   /**
    * The mandatory primary key constraint for this table.
