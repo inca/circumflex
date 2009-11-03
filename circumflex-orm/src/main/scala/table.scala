@@ -1,6 +1,5 @@
 package ru.circumflex.orm
 
-import collection.mutable.Buffer
 import reflect.Manifest
 
 /**

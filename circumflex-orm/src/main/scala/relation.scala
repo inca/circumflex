@@ -28,7 +28,7 @@ abstract class Relation[R <: Record](implicit recordType: Manifest[R]) {
  */
 class JoinRelation[P <: Record](implicit recordType: Manifest[P],
                                 val parentRelation: Relation[P] with Aliased,
-                                childrenAssociations: Association[_, P] with Aliased *)
+                                val childrenAssociations: Seq[Association[_, P] with Aliased])
     extends Relation[P] with Aliased {
 
   /**
