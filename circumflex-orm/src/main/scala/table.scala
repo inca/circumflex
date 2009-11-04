@@ -22,6 +22,21 @@ abstract class Relation[R <: Record](implicit recordType: Manifest[R]) {
    * Qualified relation name for use in SQL statements.
    */
   def qualifiedName: String
+
+  /**
+   * If possible, return an association from this relation as parent to
+   * specified relation as child.
+   */
+  def getChildAssociation[C <: Record](child: Relation[C]): Option[Association[C, R]]
+  = child.getParentAssociation(this)
+
+  /**
+   * If possible, return an association from this relation as child to
+   * specified relation as parent.
+   */
+  def getParentAssociation[P <: Record](parent: Relation[P]): Option[Association[R, P]]
+
+  override def toString = qualifiedName
 }
 
 /**
@@ -36,6 +51,19 @@ abstract class Table[R <: Record](implicit recordType: Manifest[R])
 
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
+
+  /**
+   * Gets an association to parent by scanning declared foreign keys.
+   */
+  def getParentAssociation[P <: Record](relation: Relation[P]): Option[Association[R, P]] = {
+    _constraints.foreach({
+      case c: ForeignKey[R, P] =>
+        if (c.referenceTable == relation)
+          return Some(c)
+      case _ =>
+    })
+    return None
+  }
 
   /**
    * Returns Schema object, that will containt specified table.
@@ -64,6 +92,11 @@ abstract class Table[R <: Record](implicit recordType: Manifest[R])
    * Table's constraint list.
    */
   def constraints = _constraints
+
+  /**
+   * Creates an alias to use this table in SQL FROM clause.
+   */
+  def as(alias: String): TableNode[R] = new TableNode(this, alias)
 
   /**
    * Adds some columns to this table.

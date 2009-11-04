@@ -23,3 +23,30 @@ object Book extends GenericTable[Book] {
       .onDeleteRestrict
       .onUpdateCascade
 }
+
+class Page extends Record {
+
+}
+
+object Page extends GenericTable[Page] {
+  val book = longColumn("book_id")
+      .notNull
+      .references(Book)
+      .onDeleteCascade
+      .onUpdateCascade
+  val body = stringColumn("body")
+}
+
+
+object Test extends Application {
+
+  val c = Category as "c"
+  val b = Book as "b"
+  val p = Page as "p"
+  val b1 = Book as "p1"
+
+  val j = c.join(b.join(p)).join(b1)
+
+  println(j.toSql)
+
+}

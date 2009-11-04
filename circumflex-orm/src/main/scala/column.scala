@@ -34,10 +34,8 @@ abstract class Column[T, R <: Record](val table: Table[R],
   /**
    * DSL-like way to transform a column to foreign key association.
    */
-  def references[P <: Record](referenceTable: Table[P]): ForeignKeyAssociation[R, P] = {
-    val fk = table.foreignKey(referenceTable, this)
-    return new ForeignKeyAssociation(fk)
-  }
+  def references[P <: Record](referenceTable: Table[P]): ForeignKey[R, P] =
+    table.foreignKey(referenceTable, this)
 
   /**
    * Instantiates a field instance for the record.

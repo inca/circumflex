@@ -218,17 +218,37 @@ trait Dialect {
   def qualifyColumn(col: Column[_, _], tableAlias: String) = tableAlias + "." + col
 
   /**
-   * Produces join node sql representation (e.g. person p left join address a on p.id = a.person_id)
+   * Produces join node sql representation (e.g. person p left join address a on p.id = a.person_id).
    */
-  def join(joinNode: JoinNode[_]): String =
-    if (joinNode.childrenAssociations.size == 0)  // no join -- simply emit parent relation
-      return joinNode.parentRelation.sqlFrom
-    else joinNode.parentRelation.sqlFrom + joinNode.childrenAssociations.map(child => {
-      joinNode.sqlJoinType + " " + child.sqlFrom + "\n\t\t\ton (" +
-          child.columnPairs.map(p => {
-            qualifyColumn(p._1, joinNode.alias) + " = " + qualifyColumn(p._2, child.alias)
-          }).mkString("\n\t\t\t\tand")
-    }).mkString("\n\t\t")
+  def join(j: JoinNode[_ <: Record, _ <: Record]): String = {
+    var result = j.parent.toSql
+    j.child.getParentAssociation(j.parent) match {
+      case Some(association) => {    // Got an association -- we may join them!
+        result += "\n\t\t" + j.sqlJoinType + " " +
+            joinChild(j.child, joinOn(association, j.parent.alias, j.child.alias))
+      } case _ =>   // No association -- let's leave only parent's SQL in result
+    }
+    return result
+  }
+
+  protected def joinChild(child: RelationNode[_ <: Record], on: String): String = child match {
+    case j: JoinNode[_, _] => {
+      var result = j.parent.toSql + "\n\t\t\t" + on
+      j.child.getParentAssociation(j.parent) match {
+        case Some(assoc) => {
+          result += "\n\t\t" + j.sqlJoinType + " " +
+              joinChild(j.child, joinOn(assoc, j.parent.alias, j.child.alias))
+        } case _ =>
+      }
+      return result
+    } case _ => child.toSql + "\n\t\t\t" + on
+  }
+
+  // ON subclause for joins (e.g. "on (c.id = b.category_id)")
+  protected def joinOn(association: Association[_, _], parentAlias: String, childAlias: String) =
+    "on (" + association.columnPairs.map(p =>
+        parentAlias + "." + p._1.columnName + " = " + childAlias + "." + p._2.columnName
+      ).mkString(" and ") + ")"
 
 }
 
