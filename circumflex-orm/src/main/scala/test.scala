@@ -45,8 +45,6 @@ object Test extends Application {
   val p = Page as "p"
   val b1 = Book as "p1"
 
-  val j = c.join(b.join(p)).join(b1)
-
-  println(j.toSql)
+  println(c.join(b.join(p)).join(b1).toSql)
 
 }
