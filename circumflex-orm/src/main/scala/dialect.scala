@@ -223,16 +223,14 @@ trait Dialect {
   def join(j: JoinNode[_ <: Record, _ <: Record]): String =
     joinInternal(j, null)
 
-  protected def joinInternal(child: RelationNode[_ <: Record], on: String): String = {
+  protected def joinInternal(node: RelationNode[_ <: Record], on: String): String = {
     var result = ""
-    child match {
+    node match {
       case j: JoinNode[_, _] => {
-        result = j.parent.toSql
-        if (on != null) result += "\n\t\t\t" + on
-        result += "\n\t\t" + j.sqlJoinType + " " +
+        result += joinInternal(j.parent, on) + "\n\t\t" + j.sqlJoinType + " " +
             joinInternal(j.child, joinOn(j.association, j.parent.alias, j.child.alias))
       } case _ => {
-        result += child.toSql
+        result += node.toSql
         if (on != null) result += "\n\t\t\t" + on
       }
     }
