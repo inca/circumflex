@@ -223,22 +223,20 @@ trait Dialect {
   def join(j: JoinNode[_ <: Record, _ <: Record]): String =
     joinInternal(j, null)
 
-  protected def joinInternal(child: RelationNode[_ <: Record], on: String): String = child match {
-    case j: JoinNode[_, _] => {
-      var result = j.parent.toSql
-      if (on != null) result += "\n\t\t\t" + on
-      j.child.getParentAssociation(j.parent) match {
-        case Some(assoc) => {
-          result += "\n\t\t" + j.sqlJoinType + " " +
-              joinInternal(j.child, joinOn(assoc, j.parent.alias, j.child.alias))
-        } case _ =>
+  protected def joinInternal(child: RelationNode[_ <: Record], on: String): String = {
+    var result = ""
+    child match {
+      case j: JoinNode[_, _] => {
+        result = j.parent.toSql
+        if (on != null) result += "\n\t\t\t" + on
+        result += "\n\t\t" + j.sqlJoinType + " " +
+            joinInternal(j.child, joinOn(j.association, j.parent.alias, j.child.alias))
+      } case _ => {
+        result += child.toSql
+        if (on != null) result += "\n\t\t\t" + on
       }
-      return result
-    } case _ => {
-      var result = child.toSql
-      if (on != null) result += "\n\t\t\t" + on
-      return result
     }
+    return result
   }
 
   // ON subclause for joins (e.g. "on (c.id = b.category_id)")

@@ -61,6 +61,12 @@ class JoinNode[C <: Record, P <: Record](val parent: RelationNode[P],
                                         (implicit recordType: Manifest[P])
     extends RelationNode[P](parent) {
 
+  val association: Association[C, P] = child.getParentAssociation(parent) match {
+    case Some(a) => a
+    case _ => throw new ORMException("Failed to join " + parent +
+        " with " + child + ": no associations found.")
+  }
+
   /**
    * Returns an alias of parent relation for this join.
    */
