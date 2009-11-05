@@ -223,6 +223,9 @@ trait Dialect {
   def join(j: JoinNode[_ <: Record, _ <: Record]): String =
     joinInternal(j, null)
 
+  /**
+   * This method does some magic to convert join tree to SQL.
+   */
   protected def joinInternal(node: RelationNode[_ <: Record], on: String): String = {
     var result = ""
     node match {
