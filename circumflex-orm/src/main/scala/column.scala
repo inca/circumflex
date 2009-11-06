@@ -54,6 +54,17 @@ abstract class Column[T, R <: Record](val table: Table[R],
   def sqlCreate = dialect.alterTableAddColumn(this)
   def sqlDrop = dialect.alterTableDropColumn(this)
 
+  /**
+   * Creates a field instance which corresponds to this column.
+   */
+  def createField: Field[T, R] = new Field[T, R](this)
+
+  /**
+   * Creates a column projection with specified alias.
+   */
+  def as(alias: String) = new ColumnProjection(alias, this)
+
+  override def toString = sqlDefinition
 }
 
 /**

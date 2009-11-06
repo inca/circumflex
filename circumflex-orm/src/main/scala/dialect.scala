@@ -224,7 +224,7 @@ trait Dialect {
     joinInternal(j, null)
 
   /**
-   * This method does some magic to convert join tree to SQL.
+   * Some magic to convert join tree to SQL.
    */
   protected def joinInternal(node: RelationNode[_ <: Record], on: String): String = {
     var result = ""
@@ -241,7 +241,9 @@ trait Dialect {
   }
 
   // ON subclause for joins (e.g. "on (c.id = b.category_id)")
-  protected def joinOn(association: Association[_, _], parentAlias: String, childAlias: String) =
+  protected def joinOn(association: Association[_, _],
+                       parentAlias: String,
+                       childAlias: String) =
     "on (" + association.columnPairs.map(p =>
         parentAlias + "." + p._1.columnName + " = " + childAlias + "." + p._2.columnName
       ).mkString(" and ") + ")"

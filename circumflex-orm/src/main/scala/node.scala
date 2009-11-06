@@ -1,6 +1,5 @@
 package ru.circumflex.orm
 
-
 import reflect.Manifest
 
 /**
@@ -22,7 +21,15 @@ abstract class RelationNode[R <: Record](val relation: Relation[R])
    */
   def toSql: String
 
+  /**
+   * Just proxies relation's primary key.
+   */
   def primaryKey = relation.primaryKey
+
+  /**
+   * One or more projections that correspond to this node.
+   */
+  def projections: Seq[Projection[_]]
 
   /**
    * Retrieves an association path by delegating calls to underlying relations.
@@ -36,12 +43,18 @@ abstract class RelationNode[R <: Record](val relation: Relation[R])
       }
     }
 
+  /**
+   * Proxies relation's qualified name.
+   */
   def qualifiedName = relation.qualifiedName
+
+  /**
+   * Creates a join node with this node as a parent and specified child node.
+   */
+  def join[C <: Record](child: RelationNode[C]) = new JoinNode(this, child)
 
   override def toString = toSql
 
-  def join[C <: Record](child: RelationNode[C]) = new JoinNode(this, child)
-  
 }
 
 class TableNode[R <: Record](val table: Table[R],
@@ -49,8 +62,15 @@ class TableNode[R <: Record](val table: Table[R],
                             (implicit recordType: Manifest[R])
     extends RelationNode[R](table) {
 
+  /**
+   * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
+   */
   def toSql = configuration.dialect.tableAlias(table, alias)
 
+  /**
+   * Table nodes define a collection of their column's projections.
+   */
+  def projections = table.columns.map(col => col.as(alias + "_" + col.columnName))
 }
 
 /**
@@ -61,6 +81,10 @@ class JoinNode[C <: Record, P <: Record](val parent: RelationNode[P],
                                         (implicit recordType: Manifest[P])
     extends RelationNode[P](parent) {
 
+  /**
+   * Evaluates an association between parent and child; throws an exception if
+   * failed.
+   */
   val association: Association[C, P] = child.getParentAssociation(parent) match {
     case Some(a) => a
     case _ => throw new ORMException("Failed to join " + parent +
@@ -77,6 +101,13 @@ class JoinNode[C <: Record, P <: Record](val parent: RelationNode[P],
    */
   def sqlJoinType: String = configuration.dialect.leftJoin
 
+  /**
+   * Dialect should return properly joined parent and child nodes.
+   */
   def toSql = configuration.dialect.join(this)
 
+  /**
+   * Join nodes return parent node's projections joined with child node's ones.
+   */
+  def projections = parent.projections ++ child.projections
 }
