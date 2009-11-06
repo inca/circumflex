@@ -60,9 +60,9 @@ abstract class Column[T, R <: Record](val table: Table[R],
   def createField: Field[T, R] = new Field[T, R](this)
 
   /**
-   * Creates a column projection with specified alias.
+   * Creates a column projection from specified specified.
    */
-  def as(alias: String) = new ColumnProjection(alias, this)
+  def as(node: RelationNode[R]) = new ColumnProjection(node, this)
 
   override def toString = sqlDefinition
 }

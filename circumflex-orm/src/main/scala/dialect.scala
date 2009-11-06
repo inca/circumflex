@@ -205,17 +205,18 @@ trait Dialect {
   def selectSequenceNextVal(seq: Sequence[_]) =
     "select nextval('" + sequenceName(seq) + "')"
 
-  /* FROM CLAUSE */
+  def columnAlias(col: Column[_, _], columnAlias: String, tableAlias: String) =
+    qualifyColumn(col, tableAlias) + " as " + columnAlias
 
   /**
    * Produces table with alias (e.g. "public.mytable my").
    */
-  def tableAlias(tab: Table[_], alias: String) = tab.qualifiedName + " " + alias
+  def tableAlias(tab: Table[_], alias: String) = tab.qualifiedName + " as " + alias
 
   /**
    * Qualifies a column with table alias (e.g. "p.id")
    */
-  def qualifyColumn(col: Column[_, _], tableAlias: String) = tableAlias + "." + col
+  def qualifyColumn(col: Column[_, _], tableAlias: String) = tableAlias + "." + col.columnName
 
   /**
    * Produces join node sql representation (e.g. person p left join address a on p.id = a.person_id).
@@ -245,7 +246,7 @@ trait Dialect {
                        parentAlias: String,
                        childAlias: String) =
     "on (" + association.columnPairs.map(p =>
-        parentAlias + "." + p._1.columnName + " = " + childAlias + "." + p._2.columnName
+        qualifyColumn(p._1, parentAlias) + " = " + qualifyColumn(p._2, childAlias)
       ).mkString(" and ") + ")"
 
 }
