@@ -75,22 +75,12 @@ class DDLExport extends Configurable
    * Executes DROP and CREATE script.
    */
   def dropAndCreate: Unit = {
-    // obtain JDBC connection
-    using(configuration.connectionProvider.getConnection)(conn => {
-        // we will commit every successful statement
-        conn.setAutoCommit(true)
-        // process database objects
-        dropConstraints(conn)
-        dropTables(conn)
-        dropSchemata(conn)
-        createSchemata(conn)
-        createTables(conn)
-        createConstraints(conn)
-      })(e => log.error("Connection failure occured while exporing DDL.", e))
+    drop()
+    create()
   }
 
   /**
-   * Executes DROP and CREATE script.
+   * Executes CREATE script.
    */
   def create: Unit = {
     // obtain JDBC connection
@@ -101,6 +91,21 @@ class DDLExport extends Configurable
         createSchemata(conn)
         createTables(conn)
         createConstraints(conn)
+      })(e => log.error("Connection failure occured while exporing DDL.", e))
+  }
+
+  /**
+   * Executes DROP script.
+   */
+  def drop: Unit = {
+    // obtain JDBC connection
+    using(configuration.connectionProvider.getConnection)(conn => {
+        // we will commit every successful statement
+        conn.setAutoCommit(true)
+        // process database objects
+        dropConstraints(conn)
+        dropTables(conn)
+        dropSchemata(conn)
       })(e => log.error("Connection failure occured while exporing DDL.", e))
   }
 
