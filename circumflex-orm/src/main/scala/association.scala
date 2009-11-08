@@ -16,13 +16,18 @@ trait Association[C <: Record, P <: Record] {
   def childRelation: Relation[C]
 
   /**
-   * Returns columns pairs to use in joining operations.
-   * The first column in pair is from parent table, the second a matching one from child table.
+   * Returns a list of local columns.
    */
-  def columnPairs: Seq[Pair[Column[_, P], Column[_, C]]]
+  def localColumns: Seq[Column[_, C]]
+
+  /**
+   * Get a column of the referenced table (parent) that matches local column.
+   */
+  def getReferencedColumn(localColumn: Column[_, C]): Column[_, P]
 
   /**
    * Instantiates a field, proxied by this association.
    */
-  def apply(): AssociationParentField[P]
+  def apply(): AssociationParent[P]
+
 }

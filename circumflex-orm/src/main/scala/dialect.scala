@@ -228,18 +228,19 @@ trait Dialect {
   }
 
   // ON subclause for joins (e.g. "on (c.id = b.category_id)")
-  protected def joinOn(association: Association[_, _],
-                       parentAlias: String,
-                       childAlias: String) =
-    "on (" + association.columnPairs.map(p =>
-        qualifyColumn(p._1, parentAlias) + " = " + qualifyColumn(p._2, childAlias)
+  protected def joinOn[C <: Record, P <: Record](association: Association[C, P],
+                                                 parentAlias: String,
+                                                 childAlias: String) =
+    "on (" + association.localColumns.map(l =>
+        qualifyColumn(association.getReferencedColumn(l), parentAlias) +
+            " = " + qualifyColumn(l, childAlias)
       ).mkString(" and ") + ")"
 
   /**
    * Produces SELECT statement.
    */
   def select(q: Query) = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +
-    "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
+      "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
 
 }
 

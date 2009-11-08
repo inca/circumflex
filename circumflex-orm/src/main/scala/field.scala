@@ -20,7 +20,11 @@ class ColumnField[T](val column: Column[T, _])
     extends Field[T] {
 }
 
-class AssociationParentField[T](val association: Association[_, T])
+class AssociationParent[T](val association: Association[_, T])
     extends Field[T] {
+
+  // We need to know key values to persist associations or
+  // lazily fetch them.
+
 }
 

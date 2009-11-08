@@ -73,7 +73,7 @@ class ForeignKey[C <: Record, P <: Record](table: Table[C],
                                            columns: Seq[Column[_, C]])
     extends Constraint[C](table, columns) with Association[C, P] {
 
-  private var _columnPairs: Seq[Pair[Column[_, P], Column[_, C]]] = Nil
+  private var _columnMap: Map[Column[_, C], Column[_, P]] = Map()
 
   {   // init
     val localColSize = columns.size
@@ -85,7 +85,7 @@ class ForeignKey[C <: Record, P <: Record](table: Table[C],
       throw new ORMInitializationError("Failed to initialize foreign key " + constraintName +
           ": local columns count does not match referenced columns count.")
     (0 until localColSize).foreach(i =>
-        _columnPairs ++= List(referenceTable.primaryKey.columns(i) -> columns(i))
+        _columnMap += (columns(i) -> referenceTable.primaryKey.columns(i))
       )
   }
 
@@ -98,9 +98,12 @@ class ForeignKey[C <: Record, P <: Record](table: Table[C],
   def constraintName = table.dialect.foreignKeyName(this)
   def sqlDefinition = table.dialect.foreignKeyDefinition(this)
 
-  def columnPairs = _columnPairs
+  def localColumns = columns
 
-  def apply() = new AssociationParentField(this)
+  def getReferencedColumn(localColumn: Column[_, C]) =
+    _columnMap.get(localColumn).get
+
+  def apply() = new AssociationParent(this)
 
   def onDeleteNoAction: ForeignKey[C, P] = {
     onDelete = NoAction
