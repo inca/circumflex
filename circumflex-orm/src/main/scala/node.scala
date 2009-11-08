@@ -12,6 +12,11 @@ abstract class RelationNode[R <: Record](val relation: Relation[R])
     extends Relation[R] with Configurable {
 
   /**
+   * Delegates to relation's configuration.
+   */
+  override def configuration = relation.configuration
+
+  /**
    * An alias to refer the node from projections and criteria.
    */
   def alias: String

@@ -7,7 +7,7 @@ import reflect.Manifest
  * It can be considered a table, a virtual table, a view, a subquery or everything
  * that may participate in FROM clause.
  */
-abstract class Relation[R <: Record](implicit recordType: Manifest[R]) {
+abstract class Relation[R <: Record](implicit recordType: Manifest[R]) extends Configurable {
   /**
    * A record class recovered from type parameter.
    */
