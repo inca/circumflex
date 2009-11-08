@@ -1,19 +1,5 @@
 package ru.circumflex.orm
 
-object DialectInterpolations {
-  val selectClause = "{select_clause}"
-  val fromClause = "{from_clause}"
-  val whereClause = "{where_clause}"
-  val groupByClause = "{group_by_clause}"
-  val havingClause = "{having_clause}"
-  val orderByClause = "{order_by_clause}"
-  val limitClause = "{limit_clause}"
-  val offsetClause = "{offset_clause}"
-  val distinctClause = "{distinct_clause}"
-  val setClause = "{set_clause}"
-  val valuesClause = "{values_clause}"
-}
-
 /**
  * A default dialect singleton.
  * If you feel that some of the statements do not work
@@ -248,6 +234,12 @@ trait Dialect {
     "on (" + association.columnPairs.map(p =>
         qualifyColumn(p._1, parentAlias) + " = " + qualifyColumn(p._2, childAlias)
       ).mkString(" and ") + ")"
+
+  /**
+   * Produces SELECT statement.
+   */
+  def select(q: Query) = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +
+    "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
 
 }
 

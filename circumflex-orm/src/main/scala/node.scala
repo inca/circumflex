@@ -70,7 +70,7 @@ class TableNode[R <: Record](val table: Table[R],
   /**
    * Table nodes define a collection of their column's projections.
    */
-  def projections = table.columns.map(col => col.as(this))
+  def projections = table.columns.map(col => new ColumnProjection(this, col))
 }
 
 /**

@@ -20,4 +20,9 @@ trait Association[C <: Record, P <: Record] {
    * The first column in pair is from parent table, the second a matching one from child table.
    */
   def columnPairs: Seq[Pair[Column[_, P], Column[_, C]]]
+
+  /**
+   * Instantiates a field, proxied by this association.
+   */
+  def apply(): AssociationParentField[P]
 }

@@ -125,6 +125,7 @@ class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
    */
   def openConnection: Connection = {
     val conn = ds.getConnection
+    conn.setAutoCommit(false)
     conn.setTransactionIsolation(isolation)
     return conn
   }
@@ -180,6 +181,5 @@ trait Configuration {
 object DefaultConfiguration extends Configuration {
   def connectionProvider = DefaultConnectionProvider
   def dialect = DefaultDialect
-
 }
 

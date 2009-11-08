@@ -1,30 +1,36 @@
 package ru.circumflex.orm
 
+
+import java.sql.ResultSet
+
 /**
  * Result set projection.
  */
-abstract class Projection[T](val alias: String,
-                             val node: RelationNode[_])
-    extends Configurable {
+abstract class Projection[T](val alias: String) {
 
   /**
    * SQL representation of this projection for use in SELECT clause.
    */
-  def toSqlSelect: String
+  def toSql: String
 
-  override def toString = toSqlSelect
+  /**
+   * Extract a value from result set.
+   */
+  def read(rs: ResultSet): Option[T]
+
+  override def toString = toSql
 
 }
 
 class ColumnProjection[T](alias: String,
-                          node: RelationNode[_],
+                          val node: RelationNode[_],
                           val column: Column[T, _])
-    extends Projection[T](alias, node) {
+    extends Projection[T](alias) {
 
   def this(node: RelationNode[_], column: Column[T, _]) =
     this(node.alias + "_" + column.columnName, node, column)
 
-  def toSqlSelect =
-    configuration.dialect.columnAlias(column, alias, node.alias)
+  def toSql = node.configuration.dialect.columnAlias(column, alias, node.alias)
 
+  def read(rs: ResultSet) = column.read(rs, alias)
 }

@@ -100,6 +100,8 @@ class ForeignKey[C <: Record, P <: Record](table: Table[C],
 
   def columnPairs = _columnPairs
 
+  def apply() = new AssociationParentField(this)
+
   def onDeleteNoAction: ForeignKey[C, P] = {
     onDelete = NoAction
     return this

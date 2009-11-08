@@ -182,13 +182,3 @@ abstract class Table[R <: Record](implicit recordType: Manifest[R])
     constraints.map(_.sqlDrop)
 
 }
-
-/**
- * A helper class that simply defines an "id bigint primary key" column.
- */
-abstract class GenericTable[R <: Record](implicit recordType: Manifest[R])
-    extends Table[R] {
-  def primaryKey = pk(id)
-  val id = longColumn("id").notNull
-}
-
