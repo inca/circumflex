@@ -25,9 +25,4 @@ trait Association[C <: Record, P <: Record] {
    */
   def getReferencedColumn(localColumn: Column[_, C]): Column[_, P]
 
-  /**
-   * Instantiates a field, proxied by this association.
-   */
-  def apply(): AssociationParent[P]
-
 }

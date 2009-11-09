@@ -1,8 +1,6 @@
 package ru.circumflex.orm
 
 class Category extends Record {
-  val id = Category.id()
-  val name = Category.name()
 }
 
 object Category extends Table[Category] {
@@ -14,9 +12,6 @@ object Category extends Table[Category] {
 }
 
 class Book extends Record {
-  val id = Book.id()
-  val name = Book.title()
-  val category = Book.category()
 }
 
 object Book extends Table[Book] {
@@ -32,9 +27,6 @@ object Book extends Table[Book] {
 }
 
 class Page extends Record {
-  val id = Page.id()
-  val book = Page.book()
-  val body = Page.body()
 }
 
 object Page extends Table[Page] {

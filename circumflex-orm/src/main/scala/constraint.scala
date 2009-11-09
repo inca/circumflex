@@ -103,8 +103,6 @@ class ForeignKey[C <: Record, P <: Record](table: Table[C],
   def getReferencedColumn(localColumn: Column[_, C]) =
     _columnMap.get(localColumn).get
 
-  def apply() = new AssociationParent(this)
-
   def onDeleteNoAction: ForeignKey[C, P] = {
     onDelete = NoAction
     return this

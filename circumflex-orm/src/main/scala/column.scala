@@ -42,11 +42,6 @@ abstract class Column[T, R <: Record](val table: Table[R],
     table.foreignKey(referenceTable, this)
 
   /**
-   * Instantiates a field, proxied by this column.
-   */
-  def apply(): Field[T] = new ColumnField[T](this)
-
-  /**
    * Extract a value from result set.
    */
   def read(rs: ResultSet, alias: String): Option[T]
