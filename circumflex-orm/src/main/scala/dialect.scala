@@ -237,6 +237,11 @@ trait Dialect {
       ).mkString(" and ") + ")"
 
   /**
+   * Formats provided projections for use in SELECT clause (just comma-delimited mkString).
+   */
+  def selectClause(projections: String *) = projections.mkString(",\n\t")
+
+  /**
    * Produces SELECT statement.
    */
   def select(q: Query) = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +

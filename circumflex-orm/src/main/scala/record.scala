@@ -2,8 +2,22 @@ package ru.circumflex.orm
 
 abstract class Record {
 
-  var fieldsMap: Map[Column[_, _ <: Record], Any] = Map()
+  private var fieldsMap: Map[Column[_, _ <: Record], Any] = Map()
 
-  def field[T](column: Column[T, _ <: Record]) = new Field(this, column)
+  def apply[T](col: Column[T, _]): Option[T] =
+    fieldsMap.get(col.asInstanceOf[Column[_, _ <: Record]]).asInstanceOf[Option[T]]
+
+  def update[T](col: Column[T, _], value: T): Unit =
+    update(col, Some(value))
+
+  def update[T](col: Column[T, _], value: Option[T]) = value match {
+    case Some(value) => {
+      fieldsMap += (col.asInstanceOf[Column[_, _ <: Record]] -> value)
+    } case _ => {
+      fieldsMap -= col.asInstanceOf[Column[_, _ <: Record]]
+    }
+  }
+
+  def field[T](col: Column[T, _ <: Record]) = new Field(this, col)
 
 }

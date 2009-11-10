@@ -3,13 +3,11 @@ package ru.circumflex.orm
 class Field[T](val record: Record,
                val column: Column[T, _ <: Record]) {
 
-  def get: Option[T] =
-    record.fieldsMap.get(column).asInstanceOf[Option[T]]
+  def get: Option[T] = record(column)
 
-  def set(value: T): Unit =
-    record.fieldsMap += (column.asInstanceOf[Column[_, _ <: Record]] -> value)
+  def set(value: T): Unit = record.update(column,value)
 
-  def setNull: Unit = record.fieldsMap -= column
+  def setNull: Unit = record.update(column, None)
 
 }
 

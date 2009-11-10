@@ -6,31 +6,47 @@ import java.sql.ResultSet
 /**
  * Result set projection.
  */
-abstract class Projection[T](val alias: String) {
-
-  /**
-   * SQL representation of this projection for use in SELECT clause.
-   */
-  def toSql: String
+trait Projection[T] {
 
   /**
    * Extract a value from result set.
    */
   def read(rs: ResultSet): Option[T]
 
-  override def toString = toSql
+  /**
+   * SQL representation of this projection for use in SELECT clause.
+   */
+  def toSql: String
 
 }
 
 class ColumnProjection[T](alias: String,
                           val node: RelationNode[_],
                           val column: Column[T, _])
-    extends Projection[T](alias) {
+    extends Projection[T] {
 
   def this(node: RelationNode[_], column: Column[T, _]) =
     this(node.alias + "_" + column.columnName, node, column)
 
-  def toSql = node.configuration.dialect.columnAlias(column, alias, node.alias)
+  def read(rs: ResultSet): Option[T] =
+    column.read(rs, alias)
 
-  def read(rs: ResultSet) = column.read(rs, alias)
+  def toSql = node.configuration.dialect.columnAlias(column, alias, node.alias)
+}
+
+class RecordProjection[R <: Record](val tableNode: TableNode[R])
+    extends Projection[R] {
+
+  val columnProjections: Seq[ColumnProjection[_]] =
+    tableNode.table.columns.map(col => new ColumnProjection(tableNode, col))
+
+  def read(rs: ResultSet): Option[R] = {
+    val record = tableNode.table.recordClass
+        .getConstructor()
+        .newInstance()
+    columnProjections.foreach(p => record.update(p.column.asInstanceOf[Column[Any, _]], p.read(rs)))
+    return Some(record)
+  }
+
+  def toSql = tableNode.configuration.dialect.selectClause(columnProjections.map(_.toSql): _*)
 }
