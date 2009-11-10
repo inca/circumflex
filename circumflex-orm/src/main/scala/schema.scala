@@ -42,6 +42,13 @@ trait SchemaObject extends Configurable {
 class Schema(val schemaName: String) extends SchemaObject {
   def sqlCreate = dialect.createSchema(this)
   def sqlDrop = dialect.dropSchema(this)
+
+  override def equals(obj: Any) = obj match {
+    case sc: Schema => sc.schemaName.equalsIgnoreCase(this.schemaName)
+    case _ => false
+  }
+
+  override def hashCode = this.schemaName.toLowerCase.hashCode
 }
 
 /**

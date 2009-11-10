@@ -1,6 +1,8 @@
 package ru.circumflex.orm
 
 class Category extends Record {
+  val id = field(Category.id)
+  val name = field(Category.name)
 }
 
 object Category extends Table[Category] {

@@ -57,6 +57,15 @@ abstract class Column[T, R <: Record](val table: Table[R],
   def sqlDrop = dialect.alterTableDropColumn(this)
 
   override def toString = sqlDefinition
+
+  override def equals(obj: Any) = obj match {
+    case col: Column[T, R] =>
+      col.table.equals(this.table) &&
+          col.columnName.equalsIgnoreCase(this.columnName) 
+    case _ => false
+  }
+
+  override def hashCode = this.table.hashCode * 31 + this.columnName.toLowerCase.hashCode
 }
 
 /**

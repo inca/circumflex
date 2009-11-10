@@ -37,6 +37,16 @@ abstract class Relation[R <: Record](implicit recordType: Manifest[R]) extends C
   def getParentAssociation[P <: Record](parent: Relation[P]): Option[Association[R, P]]
 
   override def toString = qualifiedName
+
+  override def equals(obj: Any) = obj match {
+    case rel: Relation[R] =>
+      rel.getClass.equals(this.getClass) &&
+          rel.qualifiedName.equalsIgnoreCase(this.qualifiedName)
+    case _ => false
+  }
+
+  override def hashCode = this.getClass.hashCode * 31 +
+      this.qualifiedName.toLowerCase.hashCode
 }
 
 /**
