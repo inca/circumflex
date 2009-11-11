@@ -18,6 +18,7 @@ trait Projection[T] {
    */
   def toSql: String
 
+  override def toString = toSql
 }
 
 class ColumnProjection[T](alias: String,

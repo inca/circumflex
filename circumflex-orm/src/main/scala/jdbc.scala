@@ -9,9 +9,9 @@ import java.sql.Connection
  */
 trait JDBCHelper {
 
-  def using[A <: {def close(): Unit}, B](obj: A)
-                                        (actions: A => B)
-                                        (errors: Throwable => B): B =
+  def autoClose[A <: {def close(): Unit}, B](obj: A)
+                                            (actions: A => B)
+                                            (errors: Throwable => B): B =
     try {
       return actions(obj)
     } catch {
@@ -19,5 +19,9 @@ trait JDBCHelper {
     } finally {
       obj.close
     }
+
+  def auto[A <: {def close(): Unit}, B](obj: A)
+                                       (actions: A => B): B =
+    autoClose(obj)(actions)(throw _)
 
 }

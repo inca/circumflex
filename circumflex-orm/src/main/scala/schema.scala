@@ -91,7 +91,7 @@ class DDLExport extends Configurable
    */
   def create: Unit = {
     // obtain JDBC connection
-    using(configuration.connectionProvider.getConnection)(conn => {
+    autoClose(configuration.connectionProvider.getConnection)(conn => {
         // we will commit every successful statement
         conn.setAutoCommit(true)
         // process database objects
@@ -106,7 +106,7 @@ class DDLExport extends Configurable
    */
   def drop: Unit = {
     // obtain JDBC connection
-    using(configuration.connectionProvider.getConnection)(conn => {
+    autoClose(configuration.connectionProvider.getConnection)(conn => {
         // we will commit every successful statement
         conn.setAutoCommit(true)
         // process database objects
@@ -118,7 +118,7 @@ class DDLExport extends Configurable
 
   def dropConstraints(conn: Connection) =
     for (c <- constraints) {
-      using(conn.prepareStatement(c.sqlDrop))(st => {
+      autoClose(conn.prepareStatement(c.sqlDrop))(st => {
         st.executeUpdate
         log.debug(c.sqlDrop)
         log.info("DROP CONSTRAINT {}: OK", c.constraintName)
@@ -130,7 +130,7 @@ class DDLExport extends Configurable
 
   def dropTables(conn: Connection) =
     for (t <- tables) {
-      using(conn.prepareStatement(t.sqlDrop))(st => {
+      autoClose(conn.prepareStatement(t.sqlDrop))(st => {
         st.executeUpdate
         log.debug(t.sqlDrop)
         log.info("DROP TABLE {}: OK", t.tableName)
@@ -142,7 +142,7 @@ class DDLExport extends Configurable
 
   def dropSchemata(conn: Connection) =
     for (s <- schemata) {
-      using(conn.prepareStatement(s.sqlDrop))(st => {
+      autoClose(conn.prepareStatement(s.sqlDrop))(st => {
         st.executeUpdate
         log.debug(s.sqlDrop)
         log.info("DROP SCHEMA {}: OK", s.schemaName)
@@ -154,7 +154,7 @@ class DDLExport extends Configurable
 
   def createSchemata(conn: Connection) =
     for (s <- schemata) {
-      using(conn.prepareStatement(s.sqlCreate))(st => {
+      autoClose(conn.prepareStatement(s.sqlCreate))(st => {
         st.executeUpdate
         log.debug(s.sqlCreate)
         log.info("CREATE SCHEMA {}: OK", s.schemaName)
@@ -166,7 +166,7 @@ class DDLExport extends Configurable
 
   def createTables(conn: Connection) =
     for (t <- tables) {
-      using(conn.prepareStatement(t.sqlCreate))(st => {
+      autoClose(conn.prepareStatement(t.sqlCreate))(st => {
         st.executeUpdate
         log.debug(t.sqlCreate)
         log.info("CREATE TABLE {}: OK", t.tableName)
@@ -178,7 +178,7 @@ class DDLExport extends Configurable
 
   def createConstraints(conn: Connection) =
     for (c <- constraints) {
-      using(conn.prepareStatement(c.sqlCreate))(st => {
+      autoClose(conn.prepareStatement(c.sqlCreate))(st => {
         st.executeUpdate
         log.debug(c.sqlCreate)
         log.info("CREATE CONSTRAINT {}: OK", c.constraintName)
