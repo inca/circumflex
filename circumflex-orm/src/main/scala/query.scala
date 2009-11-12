@@ -32,7 +32,7 @@ class Query(override val configuration: Configuration)
 
   def list: Seq[Array[Any]] = resultSet(rs => {
     val result = new ListBuffer[Array[Any]]()
-    while (rs.next) {
+    while (rs.next) { // TODO What shall we do with NULLs?
       val tuple = projections.map(_.read(rs).getOrElse(null))
       result += tuple.toArray
     }
