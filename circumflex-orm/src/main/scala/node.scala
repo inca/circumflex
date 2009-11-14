@@ -1,15 +1,13 @@
 package ru.circumflex.orm
 
-import reflect.Manifest
-
 /**
  * Wraps relational nodes (tables, views, virtual tables, subqueries and other stuff)
  * with an alias so that they may appear within SQL FROM clause.
  */
 abstract class RelationNode[R <: Record](val relation: Relation[R])
-                                    (implicit recordType: Manifest[R])
-
     extends Relation[R] with Configurable {
+
+  def recordClass = relation.recordClass
 
   /**
    * Delegates to relation's configuration.
@@ -54,9 +52,11 @@ abstract class RelationNode[R <: Record](val relation: Relation[R])
   def qualifiedName = relation.qualifiedName
 
   /**
-   * Creates a join node with this node as a parent and specified child node.
+   * Creates a join with specified node.
    */
-  def join[C <: Record](child: RelationNode[C]) = new JoinNode(this, child)
+  def join(node: RelationNode[_ <: Record]): JoinNode[_, _] =
+    new JoinNode(this, node)
+
 
   override def toString = toSql
 
@@ -64,7 +64,6 @@ abstract class RelationNode[R <: Record](val relation: Relation[R])
 
 class TableNode[R <: Record](val table: Table[R],
                              var alias: String)
-                            (implicit recordType: Manifest[R])
     extends RelationNode[R](table) {
 
   /**
@@ -81,25 +80,40 @@ class TableNode[R <: Record](val table: Table[R],
 /**
  * Represents a join node between parent and child relation.
  */
-class JoinNode[C <: Record, P <: Record](val parent: RelationNode[P],
-                                         val child: RelationNode[C])
-                                        (implicit recordType: Manifest[P])
-    extends RelationNode[P](parent) {
+class JoinNode[L <: Record, R <: Record](val leftNode: RelationNode[L],
+                                         val rightNode: RelationNode[R])
+    extends RelationNode[L](leftNode) {
+
+  private var inverse: Boolean = false;
 
   /**
    * Evaluates an association between parent and child; throws an exception if
    * failed.
    */
-  val association: Association[C, P] = child.getParentAssociation(parent) match {
-    case Some(a) => a
-    case _ => throw new ORMException("Failed to join " + parent +
-        " with " + child + ": no associations found.")
+  val association: Association[_ <: Record, _ <: Record] =
+  leftNode.getParentAssociation(rightNode) match {
+    case Some(a) => {
+      this.inverse = true
+      a
+    } case None => leftNode.getChildAssociation(rightNode) match {
+      case Some(a) => {
+        this.inverse = false
+        a
+      } case None => throw new ORMException("Failed to join " + leftNode +
+          " with " + rightNode + ": no associations found.")
+    }
   }
+
+  /**
+   * Determines whether this join is "inverse", that is the child is joined against parent.
+   * If parent is joined against child then this should yield <code>false</code>.
+   */
+  def isInverse: Boolean = inverse
 
   /**
    * Returns an alias of parent relation for this join.
    */
-  def alias = parent.alias
+  def alias = leftNode.alias
 
   /**
    * Override join type if necessary.
@@ -114,5 +128,5 @@ class JoinNode[C <: Record, P <: Record](val parent: RelationNode[P],
   /**
    * Join nodes return parent node's projections joined with child node's ones.
    */
-  def projections = parent.projections ++ child.projections
+  def projections = leftNode.projections ++ rightNode.projections
 }

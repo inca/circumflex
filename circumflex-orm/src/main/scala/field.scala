@@ -9,5 +9,9 @@ class Field[T](val record: Record,
 
   def setNull: Unit = record.update(column, None)
 
+  override def toString = get match {
+    case Some(value) => value.toString
+    case None => ""
+  }
 }
 

@@ -81,7 +81,7 @@ class DDLExport extends Configurable
   /**
    * Executes DROP and CREATE script.
    */
-  def dropAndCreate: Unit = {
+  def dropCreate: Unit = {
     drop
     create
   }

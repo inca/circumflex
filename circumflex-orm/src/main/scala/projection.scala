@@ -46,7 +46,8 @@ class RecordProjection[R <: Record](val tableNode: TableNode[R])
         .getConstructor()
         .newInstance()
     columnProjections.foreach(p => record.update(p.column.asInstanceOf[Column[Any, _]], p.read(rs)))
-    return Some(record)
+    if (record.isIdentified) return Some(record)
+    else return None 
   }
 
   def toSql = tableNode.configuration.dialect.selectClause(columnProjections.map(_.toSql): _*)

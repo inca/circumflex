@@ -20,4 +20,14 @@ abstract class Record {
 
   def field[T](col: Column[T, _ <: Record]) = new Field(this, col)
 
+  def relation: Relation[_ <: Record]
+
+  def isIdentified: Boolean = {
+    relation.primaryKey.columns.foreach(col => fieldsMap.get(col) match {
+      case None => return false
+      case _ =>
+    })
+    return true
+  }
+
 }

@@ -217,8 +217,10 @@ trait Dialect {
     var result = ""
     node match {
       case j: JoinNode[_, _] => {
-        result += joinInternal(j.parent, on) + "\n\t\t" + j.sqlJoinType + " " +
-            joinInternal(j.child, joinOn(j.association, j.parent.alias, j.child.alias))
+        val parentAlias = if (j.isInverse) j.rightNode.alias else j.leftNode.alias
+        val childAlias = if (j.isInverse) j.leftNode.alias else j.rightNode.alias 
+        result += joinInternal(j.leftNode, on) + "\n\t\t" + j.sqlJoinType + " " +
+            joinInternal(j.rightNode, joinOn(j.association, parentAlias, childAlias))
       } case _ => {
         result += node.toSql
         if (on != null) result += "\n\t\t\t" + on

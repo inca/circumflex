@@ -65,7 +65,8 @@ abstract class Column[T, R <: Record](val table: Table[R],
     case _ => false
   }
 
-  override def hashCode = this.table.hashCode * 31 + this.columnName.toLowerCase.hashCode
+  override def hashCode = this.table.hashCode * 31 +
+      this.columnName.toLowerCase.hashCode
 }
 
 /**
@@ -73,8 +74,11 @@ abstract class Column[T, R <: Record](val table: Table[R],
  */
 class StringColumn[R <: Record](table: Table[R], name: String)
     extends Column[String, R](table, name, table.dialect.stringType) {
-  def read(rs: ResultSet, alias: String) =
-    Some(rs.getString(alias))
+  def read(rs: ResultSet, alias: String): Option[String] = {
+    val result = rs.getString(alias)
+    if (rs.wasNull) return None
+    else return Some(result)
+  }
 }
 
 /**
@@ -82,8 +86,11 @@ class StringColumn[R <: Record](table: Table[R], name: String)
  */
 class LongColumn[R <: Record](table: Table[R], name: String)
     extends Column[Long, R](table, name, table.dialect.longType) {
-  def read(rs: ResultSet, alias: String) =    // TODO check what happens if getLong returns null
-    Some(rs.getLong(alias))
+  def read(rs: ResultSet, alias: String): Option[Long] = {
+    val result = rs.getLong(alias)
+    if (rs.wasNull) return None
+    else return Some(result)
+  }
 }
 
 

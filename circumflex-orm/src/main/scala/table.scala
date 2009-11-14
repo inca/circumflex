@@ -1,17 +1,16 @@
 package ru.circumflex.orm
 
-import reflect.Manifest
-
 /**
  * Designates a relation that can be used to recover certain type of records.
  * It can be considered a table, a virtual table, a view, a subquery or everything
  * that may participate in FROM clause.
  */
-abstract class Relation[R <: Record](implicit recordType: Manifest[R]) extends Configurable {
+abstract class Relation[R <: Record] extends Configurable {
+
   /**
-   * A record class recovered from type parameter.
+   * Returns a class of record which this relation describes.
    */
-  def recordClass: Class[R] = Class.forName(recordType.toString).asInstanceOf[Class[R]]
+  def recordClass: Class[R]
 
   /**
    * The mandatory primary key constraint for this relation.
@@ -56,7 +55,7 @@ abstract class Relation[R <: Record](implicit recordType: Manifest[R]) extends C
  * In general there should be only one table instance per record class
  * (a singleton object, or, more conveniantly, the companion object).
  */
-abstract class Table[R <: Record](implicit recordType: Manifest[R])
+abstract class Table[R <: Record]
     extends Relation[R] with SchemaObject {
 
   private var _columns: Seq[Column[_, R]] = Nil

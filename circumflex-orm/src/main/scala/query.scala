@@ -5,19 +5,17 @@ import collection.mutable.ListBuffer
 import java.sql.{ResultSet, PreparedStatement}
 import org.slf4j.LoggerFactory
 
-class Query(override val configuration: Configuration)
-    extends Configurable
-        with JDBCHelper {
+class Query extends Configurable with JDBCHelper {
 
   val log = LoggerFactory.getLogger("ru.circumflex.orm.SQL")
 
   var projections: Seq[Projection[_]] = Nil
   var relations: Seq[RelationNode[_]] = Nil
 
-  def from(nodes: RelationNode[_ <: Record] *): Query = {
-    relations ++= nodes.toList
+  def this(nodes: RelationNode[_] *) = {
+    this()
+    relations = nodes.toList
     nodes.foreach(n => projections ++= n.projections)
-    return this
   }
 
   def resultSet[A](actions: ResultSet => A): A =
@@ -32,7 +30,7 @@ class Query(override val configuration: Configuration)
 
   def list: Seq[Array[Any]] = resultSet(rs => {
     val result = new ListBuffer[Array[Any]]()
-    while (rs.next) { // TODO What shall we do with NULLs?
+    while (rs.next) {
       val tuple = projections.map(_.read(rs).getOrElse(null))
       result += tuple.toArray
     }
