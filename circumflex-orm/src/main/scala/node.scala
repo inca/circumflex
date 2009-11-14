@@ -4,8 +4,8 @@ package ru.circumflex.orm
  * Wraps relational nodes (tables, views, virtual tables, subqueries and other stuff)
  * with an alias so that they may appear within SQL FROM clause.
  */
-abstract class RelationNode[R <: Record](val relation: Relation[R])
-    extends Relation[R] with Configurable {
+abstract class RelationNode(val relation: Relation)
+    extends Relation with Configurable {
 
   def recordClass = relation.recordClass
 
@@ -37,11 +37,11 @@ abstract class RelationNode[R <: Record](val relation: Relation[R])
   /**
    * Retrieves an association path by delegating calls to underlying relations.
    */
-  def getParentAssociation[P <: Record](parent: Relation[P]): Option[Association[R, P]] =
+  def getParentAssociation(parent: Relation): Option[Association] =
     parent match {
-      case parentNode: RelationNode[P] => getParentAssociation(parentNode.relation)
+      case parentNode: RelationNode => getParentAssociation(parentNode.relation)
       case _ => relation match {
-        case childNode: RelationNode[R] => childNode.relation.getParentAssociation(parent)
+        case childNode: RelationNode => childNode.relation.getParentAssociation(parent)
         case _ => relation.getParentAssociation(parent)
       }
     }
@@ -54,7 +54,7 @@ abstract class RelationNode[R <: Record](val relation: Relation[R])
   /**
    * Creates a join with specified node.
    */
-  def join(node: RelationNode[_ <: Record]): JoinNode[_, _] =
+  def join(node: RelationNode): JoinNode =
     new JoinNode(this, node)
 
 
@@ -62,9 +62,9 @@ abstract class RelationNode[R <: Record](val relation: Relation[R])
 
 }
 
-class TableNode[R <: Record](val table: Table[R],
-                             var alias: String)
-    extends RelationNode[R](table) {
+class TableNode(val table: Table,
+                var alias: String)
+    extends RelationNode(table) {
 
   /**
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
@@ -80,9 +80,9 @@ class TableNode[R <: Record](val table: Table[R],
 /**
  * Represents a join node between parent and child relation.
  */
-class JoinNode[L <: Record, R <: Record](val leftNode: RelationNode[L],
-                                         val rightNode: RelationNode[R])
-    extends RelationNode[L](leftNode) {
+class JoinNode(val leftNode: RelationNode,
+               val rightNode: RelationNode)
+    extends RelationNode(leftNode) {
 
   private var inverse: Boolean = false;
 
@@ -90,8 +90,7 @@ class JoinNode[L <: Record, R <: Record](val leftNode: RelationNode[L],
    * Evaluates an association between parent and child; throws an exception if
    * failed.
    */
-  val association: Association[_ <: Record, _ <: Record] =
-  leftNode.getParentAssociation(rightNode) match {
+  val association: Association = leftNode.getParentAssociation(rightNode) match {
     case Some(a) => {
       this.inverse = true
       a

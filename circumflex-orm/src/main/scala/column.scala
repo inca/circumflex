@@ -7,9 +7,9 @@ import java.sql.{PreparedStatement, ResultSet}
 /**
  * Base functionality for columns.
  */
-abstract class Column[T, R <: Record](val table: Table[R],
-                                      val columnName: String,
-                                      val sqlType: String)
+abstract class Column[T](val table: Table,
+                         val columnName: String,
+                         val sqlType: String)
     extends SchemaObject {
 
   private var _nullable = true;
@@ -17,7 +17,7 @@ abstract class Column[T, R <: Record](val table: Table[R],
   /**
    * DSL-like way to qualify a column with NOT NULL constraint.
    */
-  def notNull: Column[T, R] = {
+  def notNull: Column[T] = {
     _nullable = false
     return this
   }
@@ -30,7 +30,7 @@ abstract class Column[T, R <: Record](val table: Table[R],
   /**
    * DSL-like way to qualify a column with UNIQUE constraint.
    */
-  def unique: Column[T, R] = {
+  def unique: Column[T] = {
     table.unique(this)
     return this
   }
@@ -38,7 +38,7 @@ abstract class Column[T, R <: Record](val table: Table[R],
   /**
    * DSL-like way to transform a column to foreign key association.
    */
-  def references[P <: Record](referenceTable: Table[P]): ForeignKey[R, P] =
+  def references(referenceTable: Table): ForeignKey =
     table.foreignKey(referenceTable, this)
 
   /**
@@ -59,9 +59,9 @@ abstract class Column[T, R <: Record](val table: Table[R],
   override def toString = sqlDefinition
 
   override def equals(obj: Any) = obj match {
-    case col: Column[T, R] =>
+    case col: Column[T] =>
       col.table.equals(this.table) &&
-          col.columnName.equalsIgnoreCase(this.columnName) 
+          col.columnName.equalsIgnoreCase(this.columnName)
     case _ => false
   }
 
@@ -72,8 +72,8 @@ abstract class Column[T, R <: Record](val table: Table[R],
 /**
  * String column (varchar-typed).
  */
-class StringColumn[R <: Record](table: Table[R], name: String)
-    extends Column[String, R](table, name, table.dialect.stringType) {
+class StringColumn(table: Table, name: String)
+    extends Column[String](table, name, table.dialect.stringType) {
   def read(rs: ResultSet, alias: String): Option[String] = {
     val result = rs.getString(alias)
     if (rs.wasNull) return None
@@ -84,8 +84,8 @@ class StringColumn[R <: Record](table: Table[R], name: String)
 /**
  * Long column (bigint-typed).
  */
-class LongColumn[R <: Record](table: Table[R], name: String)
-    extends Column[Long, R](table, name, table.dialect.longType) {
+class LongColumn(table: Table, name: String)
+    extends Column[Long](table, name, table.dialect.longType) {
   def read(rs: ResultSet, alias: String): Option[Long] = {
     val result = rs.getLong(alias)
     if (rs.wasNull) return None

@@ -1,6 +1,5 @@
 package ru.circumflex.orm
 
-
 import collection.mutable.ListBuffer
 import java.sql.{ResultSet, PreparedStatement}
 import org.slf4j.LoggerFactory
@@ -10,9 +9,9 @@ class Query extends Configurable with JDBCHelper {
   val log = LoggerFactory.getLogger("ru.circumflex.orm.SQL")
 
   var projections: Seq[Projection[_]] = Nil
-  var relations: Seq[RelationNode[_]] = Nil
+  var relations: Seq[RelationNode] = Nil
 
-  def this(nodes: RelationNode[_] *) = {
+  def this(nodes: RelationNode *) = {
     this()
     relations = nodes.toList
     nodes.foreach(n => projections ++= n.projections)

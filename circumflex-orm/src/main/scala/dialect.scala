@@ -40,31 +40,31 @@ trait Dialect {
    * Produces qualified name of a table
    * (e.g. "myschema.mytable").
    */
-  def tableName(tab: Table[_]) =
+  def tableName(tab: Table) =
     tab.schemaName + "." + tab.tableName
 
   /**
    * Produces PK name (e.g. mytable_pkey).
    */
-  def primaryKeyName(pk: PrimaryKey[_]) =
+  def primaryKeyName(pk: PrimaryKey) =
     pk.table.tableName + "_" + pk.column.columnName + "_pkey"
 
   /**
    * Produces unique constraint name (e.g. mytable_name_value_key).
    */
-  def uniqueKeyName(uniq: UniqueKey[_]) =
+  def uniqueKeyName(uniq: UniqueKey) =
     uniq.table.tableName + "_" + uniq.columns.map(_.columnName).mkString("_") + "_key"
 
   /**
    * Produces qualified sequence name (e.g. public.mytable_id_seq).
    */
-  def sequenceName(seq: Sequence[_]) =
+  def sequenceName(seq: Sequence) =
     seq.table.tableName + "_" + seq.column.columnName + "_seq"
 
   /**
    * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
    */
-  def foreignKeyName(fk: ForeignKey[_, _]) =
+  def foreignKeyName(fk: ForeignKey) =
     fk.table.tableName + fk.localColumn.columnName + "_fkey"
 
   /* DEFINITIONS */
@@ -73,26 +73,26 @@ trait Dialect {
    * Produces SQL definition for a column
    * (e.g. "mycolumn varchar not null unique").
    */
-  def columnDefinition(col: Column[_, _]) =
+  def columnDefinition(col: Column[_]) =
     col.columnName + " " + col.sqlType + (if (!col.nullable) " not null" else "")
 
   /**
    * Produces PK definition (e.g. "primary key (id)").
    */
-  def primaryKeyDefinition(pk: PrimaryKey[_]) =
+  def primaryKeyDefinition(pk: PrimaryKey) =
     "primary key (" + pk.column.columnName + ")"
 
   /**
    * Produces unique constraint definition (e.g. "unique (name, value)").
    */
-  def uniqueKeyDefinition(uniq: UniqueKey[_]) =
+  def uniqueKeyDefinition(uniq: UniqueKey) =
     "unique (" + uniq.columns.map(_.columnName).mkString(",") + ")"
 
   /**
    * Produces foreign key constraint definition
    * (e.g. "foreign key (ref_id) references public.ref(id) on delete cascade on update no action").
    */
-  def foreignKeyDefinition(fk: ForeignKey[_, _]) =
+  def foreignKeyDefinition(fk: ForeignKey) =
     "foreign key (" + fk.localColumn.columnName + ") references " +
         tableName(fk.referenceTable) + " (" + fk.referenceColumn.columnName + ")\n\t\t" +
         "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +
@@ -102,7 +102,7 @@ trait Dialect {
   /**
    * Produces constraint definition (e.g. "constraint mytable_pkey primary key(id)").
    */
-  def constraintDefinition(constraint: Constraint[_]) =
+  def constraintDefinition(constraint: Constraint) =
     "constraint " + constraint.constraintName + "\n\t\t" + constraint.sqlDefinition
 
   /* CREATE/ALTER/DROP STATEMENTS */
@@ -116,13 +116,13 @@ trait Dialect {
   /**
    * Produces CREATE SEQUENCE statement.
    */
-  def createSequence(seq: Sequence[_]) =
+  def createSequence(seq: Sequence) =
     "create sequence " + sequenceName(seq) + "\n\tstart with 1 increment by 1"
 
   /**
    * Produces CREATE TABLE statement without constraints.
    */
-  def createTable(tab: Table[_]) =
+  def createTable(tab: Table) =
     "create table " + tableName(tab) + " (\n\t" +
         tab.columns.map(_.sqlDefinition).mkString(",\n\t") + ",\n\t" +
         tab.primaryKey.sqlFullDefinition + "\n)"
@@ -130,43 +130,43 @@ trait Dialect {
   /**
    * Produces ALTER TABLE statement with abstract action.
    */
-  def alterTable(tab: Table[_], action: String) =
+  def alterTable(tab: Table, action: String) =
     "alter table " + tableName(tab) + "\n\t" + action
 
   /**
    * Produces ALTER TABLE statement with ADD CONSTRAINT action.
    */
-  def alterTableAddConstraint(constraint: Constraint[_]) =
+  def alterTableAddConstraint(constraint: Constraint) =
     alterTable(constraint.table, "add " + constraintDefinition(constraint));
 
   /**
    * Produces ALTER TABLE statement with ADD COLUMN action.
    */
-  def alterTableAddColumn(column: Column[_, _]) =
+  def alterTableAddColumn(column: Column[_]) =
     alterTable(column.table, "add column " + columnDefinition(column));
 
   /**
    * Produces ALTER TABLE statement with DROP CONSTRAINT action.
    */
-  def alterTableDropConstraint(constraint: Constraint[_]) =
+  def alterTableDropConstraint(constraint: Constraint) =
     alterTable(constraint.table, "drop constraint " + constraint.constraintName);
 
   /**
    * Produces ALTER TABLE statement with DROP COLUMN action.
    */
-  def alterTableDropColumn(column: Column[_, _]) =
+  def alterTableDropColumn(column: Column[_]) =
     alterTable(column.table, "drop column " + column.columnName);
 
   /**
    * Produces DROP TABLE statement
    */
-  def dropTable(tab: Table[_]) =
+  def dropTable(tab: Table) =
     "drop table " + tableName(tab)
 
   /**
    * Produces DROP SEQUENCE statement.
    */
-  def dropSequence(seq: Sequence[_]) =
+  def dropSequence(seq: Sequence) =
     "drop sequence " + sequenceName(seq)
 
   /**
@@ -180,37 +180,36 @@ trait Dialect {
   /**
    * Produces a statement to select a single next sequence value.
    */
-  def selectSequenceNextVal(seq: Sequence[_]) =
+  def selectSequenceNextVal(seq: Sequence) =
     "select nextval('" + sequenceName(seq) + "')"
 
-  def columnAlias(col: Column[_, _], columnAlias: String, tableAlias: String) =
+  def columnAlias(col: Column[_], columnAlias: String, tableAlias: String) =
     qualifyColumn(col, tableAlias) + " as " + columnAlias
 
   /**
    * Produces table with alias (e.g. "public.mytable my").
    */
-  def tableAlias(tab: Table[_], alias: String) = tab.qualifiedName + " as " + alias
+  def tableAlias(tab: Table, alias: String) = tab.qualifiedName + " as " + alias
 
   /**
    * Qualifies a column with table alias (e.g. "p.id")
    */
-  def qualifyColumn(col: Column[_, _], tableAlias: String) = tableAlias + "." + col.columnName
+  def qualifyColumn(col: Column[_], tableAlias: String) = tableAlias + "." + col.columnName
 
   /**
    * Produces join node sql representation (e.g. person p left join address a on p.id = a.person_id).
    */
-  def join(j: JoinNode[_ <: Record, _ <: Record]): String =
-    joinInternal(j, null)
+  def join(j: JoinNode): String = joinInternal(j, null)
 
   /**
    * Some magic to convert join tree to SQL.
    */
-  protected def joinInternal(node: RelationNode[_ <: Record], on: String): String = {
+  protected def joinInternal(node: RelationNode, on: String): String = {
     var result = ""
     node match {
-      case j: JoinNode[_, _] => {
+      case j: JoinNode => {
         val parentAlias = if (j.isInverse) j.rightNode.alias else j.leftNode.alias
-        val childAlias = if (j.isInverse) j.leftNode.alias else j.rightNode.alias 
+        val childAlias = if (j.isInverse) j.leftNode.alias else j.rightNode.alias
         result += joinInternal(j.leftNode, on) + "\n\t\t" + j.sqlJoinType + " " +
             joinInternal(j.rightNode, joinOn(j.association, parentAlias, childAlias))
       } case _ => {
@@ -222,9 +221,9 @@ trait Dialect {
   }
 
   // ON subclause for joins (e.g. "on (c.id = b.category_id)")
-  protected def joinOn[C <: Record, P <: Record](association: Association[C, P],
-                                                 parentAlias: String,
-                                                 childAlias: String) =
+  protected def joinOn(association: Association,
+                       parentAlias: String,
+                       childAlias: String) =
     "on (" + qualifyColumn(association.referenceColumn, parentAlias) + " = " +
         qualifyColumn(association.localColumn, childAlias) + ")"
 

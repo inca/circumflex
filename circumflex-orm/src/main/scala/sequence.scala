@@ -3,8 +3,8 @@ package ru.circumflex.orm
 /**
  * Base functionality for SQL sequences.
  */
-class Sequence[R <: Record](val table: Table[R],
-                            val column: Column[Long, R])
+class Sequence(val table: Table,
+               val column: Column[Long])
     extends SchemaObject {
   /* DDL */
   def sqlCreate = dialect.createSequence(this)

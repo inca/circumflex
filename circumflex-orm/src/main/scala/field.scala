@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
 class Field[T](val record: Record,
-               val column: Column[T, _ <: Record]) {
+               val column: Column[T]) {
 
   def get: Option[T] = record(column)
 

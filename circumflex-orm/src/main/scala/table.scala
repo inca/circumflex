@@ -5,17 +5,17 @@ package ru.circumflex.orm
  * It can be considered a table, a virtual table, a view, a subquery or everything
  * that may participate in FROM clause.
  */
-abstract class Relation[R <: Record] extends Configurable {
+abstract class Relation extends Configurable {
 
   /**
    * Returns a class of record which this relation describes.
    */
-  def recordClass: Class[R]
+  def recordClass: Class[_ <: Record]
 
   /**
    * The mandatory primary key constraint for this relation.
    */
-  def primaryKey: PrimaryKey[R];
+  def primaryKey: PrimaryKey;
 
   /**
    * Qualified relation name for use in SQL statements.
@@ -26,19 +26,19 @@ abstract class Relation[R <: Record] extends Configurable {
    * If possible, return an association from this relation as parent to
    * specified relation as child.
    */
-  def getChildAssociation[C <: Record](child: Relation[C]): Option[Association[C, R]]
-  = child.getParentAssociation(this)
+  def getChildAssociation(child: Relation): Option[Association] =
+    child.getParentAssociation(this)
 
   /**
    * If possible, return an association from this relation as child to
    * specified relation as parent.
    */
-  def getParentAssociation[P <: Record](parent: Relation[P]): Option[Association[R, P]]
+  def getParentAssociation(parent: Relation): Option[Association]
 
   override def toString = qualifiedName
 
   override def equals(obj: Any) = obj match {
-    case rel: Relation[R] =>
+    case rel: Relation =>
       rel.getClass.equals(this.getClass) &&
           rel.qualifiedName.equalsIgnoreCase(this.qualifiedName)
     case _ => false
@@ -55,18 +55,17 @@ abstract class Relation[R <: Record] extends Configurable {
  * In general there should be only one table instance per record class
  * (a singleton object, or, more conveniantly, the companion object).
  */
-abstract class Table[R <: Record]
-    extends Relation[R] with SchemaObject {
+abstract class Table extends Relation with SchemaObject {
 
-  private var _columns: Seq[Column[_, R]] = Nil
-  private var _constraints: Seq[Constraint[R]] = Nil
+  private var _columns: Seq[Column[_]] = Nil
+  private var _constraints: Seq[Constraint] = Nil
 
   /**
    * Gets an association to parent by scanning declared foreign keys.
    */
-  def getParentAssociation[P <: Record](relation: Relation[P]): Option[Association[R, P]] = {
+  def getParentAssociation(relation: Relation): Option[Association] = {
     _constraints.foreach({
-      case c: ForeignKey[R, P] =>
+      case c: ForeignKey =>
         if (c.referenceTable == relation)
           return Some(c)
       case _ =>
@@ -105,18 +104,18 @@ abstract class Table[R <: Record]
   /**
    * Creates an alias to use this table in SQL FROM clause.
    */
-  def as(alias: String): TableNode[R] = new TableNode(this, alias)
+  def as(alias: String): TableNode = new TableNode(this, alias)
 
   /**
    * Adds some columns to this table.
    */
-  def addColumn(cols: Column[_, R]*) =
+  def addColumn(cols: Column[_]*) =
     _columns ++= cols.toList
 
   /**
    * Adds some constraints to this table.
    */
-  def addConstraint(constrs: Constraint[R]*) =
+  def addConstraint(constrs: Constraint*) =
     _constraints ++= constrs.toList
 
   /* HELPERS */
@@ -124,7 +123,7 @@ abstract class Table[R <: Record]
   /**
    * Helper method to create primary key constraint.
    */
-  def pk(column: Column[_, R]): PrimaryKey[R] = {
+  def pk(column: Column[_]): PrimaryKey = {
     val pk = new PrimaryKey(this, column)
     return pk;
   }
@@ -132,7 +131,7 @@ abstract class Table[R <: Record]
   /**
    * Helper method to create unique constraint.
    */
-  def unique(columns: Column[_, R]*): UniqueKey[R] = {
+  def unique(columns: Column[_]*): UniqueKey = {
     val constr = new UniqueKey(this, columns.toList)
     addConstraint(constr)
     return constr
@@ -141,7 +140,8 @@ abstract class Table[R <: Record]
   /**
    * Helper method to create a foreign key constraint.
    */
-  def foreignKey[T <: Record](referenceTable: Table[T], column: Column[_, R]): ForeignKey[R, T] = {
+  def foreignKey(referenceTable: Table,
+                 column: Column[_]): ForeignKey = {
     val fk = new ForeignKey(this, referenceTable, column)
     addConstraint(fk)
     return fk
@@ -150,7 +150,7 @@ abstract class Table[R <: Record]
   /**
    * Helper method to create a bigint column.
    */
-  def longColumn(name: String): LongColumn[R] = {
+  def longColumn(name: String): LongColumn = {
     val col = new LongColumn(this, name)
     addColumn(col)
     return col
@@ -159,7 +159,7 @@ abstract class Table[R <: Record]
   /**
    * Helper method to create a string column.
    */
-  def stringColumn(name: String): StringColumn[R] = {
+  def stringColumn(name: String): StringColumn = {
     val col = new StringColumn(this, name)
     addColumn(col)
     return col

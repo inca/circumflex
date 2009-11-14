@@ -65,13 +65,13 @@ class DDLExport extends Configurable
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm.ddl")
 
   private val schemata = HashSet[Schema]()
-  private val tables = HashSet[Table[_]]()
-  private val constraints = HashSet[Constraint[_]]()
+  private val tables = HashSet[Table]()
+  private val constraints = HashSet[Constraint]()
 
   /**
    * Adds a table to database objects list.
    */
-  def addTable(tab: Table[_]): DDLExport = {
+  def addTable(tab: Table): DDLExport = {
     tables += tab
     schemata += tab.schema
     constraints ++= tab.constraints

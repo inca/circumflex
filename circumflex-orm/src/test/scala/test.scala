@@ -10,7 +10,7 @@ class Category extends Record {
     else "UNKNOWN: " + name.toString
 }
 
-object Category extends Table[Category] {
+object Category extends Table {
   def recordClass = classOf[Category]
   def primaryKey = pk(id)
   val id = longColumn("id").notNull
@@ -29,7 +29,7 @@ class Book extends Record {
     else "UNKNOWN: " + title.toString
 }
 
-object Book extends Table[Book] {
+object Book extends Table {
   def recordClass = classOf[Book]
   def primaryKey = pk(id)
   val id = longColumn("id").notNull

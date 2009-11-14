@@ -2,34 +2,31 @@ package ru.circumflex.orm
 
 abstract class Record {
 
-  private var fieldsMap: Map[Column[_, _ <: Record], Any] = Map()
+  private var fieldsMap: Map[Column[_], Any] = Map()
 
-  def apply[T](col: Column[T, _]): Option[T] =
-    fieldsMap.get(col.asInstanceOf[Column[_, _ <: Record]]).asInstanceOf[Option[T]]
+  def apply[T](col: Column[T]): Option[T] =
+    fieldsMap.get(col).asInstanceOf[Option[T]]
 
-  def update[T](col: Column[T, _], value: T): Unit =
+  def update[T](col: Column[T], value: T): Unit =
     update(col, Some(value))
 
-  def update[T](col: Column[T, _], value: Option[T]) = value match {
+  def update[T](col: Column[T], value: Option[T]) = value match {
     case Some(value) => {
-      fieldsMap += (col.asInstanceOf[Column[_, _ <: Record]] -> value)
+      fieldsMap += (col -> value)
     } case _ => {
-      fieldsMap -= col.asInstanceOf[Column[_, _ <: Record]]
+      fieldsMap -= col
     }
   }
 
-  def field[T](col: Column[T, _ <: Record]) = new Field(this, col)
+  def field[T](col: Column[T]) = new Field(this, col)
 
-  def relation: Relation[_ <: Record]
+  def relation: Relation
 
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
 
-  def isIdentified: Boolean = {
-     primaryKey match {
-      case None => return false
-      case _ =>
-    }
-    return true
+  def isIdentified = primaryKey match {
+    case None => false
+    case _ => true
   }
 
 }
