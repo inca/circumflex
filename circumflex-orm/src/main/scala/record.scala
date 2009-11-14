@@ -22,11 +22,13 @@ abstract class Record {
 
   def relation: Relation[_ <: Record]
 
+  def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
+
   def isIdentified: Boolean = {
-    relation.primaryKey.columns.foreach(col => fieldsMap.get(col) match {
+     primaryKey match {
       case None => return false
       case _ =>
-    })
+    }
     return true
   }
 

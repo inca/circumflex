@@ -124,8 +124,8 @@ abstract class Table[R <: Record]
   /**
    * Helper method to create primary key constraint.
    */
-  def pk(columns: Column[_, R]*): PrimaryKey[R] = {
-    val pk = new PrimaryKey(this, columns.toList)
+  def pk(column: Column[_, R]): PrimaryKey[R] = {
+    val pk = new PrimaryKey(this, column)
     return pk;
   }
 
@@ -141,8 +141,8 @@ abstract class Table[R <: Record]
   /**
    * Helper method to create a foreign key constraint.
    */
-  def foreignKey[T <: Record](referenceTable: Table[T], columns: Column[_, R]*): ForeignKey[R, T] = {
-    val fk = new ForeignKey(this, referenceTable, columns.toList)
+  def foreignKey[T <: Record](referenceTable: Table[T], column: Column[_, R]): ForeignKey[R, T] = {
+    val fk = new ForeignKey(this, referenceTable, column)
     addConstraint(fk)
     return fk
   }

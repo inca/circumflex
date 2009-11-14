@@ -18,11 +18,11 @@ trait Association[C <: Record, P <: Record] {
   /**
    * Returns a list of local columns.
    */
-  def localColumns: Seq[Column[_, C]]
+  def localColumn: Column[_, C]
 
   /**
-   * Get a column of the referenced table (parent) that matches local column.
+   * Returns a column of the referenced table (parent) that matches local column.
    */
-  def getReferencedColumn(localColumn: Column[_, C]): Column[_, P]
+  def referenceColumn: Column[_, P]
 
 }

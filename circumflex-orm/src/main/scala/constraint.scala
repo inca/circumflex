@@ -1,15 +1,9 @@
 package ru.circumflex.orm
 
-
-import collection.mutable.ListBuffer
-
 /**
- * Base superclass with functionality for SQL constraints.
- * Constraint object must hold a reference to containing table
- * and to the list of columns. It is responsible for DDL generation.
+ * Base superclass with functionality for generating SQL constraints.
  */
-abstract class Constraint[R <: Record](val table: Table[R],
-                                       val columns: Seq[Column[_, R]])
+abstract class Constraint[R <: Record](val table: Table[R])
     extends SchemaObject {
 
   /**
@@ -38,8 +32,8 @@ abstract class Constraint[R <: Record](val table: Table[R],
  * Primary key constraint.
  */
 class PrimaryKey[R <: Record](table: Table[R],
-                              columns: Seq[Column[_, R]])
-    extends Constraint[R](table, columns) {
+                              val column: Column[_, R])
+    extends Constraint[R](table) {
   def constraintName = table.dialect.primaryKeyName(this)
   def sqlDefinition = table.dialect.primaryKeyDefinition(this)
 }
@@ -48,8 +42,8 @@ class PrimaryKey[R <: Record](table: Table[R],
  * Unique constraint.
  */
 class UniqueKey[R <: Record](table: Table[R],
-                             columns: Seq[Column[_, R]])
-    extends Constraint[R](table, columns) {
+                             val columns: Seq[Column[_, R]])
+    extends Constraint[R](table) {
   def constraintName = table.dialect.uniqueKeyName(this)
   def sqlDefinition = table.dialect.uniqueKeyDefinition(this)
 }
@@ -70,24 +64,8 @@ object SetDefaultAction extends ForeignKeyAction
  */
 class ForeignKey[C <: Record, P <: Record](table: Table[C],
                                            val referenceTable: Table[P],
-                                           columns: Seq[Column[_, C]])
-    extends Constraint[C](table, columns) with Association[C, P] {
-
-  private var _columnMap: Map[Column[_, C], Column[_, P]] = Map()
-
-  {   // init
-    val localColSize = columns.size
-    val refColSize = referenceTable.primaryKey.columns.size
-    if (localColSize == 0)
-      throw new ORMInitializationError("Failed to initialize foreign key " + constraintName +
-          ": no local columns specified.")
-    if (localColSize != refColSize)
-      throw new ORMInitializationError("Failed to initialize foreign key " + constraintName +
-          ": local columns count does not match referenced columns count.")
-    (0 until localColSize).foreach(i =>
-        _columnMap += (columns(i) -> referenceTable.primaryKey.columns(i))
-      )
-  }
+                                           val localColumn: Column[_, C])
+    extends Constraint[C](table) with Association[C, P] {
 
   def parentRelation = referenceTable
   def childRelation = table
@@ -98,10 +76,7 @@ class ForeignKey[C <: Record, P <: Record](table: Table[C],
   def constraintName = table.dialect.foreignKeyName(this)
   def sqlDefinition = table.dialect.foreignKeyDefinition(this)
 
-  def localColumns = columns
-
-  def getReferencedColumn(localColumn: Column[_, C]) =
-    _columnMap.get(localColumn).get
+  def referenceColumn = referenceTable.primaryKey.column
 
   def onDeleteNoAction: ForeignKey[C, P] = {
     onDelete = NoAction

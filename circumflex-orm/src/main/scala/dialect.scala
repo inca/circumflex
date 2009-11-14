@@ -44,23 +44,16 @@ trait Dialect {
     tab.schemaName + "." + tab.tableName
 
   /**
-   * Used to group common parts for constraint names (concatenate table and column names,
-   * separated by underscore).
-   */
-  protected def constraintBaseName(constr: Constraint[_]) =
-    constr.table.tableName + "_" + constr.columns.map(_.columnName).mkString("_")
-
-  /**
    * Produces PK name (e.g. mytable_pkey).
    */
   def primaryKeyName(pk: PrimaryKey[_]) =
-    constraintBaseName(pk) + "_pkey"
+    pk.table.tableName + "_" + pk.column.columnName + "_pkey"
 
   /**
    * Produces unique constraint name (e.g. mytable_name_value_key).
    */
   def uniqueKeyName(uniq: UniqueKey[_]) =
-    constraintBaseName(uniq) + "_key"
+    uniq.table.tableName + "_" + uniq.columns.map(_.columnName).mkString("_") + "_key"
 
   /**
    * Produces qualified sequence name (e.g. public.mytable_id_seq).
@@ -72,7 +65,7 @@ trait Dialect {
    * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
    */
   def foreignKeyName(fk: ForeignKey[_, _]) =
-    constraintBaseName(fk) + "_fkey"
+    fk.table.tableName + fk.localColumn.columnName + "_fkey"
 
   /* DEFINITIONS */
 
@@ -87,7 +80,7 @@ trait Dialect {
    * Produces PK definition (e.g. "primary key (id)").
    */
   def primaryKeyDefinition(pk: PrimaryKey[_]) =
-    "primary key (" + pk.columns.map(_.columnName).mkString(",") + ")"
+    "primary key (" + pk.column.columnName + ")"
 
   /**
    * Produces unique constraint definition (e.g. "unique (name, value)").
@@ -100,9 +93,8 @@ trait Dialect {
    * (e.g. "foreign key (ref_id) references public.ref(id) on delete cascade on update no action").
    */
   def foreignKeyDefinition(fk: ForeignKey[_, _]) =
-    "foreign key (" + fk.columns.map(_.columnName).mkString(",") +
-        ") references " + tableName(fk.referenceTable) + " (" +
-        fk.referenceTable.primaryKey.columns.map(_.columnName).mkString(",") + ")\n\t\t" +
+    "foreign key (" + fk.localColumn.columnName + ") references " +
+        tableName(fk.referenceTable) + " (" + fk.referenceColumn.columnName + ")\n\t\t" +
         "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +
         "on update " + foreignKeyAction(fk.onUpdate)
 
@@ -233,10 +225,8 @@ trait Dialect {
   protected def joinOn[C <: Record, P <: Record](association: Association[C, P],
                                                  parentAlias: String,
                                                  childAlias: String) =
-    "on (" + association.localColumns.map(l =>
-        qualifyColumn(association.getReferencedColumn(l), parentAlias) +
-            " = " + qualifyColumn(l, childAlias)
-      ).mkString(" and ") + ")"
+    "on (" + qualifyColumn(association.referenceColumn, parentAlias) + " = " +
+        qualifyColumn(association.localColumn, childAlias) + ")"
 
   /**
    * Formats provided projections for use in SELECT clause (just comma-delimited mkString).
