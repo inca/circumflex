@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
 import collection.mutable.ListBuffer
-import java.sql.{ResultSet, PreparedStatement}
+import java.sql.ResultSet
 import org.slf4j.LoggerFactory
 
 class Query extends Configurable with JDBCHelper {
