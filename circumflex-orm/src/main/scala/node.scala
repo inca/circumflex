@@ -72,9 +72,27 @@ class TableNode(val table: Table,
   def toSql = configuration.dialect.tableAlias(table, alias)
 
   /**
-   * Table nodes define a collection of their column's projections.
+   * Creates a record projection.
    */
-  def projections = List(new RecordProjection(this))
+  def projections = List(record)
+
+  /**
+   * Creates a record projection.
+   */
+  def record = new RecordProjection(this)
+
+  /**
+   * Creates a field projection with specified alias.
+   */
+  def field[T](col: Column[T], alias: String): FieldProjection[T] =
+    new FieldProjection(alias, this, col)
+
+  /**
+   * Creates a field projection with default alias.
+   */
+  def field[T](col: Column[T]): FieldProjection[T] =
+    new FieldProjection(this, col)
+
 }
 
 /**

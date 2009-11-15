@@ -10,6 +10,7 @@ class Query extends Configurable with JDBCHelper {
 
   var projections: Seq[Projection[_]] = Nil
   var relations: Seq[RelationNode] = Nil
+  var predicate: Predicate = EmptyPredicate
 
   def this(nodes: RelationNode *) = {
     this()
@@ -17,11 +18,18 @@ class Query extends Configurable with JDBCHelper {
     nodes.foreach(n => projections ++= n.projections)
   }
 
+  def where(predicate: Predicate): Query = {
+    this.predicate = predicate
+    this
+  }
+
   def resultSet[A](actions: ResultSet => A): A =
     auto(configuration.connectionProvider.getConnection) {
       conn => auto(conn.prepareStatement(toSql)) {
         st => {
           log.debug(toSql)
+          (0 until predicate.parameters.size).foreach(ix =>
+              configuration.typeConverter.write(st, predicate.parameters(ix), ix + 1))
           auto(st.executeQuery)(actions)
         }
       }

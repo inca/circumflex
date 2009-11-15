@@ -36,8 +36,9 @@ trait Dialect {
   def rightJoin = "right join"
   def fullJoin = "full join"
 
-  /* SIMPLE PREDICATES */
+  /* SIMPLE PREDICATES AND KEYWORDS */
 
+  def dummy = "1 = 1"
   def eq = "{alias} = ?"
   def ne = "{alias} <> ?"
   def gt = "{alias} > ?"
@@ -48,6 +49,9 @@ trait Dialect {
   def isNotNull = "{alias} is not null"
   def like = "{alias} like ?"
   def between = "{alias} between ? and ?"
+  def and = " and\n\t\t"
+  def or = " or\n\t\t"
+  def not = "not"
 
   /* GENERATED NAMES */
 
@@ -250,8 +254,12 @@ trait Dialect {
   /**
    * Produces SELECT statement.
    */
-  def select(q: Query) = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +
-      "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
+  def select(q: Query): String = {
+    var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +
+        "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
+    if (q.predicate != EmptyPredicate) result += "\nwhere\n\t" + q.predicate.toSql
+    return result
+  }
 
 }
 
