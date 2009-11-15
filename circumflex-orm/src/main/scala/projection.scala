@@ -7,25 +7,16 @@ import java.sql.ResultSet
  * Result set projection.
  */
 trait Projection[T] {
-
   /**
    * Extract a value from result set.
    */
   def read(rs: ResultSet): Option[T]
-
   /**
    * SQL representation of this projection for use in SELECT clause.
    */
   def toSql: String
 
   override def toString = toSql
-}
-
-/**
- * Criteria are projections that may participate in SQL WHERE clauses.
- */
-trait Criterion[T] extends Projection[T]{
-  def toSqlWhere: String
 }
 
 /**
@@ -39,7 +30,9 @@ trait AliasedProjection[T] extends Projection[T] {
 class FieldProjection[T](val alias: String,
                          val node: RelationNode,
                          val column: Column[T])
-    extends AliasedProjection[T] with Criterion[T] {
+    extends AliasedProjection[T] {
+
+  def dialect: Dialect = node.configuration.dialect
 
   def this(node: RelationNode, column: Column[T]) =
     this(node.alias + "_" + column.columnName, node, column)
@@ -47,11 +40,31 @@ class FieldProjection[T](val alias: String,
   def read(rs: ResultSet): Option[T] =
     node.configuration.typeConverter.read(rs, alias).asInstanceOf[Option[T]]
 
+  /**
+   * Change an alias of this projection.
+   */
   def as(alias: String) = new FieldProjection(alias, node, column)
 
-  def toSql = node.configuration.dialect.columnAlias(column, alias, node.alias)
+  /**
+   * Returns a column name qualified with node's alias.
+   */
+  def expr = dialect.qualifyColumn(column, node.alias)
 
-  def toSqlWhere = node.configuration.dialect.qualifyColumn(column, node.alias)
+  /* PREDICATES */
+  def eq(value: Any) = new SimpleExpression(expr, dialect.eq, List(value))
+  def ne(value: Any) = new SimpleExpression(expr, dialect.ne, List(value))
+  def gt(value: Any) = new SimpleExpression(expr, dialect.gt, List(value))
+  def ge(value: Any) = new SimpleExpression(expr, dialect.ge, List(value))
+  def lt(value: Any) = new SimpleExpression(expr, dialect.lt, List(value))
+  def le(value: Any) = new SimpleExpression(expr, dialect.le, List(value))
+  def isNull = new SimpleExpression(expr, dialect.isNull, Nil)
+  def isNotNull = new SimpleExpression(expr, dialect.isNotNull, Nil)
+  def like(value: String) = new SimpleExpression(expr, dialect.like, List(value))
+  def between(lowerValue: Any, upperValue: Any) =
+    new SimpleExpression(expr, dialect.between, List(lowerValue, upperValue))
+
+  def toSql = dialect.columnAlias(column, alias, node.alias)
+
 }
 
 class RecordProjection[R <: Record](val tableNode: TableNode)

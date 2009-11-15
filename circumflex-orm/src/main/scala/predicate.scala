@@ -29,13 +29,11 @@ object EmptyPredicate extends Predicate {
   def parameters = Nil
 }
 
-class SimpleExpression(val criterion: Criterion[_],
+class SimpleExpression(val field: String,
                        val expression: String,
                        val parameters: Seq[Any])
     extends Predicate {
-
-  def toSql = expression.replaceAll("\\{alias}", criterion.toSqlWhere)
-
+  def toSql = expression.replaceAll("\\{field}", field)
 }
 
 /**
