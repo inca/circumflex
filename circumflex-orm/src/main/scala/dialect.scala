@@ -49,8 +49,8 @@ trait Dialect {
   def isNotNull = "{field} is not null"
   def like = "{field} like ?"
   def between = "{field} between ? and ?"
-  def and = " and\n\t\t"
-  def or = " or\n\t\t"
+  def and = " and\n\t"
+  def or = " or\n\t"
   def not = "not"
 
   /* GENERATED NAMES */
