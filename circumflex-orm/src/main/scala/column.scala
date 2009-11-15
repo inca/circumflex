@@ -41,11 +41,6 @@ abstract class Column[T](val table: Table,
   def references(referenceTable: Table): ForeignKey =
     table.foreignKey(referenceTable, this)
 
-  /**
-   * Extract a value from result set.
-   */
-  def read(rs: ResultSet, alias: String): Option[T]
-
   /* DDL */
 
   /**
@@ -73,24 +68,12 @@ abstract class Column[T](val table: Table,
  * String column (varchar-typed).
  */
 class StringColumn(table: Table, name: String)
-    extends Column[String](table, name, table.dialect.stringType) {
-  def read(rs: ResultSet, alias: String): Option[String] = {
-    val result = rs.getString(alias)
-    if (rs.wasNull) return None
-    else return Some(result)
-  }
-}
+    extends Column[String](table, name, table.dialect.stringType)
 
 /**
  * Long column (bigint-typed).
  */
 class LongColumn(table: Table, name: String)
-    extends Column[Long](table, name, table.dialect.longType) {
-  def read(rs: ResultSet, alias: String): Option[Long] = {
-    val result = rs.getLong(alias)
-    if (rs.wasNull) return None
-    else return Some(result)
-  }
-}
+    extends Column[Long](table, name, table.dialect.longType)
 
 

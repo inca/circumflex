@@ -1,8 +1,5 @@
 package ru.circumflex.orm
 
-
-import java.sql.Connection
-
 /**
  * Contains helper constructions that automatically close such JDBC objects as
  * ResultSets and PreparedStatements.

@@ -2,9 +2,9 @@ package ru.circumflex.orm
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import core.{RouteContext, AbstractCircumflexFilter}
+import java.sql.{PreparedStatement, ResultSet, Connection}
+import java.util.{Date, MissingResourceException, ResourceBundle}
 import javax.servlet.FilterChain
-import java.sql.Connection
-import java.util.{MissingResourceException, ResourceBundle}
 import javax.naming.InitialContext
 import javax.sql.DataSource
 import org.slf4j.LoggerFactory
@@ -163,6 +163,38 @@ class ORMFilter extends AbstractCircumflexFilter {
 }
 
 /**
+ * Type converters are used to read atomic values from JDBC
+ * result sets and to set JDBC prepared statement values for execution.
+ * If you intend to use custom types, provide your own implementation.
+ */
+trait TypeConverter {
+  def read(rs: ResultSet, alias: String): Option[Any]
+  def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit
+}
+
+/**
+ * Default implementation of type converter.
+ * This implementation only handles <code>java.util.Date</code>
+ * and unwraps Scala <code>Option[T]</code>.
+ * You may subclass it to provide support for custom types.
+ */
+class DefaultTypeConverter extends TypeConverter {
+  def read(rs: ResultSet, alias: String): Option[Any] = {
+    val result = rs.getObject(alias)
+    if (rs.wasNull) return None
+    else return Some(result)
+  }
+
+  def write(st: PreparedStatement, parameter: Any, paramIndex: Int) = parameter match {
+    case (p: Date) => st.setTimestamp(paramIndex, new java.sql.Timestamp(p.getTime))
+    case Some(p) => write(st, p, paramIndex)
+    case _ => st.setObject(paramIndex, parameter)
+  }
+}
+
+object DefaultTypeConverter extends DefaultTypeConverter
+
+/**
  * Aggregates all ORM-related interfaces into configuration object.
  * We use configuration object with Table objects.
  * You may want to provide your own implementation of all these methods
@@ -171,6 +203,7 @@ class ORMFilter extends AbstractCircumflexFilter {
 trait Configuration {
   def connectionProvider: ConnectionProvider
   def dialect: Dialect
+  def typeConverter: TypeConverter
 }
 
 /**
@@ -181,5 +214,6 @@ trait Configuration {
 object DefaultConfiguration extends Configuration {
   def connectionProvider = DefaultConnectionProvider
   def dialect = DefaultDialect
+  def typeConverter = DefaultTypeConverter
 }
 

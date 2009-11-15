@@ -30,7 +30,7 @@ class ColumnProjection[T](alias: String,
     this(node.alias + "_" + column.columnName, node, column)
 
   def read(rs: ResultSet): Option[T] =
-    column.read(rs, alias)
+    node.configuration.typeConverter.read(rs, alias).asInstanceOf[Option[T]]
 
   def toSql = node.configuration.dialect.columnAlias(column, alias, node.alias)
 }

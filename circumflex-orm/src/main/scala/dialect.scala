@@ -20,6 +20,7 @@ trait Dialect {
   def stringType = "text"
 
   /* FOREIGN KEY ACTIONS */
+
   def foreignKeyAction(action: ForeignKeyAction) = action match {
     case NoAction => "no action"
     case CascadeAction => "cascade"
@@ -29,10 +30,24 @@ trait Dialect {
   }
 
   /* JOIN KEYWORDS */
+
   def innerJoin = "inner join"
   def leftJoin = "left join"
   def rightJoin = "right join"
   def fullJoin = "full join"
+
+  /* SIMPLE PREDICATES */
+
+  def eq = "{alias} = ?"
+  def ne = "{alias} <> ?"
+  def gt = "{alias} > ?"
+  def ge = "{alias} >= ?"
+  def lt = "{alias} < ?"
+  def le = "{alias} <= ?"
+  def isNull = "{alias} is null"
+  def isNotNull = "{alias} is not null"
+  def like = "{alias} like ?"
+  def between = "{alias} between ? and ?"
 
   /* GENERATED NAMES */
 
