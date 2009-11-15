@@ -18,12 +18,6 @@ trait Projection[T] {
    */
   def toSql: String
 
-  /**
-   * Wraps this projection with alias.
-   */
-  def as(alias: String): AliasedProjection[T] =
-    new WrapperProjection(this, alias)
-
   override def toString = toSql
 }
 
@@ -42,16 +36,6 @@ trait AliasedProjection[T] extends Projection[T] {
   def alias: String
 }
 
-/**
- * Wraps a projection with alias and delegates all calls to it.
- */
-class WrapperProjection[T](val projection: Projection[T],
-                           val alias: String)
-    extends AliasedProjection[T] {
-  def read(rs: ResultSet) = projection.read(rs)
-  def toSql = projection.toSql
-}
-
 class FieldProjection[T](val alias: String,
                          val node: RelationNode,
                          val column: Column[T])
@@ -63,7 +47,7 @@ class FieldProjection[T](val alias: String,
   def read(rs: ResultSet): Option[T] =
     node.configuration.typeConverter.read(rs, alias).asInstanceOf[Option[T]]
 
-  override def as(alias: String) = new FieldProjection(alias, node, column)
+  def as(alias: String) = new FieldProjection(alias, node, column)
 
   def toSql = node.configuration.dialect.columnAlias(column, alias, node.alias)
 
