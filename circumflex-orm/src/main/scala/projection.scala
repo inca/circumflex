@@ -51,17 +51,17 @@ class FieldProjection[T](val alias: String,
   def expr = dialect.qualifyColumn(column, node.alias)
 
   /* PREDICATES */
-  def eq(value: Any) = new SimpleExpression(expr, dialect.eq, List(value))
-  def ne(value: Any) = new SimpleExpression(expr, dialect.ne, List(value))
-  def gt(value: Any) = new SimpleExpression(expr, dialect.gt, List(value))
-  def ge(value: Any) = new SimpleExpression(expr, dialect.ge, List(value))
-  def lt(value: Any) = new SimpleExpression(expr, dialect.lt, List(value))
-  def le(value: Any) = new SimpleExpression(expr, dialect.le, List(value))
-  def isNull = new SimpleExpression(expr, dialect.isNull, Nil)
-  def isNotNull = new SimpleExpression(expr, dialect.isNotNull, Nil)
-  def like(value: String) = new SimpleExpression(expr, dialect.like, List(value))
+  def eq(value: Any) = new SimpleExpression(expr + dialect.eq, List(value))
+  def ne(value: Any) = new SimpleExpression(expr + dialect.ne, List(value))
+  def gt(value: Any) = new SimpleExpression(expr + dialect.gt, List(value))
+  def ge(value: Any) = new SimpleExpression(expr + dialect.ge, List(value))
+  def lt(value: Any) = new SimpleExpression(expr + dialect.lt, List(value))
+  def le(value: Any) = new SimpleExpression(expr + dialect.le, List(value))
+  def isNull = new SimpleExpression(expr + dialect.isNull, Nil)
+  def isNotNull = new SimpleExpression(expr + dialect.isNotNull, Nil)
+  def like(value: String) = new SimpleExpression(expr + dialect.like, List(value))
   def between(lowerValue: Any, upperValue: Any) =
-    new SimpleExpression(expr, dialect.between, List(lowerValue, upperValue))
+    new SimpleExpression(expr + dialect.between, List(lowerValue, upperValue))
 
   def toSql = dialect.columnAlias(column, alias, node.alias)
 
