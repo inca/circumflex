@@ -35,6 +35,23 @@ class SimpleExpression(val expression: String,
 }
 
 /**
+ * Contains some common predicates.
+ */
+class SimpleExpressionHelper(val expr: String) extends Configurable {
+  def eq(value: Any) = new SimpleExpression(expr + dialect.eq, List(value))
+  def ne(value: Any) = new SimpleExpression(expr + dialect.ne, List(value))
+  def gt(value: Any) = new SimpleExpression(expr + dialect.gt, List(value))
+  def ge(value: Any) = new SimpleExpression(expr + dialect.ge, List(value))
+  def lt(value: Any) = new SimpleExpression(expr + dialect.lt, List(value))
+  def le(value: Any) = new SimpleExpression(expr + dialect.le, List(value))
+  def isNull = new SimpleExpression(expr + dialect.isNull, Nil)
+  def isNotNull = new SimpleExpression(expr + dialect.isNotNull, Nil)
+  def like(value: String) = new SimpleExpression(expr + dialect.like, List(value))
+  def between(lowerValue: Any, upperValue: Any) =
+    new SimpleExpression(expr + dialect.between, List(lowerValue, upperValue))
+}
+
+/**
  * Aggregates multiple predicates with specified operator.
  */
 class AggregatePredicate(val operator: String,
@@ -49,12 +66,20 @@ class AggregatePredicate(val operator: String,
   else predicates.map(_.toSql).mkString(operator)
 }
 
-object And extends Configurable {
-  def apply(predicates: Predicate *) =
-    new AggregatePredicate(configuration.dialect.and, predicates.toList)
-}
+/**
+ * Some common helpers for making up predicates.
+ */
+object Predicates extends Configurable {
 
-object Or extends Configurable {
-  def apply(predicates: Predicate *) =
+  implicit def stringTonHelper(str: String): SimpleExpressionHelper =
+    new SimpleExpressionHelper(str)
+
+  implicit def fieldProjectionToHelper(f: FieldProjection[_]): SimpleExpressionHelper =
+    new SimpleExpressionHelper(f.expr)
+
+  def and(predicates: Predicate *) =
+    new AggregatePredicate(configuration.dialect.and, predicates.toList)
+
+  def or(predicates: Predicate *) =
     new AggregatePredicate(configuration.dialect.or, predicates.toList)
 }

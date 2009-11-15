@@ -15,6 +15,8 @@ trait Configurable {
    * @return DefaultConfiguration by default
    */
   def configuration: Configuration = DefaultConfiguration
+
+  def dialect = configuration.dialect
 }
 
 /**
@@ -22,10 +24,6 @@ trait Configurable {
  * They must provide SQL statement to create them and to drop them.
  */
 trait SchemaObject extends Configurable {
-  /**
-   * Dialect object that is used to generate SQL statements.
-   */
-  def dialect: Dialect = configuration.dialect
   /**
    * SQL statement to create this database object.
    */

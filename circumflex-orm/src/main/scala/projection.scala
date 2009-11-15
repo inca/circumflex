@@ -30,9 +30,9 @@ trait AliasedProjection[T] extends Projection[T] {
 class FieldProjection[T](val alias: String,
                          val node: RelationNode,
                          val column: Column[T])
-    extends AliasedProjection[T] {
+    extends AliasedProjection[T] with Configurable {
 
-  def dialect: Dialect = node.configuration.dialect
+  override def configuration = node.configuration
 
   def this(node: RelationNode, column: Column[T]) =
     this(node.alias + "_" + column.columnName, node, column)
@@ -49,19 +49,6 @@ class FieldProjection[T](val alias: String,
    * Returns a column name qualified with node's alias.
    */
   def expr = dialect.qualifyColumn(column, node.alias)
-
-  /* PREDICATES */
-  def eq(value: Any) = new SimpleExpression(expr + dialect.eq, List(value))
-  def ne(value: Any) = new SimpleExpression(expr + dialect.ne, List(value))
-  def gt(value: Any) = new SimpleExpression(expr + dialect.gt, List(value))
-  def ge(value: Any) = new SimpleExpression(expr + dialect.ge, List(value))
-  def lt(value: Any) = new SimpleExpression(expr + dialect.lt, List(value))
-  def le(value: Any) = new SimpleExpression(expr + dialect.le, List(value))
-  def isNull = new SimpleExpression(expr + dialect.isNull, Nil)
-  def isNotNull = new SimpleExpression(expr + dialect.isNotNull, Nil)
-  def like(value: String) = new SimpleExpression(expr + dialect.like, List(value))
-  def between(lowerValue: Any, upperValue: Any) =
-    new SimpleExpression(expr + dialect.between, List(lowerValue, upperValue))
 
   def toSql = dialect.columnAlias(column, alias, node.alias)
 
