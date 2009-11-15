@@ -44,6 +44,17 @@ class Query extends Configurable with JDBCHelper {
     return result
   })
 
+  def uniqueResult: Option[Array[Any]] = resultSet(rs => {
+    if (!rs.next) return None
+    else if (rs.isLast) return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
+    else throw new ORMException("Unique result expected, but multiple rows found.")
+  })
+
+  def firstResult: Option[Array[Any]] = resultSet(rs => {
+    if (!rs.next) return None
+    else return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
+  })
+
   def toSql = configuration.dialect.select(this)
 
   override def toString = toSql
