@@ -92,6 +92,11 @@ abstract class Table extends Relation with SchemaObject {
   def qualifiedName = dialect.tableName(this)
 
   /**
+   * List of sequences associated with this table.
+   */
+  def sequences = columns.flatMap(_.sequence)
+
+  /**
    * Table's column list.
    */
   def columns = _columns
@@ -178,16 +183,17 @@ abstract class Table extends Relation with SchemaObject {
    */
   def sqlDrop = dialect.dropTable(this)
 
-  /**
-   * Produces a list of SQL ALTER TABLE ADD CONSTRAINT statements.
-   */
-  def sqlCreateConstraints: Seq[String] =
-    constraints.map(_.sqlCreate)
+}
 
-  /**
-   * Produces a list of SQL ALTER TABLE DROP CONSTRAINT statements.
-   */
-  def sqlDropConstraints: Seq[String] =
-    constraints.map(_.sqlDrop)
+/**
+ * Just a helper that defines long primary key column "id" with sequence.
+ */
+abstract class GenericTable extends Table {
+
+  val id = longColumn("id")
+      .autoIncrement
+      .notNull
+  
+  def primaryKey = pk(id)
 
 }

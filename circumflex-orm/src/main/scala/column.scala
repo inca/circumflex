@@ -12,7 +12,8 @@ abstract class Column[T](val table: Table,
                          val sqlType: String)
     extends SchemaObject {
 
-  private var _nullable = true;
+  protected var _nullable = true;
+  protected var _sequence: Option[Sequence] = None;
 
   /**
    * DSL-like way to qualify a column with NOT NULL constraint.
@@ -26,6 +27,16 @@ abstract class Column[T](val table: Table,
    * Is this column nullable?
    */
   def nullable: Boolean = _nullable
+
+  /**
+   * Is this column's value generated using database sequence?
+   */
+  def generated: Boolean = false
+
+  /**
+   * Get a sequence for autoincrement columns.
+   */
+  def sequence: Option[Sequence] = _sequence
 
   /**
    * DSL-like way to qualify a column with UNIQUE constraint.
@@ -74,6 +85,14 @@ class StringColumn(table: Table, name: String)
  * Long column (bigint-typed).
  */
 class LongColumn(table: Table, name: String)
-    extends Column[Long](table, name, table.dialect.longType)
+    extends Column[Long](table, name, table.dialect.longType) {
+  /**
+   * DSL-like way to create a sequence for this column.
+   */
+  def autoIncrement: LongColumn = {
+    _sequence = Some(new Sequence(table, this))
+    this
+  }
+}
 
 

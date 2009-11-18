@@ -65,6 +65,7 @@ class DDLExport extends Configurable
   private val schemata = HashSet[Schema]()
   private val tables = HashSet[Table]()
   private val constraints = HashSet[Constraint]()
+  private val sequences = HashSet[Sequence]()
 
   /**
    * Adds a table to database objects list.
@@ -73,6 +74,7 @@ class DDLExport extends Configurable
     tables += tab
     schemata += tab.schema
     constraints ++= tab.constraints
+    sequences ++= tab.sequences
     return this
   }
 
@@ -90,13 +92,14 @@ class DDLExport extends Configurable
   def create: Unit = {
     // obtain JDBC connection
     autoClose(configuration.connectionProvider.getConnection)(conn => {
-        // we will commit every successful statement
-        conn.setAutoCommit(true)
-        // process database objects
-        createSchemata(conn)
-        createTables(conn)
-        createConstraints(conn)
-      })(e => log.error("Connection failure occured while exporing DDL.", e))
+      // we will commit every successful statement
+      conn.setAutoCommit(true)
+      // process database objects
+      createSchemata(conn)
+      createTables(conn)
+      createConstraints(conn)
+      createSequences(conn)
+    })(e => log.error("Connection failure occured while exporing DDL.", e))
   }
 
   /**
@@ -105,14 +108,27 @@ class DDLExport extends Configurable
   def drop: Unit = {
     // obtain JDBC connection
     autoClose(configuration.connectionProvider.getConnection)(conn => {
-        // we will commit every successful statement
-        conn.setAutoCommit(true)
-        // process database objects
-        dropConstraints(conn)
-        dropTables(conn)
-        dropSchemata(conn)
-      })(e => log.error("Connection failure occured while exporing DDL.", e))
+      // we will commit every successful statement
+      conn.setAutoCommit(true)
+      // process database objects
+      dropSequences(conn)
+      dropConstraints(conn)
+      dropTables(conn)
+      dropSchemata(conn)
+    })(e => log.error("Connection failure occured while exporing DDL.", e))
   }
+
+  def dropSequences(conn: Connection) =
+    for (s <- sequences) {
+      autoClose(conn.prepareStatement(s.sqlDrop))(st => {
+        st.executeUpdate
+        log.debug(s.sqlDrop)
+        log.info("DROP SEQUENCE {}: OK", s.sequenceName)
+      })(e => {
+        log.error("DROP SEQUENCE {}: {}", s.sequenceName, e.getMessage)
+        log.trace("Error dropping sequence.", e)
+      })
+    }
 
   def dropConstraints(conn: Connection) =
     for (c <- constraints) {
@@ -183,6 +199,18 @@ class DDLExport extends Configurable
       })(e => {
         log.error("CREATE CONSTRAINT {}: {}", c.constraintName, e.getMessage)
         log.trace("Error creating constraint.", e)
+      })
+    }
+
+  def createSequences(conn: Connection) =
+    for (s <- sequences) {
+      autoClose(conn.prepareStatement(s.sqlCreate))(st => {
+        st.executeUpdate
+        log.debug(s.sqlCreate)
+        log.info("CREATE SEQUENCE {}: OK", s.sequenceName)
+      })(e => {
+        log.error("CREATE SEQUENCE {}: {}", s.sequenceName, e.getMessage)
+        log.trace("Error creating sequence.", e)
       })
     }
 

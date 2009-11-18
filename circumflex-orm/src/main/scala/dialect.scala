@@ -84,7 +84,7 @@ trait Dialect {
    * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
    */
   def foreignKeyName(fk: ForeignKey) =
-    fk.table.tableName + fk.localColumn.columnName + "_fkey"
+    fk.table.tableName + "_" + fk.localColumn.columnName + "_fkey"
 
   /* DEFINITIONS */
 
@@ -136,7 +136,7 @@ trait Dialect {
    * Produces CREATE SEQUENCE statement.
    */
   def createSequence(seq: Sequence) =
-    "create sequence " + sequenceName(seq) + "\n\tstart with 1 increment by 1"
+    "create sequence " + seq.sequenceName + "\n\tstart with 1 increment by 1"
 
   /**
    * Produces CREATE TABLE statement without constraints.
@@ -186,7 +186,7 @@ trait Dialect {
    * Produces DROP SEQUENCE statement.
    */
   def dropSequence(seq: Sequence) =
-    "drop sequence " + sequenceName(seq)
+    "drop sequence " + seq.sequenceName
 
   /**
    * Produces DROP SCHEMA statement.
@@ -254,7 +254,7 @@ trait Dialect {
   /**
    * Produces SELECT statement.
    */
-  def select(q: Query): String = {
+  def select(q: Select): String = {
     var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +
         "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
     if (q.predicate != EmptyPredicate) result += "\nwhere\n\t" + q.predicate.toSql

@@ -4,7 +4,7 @@ import collection.mutable.ListBuffer
 import java.sql.ResultSet
 import org.slf4j.LoggerFactory
 
-class Query extends Configurable with JDBCHelper {
+class Select extends Configurable with JDBCHelper {
 
   val log = LoggerFactory.getLogger("ru.circumflex.orm.SQL")
 
@@ -18,7 +18,7 @@ class Query extends Configurable with JDBCHelper {
     nodes.foreach(n => projections ++= n.projections)
   }
 
-  def where(predicate: Predicate): Query = {
+  def where(predicate: Predicate): Select = {
     this.predicate = predicate
     this
   }

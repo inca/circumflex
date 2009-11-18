@@ -9,4 +9,7 @@ class Sequence(val table: Table,
   /* DDL */
   def sqlCreate = dialect.createSequence(this)
   def sqlDrop = dialect.dropSequence(this)
+
+  def sequenceName = dialect.sequenceName(this)
+
 }

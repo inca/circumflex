@@ -1,5 +1,8 @@
 package ru.circumflex.orm
 
+/**
+ * Represents records that could be recovered from relations.
+ */
 abstract class Record {
 
   private var fieldsMap: Map[Column[_], Any] = Map()
