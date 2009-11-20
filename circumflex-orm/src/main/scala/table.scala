@@ -41,12 +41,10 @@ abstract class Relation extends Configurable {
   def getParentAssociation(parent: Relation): Option[Association]
 
   /**
-   * Persists a record using SQL INSERT statement.
-   * All autoincrement fields should be initialized with
-   * next values of their sequences inside this method.
-   * @return number of rows affected by <code>executeUpdate</code>.
+   * Returns column list excluding primary key column.
    */
-  def save(record: Record)
+  def nonPKColumns: Seq[Column[_]] =
+      columns.filter(_ != primaryKey.column)
 
   override def toString = qualifiedName
 
@@ -197,27 +195,6 @@ abstract class Table extends Relation
    * Produces SQL DROP TABLE statement.
    */
   def sqlDrop = dialect.dropTable(this)
-
-  def save(record: Record): Int = {
-    sequences.foreach(seq => {
-      val nextval = seq.nextValue
-      record.update(seq.column, nextval)
-    })
-    val conn = configuration.connectionProvider.getConnection
-    val sql = dialect.insertRecord(record)
-    sqlLog.debug(sql)
-    auto (conn.prepareStatement(sql)) (st => {
-      (0 until record.relation.columns.size).foreach(ix => {
-        val col = record.relation.columns(ix)
-        val value = record.apply(col) match {
-          case Some (v) => v
-          case _ => null
-        }
-        configuration.typeConverter.write(st, value, ix + 1)
-      })
-      return st.executeUpdate
-    })
-  }
 
 }
 

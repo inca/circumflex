@@ -151,4 +151,5 @@ class JoinNode(val leftNode: RelationNode,
    * Join nodes return parent node's projections joined with child node's ones.
    */
   def projections = leftNode.projections ++ rightNode.projections
+
 }

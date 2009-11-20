@@ -266,9 +266,20 @@ trait Dialect {
   /**
    * Produces INSERT INTO .. VALUES statement.
    */
-  def insertRecord(record: Record): String = "insert into " + record.relation.qualifiedName +
-      " (\n\t" + record.relation.columns.map(_.columnName).mkString(",\n\t") +
-      ") values (" + record.relation.columns.map(_ => "?").mkString(", ") + ")"
+  def insertRecord(record: Record): String =
+    "insert into " + record.relation.qualifiedName +
+        " (\n\t" + record.relation.columns.map(_.columnName).mkString(",\n\t") +
+        ") values (" + record.relation.columns.map(_ => "?").mkString(", ") + ")"
+
+  /* UPDATE STATEMENTS */
+
+  /**
+   * Produces UPDATE statement with primary key criteria.
+   */
+  def updateRecord(record: Record): String =
+    "update " + record.relation.qualifiedName +
+        "\nset\n\t" + record.relation.nonPKColumns.map(_.columnName + " = ?").mkString(",\n\t") +
+        "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
 
 }
 

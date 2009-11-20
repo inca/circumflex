@@ -29,11 +29,6 @@ abstract class Column[T](val table: Table,
   def nullable: Boolean = _nullable
 
   /**
-   * Is this column's value generated using database sequence?
-   */
-  def generated: Boolean = false
-
-  /**
    * Get a sequence for autoincrement columns.
    */
   def sequence: Option[Sequence] = _sequence
