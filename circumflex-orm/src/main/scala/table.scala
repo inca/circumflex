@@ -30,10 +30,23 @@ abstract class Relation extends Configurable {
     child.getParentAssociation(this)
 
   /**
+   * Returns columns that correspond to this relation.
+   */
+  def columns: Seq[Column[_]]
+
+  /**
    * If possible, return an association from this relation as child to
    * specified relation as parent.
    */
   def getParentAssociation(parent: Relation): Option[Association]
+
+  /**
+   * Persists a record using SQL INSERT statement.
+   * All autoincrement fields should be initialized with
+   * next values of their sequences inside this method.
+   * @return number of rows affected by <code>executeUpdate</code>.
+   */
+  def save(record: Record)
 
   override def toString = qualifiedName
 
@@ -55,7 +68,9 @@ abstract class Relation extends Configurable {
  * In general there should be only one table instance per record class
  * (a singleton object, or, more conveniantly, the companion object).
  */
-abstract class Table extends Relation with SchemaObject {
+abstract class Table extends Relation
+    with SchemaObject
+    with JDBCHelper {
 
   private var _columns: Seq[Column[_]] = Nil
   private var _constraints: Seq[Constraint] = Nil
@@ -183,6 +198,27 @@ abstract class Table extends Relation with SchemaObject {
    */
   def sqlDrop = dialect.dropTable(this)
 
+  def save(record: Record): Int = {
+    sequences.foreach(seq => {
+      val nextval = seq.nextValue
+      record.update(seq.column, nextval)
+    })
+    val conn = configuration.connectionProvider.getConnection
+    val sql = dialect.insertRecord(record)
+    sqlLog.debug(sql)
+    auto (conn.prepareStatement(sql)) (st => {
+      (0 until record.relation.columns.size).foreach(ix => {
+        val col = record.relation.columns(ix)
+        val value = record.apply(col) match {
+          case Some (v) => v
+          case _ => null
+        }
+        configuration.typeConverter.write(st, value, ix + 1)
+      })
+      return st.executeUpdate
+    })
+  }
+
 }
 
 /**
@@ -193,7 +229,7 @@ abstract class GenericTable extends Table {
   val id = longColumn("id")
       .autoIncrement
       .notNull
-  
+
   def primaryKey = pk(id)
 
 }

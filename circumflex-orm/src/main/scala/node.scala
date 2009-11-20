@@ -35,6 +35,11 @@ abstract class RelationNode(val relation: Relation)
   def projections: Seq[Projection[_]]
 
   /**
+   * Returns columns of underlying relation.
+   */
+  def columns = relation.columns
+
+  /**
    * Retrieves an association path by delegating calls to underlying relations.
    */
   def getParentAssociation(parent: Relation): Option[Association] =

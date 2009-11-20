@@ -261,5 +261,14 @@ trait Dialect {
     return result
   }
 
+  /* INSERT STATEMENTS */
+
+  /**
+   * Produces INSERT INTO .. VALUES statement.
+   */
+  def insertRecord(record: Record): String = "insert into " + record.relation.qualifiedName +
+      " (\n\t" + record.relation.columns.map(_.columnName).mkString(",\n\t") +
+      ") values (" + record.relation.columns.map(_ => "?").mkString(", ") + ")"
+
 }
 

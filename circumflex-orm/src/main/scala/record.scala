@@ -32,4 +32,6 @@ abstract class Record {
     case _ => true
   }
 
+  def save = relation.save(this)
+
 }
