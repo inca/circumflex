@@ -35,7 +35,7 @@ abstract class Record extends JDBCHelper {
     case _ => true
   }
 
-  private def insertRecord: Int = {
+  def insert: Int = {
     generateSequenceFields
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.insertRecord(this)
@@ -46,7 +46,7 @@ abstract class Record extends JDBCHelper {
     })
   }
 
-  private def updateRecord: Int = {
+  def update: Int = {
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.updateRecord(this)
     sqlLog.debug(sql)
@@ -76,6 +76,16 @@ abstract class Record extends JDBCHelper {
       this.update(seq.column, nextval)
     })
 
-  def save = if (isIdentified) updateRecord else insertRecord
+  def save = if (isIdentified) update else insert
+
+  def delete: Int = {
+    val conn = relation.configuration.connectionProvider.getConnection
+    val sql = relation.dialect.deleteRecord(this)
+    sqlLog.debug(sql)
+    auto (conn.prepareStatement(sql)) (st => {
+      relation.configuration.typeConverter.write(st, primaryKey.get, 1)
+      return st.executeUpdate
+    })
+  }
 
 }

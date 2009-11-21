@@ -281,5 +281,14 @@ trait Dialect {
         "\nset\n\t" + record.relation.nonPKColumns.map(_.columnName + " = ?").mkString(",\n\t") +
         "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
 
+  /* DELETE STATEMENTS */
+
+  /**
+   * Produces DELETE statement with primary key criteria.
+   */
+  def deleteRecord(record: Record): String =
+    "delete from " + record.relation.qualifiedName +
+        "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
+
 }
 

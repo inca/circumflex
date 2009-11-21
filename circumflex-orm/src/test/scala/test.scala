@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 class Category extends Record {
   def relation = Category
+  val id = field(Category.id)
   val name = field(Category.name)
 
   override def toString =
@@ -18,6 +19,7 @@ object Category extends GenericTable {
 
 class Book extends Record {
   def relation = Book
+  val id = field(Category.id)
   val title = field(Book.title)
 
   override def toString =
