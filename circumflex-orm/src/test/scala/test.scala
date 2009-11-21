@@ -19,8 +19,9 @@ object Category extends GenericTable {
 
 class Book extends Record {
   def relation = Book
-  val id = field(Category.id)
+  val id = field(Book.id)
   val title = field(Book.title)
+  val categoryId = field(Book.category.localColumn)
 
   override def toString =
     if (isIdentified) title.toString
