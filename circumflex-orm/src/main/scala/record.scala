@@ -36,7 +36,6 @@ abstract class Record extends JDBCHelper {
   }
 
   def insert: Int = {
-    generateSequenceFields
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.insertRecord(this)
     sqlLog.debug(sql)
@@ -60,23 +59,11 @@ abstract class Record extends JDBCHelper {
     })
   }
 
-  private def setParams(st: PreparedStatement, cols: Seq[Column[_]]) =
-    (0 until cols.size).foreach(ix => {
-      val col = cols(ix)
-      val value = this.apply(col) match {
-        case Some (v) => v
-        case _ => null
-      }
-      relation.configuration.typeConverter.write(st, value, ix + 1)
-    })
-
-  private def generateSequenceFields: Unit =
-    relation.columns.flatMap(_.sequence).foreach(seq => {
-      val nextval = seq.nextValue
-      this.update(seq.column, nextval)
-    })
-
-  def save = if (isIdentified) update else insert
+  def save = if (isIdentified) update
+  else {
+    generateFields
+    insert
+  }
 
   def delete: Int = {
     val conn = relation.configuration.connectionProvider.getConnection
@@ -87,5 +74,21 @@ abstract class Record extends JDBCHelper {
       return st.executeUpdate
     })
   }
+
+  private def setParams(st: PreparedStatement, cols: Seq[Column[_]]) =
+    (0 until cols.size).foreach(ix => {
+      val col = cols(ix)
+      val value = this.apply(col) match {
+        case Some (v) => v
+        case _ => null
+      }
+      relation.configuration.typeConverter.write(st, value, ix + 1)
+    })
+
+  def generateFields: Unit =
+    relation.columns.flatMap(_.sequence).foreach(seq => {
+      val nextval = seq.nextValue
+      this.update(seq.column, nextval)
+    })
 
 }
