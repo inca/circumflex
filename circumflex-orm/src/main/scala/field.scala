@@ -3,7 +3,7 @@ package ru.circumflex.orm
 class Field[T](val record: Record,
                val column: Column[T]) {
 
-  def get: Option[T] = record(column)
+  def get: Option[T] = record.getFieldValue(column)
 
   def set(value: T): Unit = record.setFieldValue(column,value)
 
