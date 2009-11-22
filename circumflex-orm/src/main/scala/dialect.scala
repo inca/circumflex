@@ -257,7 +257,9 @@ trait Dialect {
   def select(q: Select): String = {
     var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +
         "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
-    if (q.predicate != EmptyPredicate) result += "\nwhere\n\t" + q.predicate.toSql
+    if (q.where != EmptyPredicate) result += "\nwhere\n\t" + q.where.toSql
+    if (q.limit > -1) result += "\nlimit " + q.limit
+    if (q.offset > 0) result += "\noffset " + q.offset
     return result
   }
 

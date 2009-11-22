@@ -9,7 +9,10 @@ class Select extends Configurable with JDBCHelper {
 
   val projections = new ListBuffer[Projection[_]]
   val relations = new ListBuffer[RelationNode]
-  var predicate: Predicate = EmptyPredicate
+
+  private var _predicate: Predicate = EmptyPredicate
+  private var _limit: Int = -1
+  private var _offset: Int = 0
 
   def this(nodes: RelationNode *) = {
     this()
@@ -30,9 +33,41 @@ class Select extends Configurable with JDBCHelper {
    * Sets WHERE clause of this query.
    */
   def where(predicate: Predicate): Select = {
-    this.predicate = predicate
+    this._predicate = predicate
     return this
   }
+
+  /**
+   * Returns the WHERE clause of this query.
+   */
+  def where: Predicate = this._predicate
+
+  /**
+   * Sets maximum results for this query. Use -1 for infinite-sized queries.
+   */
+  def limit(value: Int): Select = {
+    _limit = value
+    return this
+  }
+
+  /**
+   * Sets the offset for this query.
+   */
+  def offset(value: Int): Select = {
+    _offset = value
+    return this
+  }
+
+  /**
+   * Returns this query result limit.
+   */
+  def limit = this._limit
+
+  /**
+   * Returns this query result offset.
+   */
+  def offset = this._offset
+
 
   /**
    * Executes a query and Opens a JDBC result set.
@@ -40,8 +75,8 @@ class Select extends Configurable with JDBCHelper {
   def resultSet[A](actions: ResultSet => A): A =
     auto(configuration.connectionProvider.getConnection.prepareStatement(toSql))(st => {
       sqlLog.debug(toSql)
-      (0 until predicate.parameters.size).foreach(ix =>
-          configuration.typeConverter.write(st, predicate.parameters(ix), ix + 1))
+      (0 until _predicate.parameters.size).foreach(ix =>
+          configuration.typeConverter.write(st, _predicate.parameters(ix), ix + 1))
       auto(st.executeQuery)(actions)
     })
 
@@ -73,17 +108,20 @@ class Select extends Configurable with JDBCHelper {
   })
 
   /**
-   * Executes a query and returns first result.
+   * Executes a query and returns the first result.
    * The behavior is as follows: <ul>
    * <li>return <code>None</code> if result set yields no rows;</li>
    * <li>return <code>Some(tuple)</code> if result set yields one or more row
    * (first row is returned).</li>
    * </ul>
    */
-  def first(): Option[Array[Any]] = resultSet(rs => {
-    if (!rs.next) return None
-    else return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
-  })
+  def first(): Option[Array[Any]] = {
+    limit(1)
+    resultSet(rs => {
+      if (!rs.next) return None
+      else return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
+    })
+  }
 
   def toSql = configuration.dialect.select(this)
 
