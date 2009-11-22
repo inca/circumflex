@@ -9,14 +9,16 @@ import java.sql.PreparedStatement
 abstract class Record extends JDBCHelper {
 
   private var fieldsMap: Map[Column[_], Any] = Map()
+  private var parentsMap: Map[Association, Any] = Map()
+  private var childrenMap: Map[Association, Seq[Any]] = Map()
 
-  def apply[T](col: Column[T]): Option[T] =
+  def getFieldValue[T](col: Column[T]): Option[T] =
     fieldsMap.get(col).asInstanceOf[Option[T]]
 
-  def update[T](col: Column[T], value: T): Unit =
-    update(col, Some(value))
+  def setFieldValue[T](col: Column[T], value: T): Unit =
+    setFieldValue(col, Some(value))
 
-  def update[T](col: Column[T], value: Option[T]) = value match {
+  def setFieldValue[T](col: Column[T], value: Option[T]) = value match {
     case Some(value) => {
       fieldsMap += (col -> value)
     } case _ => {
@@ -35,7 +37,7 @@ abstract class Record extends JDBCHelper {
     case _ => true
   }
 
-  def insert: Int = {
+  def insert(): Int = {
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.insertRecord(this)
     sqlLog.debug(sql)
@@ -45,7 +47,7 @@ abstract class Record extends JDBCHelper {
     })
   }
 
-  def update: Int = {
+  def update(): Int = {
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.updateRecord(this)
     sqlLog.debug(sql)
@@ -59,13 +61,13 @@ abstract class Record extends JDBCHelper {
     })
   }
 
-  def save = if (isIdentified) update
+  def save() = if (isIdentified) update()
   else {
     generateFields
-    insert
+    insert()
   }
 
-  def delete: Int = {
+  def delete(): Int = {
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.deleteRecord(this)
     sqlLog.debug(sql)
@@ -78,17 +80,17 @@ abstract class Record extends JDBCHelper {
   private def setParams(st: PreparedStatement, cols: Seq[Column[_]]) =
     (0 until cols.size).foreach(ix => {
       val col = cols(ix)
-      val value = this.apply(col) match {
+      val value = this.getFieldValue(col) match {
         case Some (v) => v
         case _ => null
       }
       relation.configuration.typeConverter.write(st, value, ix + 1)
     })
 
-  def generateFields: Unit =
+  def generateFields(): Unit =
     relation.columns.flatMap(_.sequence).foreach(seq => {
       val nextval = seq.nextValue
-      this.update(seq.column, nextval)
+      this.setFieldValue(seq.column, nextval)
     })
 
 }

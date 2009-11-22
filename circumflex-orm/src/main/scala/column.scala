@@ -1,9 +1,5 @@
 package ru.circumflex.orm
 
-
-import java.sql.{PreparedStatement, ResultSet}
-
-
 /**
  * Base functionality for columns.
  */

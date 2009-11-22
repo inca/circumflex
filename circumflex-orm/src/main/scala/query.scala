@@ -29,7 +29,7 @@ class Select extends Configurable with JDBCHelper {
     })
 
 
-  def list: Seq[Array[Any]] = resultSet(rs => {
+  def list(): Seq[Array[Any]] = resultSet(rs => {
     val result = new ListBuffer[Array[Any]]()
     while (rs.next) {
       val tuple = projections.map(_.read(rs).getOrElse(null))
@@ -38,13 +38,13 @@ class Select extends Configurable with JDBCHelper {
     return result
   })
 
-  def uniqueResult: Option[Array[Any]] = resultSet(rs => {
+  def unique(): Option[Array[Any]] = resultSet(rs => {
     if (!rs.next) return None
     else if (rs.isLast) return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
 
-  def firstResult: Option[Array[Any]] = resultSet(rs => {
+  def first(): Option[Array[Any]] = resultSet(rs => {
     if (!rs.next) return None
     else return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
   })

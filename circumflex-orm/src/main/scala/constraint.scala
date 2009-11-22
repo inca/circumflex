@@ -24,8 +24,9 @@ abstract class Constraint(val table: Table)
    * Full SQL definition statement (should be dialect-specific,
    * e.g. "CONSTRAINT mytable_pkey PRIMARY KEY (id)".
    */
-  def sqlFullDefinition: String = dialect.constraintDefinition(this)
+  def sqlFullDefinition = dialect.constraintDefinition(this)
 
+  override def toString = sqlFullDefinition
 }
 
 /**

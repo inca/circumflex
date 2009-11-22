@@ -62,6 +62,10 @@ abstract class RelationNode(val relation: Relation)
   def join(node: RelationNode): JoinNode =
     new JoinNode(this, node)
 
+  /**
+   * Returns associations defined on underlying relation.
+   */
+  def associations = relation.associations
 
   override def toString = toSql
 

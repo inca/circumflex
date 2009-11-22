@@ -35,6 +35,11 @@ abstract class Relation extends Configurable {
   def columns: Seq[Column[_]]
 
   /**
+   * Returns all associations defined for this relation.
+   */
+  def associations: Seq[Association]
+
+  /**
    * If possible, return an association from this relation as child to
    * specified relation as parent.
    */
@@ -74,17 +79,18 @@ abstract class Table extends Relation
   private var _constraints: Seq[Constraint] = Nil
 
   /**
+   * Returns all associations defined for this table.
+   */
+  def associations: Seq[Association] = _constraints.flatMap {
+    case a: Association => Some(a)
+    case _ => None
+  }
+
+  /**
    * Gets an association to parent by scanning declared foreign keys.
    */
-  def getParentAssociation(relation: Relation): Option[Association] = {
-    _constraints.foreach({
-      case c: ForeignKey =>
-        if (c.referenceTable == relation)
-          return Some(c)
-      case _ =>
-    })
-    return None
-  }
+  def getParentAssociation(relation: Relation): Option[Association] =
+    associations.find(_.parentRelation == relation)
 
   /**
    * Returns Schema object, that will containt specified table.
