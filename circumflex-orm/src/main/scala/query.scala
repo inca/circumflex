@@ -20,40 +20,11 @@ class Select extends Configurable with JDBCHelper {
   /**
    * Wraps a table into RelationNode, assigning it a query-unique alias.
    */
-  protected def makeNode(table: Table): TableNode = {
+  def makeNode(table: Table): TableNode = {
     val alias = "_" + table.relationName.take(3).mkString + aliasCounter
     aliasCounter += 1
     return new TableNode(table, alias)
   }
-
-  /**
-   * Adds a table to FROM clause, first assigning it an alias.
-   * All projections of specified table are also added to query projections list.
-   */
-  def addFrom(table: Table): Select = {
-    val node = makeNode(table)
-    relations ++= List(node)
-    projections ++= node.projections
-    this
-  }
-
-  /**
-   * Joins specified table to the last relation in FROM clause,
-   * first assigning it an alias, or throws an <code>ORMException<code>
-   * if join is impossible. If no relations were previously added,
-   * the specified table is just added to FROM clause
-   * (as if <code>addFrom</code> been called).
-   * All projections of specified table are also added to query projections list.
-   */
-  def addJoin(table: Table): Select =
-    if (relations.size == 0) return addFrom(table)
-    else {
-      val node = makeNode(table)
-      val joinNode = relations.last.join(node)
-      relations(relations.size - 1) = joinNode
-      projections ++= node.projections
-      return this
-    }
 
   /**
    * Sets WHERE clause of this query.
