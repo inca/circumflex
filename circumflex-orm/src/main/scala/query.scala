@@ -160,16 +160,18 @@ object Query extends Configurable {
   def desc(expr: String): Order = new Order(configuration.dialect.orderDesc(expr), Nil)
   def desc(proj: FieldProjection[_]): Order = desc(proj.expr)
 
+  implicit def stringToOrder(expr: String): Order =
+    new Order(expr, Nil)
+  implicit def projectionToOrder(proj: FieldProjection[_]): Order =
+    new Order(proj.expr, Nil)
+  implicit def predicateToOrder(predicate: Predicate): Order =
+    new Order(predicate.toSql, predicate.parameters)
+
   implicit def stringTonHelper(str: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(str)
 
   implicit def fieldProjectionToHelper(f: FieldProjection[_]): SimpleExpressionHelper =
     new SimpleExpressionHelper(f.expr)
-
-  implicit def stringToOrder(expr: String): Order = new Order(expr, Nil)
-  implicit def projectionToOrder(proj: FieldProjection[_]): Order = new Order(proj.expr, Nil)
-  implicit def predicateToOrder(predicate: Predicate): Order =
-    new Order(predicate.toSql, predicate.parameters)
 
   def and(predicates: Predicate *) =
     new AggregatePredicate(configuration.dialect.and, predicates.toList)
