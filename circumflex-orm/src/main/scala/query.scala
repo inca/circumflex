@@ -83,8 +83,15 @@ class Select extends Configurable with JDBCHelper {
   def resultSet[A](actions: ResultSet => A): A =
     auto(configuration.connectionProvider.getConnection.prepareStatement(toSql))(st => {
       sqlLog.debug(toSql)
-      (0 until _predicate.parameters.size).foreach(ix =>
-          configuration.typeConverter.write(st, _predicate.parameters(ix), ix + 1))
+      var paramsCounter = 1;
+      _predicate.parameters.foreach(p => {
+        configuration.typeConverter.write(st, p, paramsCounter)
+        paramsCounter += 1
+      })
+      orders.flatMap(_.parameters).foreach(p => {
+        configuration.typeConverter.write(st, p, paramsCounter)
+        paramsCounter += 1
+      })
       auto(st.executeQuery)(actions)
     })
 
@@ -139,17 +146,18 @@ class Select extends Configurable with JDBCHelper {
 /**
  * Represents an order for queries.
  */
-class Order(val expression: String)
+class Order(val expression: String,
+            val parameters: Seq[Any])
 
 /**
  * Some common helpers for making up query-related .
  */
 object Query extends Configurable {
 
-  def asc(expr: String): Order = new Order(configuration.dialect.orderAsc(expr))
+  def asc(expr: String): Order = new Order(configuration.dialect.orderAsc(expr), Nil)
   def asc(proj: FieldProjection[_]): Order = asc(proj.expr)
 
-  def desc(expr: String): Order = new Order(configuration.dialect.orderDesc(expr))
+  def desc(expr: String): Order = new Order(configuration.dialect.orderDesc(expr), Nil)
   def desc(proj: FieldProjection[_]): Order = desc(proj.expr)
 
   implicit def stringTonHelper(str: String): SimpleExpressionHelper =
@@ -158,9 +166,10 @@ object Query extends Configurable {
   implicit def fieldProjectionToHelper(f: FieldProjection[_]): SimpleExpressionHelper =
     new SimpleExpressionHelper(f.expr)
 
-  implicit def stringToOrder(expr: String): Order = new Order(expr)
-  implicit def projectionToOrder(proj: FieldProjection[_]): Order = new Order(proj.expr)
-  implicit def predicateToOrder(predicate: Predicate): Order = new Order(predicate.toSql)
+  implicit def stringToOrder(expr: String): Order = new Order(expr, Nil)
+  implicit def projectionToOrder(proj: FieldProjection[_]): Order = new Order(proj.expr, Nil)
+  implicit def predicateToOrder(predicate: Predicate): Order =
+    new Order(predicate.toSql, predicate.parameters)
 
   def and(predicates: Predicate *) =
     new AggregatePredicate(configuration.dialect.and, predicates.toList)

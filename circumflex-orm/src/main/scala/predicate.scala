@@ -61,7 +61,7 @@ class AggregatePredicate(val operator: String,
 
   def parameters = params
 
-  def toSql: String = if (predicates.size == 0)
-    EmptyPredicate.toSql
-  else "(" + predicates.map(_.toSql).mkString(operator) + ")"
+  def toSql: String =
+    if (predicates.size == 0) EmptyPredicate.toSql
+    else "(" + predicates.map(_.toSql).mkString(operator) + ")"
 }
