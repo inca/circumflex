@@ -40,7 +40,7 @@ abstract class Column[T](val table: Table,
   /**
    * DSL-like way to transform a column to foreign key association.
    */
-  def references(referenceTable: Table): ForeignKey =
+  def references(referenceTable: Table): ForeignKey[T] =
     table.foreignKey(referenceTable, this)
 
   /* DDL */

@@ -1,16 +1,24 @@
 package ru.circumflex.orm
 
-
+import collection.mutable.HashMap
 import java.sql.PreparedStatement
 
 /**
- * Represents records that could be recovered from relations.
+ * Contains base functionality for objects that can be retrieved from and
+ * persisted to database relations.
+ * There's a couple of things one must know about records.
+ * <ul>
+ * <li>Each record instance "knows" about it's main relation through
+ * <code>relation</code> method.</li>
+ * <li>Records carry the data around using <em>fields</em; internally they are
+ * stored in <code>fieldsMap</code> in a "column-to-value" form.</li>
+ * </ul>
  */
 abstract class Record extends JDBCHelper {
 
-  private var fieldsMap: Map[Column[_], Any] = Map()
-  private var parentsMap: Map[Association, Any] = Map()
-  private var childrenMap: Map[Association, Seq[Any]] = Map()
+  private val fieldsMap = HashMap[Column[_], Any]()
+  private val parentsMap = HashMap[Association, Any]()
+  private val childrenMap = HashMap[Association, Seq[Any]]()
 
   def getFieldValue[T](col: Column[T]): Option[T] =
     fieldsMap.get(col).asInstanceOf[Option[T]]

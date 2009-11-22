@@ -1,9 +1,8 @@
 package ru.circumflex.orm
 
 /**
- * Designates a relation that can be used to recover certain type of records.
- * It can be considered a table, a virtual table, a view, a subquery or everything
- * that may participate in FROM clause.
+ * Designates a relation that can be used to retrieve certain type of records.
+ * It can be considered a table, a virtual table, a view, a subquery, etc.
  */
 abstract class Relation extends Configurable {
 
@@ -33,6 +32,11 @@ abstract class Relation extends Configurable {
    * Returns columns that correspond to this relation.
    */
   def columns: Seq[Column[_]]
+
+  /**
+   * Returns all constraints defined for this relation.
+   */
+  def constraints: Seq[Constraint]
 
   /**
    * Returns all associations defined for this relation.
@@ -65,11 +69,13 @@ abstract class Relation extends Configurable {
 }
 
 /**
- * Provides base functionality for generating domain model schema,
- * as well as validating, quering, inserting, deleting and updating
- * domain model objects (a.k.a. <code>records</code>).
+ * Contains metadata necessary for generating domain model schema,
+ * as well as quering, inserting, updating, validating and deleting
+ * records.
  * In general there should be only one table instance per record class
- * (a singleton object, or, more conveniantly, the companion object).
+ * (the best practice is to implement it with a companion object for
+ * record class). However, it is also possible to create tables dynamically,
+ * the only requirement is to implement the <code>recordClass</code> method.
  */
 abstract class Table extends Relation
     with SchemaObject
@@ -164,8 +170,8 @@ abstract class Table extends Relation
   /**
    * Helper method to create a foreign key constraint.
    */
-  def foreignKey(referenceTable: Table,
-                 column: Column[_]): ForeignKey = {
+  def foreignKey[T](referenceTable: Table,
+                 column: Column[T]): ForeignKey[T] = {
     val fk = new ForeignKey(this, referenceTable, column)
     addConstraint(fk)
     return fk

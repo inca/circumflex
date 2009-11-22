@@ -83,7 +83,7 @@ trait Dialect {
   /**
    * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
    */
-  def foreignKeyName(fk: ForeignKey) =
+  def foreignKeyName(fk: ForeignKey[_]) =
     fk.table.tableName + "_" + fk.localColumn.columnName + "_fkey"
 
   /* DEFINITIONS */
@@ -111,7 +111,7 @@ trait Dialect {
    * Produces foreign key constraint definition
    * (e.g. "foreign key (ref_id) references public.ref(id) on delete cascade on update no action").
    */
-  def foreignKeyDefinition(fk: ForeignKey) =
+  def foreignKeyDefinition(fk: ForeignKey[_]) =
     "foreign key (" + fk.localColumn.columnName + ") references " +
         tableName(fk.referenceTable) + " (" + fk.referenceColumn.columnName + ")\n\t\t" +
         "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +

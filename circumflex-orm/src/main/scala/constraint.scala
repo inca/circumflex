@@ -63,9 +63,9 @@ object SetDefaultAction extends ForeignKeyAction
 /**
  * Foreign key constraint.
  */
-class ForeignKey(table: Table,
-                 val referenceTable: Table,
-                 val localColumn: Column[_])
+class ForeignKey[T](table: Table,
+                    val referenceTable: Table,
+                    val localColumn: Column[T])
     extends Constraint(table) with Association {
 
   def parentRelation = referenceTable
@@ -79,52 +79,52 @@ class ForeignKey(table: Table,
 
   def referenceColumn = referenceTable.primaryKey.column
 
-  def onDeleteNoAction: ForeignKey = {
+  def onDeleteNoAction: ForeignKey[T] = {
     onDelete = NoAction
     return this
   }
 
-  def onDeleteCascade: ForeignKey = {
+  def onDeleteCascade: ForeignKey[T] = {
     onDelete = CascadeAction
     return this
   }
 
-  def onDeleteRestrict: ForeignKey = {
+  def onDeleteRestrict: ForeignKey[T] = {
     onDelete = RestrictAction
     return this
   }
 
-  def onDeleteSetNull: ForeignKey = {
+  def onDeleteSetNull: ForeignKey[T] = {
     onDelete = SetNullAction
     return this
   }
 
-  def onDeleteSetDefault: ForeignKey = {
+  def onDeleteSetDefault: ForeignKey[T] = {
     onDelete = SetDefaultAction
     return this
   }
 
-  def onUpdateNoAction: ForeignKey = {
+  def onUpdateNoAction: ForeignKey[T] = {
     onUpdate = NoAction
     return this
   }
 
-  def onUpdateCascade: ForeignKey = {
+  def onUpdateCascade: ForeignKey[T] = {
     onUpdate = CascadeAction
     return this
   }
 
-  def onUpdateRestrict: ForeignKey = {
+  def onUpdateRestrict: ForeignKey[T] = {
     onUpdate = RestrictAction
     return this
   }
 
-  def onUpdateSetNull: ForeignKey = {
+  def onUpdateSetNull: ForeignKey[T] = {
     onUpdate = SetNullAction
     return this
   }
 
-  def onUpdateSetDefault: ForeignKey = {
+  def onUpdateSetDefault: ForeignKey[T] = {
     onUpdate = SetDefaultAction
     return this
   }

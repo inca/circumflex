@@ -67,6 +67,11 @@ abstract class RelationNode(val relation: Relation)
    */
   def associations = relation.associations
 
+  /**
+   * Returns constraints defined on underlying relation.
+   */
+  def constraints = relation.constraints
+
   override def toString = toSql
 
 }
