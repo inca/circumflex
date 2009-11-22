@@ -17,6 +17,11 @@ abstract class Relation extends Configurable {
   def primaryKey: PrimaryKey;
 
   /**
+   * Unqualified relation name.
+   */
+  def relationName: String
+
+  /**
    * Qualified relation name for use in SQL statements.
    */
   def qualifiedName: String
@@ -113,6 +118,8 @@ abstract class Table extends Relation
    * Provides table name. Defaults to unqualified record class name.
    */
   def tableName: String = recordClass.getSimpleName.toLowerCase
+
+  def relationName = tableName
 
   def qualifiedName = dialect.tableName(this)
 

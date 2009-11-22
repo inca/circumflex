@@ -52,6 +52,11 @@ abstract class RelationNode(val relation: Relation)
     }
 
   /**
+   * Proxies relation's name.
+   */
+  def relationName = relation.relationName
+
+  /**
    * Proxies relation's qualified name.
    */
   def qualifiedName = relation.qualifiedName
