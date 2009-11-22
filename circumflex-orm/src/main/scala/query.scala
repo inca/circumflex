@@ -9,7 +9,7 @@ class Select extends Configurable with JDBCHelper {
 
   val projections = new ListBuffer[Projection[_]]
   val relations = new ListBuffer[RelationNode]
-
+  val orders = new ListBuffer[Order]
   private var _predicate: Predicate = EmptyPredicate
   private var _limit: Int = -1
   private var _offset: Int = 0
@@ -41,6 +41,14 @@ class Select extends Configurable with JDBCHelper {
    * Returns the WHERE clause of this query.
    */
   def where: Predicate = this._predicate
+
+  /**
+   * Adds an order object to ORDER BY clause.
+   */
+  def addOrder(order: Order): Select = {
+    this.orders += order
+    return this
+  }
 
   /**
    * Sets maximum results for this query. Use -1 for infinite-sized queries.
@@ -126,4 +134,37 @@ class Select extends Configurable with JDBCHelper {
   def toSql = configuration.dialect.select(this)
 
   override def toString = toSql
+}
+
+/**
+ * Represents an order for queries.
+ */
+class Order(val expression: String)
+
+/**
+ * Some common helpers for making up query-related .
+ */
+object Query extends Configurable {
+
+  def asc(expr: String): Order = new Order(configuration.dialect.orderAsc(expr))
+  def asc(proj: FieldProjection[_]): Order = asc(proj.expr)
+
+  def desc(expr: String): Order = new Order(configuration.dialect.orderDesc(expr))
+  def desc(proj: FieldProjection[_]): Order = desc(proj.expr)
+
+  implicit def stringTonHelper(str: String): SimpleExpressionHelper =
+    new SimpleExpressionHelper(str)
+
+  implicit def fieldProjectionToHelper(f: FieldProjection[_]): SimpleExpressionHelper =
+    new SimpleExpressionHelper(f.expr)
+
+  implicit def stringToOrder(expr: String): Order = new Order(expr)
+  implicit def projectionToOrder(proj: FieldProjection[_]): Order = new Order(proj.expr)
+  implicit def predicateToOrder(predicate: Predicate): Order = new Order(predicate.toSql)
+
+  def and(predicates: Predicate *) =
+    new AggregatePredicate(configuration.dialect.and, predicates.toList)
+
+  def or(predicates: Predicate *) =
+    new AggregatePredicate(configuration.dialect.or, predicates.toList)
 }

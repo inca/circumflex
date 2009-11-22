@@ -65,21 +65,3 @@ class AggregatePredicate(val operator: String,
     EmptyPredicate.toSql
   else predicates.map(_.toSql).mkString(operator)
 }
-
-/**
- * Some common helpers for making up predicates.
- */
-object Predicates extends Configurable {
-
-  implicit def stringTonHelper(str: String): SimpleExpressionHelper =
-    new SimpleExpressionHelper(str)
-
-  implicit def fieldProjectionToHelper(f: FieldProjection[_]): SimpleExpressionHelper =
-    new SimpleExpressionHelper(f.expr)
-
-  def and(predicates: Predicate *) =
-    new AggregatePredicate(configuration.dialect.and, predicates.toList)
-
-  def or(predicates: Predicate *) =
-    new AggregatePredicate(configuration.dialect.or, predicates.toList)
-}

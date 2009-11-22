@@ -53,6 +53,11 @@ trait Dialect {
   def or = " or\n\t"
   def not = "not"
 
+  /* ORDER SPECIFICATOR KEYWORDS */
+
+  def asc = "asc"
+  def desc = "desc"
+
   /* GENERATED NAMES */
 
   /**
@@ -258,10 +263,24 @@ trait Dialect {
     var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +
         "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
     if (q.where != EmptyPredicate) result += "\nwhere\n\t" + q.where.toSql
-    if (q.limit > -1) result += "\nlimit " + q.limit
-    if (q.offset > 0) result += "\noffset " + q.offset
+    if (q.orders.size > 0)
+      result += "\norder by\n\t" + q.orders.map(_.expression).mkString(",\n\t")
+    if (q.limit > -1)
+      result += "\nlimit " + q.limit
+    if (q.offset > 0)
+      result += "\noffset " + q.offset
     return result
   }
+
+  /**
+   * Produces SQL for ascending order.
+   */
+  def orderAsc(expr: String) = expr + " " + asc
+
+  /**
+   * Produces SQL for descending order.
+   */
+  def orderDesc(expr: String) = expr + " " + desc
 
   /* INSERT STATEMENTS */
 
@@ -293,4 +312,3 @@ trait Dialect {
         "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
 
 }
-
