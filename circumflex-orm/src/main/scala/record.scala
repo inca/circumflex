@@ -25,8 +25,11 @@ abstract class Record extends JDBCHelper {
   private val uniqueKey = UUID.randomUUID.toString
 
   private val fieldsMap = HashMap[Column[_], Any]()
-  private val parentsMap = HashMap[Association, Any]()
-  private val childrenMap = HashMap[Association, Seq[Any]]()
+  private val manyToOneMap = HashMap[Association, Any]()
+  private val oneToManyMap = HashMap[Association, Seq[Any]]()
+
+  def relation: Relation
+  def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
 
   def getFieldValue[T](col: Column[T]): Option[T] =
     fieldsMap.get(col).asInstanceOf[Option[T]]
@@ -34,19 +37,18 @@ abstract class Record extends JDBCHelper {
   def setFieldValue[T](col: Column[T], value: T): Unit =
     setFieldValue(col, Some(value))
 
-  def setFieldValue[T](col: Column[T], value: Option[T]) = value match {
-    case Some(value) => {
-      fieldsMap += (col -> value)
-    } case _ => {
-      fieldsMap -= col
+  def setFieldValue[T](col: Column[T], value: Option[T]) = {
+    value match {
+      case Some(value) => { fieldsMap += (col -> value) }
+      case _ => { fieldsMap -= col }
     }
+    relation.associations.foreach(a => if (a.localColumn == col) {
+      manyToOneMap -= a
+      oneToManyMap -= a
+    })
   }
 
   def field[T](col: Column[T]) = new Field(this, col)
-
-  def relation: Relation
-
-  def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
 
   override def equals(obj: Any) = obj match {
     case r: Record if (r.relation == this.relation) =>
