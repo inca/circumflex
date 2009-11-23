@@ -16,13 +16,13 @@ import java.util.UUID
  * <li>Each record has a primary key field which identifies the record in database.
  * The <code>isIdentified</code> method determines, whether primary key field is set.</li>
  * <li>Two records are considered equal if their relations and primary key
- * fields are equal. If they are not identified, the internally generated unique key is
+ * fields are equal. If they are not identified, the internally generated uuid is
  * used for equality testing (so unidentified records never match each other).</li>
  * </ul>
  */
 abstract class Record extends JDBCHelper {
 
-  private val uniqueKey = UUID.randomUUID.toString
+  private val uuid = UUID.randomUUID.toString
 
   private val fieldsMap = HashMap[Column[_], Any]()
   private val manyToOneMap = HashMap[Association, Any]()
@@ -30,6 +30,11 @@ abstract class Record extends JDBCHelper {
 
   def relation: Relation
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
+  def isIdentified = primaryKey != None
+
+  /* FIELDS-RELATED STUFF */
+
+  def field[T](col: Column[T]) = new Field(this, col)
 
   def getFieldValue[T](col: Column[T]): Option[T] =
     fieldsMap.get(col).asInstanceOf[Option[T]]
@@ -39,8 +44,8 @@ abstract class Record extends JDBCHelper {
 
   def setFieldValue[T](col: Column[T], value: Option[T]) = {
     value match {
-      case Some(value) => { fieldsMap += (col -> value) }
-      case _ => { fieldsMap -= col }
+      case Some(value) => fieldsMap += (col -> value)
+      case _ => fieldsMap -= col
     }
     relation.associations.foreach(a => if (a.localColumn == col) {
       manyToOneMap -= a
@@ -48,20 +53,7 @@ abstract class Record extends JDBCHelper {
     })
   }
 
-  def field[T](col: Column[T]) = new Field(this, col)
-
-  override def equals(obj: Any) = obj match {
-    case r: Record if (r.relation == this.relation) =>
-      this.primaryKey.getOrElse(this.uniqueKey) == r.primaryKey.getOrElse(r.uniqueKey)
-    case _ => false
-  }
-
-  override def hashCode = this.primaryKey.getOrElse(uniqueKey).hashCode
-
-  def isIdentified = primaryKey match {
-    case None => false
-    case _ => true
-  }
+  /* PERSISTENCE-RELATED STUFF */
 
   def insert(): Int = {
     val conn = relation.configuration.connectionProvider.getConnection
@@ -103,6 +95,12 @@ abstract class Record extends JDBCHelper {
     })
   }
 
+  def generateFields(): Unit =
+    relation.columns.flatMap(_.sequence).foreach(seq => {
+      val nextval = seq.nextValue
+      this.setFieldValue(seq.column, nextval)
+    })
+
   private def setParams(st: PreparedStatement, cols: Seq[Column[_]]) =
     (0 until cols.size).foreach(ix => {
       val col = cols(ix)
@@ -113,10 +111,14 @@ abstract class Record extends JDBCHelper {
       relation.configuration.typeConverter.write(st, value, ix + 1)
     })
 
-  def generateFields(): Unit =
-    relation.columns.flatMap(_.sequence).foreach(seq => {
-      val nextval = seq.nextValue
-      this.setFieldValue(seq.column, nextval)
-    })
+  /* EQUALS BOILERPLATE */
+
+  override def equals(obj: Any) = obj match {
+    case r: Record if (r.relation == this.relation) =>
+      this.primaryKey.getOrElse(this.uuid) == r.primaryKey.getOrElse(r.uuid)
+    case _ => false
+  }
+
+  override def hashCode = this.primaryKey.getOrElse(uuid).hashCode
 
 }

@@ -4,9 +4,7 @@ class Field[T](val record: Record,
                val column: Column[T]) {
 
   def get: Option[T] = record.getFieldValue(column)
-
   def set(value: T): Unit = record.setFieldValue(column,value)
-
   def setNull: Unit = record.setFieldValue(column, None)
 
   def <=(value: T): Unit = set(value)
@@ -16,5 +14,10 @@ class Field[T](val record: Record,
     case Some(value) => value.toString
     case None => ""
   }
+}
+
+class ManyToOne[T](val record: Record,
+                   val association: Association) {
+  
 }
 
