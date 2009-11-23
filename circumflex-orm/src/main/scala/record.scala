@@ -55,8 +55,8 @@ abstract class Record extends JDBCHelper {
 
   /* ASSOCIATIONS-RELATED STUFF */
 
-  def manyToOne[P](association: Association) =
-    new ManyToOne(this, association.parentRelation)
+  def manyToOne[P <: Record](association: Association) =
+    new ManyToOne[P](this, association)
 
   /* PERSISTENCE-RELATED STUFF */
 
@@ -144,9 +144,9 @@ class Field[T](val record: Record,
   }
 }
 
-class ManyToOne[P <: Relation](val record: Record,
-                               val parent: P) {
+class ManyToOne[P <: Record](val record: Record,
+                             val association: Association) {
 
-  val association = record.relation.getParentAssociation(parent)
+  def get: Option[P] = None
 
 }

@@ -21,8 +21,7 @@ class Book extends Record {
   def relation = Book
   val id = field(Book.id)
   val title = field(Book.title)
-  val categoryId = field(Book.category.localColumn)
-  val category = manyToOne(Book.category)
+  val category = manyToOne[Category](Book.category)
 
   override def toString =
     if (isIdentified) title.toString
