@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 import collection.mutable.HashMap
 import java.sql.PreparedStatement
+import java.util.UUID
 
 /**
  * Contains base functionality for objects that can be retrieved from and
@@ -12,9 +13,16 @@ import java.sql.PreparedStatement
  * <code>relation</code> method.</li>
  * <li>Records carry the data around using <em>fields</em; internally they are
  * stored in <code>fieldsMap</code> in a "column-to-value" form.</li>
+ * <li>Each record has a primary key field which identifies the record in database.
+ * The <code>isIdentified</code> method determines, whether primary key field is set.</li>
+ * <li>Two records are considered equal if their relations and primary key
+ * fields are equal. If they are not identified, the internally generated unique key is
+ * used for equality testing (so unidentified records never match each other).</li>
  * </ul>
  */
 abstract class Record extends JDBCHelper {
+
+  private val uniqueKey = UUID.randomUUID.toString
 
   private val fieldsMap = HashMap[Column[_], Any]()
   private val parentsMap = HashMap[Association, Any]()
@@ -39,6 +47,14 @@ abstract class Record extends JDBCHelper {
   def relation: Relation
 
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
+
+  override def equals(obj: Any) = obj match {
+    case r: Record if (r.relation == this.relation) =>
+      this.primaryKey.getOrElse(this.uniqueKey) == r.primaryKey.getOrElse(r.uniqueKey)
+    case _ => false
+  }
+
+  override def hashCode = this.primaryKey.getOrElse(uniqueKey).hashCode
 
   def isIdentified = primaryKey match {
     case None => false
