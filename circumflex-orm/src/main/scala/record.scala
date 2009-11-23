@@ -53,6 +53,11 @@ abstract class Record extends JDBCHelper {
     })
   }
 
+  /* ASSOCIATIONS-RELATED STUFF */
+
+  def manyToOne[P](association: Association) =
+    new ManyToOne(this, association.parentRelation)
+
   /* PERSISTENCE-RELATED STUFF */
 
   def insert(): Int = {
@@ -120,5 +125,28 @@ abstract class Record extends JDBCHelper {
   }
 
   override def hashCode = this.primaryKey.getOrElse(uuid).hashCode
+
+}
+
+class Field[T](val record: Record,
+               val column: Column[T]) {
+
+  def get: Option[T] = record.getFieldValue(column)
+  def set(value: T): Unit = record.setFieldValue(column,value)
+  def setNull: Unit = record.setFieldValue(column, None)
+
+  def <=(value: T): Unit = set(value)
+  def :=(value: T): Unit = set(value)
+
+  override def toString = get match {
+    case Some(value) => value.toString
+    case None => ""
+  }
+}
+
+class ManyToOne[P <: Relation](val record: Record,
+                               val parent: P) {
+
+  val association = record.relation.getParentAssociation(parent)
 
 }
