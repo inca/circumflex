@@ -27,14 +27,14 @@ trait AliasedProjection[T] extends Projection[T] {
   def alias: String
 }
 
-class FieldProjection[T](val alias: String,
-                         val node: RelationNode,
-                         val column: Column[T])
+class FieldProjection[T, R](val alias: String,
+                            val node: RelationNode[R],
+                            val column: Column[T, R])
     extends AliasedProjection[T] with Configurable {
 
   override def configuration = node.configuration
 
-  def this(node: RelationNode, column: Column[T]) =
+  def this(node: RelationNode[R], column: Column[T, R]) =
     this(node.alias + "_" + column.columnName, node, column)
 
   def read(rs: ResultSet): Option[T] =
@@ -54,19 +54,19 @@ class FieldProjection[T](val alias: String,
 
 }
 
-class RecordProjection[R <: Record](val tableNode: TableNode)
-    extends Projection[R] {
+class RecordProjection[R](val tableNode: TableNode[R])
+    extends Projection[Record[R]] {
 
-  val columnProjections: Seq[FieldProjection[_]] =
-  tableNode.table.columns.map(col => new FieldProjection(tableNode, col))
+  val columnProjections: Seq[FieldProjection[Any, R]] =
+  tableNode.table.columns.map(col => new FieldProjection(tableNode, col.asInstanceOf[Column[Any, R]]))
 
-  def read(rs: ResultSet): Option[R] = {
+  def read(rs: ResultSet): Option[Record[R]] = {
     val record = tableNode.table.recordClass
         .getConstructor()
         .newInstance()
-        .asInstanceOf[R]
+        .asInstanceOf[Record[R]]
     columnProjections.foreach(
-      p => record.setFieldValue(p.column.asInstanceOf[Column[Any]], p.read(rs)))
+      p => record.setFieldValue(p.column, p.read(rs)))
     if (record.isIdentified) return Some(record)
     else return None
   }

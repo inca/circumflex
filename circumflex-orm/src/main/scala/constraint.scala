@@ -3,7 +3,7 @@ package ru.circumflex.orm
 /**
  * Base superclass with functionality for generating SQL constraints.
  */
-abstract class Constraint(val table: Table)
+abstract class Constraint[R](val table: Table[R])
     extends SchemaObject {
 
   /**
@@ -32,9 +32,9 @@ abstract class Constraint(val table: Table)
 /**
  * Primary key constraint.
  */
-class PrimaryKey(table: Table,
-                 val column: Column[_])
-    extends Constraint(table) {
+class PrimaryKey[T, R](table: Table[R],
+                              val column: Column[T, R])
+    extends Constraint[R](table) {
   def constraintName = table.dialect.primaryKeyName(this)
   def sqlDefinition = table.dialect.primaryKeyDefinition(this)
 }
@@ -42,9 +42,9 @@ class PrimaryKey(table: Table,
 /**
  * Unique constraint.
  */
-class UniqueKey(table: Table,
-                val columns: Seq[Column[_]])
-    extends Constraint(table) {
+class UniqueKey[R](table: Table[R],
+                             val columns: Seq[Column[_, R]])
+    extends Constraint[R](table) {
   def constraintName = table.dialect.uniqueKeyName(this)
   def sqlDefinition = table.dialect.uniqueKeyDefinition(this)
 }
@@ -63,10 +63,10 @@ object SetDefaultAction extends ForeignKeyAction
 /**
  * Foreign key constraint.
  */
-class ForeignKey[T](table: Table,
-                    val referenceTable: Table,
-                    val localColumn: Column[T])
-    extends Constraint(table) with Association {
+class ForeignKey[T, C, P](table: Table[C],
+                                              val referenceTable: Table[P],
+                                              val localColumn: Column[T, C])
+    extends Constraint[C](table) with Association[C, P] {
 
   def parentRelation = referenceTable
   def childRelation = table
@@ -79,52 +79,52 @@ class ForeignKey[T](table: Table,
 
   def referenceColumn = referenceTable.primaryKey.column
 
-  def onDeleteNoAction: ForeignKey[T] = {
+  def onDeleteNoAction: ForeignKey[T, C, P] = {
     onDelete = NoAction
     return this
   }
 
-  def onDeleteCascade: ForeignKey[T] = {
+  def onDeleteCascade: ForeignKey[T, C, P] = {
     onDelete = CascadeAction
     return this
   }
 
-  def onDeleteRestrict: ForeignKey[T] = {
+  def onDeleteRestrict: ForeignKey[T, C, P] = {
     onDelete = RestrictAction
     return this
   }
 
-  def onDeleteSetNull: ForeignKey[T] = {
+  def onDeleteSetNull: ForeignKey[T, C, P] = {
     onDelete = SetNullAction
     return this
   }
 
-  def onDeleteSetDefault: ForeignKey[T] = {
+  def onDeleteSetDefault: ForeignKey[T, C, P] = {
     onDelete = SetDefaultAction
     return this
   }
 
-  def onUpdateNoAction: ForeignKey[T] = {
+  def onUpdateNoAction: ForeignKey[T, C, P] = {
     onUpdate = NoAction
     return this
   }
 
-  def onUpdateCascade: ForeignKey[T] = {
+  def onUpdateCascade: ForeignKey[T, C, P] = {
     onUpdate = CascadeAction
     return this
   }
 
-  def onUpdateRestrict: ForeignKey[T] = {
+  def onUpdateRestrict: ForeignKey[T, C, P] = {
     onUpdate = RestrictAction
     return this
   }
 
-  def onUpdateSetNull: ForeignKey[T] = {
+  def onUpdateSetNull: ForeignKey[T, C, P] = {
     onUpdate = SetNullAction
     return this
   }
 
-  def onUpdateSetDefault: ForeignKey[T] = {
+  def onUpdateSetDefault: ForeignKey[T, C, P] = {
     onUpdate = SetDefaultAction
     return this
   }

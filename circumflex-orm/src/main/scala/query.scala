@@ -8,13 +8,13 @@ class Select extends Configurable with JDBCHelper {
   private var aliasCounter = 0;
 
   val projections = new ListBuffer[Projection[_]]
-  val relations = new ListBuffer[RelationNode]
+  val relations = new ListBuffer[RelationNode[_]]
   val orders = new ListBuffer[Order]
   private var _predicate: Predicate = EmptyPredicate
   private var _limit: Int = -1
   private var _offset: Int = 0
 
-  def this(nodes: RelationNode *) = {
+  def this(nodes: RelationNode[_] *) = {
     this()
     relations ++= nodes.toList
     nodes.foreach(n => projections ++= n.projections)
@@ -23,7 +23,7 @@ class Select extends Configurable with JDBCHelper {
   /**
    * Wraps a table into RelationNode, assigning it a query-unique alias.
    */
-  def makeNode(table: Table): TableNode = {
+  def makeNode[R](table: Table[R]): TableNode[R] = {
     val alias = "_" + table.relationName.take(3).mkString + aliasCounter
     aliasCounter += 1
     return new TableNode(table, alias)
@@ -155,14 +155,14 @@ class Order(val expression: String,
 object Query extends Configurable {
 
   def asc(expr: String): Order = new Order(configuration.dialect.orderAsc(expr), Nil)
-  def asc(proj: FieldProjection[_]): Order = asc(proj.expr)
+  def asc(proj: FieldProjection[_, _]): Order = asc(proj.expr)
 
   def desc(expr: String): Order = new Order(configuration.dialect.orderDesc(expr), Nil)
-  def desc(proj: FieldProjection[_]): Order = desc(proj.expr)
+  def desc(proj: FieldProjection[_, _]): Order = desc(proj.expr)
 
   implicit def stringToOrder(expr: String): Order =
     new Order(expr, Nil)
-  implicit def projectionToOrder(proj: FieldProjection[_]): Order =
+  implicit def projectionToOrder(proj: FieldProjection[_, _]): Order =
     new Order(proj.expr, Nil)
   implicit def predicateToOrder(predicate: Predicate): Order =
     new Order(predicate.toSql, predicate.parameters)
@@ -170,7 +170,7 @@ object Query extends Configurable {
   implicit def stringTonHelper(str: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(str)
 
-  implicit def fieldProjectionToHelper(f: FieldProjection[_]): SimpleExpressionHelper =
+  implicit def fieldProjectionToHelper(f: FieldProjection[_, _]): SimpleExpressionHelper =
     new SimpleExpressionHelper(f.expr)
 
   def and(predicates: Predicate *) =

@@ -3,18 +3,18 @@ package ru.circumflex.orm
 /**
  * Base functionality for columns.
  */
-abstract class Column[T](val table: Table,
-                         val columnName: String,
-                         val sqlType: String)
+abstract class Column[T, R](val table: Table[R],
+                                      val columnName: String,
+                                      val sqlType: String)
     extends SchemaObject {
 
   protected var _nullable = true;
-  protected var _sequence: Option[Sequence] = None;
+  protected var _sequence: Option[Sequence[R]] = None;
 
   /**
    * DSL-like way to qualify a column with NOT NULL constraint.
    */
-  def notNull: Column[T] = {
+  def notNull: Column[T, R] = {
     _nullable = false
     return this
   }
@@ -27,12 +27,12 @@ abstract class Column[T](val table: Table,
   /**
    * Get a sequence for autoincrement columns.
    */
-  def sequence: Option[Sequence] = _sequence
+  def sequence: Option[Sequence[R]] = _sequence
 
   /**
    * DSL-like way to qualify a column with UNIQUE constraint.
    */
-  def unique: Column[T] = {
+  def unique: Column[T, R] = {
     table.unique(this)
     return this
   }
@@ -40,7 +40,7 @@ abstract class Column[T](val table: Table,
   /**
    * DSL-like way to transform a column to foreign key association.
    */
-  def references(referenceTable: Table): ForeignKey[T] =
+  def references[P](referenceTable: Table[P]): ForeignKey[T, R, P] =
     table.foreignKey(referenceTable, this)
 
   /* DDL */
@@ -56,7 +56,7 @@ abstract class Column[T](val table: Table,
   override def toString = sqlDefinition
 
   override def equals(obj: Any) = obj match {
-    case col: Column[T] =>
+    case col: Column[T, R] =>
       col.table.equals(this.table) &&
           col.columnName.equalsIgnoreCase(this.columnName)
     case _ => false
@@ -69,18 +69,18 @@ abstract class Column[T](val table: Table,
 /**
  * String column (varchar-typed).
  */
-class StringColumn(table: Table, name: String)
-    extends Column[String](table, name, table.dialect.stringType)
+class StringColumn[R](table: Table[R], name: String)
+    extends Column[String, R](table, name, table.dialect.stringType)
 
 /**
  * Long column (bigint-typed).
  */
-class LongColumn(table: Table, name: String)
-    extends Column[Long](table, name, table.dialect.longType) {
+class LongColumn[R](table: Table[R], name: String)
+    extends Column[Long, R](table, name, table.dialect.longType) {
   /**
    * DSL-like way to create a sequence for this column.
    */
-  def autoIncrement: LongColumn = {
+  def autoIncrement: LongColumn[R] = {
     _sequence = Some(new Sequence(table, this))
     this
   }

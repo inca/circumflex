@@ -1,6 +1,6 @@
 package ru.circumflex.orm
 
-class Category extends Record {
+class Category extends Record[Category] {
   def relation = Category
   val id = field(Category.id)
   val name = field(Category.name)
@@ -10,26 +10,24 @@ class Category extends Record {
     else "UNKNOWN"
 }
 
-object Category extends GenericTable {
-  def recordClass = classOf[Category]
+object Category extends GenericTable[Category] {
   val name = stringColumn("name")       // Creates a column
       .notNull                          // Creates NOT NULL constraint
       .unique                           // Creates UNIQUE constraint
 }
 
-class Book extends Record {
+class Book extends Record[Book] {
   def relation = Book
   val id = field(Book.id)
   val title = field(Book.title)
-  val category = manyToOne[Category](Book.category)
+  val category = manyToOne(Book.category)
 
   override def toString =
     if (isIdentified) title.toString
     else "UNKNOWN"
 }
 
-object Book extends GenericTable {
-  def recordClass = classOf[Book]
+object Book extends GenericTable[Book] {
   val title = stringColumn("title")
       .notNull
   val category = longColumn("category_id")

@@ -3,8 +3,8 @@ package ru.circumflex.orm
 /**
  * Base functionality for SQL sequences.
  */
-class Sequence(val table: Table,
-               val column: Column[Long])
+class Sequence[R](val table: Table[R],
+                            val column: Column[Long, R])
     extends SchemaObject with JDBCHelper {
 
   override def configuration = table.configuration

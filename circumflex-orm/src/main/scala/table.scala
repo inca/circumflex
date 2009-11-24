@@ -4,17 +4,17 @@ package ru.circumflex.orm
  * Designates a relation that can be used to retrieve certain type of records.
  * It can be considered a table, a virtual table, a view, a subquery, etc.
  */
-abstract class Relation extends Configurable {
+abstract class Relation[R] extends Configurable {
 
   /**
    * Returns a class of record which this relation describes.
    */
-  def recordClass: Class[_ <: Record]
+  def recordClass: Class[Record[R]]
 
   /**
    * The mandatory primary key constraint for this relation.
    */
-  def primaryKey: PrimaryKey;
+  def primaryKey: PrimaryKey[_, R];
 
   /**
    * Unqualified relation name.
@@ -27,43 +27,43 @@ abstract class Relation extends Configurable {
   def qualifiedName: String
 
   /**
-   * If possible, return an association from this relation as parent to
-   * specified relation as child.
-   */
-  def getChildAssociation(child: Relation): Option[Association] =
-    child.getParentAssociation(this)
-
-  /**
    * Returns columns that correspond to this relation.
    */
-  def columns: Seq[Column[_]]
+  def columns: Seq[Column[_, R]]
 
   /**
    * Returns all constraints defined for this relation.
    */
-  def constraints: Seq[Constraint]
+  def constraints: Seq[Constraint[R]]
 
   /**
    * Returns all associations defined for this relation.
    */
-  def associations: Seq[Association]
+  def associations: Seq[Association[_, _]]
+
+  /**
+   * If possible, return an association from this relation as parent to
+   * specified relation as child.
+   */
+  def getChildAssociation[C](child: Relation[C]): Option[Association[C, R]] =
+    child.getParentAssociation(this)
 
   /**
    * If possible, return an association from this relation as child to
    * specified relation as parent.
    */
-  def getParentAssociation(parent: Relation): Option[Association]
+  def getParentAssociation[P](parent: Relation[P]): Option[Association[R, P]]
 
   /**
    * Returns column list excluding primary key column.
    */
-  def nonPKColumns: Seq[Column[_]] =
-      columns.filter(_ != primaryKey.column)
+  def nonPKColumns: Seq[Column[_, R]] =
+    columns.filter(_ != primaryKey.column)
 
   override def toString = qualifiedName
 
   override def equals(obj: Any) = obj match {
-    case rel: Relation =>
+    case rel: Relation[R] =>
       rel.getClass.equals(this.getClass) &&
           rel.qualifiedName.equalsIgnoreCase(this.qualifiedName)
     case _ => false
@@ -82,26 +82,38 @@ abstract class Relation extends Configurable {
  * record class). However, it is also possible to create tables dynamically,
  * the only requirement is to implement the <code>recordClass</code> method.
  */
-abstract class Table extends Relation
+abstract class Table[R] extends Relation[R]
     with SchemaObject
     with JDBCHelper {
 
-  private var _columns: Seq[Column[_]] = Nil
-  private var _constraints: Seq[Constraint] = Nil
+  private var _columns: Seq[Column[_, R]] = Nil
+  private var _constraints: Seq[Constraint[R]] = Nil
+  private var _cachedRecordClass: Class[Record[R]] = null;
+
+  /**
+   * Uses companion object runtime convention to find a record class.
+   * Override it if you are not using companion objects.
+   */
+  def recordClass: Class[Record[R]] = {
+    if (_cachedRecordClass == null)
+      _cachedRecordClass = Class.forName(this.getClass.getName.replaceAll("(.*)\\$$","$1"))
+          .asInstanceOf[Class[Record[R]]]
+    return _cachedRecordClass
+  }
 
   /**
    * Returns all associations defined for this table.
    */
-  def associations: Seq[Association] = _constraints.flatMap {
-    case a: Association => Some(a)
+  def associations: Seq[Association[_, _]] = _constraints.flatMap {
+    case a: Association[_, _] => Some(a)
     case _ => None
   }
 
   /**
    * Gets an association to parent by scanning declared foreign keys.
    */
-  def getParentAssociation(relation: Relation): Option[Association] =
-    associations.find(_.parentRelation == relation)
+  def getParentAssociation[P](relation: Relation[P]): Option[Association[R, P]] =
+    associations.find(_.parentRelation == relation).asInstanceOf[Option[Association[R, P]]]
 
   /**
    * Returns Schema object, that will containt specified table.
@@ -141,18 +153,18 @@ abstract class Table extends Relation
   /**
    * Creates an alias to use this table in SQL FROM clause.
    */
-  def as(alias: String): TableNode = new TableNode(this, alias)
+  def as(alias: String): TableNode[R] = new TableNode(this, alias)
 
   /**
    * Adds some columns to this table.
    */
-  def addColumn(cols: Column[_]*) =
+  def addColumn(cols: Column[_, R]*) =
     _columns ++= cols.toList
 
   /**
    * Adds some constraints to this table.
    */
-  def addConstraint(constrs: Constraint*) =
+  def addConstraint(constrs: Constraint[R]*) =
     _constraints ++= constrs.toList
 
   /* HELPERS */
@@ -160,7 +172,7 @@ abstract class Table extends Relation
   /**
    * Helper method to create primary key constraint.
    */
-  def pk(column: Column[_]): PrimaryKey = {
+  def pk[T](column: Column[T, R]): PrimaryKey[T, R] = {
     val pk = new PrimaryKey(this, column)
     return pk;
   }
@@ -168,7 +180,7 @@ abstract class Table extends Relation
   /**
    * Helper method to create unique constraint.
    */
-  def unique(columns: Column[_]*): UniqueKey = {
+  def unique(columns: Column[_, R]*): UniqueKey[R] = {
     val constr = new UniqueKey(this, columns.toList)
     addConstraint(constr)
     return constr
@@ -177,8 +189,8 @@ abstract class Table extends Relation
   /**
    * Helper method to create a foreign key constraint.
    */
-  def foreignKey[T](referenceTable: Table,
-                 column: Column[T]): ForeignKey[T] = {
+  def foreignKey[T, P](referenceTable: Table[P],
+                       column: Column[T, R]): ForeignKey[T, R, P] = {
     val fk = new ForeignKey(this, referenceTable, column)
     addConstraint(fk)
     return fk
@@ -187,7 +199,7 @@ abstract class Table extends Relation
   /**
    * Helper method to create a bigint column.
    */
-  def longColumn(name: String): LongColumn = {
+  def longColumn(name: String): LongColumn[R] = {
     val col = new LongColumn(this, name)
     addColumn(col)
     return col
@@ -196,7 +208,7 @@ abstract class Table extends Relation
   /**
    * Helper method to create a string column.
    */
-  def stringColumn(name: String): StringColumn = {
+  def stringColumn(name: String): StringColumn[R] = {
     val col = new StringColumn(this, name)
     addColumn(col)
     return col
@@ -220,7 +232,7 @@ abstract class Table extends Relation
 /**
  * Just a helper that defines long primary key column "id" with sequence.
  */
-abstract class GenericTable extends Table {
+abstract class GenericTable[R] extends Table[R] {
 
   val id = longColumn("id")
       .autoIncrement

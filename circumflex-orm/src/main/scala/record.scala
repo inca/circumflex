@@ -20,43 +20,41 @@ import java.util.UUID
  * used for equality testing (so unidentified records never match each other).</li>
  * </ul>
  */
-abstract class Record extends JDBCHelper {
+abstract class Record[R] extends JDBCHelper {
 
   private val uuid = UUID.randomUUID.toString
 
-  private val fieldsMap = HashMap[Column[_], Any]()
-  private val manyToOneMap = HashMap[Association, Any]()
-  private val oneToManyMap = HashMap[Association, Seq[Any]]()
+  private val fieldsMap = HashMap[Column[_, R], Any]()
+  private val manyToOneMap = HashMap[Association[R, _], Any]()
+  private val oneToManyMap = HashMap[Association[_, R], Seq[Any]]()
 
-  def relation: Relation
+  def relation: Relation[R]
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
   def isIdentified = primaryKey != None
 
   /* FIELDS-RELATED STUFF */
 
-  def field[T](col: Column[T]) = new Field(this, col)
+  def field[T](col: Column[T, R]) = new Field(this, col)
 
-  def getFieldValue[T](col: Column[T]): Option[T] =
+  def getFieldValue[T](col: Column[T, R]): Option[T] =
     fieldsMap.get(col).asInstanceOf[Option[T]]
 
-  def setFieldValue[T](col: Column[T], value: T): Unit =
+  def setFieldValue[T](col: Column[T, R], value: T): Unit =
     setFieldValue(col, Some(value))
 
-  def setFieldValue[T](col: Column[T], value: Option[T]) = {
+  def setFieldValue[T](col: Column[T, R], value: Option[T]) = {
     value match {
       case Some(value) => fieldsMap += (col -> value)
       case _ => fieldsMap -= col
     }
-    relation.associations.foreach(a => if (a.localColumn == col) {
-      manyToOneMap -= a
-      oneToManyMap -= a
-    })
+    manyToOneMap.keys.filter(_.localColumn == col).foreach(manyToOneMap -= _)
+    oneToManyMap.keys.filter(_.localColumn == col).foreach(oneToManyMap -= _)
   }
 
   /* ASSOCIATIONS-RELATED STUFF */
 
-  def manyToOne[P <: Record](association: Association) =
-    new ManyToOne[P](this, association)
+  def manyToOne[P](association: Association[R, P]) =
+    new ManyToOne[R, P](this, association)
 
   /* PERSISTENCE-RELATED STUFF */
 
@@ -106,7 +104,7 @@ abstract class Record extends JDBCHelper {
       this.setFieldValue(seq.column, nextval)
     })
 
-  private def setParams(st: PreparedStatement, cols: Seq[Column[_]]) =
+  private def setParams(st: PreparedStatement, cols: Seq[Column[_, R]]) =
     (0 until cols.size).foreach(ix => {
       val col = cols(ix)
       val value = this.getFieldValue(col) match {
@@ -119,7 +117,7 @@ abstract class Record extends JDBCHelper {
   /* EQUALS BOILERPLATE */
 
   override def equals(obj: Any) = obj match {
-    case r: Record if (r.relation == this.relation) =>
+    case r: Record[R] if (r.relation == this.relation) =>
       this.primaryKey.getOrElse(this.uuid) == r.primaryKey.getOrElse(r.uuid)
     case _ => false
   }
@@ -128,8 +126,8 @@ abstract class Record extends JDBCHelper {
 
 }
 
-class Field[T](val record: Record,
-               val column: Column[T]) {
+class Field[T, R](val record: Record[R],
+                  val column: Column[T, R]) {
 
   def get: Option[T] = record.getFieldValue(column)
   def set(value: T): Unit = record.setFieldValue(column,value)
@@ -144,8 +142,8 @@ class Field[T](val record: Record,
   }
 }
 
-class ManyToOne[P <: Record](val record: Record,
-                             val association: Association) {
+class ManyToOne[C, P](val record: Record[C],
+                      val association: Association[C, P]) {
 
   def get: Option[P] = None
 

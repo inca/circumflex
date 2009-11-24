@@ -4,8 +4,8 @@ package ru.circumflex.orm
  * Wraps relational nodes (tables, views, virtual tables, subqueries and other stuff)
  * with an alias so that they may appear within SQL FROM clause.
  */
-abstract class RelationNode(val relation: Relation)
-    extends Relation with Configurable {
+abstract class RelationNode[R](val relation: Relation[R])
+    extends Relation[R] with Configurable {
 
   def recordClass = relation.recordClass
 
@@ -42,11 +42,11 @@ abstract class RelationNode(val relation: Relation)
   /**
    * Retrieves an association path by delegating calls to underlying relations.
    */
-  def getParentAssociation(parent: Relation): Option[Association] =
+  def getParentAssociation[P](parent: Relation[P]): Option[Association[R, P]] =
     parent match {
-      case parentNode: RelationNode => getParentAssociation(parentNode.relation)
+      case parentNode: RelationNode[P] => getParentAssociation(parentNode.relation)
       case _ => relation match {
-        case childNode: RelationNode => childNode.relation.getParentAssociation(parent)
+        case childNode: RelationNode[R] => childNode.relation.getParentAssociation(parent)
         case _ => relation.getParentAssociation(parent)
       }
     }
@@ -64,7 +64,7 @@ abstract class RelationNode(val relation: Relation)
   /**
    * Creates a join with specified node.
    */
-  def join(node: RelationNode): JoinNode =
+  def join[J](node: RelationNode[J]): JoinNode[R, J] =
     new JoinNode(this, node)
 
   /**
@@ -81,9 +81,9 @@ abstract class RelationNode(val relation: Relation)
 
 }
 
-class TableNode(val table: Table,
-                var alias: String)
-    extends RelationNode(table) {
+class TableNode[R](val table: Table[R],
+                             var alias: String)
+    extends RelationNode[R](table) {
 
   /**
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
@@ -98,18 +98,18 @@ class TableNode(val table: Table,
   /**
    * Creates a record projection.
    */
-  def record = new RecordProjection(this)
+  def record = new RecordProjection[R](this)
 
   /**
    * Creates a field projection with specified alias.
    */
-  def field[T](col: Column[T], alias: String): FieldProjection[T] =
+  def field[T](col: Column[T, R], alias: String): FieldProjection[T, R] =
     new FieldProjection(alias, this, col)
 
   /**
    * Creates a field projection with default alias.
    */
-  def field[T](col: Column[T]): FieldProjection[T] =
+  def field[T](col: Column[T, R]): FieldProjection[T, R] =
     new FieldProjection(this, col)
 
 }
@@ -117,9 +117,9 @@ class TableNode(val table: Table,
 /**
  * Represents a join node between parent and child relation.
  */
-class JoinNode(val leftNode: RelationNode,
-               val rightNode: RelationNode)
-    extends RelationNode(leftNode) {
+class JoinNode[L, R](val leftNode: RelationNode[L],
+                                         val rightNode: RelationNode[R])
+    extends RelationNode[L](leftNode) {
 
   private var inverse: Boolean = false;
 
@@ -127,7 +127,7 @@ class JoinNode(val leftNode: RelationNode,
    * Evaluates an association between parent and child; throws an exception if
    * failed.
    */
-  val association: Association = leftNode.getParentAssociation(rightNode) match {
+  val association: Association[_, _] = leftNode.getParentAssociation(rightNode) match {
     case Some(a) => {
       this.inverse = true
       a
