@@ -17,6 +17,7 @@ trait Dialect {
   /* SQL TYPES */
 
   def longType = "int8"
+
   def stringType = "text"
 
   /* FOREIGN KEY ACTIONS */
@@ -32,30 +33,47 @@ trait Dialect {
   /* JOIN KEYWORDS */
 
   def innerJoin = "inner join"
+
   def leftJoin = "left join"
+
   def rightJoin = "right join"
+
   def fullJoin = "full join"
 
   /* SIMPLE PREDICATES AND KEYWORDS */
 
   def dummy = "1 = 1"
+
   def eq = " = ?"
+
   def ne = " <> ?"
+
   def gt = " > ?"
+
   def ge = " >= ?"
+
   def lt = " < ?"
+
   def le = " <= ?"
+
   def isNull = " is null"
+
   def isNotNull = " is not null"
+
   def like = " like ?"
+
   def between = " between ? and ?"
+
   def and = " and\n\t"
+
   def or = " or\n\t"
+
   def not = "not"
 
   /* ORDER SPECIFICATOR KEYWORDS */
 
   def asc = "asc"
+
   def desc = "desc"
 
   /* GENERATED NAMES */
@@ -236,7 +254,8 @@ trait Dialect {
         val childAlias = if (j.isInverse) j.leftNode.alias else j.rightNode.alias
         result += joinInternal(j.leftNode, on) + "\n\t\t" + j.sqlJoinType + " " +
             joinInternal(j.rightNode, joinOn(j.association, parentAlias, childAlias))
-      } case _ => {
+      }
+      case _ => {
         result += node.toSql
         if (on != null) result += "\n\t\t\t" + on
       }
@@ -254,7 +273,7 @@ trait Dialect {
   /**
    * Formats provided projections for use in SELECT clause (just comma-delimited mkString).
    */
-  def selectClause(projections: String *) = projections.mkString(",\n\t")
+  def selectClause(projections: String*) = projections.mkString(",\n\t")
 
   /**
    * Produces SELECT statement.

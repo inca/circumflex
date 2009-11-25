@@ -12,6 +12,7 @@ abstract class Constraint[R](val table: Table[R])
   def constraintName: String
 
   def sqlCreate: String = dialect.alterTableAddConstraint(this)
+
   def sqlDrop: String = dialect.alterTableDropConstraint(this)
 
   /**
@@ -33,9 +34,10 @@ abstract class Constraint[R](val table: Table[R])
  * Primary key constraint.
  */
 class PrimaryKey[T, R](table: Table[R],
-                              val column: Column[T, R])
+                       val column: Column[T, R])
     extends Constraint[R](table) {
   def constraintName = table.dialect.primaryKeyName(this)
+
   def sqlDefinition = table.dialect.primaryKeyDefinition(this)
 }
 
@@ -43,9 +45,10 @@ class PrimaryKey[T, R](table: Table[R],
  * Unique constraint.
  */
 class UniqueKey[R](table: Table[R],
-                             val columns: Seq[Column[_, R]])
+                   val columns: Seq[Column[_, R]])
     extends Constraint[R](table) {
   def constraintName = table.dialect.uniqueKeyName(this)
+
   def sqlDefinition = table.dialect.uniqueKeyDefinition(this)
 }
 
@@ -64,17 +67,18 @@ object SetDefaultAction extends ForeignKeyAction
  * Foreign key constraint.
  */
 class ForeignKey[T, C, P](table: Table[C],
-                                              val referenceTable: Table[P],
-                                              val localColumn: Column[T, C])
+                          val referenceTable: Table[P],
+                          val localColumn: Column[T, C])
     extends Constraint[C](table) with Association[C, P] {
-
   def parentRelation = referenceTable
+
   def childRelation = table
 
   var onDelete: ForeignKeyAction = NoAction
   var onUpdate: ForeignKeyAction = NoAction
 
   def constraintName = table.dialect.foreignKeyName(this)
+
   def sqlDefinition = table.dialect.foreignKeyDefinition(this)
 
   def referenceColumn = referenceTable.primaryKey.column

@@ -85,7 +85,6 @@ abstract class Relation[R] extends Configurable {
 abstract class Table[R] extends Relation[R]
     with SchemaObject
     with JDBCHelper {
-
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
   private var _cachedRecordClass: Class[Record[R]] = null;
@@ -96,7 +95,7 @@ abstract class Table[R] extends Relation[R]
    */
   def recordClass: Class[Record[R]] = {
     if (_cachedRecordClass == null)
-      _cachedRecordClass = Class.forName(this.getClass.getName.replaceAll("(.*)\\$$","$1"))
+      _cachedRecordClass = Class.forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"))
           .asInstanceOf[Class[Record[R]]]
     return _cachedRecordClass
   }
@@ -233,7 +232,6 @@ abstract class Table[R] extends Relation[R]
  * Just a helper that defines long primary key column "id" with sequence.
  */
 abstract class GenericTable[R] extends Table[R] {
-
   val id = longColumn("id")
       .autoIncrement
       .notNull

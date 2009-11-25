@@ -4,9 +4,8 @@ package ru.circumflex.orm
  * Base functionality for SQL sequences.
  */
 class Sequence[R](val table: Table[R],
-                            val column: Column[Long, R])
+                  val column: Column[Long, R])
     extends SchemaObject with JDBCHelper {
-
   override def configuration = table.configuration
 
   /**
@@ -26,6 +25,7 @@ class Sequence[R](val table: Table[R],
   /* DDL */
 
   def sqlCreate = dialect.createSequence(this)
+
   def sqlDrop = dialect.dropSequence(this)
 
   def sequenceName = dialect.sequenceName(this)

@@ -28,6 +28,7 @@ trait SchemaObject extends Configurable {
    * SQL statement to create this database object.
    */
   def sqlCreate: String
+
   /**
    * SQL statement to drop this database object.
    */
@@ -39,6 +40,7 @@ trait SchemaObject extends Configurable {
  */
 class Schema(val schemaName: String) extends SchemaObject {
   def sqlCreate = dialect.createSchema(this)
+
   def sqlDrop = dialect.dropSchema(this)
 
   override def equals(obj: Any) = obj match {
@@ -59,7 +61,6 @@ object DefaultSchema extends Schema("public")
  */
 class DDLExport extends Configurable
     with JDBCHelper {
-
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm.ddl")
 
   private val schemata = HashSet[Schema]()

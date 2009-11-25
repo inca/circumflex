@@ -4,7 +4,6 @@ import collection.mutable.ListBuffer
 import java.sql.ResultSet
 
 class Select extends Configurable with JDBCHelper {
-
   private var aliasCounter = 0;
 
   val projections = new ListBuffer[Projection[_]]
@@ -14,8 +13,8 @@ class Select extends Configurable with JDBCHelper {
   private var _limit: Int = -1
   private var _offset: Int = 0
 
-  def this(nodes: RelationNode[_] *) = {
-    this()
+  def this(nodes: RelationNode[_]*) = {
+    this ()
     relations ++= nodes.toList
     nodes.foreach(n => projections ++= n.projections)
   }
@@ -153,17 +152,20 @@ class Order(val expression: String,
  * Some common helpers for making up query-related .
  */
 object Query extends Configurable {
-
   def asc(expr: String): Order = new Order(configuration.dialect.orderAsc(expr), Nil)
+
   def asc(proj: FieldProjection[_, _]): Order = asc(proj.expr)
 
   def desc(expr: String): Order = new Order(configuration.dialect.orderDesc(expr), Nil)
+
   def desc(proj: FieldProjection[_, _]): Order = desc(proj.expr)
 
   implicit def stringToOrder(expr: String): Order =
     new Order(expr, Nil)
+
   implicit def projectionToOrder(proj: FieldProjection[_, _]): Order =
     new Order(proj.expr, Nil)
+
   implicit def predicateToOrder(predicate: Predicate): Order =
     new Order(predicate.toSql, predicate.parameters)
 
@@ -173,9 +175,9 @@ object Query extends Configurable {
   implicit def fieldProjectionToHelper(f: FieldProjection[_, _]): SimpleExpressionHelper =
     new SimpleExpressionHelper(f.expr)
 
-  def and(predicates: Predicate *) =
+  def and(predicates: Predicate*) =
     new AggregatePredicate(configuration.dialect.and, predicates.toList)
 
-  def or(predicates: Predicate *) =
+  def or(predicates: Predicate*) =
     new AggregatePredicate(configuration.dialect.or, predicates.toList)
 }

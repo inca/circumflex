@@ -4,10 +4,9 @@ package ru.circumflex.orm
  * Base functionality for columns.
  */
 abstract class Column[T, R](val table: Table[R],
-                                      val columnName: String,
-                                      val sqlType: String)
+                            val columnName: String,
+                            val sqlType: String)
     extends SchemaObject {
-
   protected var _nullable = true;
   protected var _sequence: Option[Sequence[R]] = None;
 
@@ -51,6 +50,7 @@ abstract class Column[T, R](val table: Table[R],
   def sqlDefinition: String = dialect.columnDefinition(this)
 
   def sqlCreate = dialect.alterTableAddColumn(this)
+
   def sqlDrop = dialect.alterTableDropColumn(this)
 
   override def toString = sqlDefinition

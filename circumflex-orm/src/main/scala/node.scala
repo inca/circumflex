@@ -6,7 +6,6 @@ package ru.circumflex.orm
  */
 abstract class RelationNode[R](val relation: Relation[R])
     extends Relation[R] with Configurable {
-
   def recordClass = relation.recordClass
 
   /**
@@ -82,7 +81,7 @@ abstract class RelationNode[R](val relation: Relation[R])
 }
 
 class TableNode[R](val table: Table[R],
-                             var alias: String)
+                   var alias: String)
     extends RelationNode[R](table) {
 
   /**
@@ -118,9 +117,8 @@ class TableNode[R](val table: Table[R],
  * Represents a join node between parent and child relation.
  */
 class JoinNode[L, R](val leftNode: RelationNode[L],
-                                         val rightNode: RelationNode[R])
+                     val rightNode: RelationNode[R])
     extends RelationNode[L](leftNode) {
-
   private var inverse: Boolean = false;
 
   /**
@@ -131,11 +129,13 @@ class JoinNode[L, R](val leftNode: RelationNode[L],
     case Some(a) => {
       this.inverse = true
       a
-    } case None => leftNode.getChildAssociation(rightNode) match {
+    }
+    case None => leftNode.getChildAssociation(rightNode) match {
       case Some(a) => {
         this.inverse = false
         a
-      } case None => throw new ORMException("Failed to join " + leftNode +
+      }
+      case None => throw new ORMException("Failed to join " + leftNode +
           " with " + rightNode + ": no associations found.")
     }
   }

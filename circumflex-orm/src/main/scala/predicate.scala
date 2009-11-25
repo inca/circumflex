@@ -10,6 +10,7 @@ trait Predicate extends Configurable {
    * when executed.
    */
   def toSql: String
+
   /**
    * The list of parameters that should be applied to this predicate.
    * Essentially these are set on JDBC prepared statement object.
@@ -25,6 +26,7 @@ trait Predicate extends Configurable {
  */
 object EmptyPredicate extends Predicate {
   def toSql = configuration.dialect.dummy
+
   def parameters = Nil
 }
 
@@ -39,14 +41,23 @@ class SimpleExpression(val expression: String,
  */
 class SimpleExpressionHelper(val expr: String) extends Configurable {
   def eq(value: Any) = new SimpleExpression(expr + dialect.eq, List(value))
+
   def ne(value: Any) = new SimpleExpression(expr + dialect.ne, List(value))
+
   def gt(value: Any) = new SimpleExpression(expr + dialect.gt, List(value))
+
   def ge(value: Any) = new SimpleExpression(expr + dialect.ge, List(value))
+
   def lt(value: Any) = new SimpleExpression(expr + dialect.lt, List(value))
+
   def le(value: Any) = new SimpleExpression(expr + dialect.le, List(value))
+
   def isNull = new SimpleExpression(expr + dialect.isNull, Nil)
+
   def isNotNull = new SimpleExpression(expr + dialect.isNotNull, Nil)
+
   def like(value: String) = new SimpleExpression(expr + dialect.like, List(value))
+
   def between(lowerValue: Any, upperValue: Any) =
     new SimpleExpression(expr + dialect.between, List(lowerValue, upperValue))
 }

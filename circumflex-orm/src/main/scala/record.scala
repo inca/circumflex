@@ -21,7 +21,6 @@ import java.util.UUID
  * </ul>
  */
 abstract class Record[R] extends JDBCHelper {
-
   private val uuid = UUID.randomUUID.toString
 
   private val fieldsMap = HashMap[Column[_, R], Any]()
@@ -29,7 +28,9 @@ abstract class Record[R] extends JDBCHelper {
   private val oneToManyMap = HashMap[Association[_, R], Seq[Any]]()
 
   def relation: Relation[R]
+
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
+
   def isIdentified = primaryKey != None
 
   /* FIELDS-RELATED STUFF */
@@ -62,7 +63,7 @@ abstract class Record[R] extends JDBCHelper {
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.insertRecord(this)
     sqlLog.debug(sql)
-    auto (conn.prepareStatement(sql)) (st => {
+    auto(conn.prepareStatement(sql))(st => {
       setParams(st, relation.columns)
       return st.executeUpdate
     })
@@ -72,7 +73,7 @@ abstract class Record[R] extends JDBCHelper {
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.updateRecord(this)
     sqlLog.debug(sql)
-    auto (conn.prepareStatement(sql)) (st => {
+    auto(conn.prepareStatement(sql))(st => {
       setParams(st, relation.nonPKColumns)
       relation.configuration.typeConverter.write(
         st,
@@ -92,7 +93,7 @@ abstract class Record[R] extends JDBCHelper {
     val conn = relation.configuration.connectionProvider.getConnection
     val sql = relation.dialect.deleteRecord(this)
     sqlLog.debug(sql)
-    auto (conn.prepareStatement(sql)) (st => {
+    auto(conn.prepareStatement(sql))(st => {
       relation.configuration.typeConverter.write(st, primaryKey.get, 1)
       return st.executeUpdate
     })
@@ -108,7 +109,7 @@ abstract class Record[R] extends JDBCHelper {
     (0 until cols.size).foreach(ix => {
       val col = cols(ix)
       val value = this.getFieldValue(col) match {
-        case Some (v) => v
+        case Some(v) => v
         case _ => null
       }
       relation.configuration.typeConverter.write(st, value, ix + 1)
@@ -128,12 +129,14 @@ abstract class Record[R] extends JDBCHelper {
 
 class Field[T, R](val record: Record[R],
                   val column: Column[T, R]) {
-
   def get: Option[T] = record.getFieldValue(column)
-  def set(value: T): Unit = record.setFieldValue(column,value)
+
+  def set(value: T): Unit = record.setFieldValue(column, value)
+
   def setNull: Unit = record.setFieldValue(column, None)
 
   def <=(value: T): Unit = set(value)
+
   def :=(value: T): Unit = set(value)
 
   override def toString = get match {
@@ -144,7 +147,6 @@ class Field[T, R](val record: Record[R],
 
 class ManyToOne[C, P](val record: Record[C],
                       val association: Association[C, P]) {
-
   def get: Option[P] = None
 
 }

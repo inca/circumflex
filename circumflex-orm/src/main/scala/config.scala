@@ -72,7 +72,6 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
  * properties reference</a> for information regarding connection pool configuration.
  */
 class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
-
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   /**
@@ -141,6 +140,7 @@ object DefaultConnectionProvider extends DefaultConnectionProvider
  */
 class ORMFilter extends AbstractCircumflexFilter {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm.filter")
+
   /**
    * Commits current transaction at the end of request processing cycle and closes current connection.
    */
@@ -169,6 +169,7 @@ class ORMFilter extends AbstractCircumflexFilter {
  */
 trait TypeConverter {
   def read(rs: ResultSet, alias: String): Option[Any]
+
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit
 }
 
@@ -202,7 +203,9 @@ object DefaultTypeConverter extends DefaultTypeConverter
  */
 trait Configuration {
   def connectionProvider: ConnectionProvider
+
   def dialect: Dialect
+
   def typeConverter: TypeConverter
 }
 
@@ -213,7 +216,9 @@ trait Configuration {
  */
 object DefaultConfiguration extends Configuration {
   def connectionProvider = DefaultConnectionProvider
+
   def dialect = DefaultDialect
+
   def typeConverter = DefaultTypeConverter
 }
 
