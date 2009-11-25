@@ -55,18 +55,18 @@ class FieldProjection[T, R](val alias: String,
 }
 
 class RecordProjection[R](val tableNode: TableNode[R])
-    extends Projection[Record[R]] {
+    extends Projection[R] {
   val columnProjections: Seq[FieldProjection[Any, R]] =
   tableNode.table.columns.map(col => new FieldProjection(tableNode, col.asInstanceOf[Column[Any, R]]))
 
-  def read(rs: ResultSet): Option[Record[R]] = {
+  def read(rs: ResultSet): Option[R] = {
     val record = tableNode.table.recordClass
         .getConstructor()
         .newInstance()
         .asInstanceOf[Record[R]]
     columnProjections.foreach(
       p => record.setField(p.column, p.read(rs)))
-    if (record.isIdentified) return Some(record)
+    if (record.isIdentified) return Some(record.asInstanceOf[R])
     else return None
   }
 

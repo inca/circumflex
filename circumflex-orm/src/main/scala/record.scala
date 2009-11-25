@@ -57,9 +57,9 @@ abstract class Record[R] extends JDBCHelper {
   def manyToOne[P](association: Association[R, P]) =
     new ManyToOne[R, P](this, association)
 
-  def getManyToOne[P](association: Association[R, P]): Option[Record[P]] =
+  def getManyToOne[P](association: Association[R, P]): Option[P] =
     manyToOneMap.get(association) match {
-      case Some(value : Record[P]) => Some(value)
+      case Some(value : P) => Some(value)
       case _ => {
         getField(association.localColumn) match {
           case Some(fkVal) => {       // Let's fetch it lazily
@@ -161,7 +161,7 @@ class Field[T, R](val record: Record[R],
 class ManyToOne[C, P](val record: Record[C],
                       val association: Association[C, P]) {
 
-  def get: Option[Record[P]] = record.getManyToOne(association)
+  def get: Option[P] = record.getManyToOne(association)
 
   override def toString = get match {
     case Some(value) => value.toString

@@ -9,7 +9,7 @@ abstract class Relation[R] extends Configurable {
   /**
    * Returns a class of record which this relation describes.
    */
-  def recordClass: Class[Record[R]]
+  def recordClass: Class[R]
 
   /**
    * The mandatory primary key constraint for this relation.
@@ -92,16 +92,16 @@ abstract class Table[R] extends Relation[R]
     with JDBCHelper {
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
-  private var _cachedRecordClass: Class[Record[R]] = null;
+  private var _cachedRecordClass: Class[R] = null;
 
   /**
    * Uses companion object runtime convention to find a record class.
    * Override it if you are not using companion objects.
    */
-  def recordClass: Class[Record[R]] = {
+  def recordClass: Class[R] = {
     if (_cachedRecordClass == null)
       _cachedRecordClass = Class.forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"))
-          .asInstanceOf[Class[Record[R]]]
+          .asInstanceOf[Class[R]]
     return _cachedRecordClass
   }
 
