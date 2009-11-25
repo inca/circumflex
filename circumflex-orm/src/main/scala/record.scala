@@ -48,6 +48,7 @@ abstract class Record[R] extends JDBCHelper {
       case Some(value) => fieldsMap += (col -> value)
       case _ => fieldsMap -= col
     }
+    // invalidate association caches
     manyToOneMap.keys.filter(_.localColumn == col).foreach(manyToOneMap -= _)
     oneToManyMap.keys.filter(_.localColumn == col).foreach(oneToManyMap -= _)
   }
@@ -57,16 +58,19 @@ abstract class Record[R] extends JDBCHelper {
   def manyToOne[P](association: Association[R, P]) =
     new ManyToOne[R, P](this, association)
 
-  def getManyToOne[P](association: Association[R, P]): Option[P] =
-    manyToOneMap.get(association) match {
-      case Some(value : P) => Some(value)
-      case _ => {
-        getField(association.localColumn) match {
-          case Some(fkVal) => {       // Let's fetch it lazily
+  def getManyToOne[P](a: Association[R, P]): Option[P] =
+    manyToOneMap.get(a) match {
+      case Some(value : P) => Some(value)   // parent is already in cache
+      case _ => {                           // lazy-fetch a parent
+        getField(a.localColumn) match {
+          case Some(localVal) => a.fetchManyToOne(localVal) match {
+            case Some(mto : P) =>
+              manyToOneMap += (a -> mto)
+              Some(mto)
+            case _ => None
           }
-          case None => manyToOneMap -= association
+          case None => None
         }
-        None
       }
     }
 
