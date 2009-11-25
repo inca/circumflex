@@ -1,5 +1,7 @@
 package ru.circumflex.orm
 
+import Query._
+
 /**
  * Designates a relation that can be used to retrieve certain type of records.
  * It can be considered a table, a virtual table, a view, a subquery, etc.
@@ -64,6 +66,11 @@ abstract class Relation[R] extends Configurable {
    * Returns a node that represents this relation.
    */
   def as(alias: String): RelationNode[R]
+
+  /**
+   * Creates a criteria object for this relation.
+   */
+  def createCriteria: Criteria[R] = new Criteria(this)
 
   override def toString = qualifiedName
 
@@ -170,6 +177,20 @@ abstract class Table[R] extends Relation[R]
    */
   def addConstraint(constrs: Constraint[R]*) =
     _constraints ++= constrs.toList
+
+  /* SIMPLE QUERIES */
+
+  /**
+   * Queries a record by it's primary key.
+   */
+  def get(pk: Any): Option[R] =
+    createCriteria.add(_.field(primaryKey.column) eq pk).unique
+
+  /**
+   * Queries all records.
+   */
+  def all(): Seq[R] =
+    createCriteria.list
 
   /* HELPERS */
 

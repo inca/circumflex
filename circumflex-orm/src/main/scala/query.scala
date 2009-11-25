@@ -169,6 +169,8 @@ class Order(val expression: String,
  * Some common helpers for making up query-related .
  */
 object Query extends Configurable {
+  def conn = configuration.connectionProvider.getConnection
+
   def asc(expr: String): Order = new Order(configuration.dialect.orderAsc(expr), Nil)
 
   def asc(proj: FieldProjection[_, _]): Order = asc(proj.expr)

@@ -28,26 +28,10 @@ trait Association[C, P] {
    */
   def referenceColumn: Column[_, P] = parentRelation.primaryKey.column
 
-  protected def manyToOneQuery(localValue: Any): Select = {
-    val q = select()
-    val node = q.makeNode(parentRelation)
-    q.addFrom(node)
-    q.where(node.field(referenceColumn).eq(localValue))
-    return q
-  }
-
   def fetchManyToOne(localValue: Any): Option[P] =
-    manyToOneQuery(localValue).unique.map(_.apply(0)).asInstanceOf[Option[P]]
-
-  protected def oneToManyQuery(referenceValue: Any): Select = {
-    val q = select()
-    val node = q.makeNode(childRelation)
-    q.addFrom(node)
-    q.where(node.field(localColumn).eq(referenceValue))
-    return q
-  }
+    parentRelation.createCriteria.add(_.field(referenceColumn).eq(localValue)).unique
 
   def fetchOneToMany(referenceValue: Any): Seq[C] =
-    oneToManyQuery(referenceValue).list.asInstanceOf[Seq[C]]
+    childRelation.createCriteria.add(_.field(localColumn).eq(referenceValue)).list
 
 }

@@ -142,6 +142,7 @@ abstract class Record[R] extends JDBCHelper {
 
   override def hashCode = this.primaryKey.getOrElse(uuid).hashCode
 
+  override def toString = relation.relationName + ": " + this.fieldsMap.toString
 }
 
 class Field[T, R](val record: Record[R],
