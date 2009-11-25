@@ -19,12 +19,13 @@ trait Association[C, P] {
   def parentRelation: Relation[P]
 
   /**
-   * Returns a list of local columns.
+   * Returns a local (a.k.a. child) column.
    */
   def localColumn: Column[_, C]
 
   /**
-   * Returns a column of the referenced table (parent) that matches local column.
+   * Returns a referenced (a.k.a. parent) column that matches local column.
+   * In normal circumstances this matches parent's primary key.
    */
   def referenceColumn: Column[_, P] = parentRelation.primaryKey.column
 

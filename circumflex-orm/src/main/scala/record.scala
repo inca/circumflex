@@ -61,18 +61,32 @@ abstract class Record[R] extends JDBCHelper {
   def getManyToOne[P](a: Association[R, P]): Option[P] =
     manyToOneMap.get(a) match {
       case Some(value : P) => Some(value)   // parent is already in cache
-      case _ => {                           // lazy-fetch a parent
-        getField(a.localColumn) match {
+      case _ => {
+        getField(a.localColumn) match {     // lazy-fetch a parent
           case Some(localVal) => a.fetchManyToOne(localVal) match {
             case Some(mto : P) =>
               manyToOneMap += (a -> mto)
               Some(mto)
-            case _ => None
+            case _ => None                  // no parent to fetch -- return None
           }
-          case None => None
+          case _ => None
         }
       }
     }
+
+  def setManyToOne[P](a: Association[R, P], value: P): Unit =
+    setManyToOne(a, Some(value))
+
+  def setManyToOne[P](a: Association[R, P], value: Option[P]): Unit = value match {
+    case Some(value: P) => {
+      manyToOneMap += (a -> value)
+      setField(a.localColumn.asInstanceOf[Column[Any, R]], value.asInstanceOf[Record[P]].primaryKey)
+    }
+    case None => {
+      manyToOneMap -= a
+      setField(a.localColumn, None)
+    }
+  }
 
   /* PERSISTENCE-RELATED STUFF */
 
@@ -167,6 +181,14 @@ class ManyToOne[C, P](val record: Record[C],
                       val association: Association[C, P]) {
 
   def get: Option[P] = record.getManyToOne(association)
+
+  def set(value: P): Unit = record.setManyToOne(association, value)
+
+  def setNull: Unit = record.setManyToOne(association, None)
+
+  def <=(value: P): Unit = set(value)
+
+  def :=(value: P): Unit = set(value)
 
   override def toString = get match {
     case Some(value) => value.toString

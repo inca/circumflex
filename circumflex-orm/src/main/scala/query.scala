@@ -59,7 +59,7 @@ class Select extends Configurable with JDBCHelper {
   def where: Predicate = this._predicate
 
   /**
-   * Adds an order object to ORDER BY clause.
+   * Adds an order to ORDER BY clause.
    */
   def addOrder(order: Order): Select = {
     this.orders += order
@@ -126,10 +126,7 @@ class Select extends Configurable with JDBCHelper {
 
   /**
    * Executes a query and returns a unique result.
-   * The behavior is as follows: <ul>
-   * <li>return <code>None</code> if result set yields no rows;</li>
-   * <li>return <code>Some(tuple)</code> if result set yields one and only one row;</li>
-   * <li>throw <code>ORMException</code> if result set yields multiple rows.</li>
+   * An exception is thrown if result set yields more than one row.
    * </ul>
    */
   def unique(): Option[Array[Any]] = resultSet(rs => {
@@ -140,10 +137,9 @@ class Select extends Configurable with JDBCHelper {
 
   /**
    * Executes a query and returns the first result.
-   * The behavior is as follows: <ul>
-   * <li>return <code>None</code> if result set yields no rows;</li>
-   * <li>return <code>Some(tuple)</code> if result set yields one or more row
-   * (first row is returned).</li>
+   * WARNING! This call implicitly sets the query limit to 1. If you plan to reuse
+   * the query object after <code>first</code> is called, set query limit manually
+   * or it will always yield a single row.
    * </ul>
    */
   def first(): Option[Array[Any]] = {
