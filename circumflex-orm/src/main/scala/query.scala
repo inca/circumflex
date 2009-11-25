@@ -42,8 +42,8 @@ class Select extends Configurable with JDBCHelper {
    * Adds specified table to FROM clause (assigning it query-unique alias).
    * All projections are added too.
    */
-  def addFrom[R](table: Table[R]): Select =
-    addFrom(makeNode(table))
+  def addFrom[R](rel: Relation[R]): Select =
+    addFrom(makeNode(rel))
 
   /**
    * Sets WHERE clause of this query.

@@ -48,11 +48,6 @@ abstract class RelationNode[R](val relation: Relation[R],
     }
 
   /**
-   * Since this is a node, return itself.
-   */
-  def toNode = this
-
-  /**
    * Proxies relation's name.
    */
   def relationName = relation.relationName
@@ -86,6 +81,18 @@ abstract class RelationNode[R](val relation: Relation[R],
     return this
   }
 
+  /**
+   * Creates a field projection with specified alias.
+   */
+  def field[T](col: Column[T, R], alias: String): FieldProjection[T, R] =
+    new FieldProjection(alias, this, col)
+
+  /**
+   * Creates a field projection with default alias.
+   */
+  def field[T](col: Column[T, R]): FieldProjection[T, R] =
+    new FieldProjection(this, col)
+
   override def toString = toSql
 
 }
@@ -110,18 +117,6 @@ class TableNode[R](val table: Table[R],
    * Creates a record projection.
    */
   def record = new RecordProjection[R](this)
-
-  /**
-   * Creates a field projection with specified alias.
-   */
-  def field[T](col: Column[T, R], alias: String): FieldProjection[T, R] =
-    new FieldProjection(alias, this, col)
-
-  /**
-   * Creates a field projection with default alias.
-   */
-  def field[T](col: Column[T, R]): FieldProjection[T, R] =
-    new FieldProjection(this, col)
 
 }
 
