@@ -60,6 +60,11 @@ abstract class Relation[R] extends Configurable {
   def nonPKColumns: Seq[Column[_, R]] =
     columns.filter(_ != primaryKey.column)
 
+  /**
+   * Returns a node that represents this relation.
+   */
+  def as(alias: String): RelationNode[R]
+
   override def toString = qualifiedName
 
   override def equals(obj: Any) = obj match {
@@ -152,7 +157,7 @@ abstract class Table[R] extends Relation[R]
   /**
    * Creates an alias to use this table in SQL FROM clause.
    */
-  def as(alias: String): TableNode[R] = new TableNode(this, alias)
+  def as(alias: String) = new TableNode(this, alias)
 
   /**
    * Adds some columns to this table.

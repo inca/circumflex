@@ -65,7 +65,7 @@ class RecordProjection[R](val tableNode: TableNode[R])
         .newInstance()
         .asInstanceOf[Record[R]]
     columnProjections.foreach(
-      p => record.setFieldValue(p.column, p.read(rs)))
+      p => record.setField(p.column, p.read(rs)))
     if (record.isIdentified) return Some(record)
     else return None
   }

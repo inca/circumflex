@@ -81,8 +81,6 @@ class ForeignKey[T, C, P](table: Table[C],
 
   def sqlDefinition = table.dialect.foreignKeyDefinition(this)
 
-  def referenceColumn = referenceTable.primaryKey.column
-
   def onDeleteNoAction: ForeignKey[T, C, P] = {
     onDelete = NoAction
     return this

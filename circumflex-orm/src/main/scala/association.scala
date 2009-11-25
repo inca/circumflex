@@ -5,6 +5,9 @@ package ru.circumflex.orm
  * Usually they are modelled as tables with foreign keys.
  */
 trait Association[C, P] {
+
+  import Query._
+
   /**
    * Returns child relation.
    */
@@ -23,6 +26,6 @@ trait Association[C, P] {
   /**
    * Returns a column of the referenced table (parent) that matches local column.
    */
-  def referenceColumn: Column[_, P]
+  def referenceColumn: Column[_, P] = parentRelation.primaryKey.column
 
 }

@@ -22,11 +22,28 @@ class Select extends Configurable with JDBCHelper {
   /**
    * Wraps a table into RelationNode, assigning it a query-unique alias.
    */
-  def makeNode[R](table: Table[R]): TableNode[R] = {
-    val alias = "_" + table.relationName.take(3).mkString + aliasCounter
+  def makeNode[R](rel: Relation[R]): RelationNode[R] = {
+    val alias = "_" + rel.relationName.take(3).mkString + aliasCounter
     aliasCounter += 1
-    return new TableNode(table, alias)
+    return rel.as(alias)
   }
+
+  /**
+   * Adds specified node to FROM clause.
+   * All projections are added too.
+   */
+  def addFrom[R](node: RelationNode[R]): Select = {
+    this.relations += node
+    this.projections ++= node.projections
+    return this
+  }
+
+  /**
+   * Adds specified table to FROM clause (assigning it query-unique alias).
+   * All projections are added too.
+   */
+  def addFrom[R](table: Table[R]): Select =
+    addFrom(makeNode(table))
 
   /**
    * Sets WHERE clause of this query.
@@ -180,4 +197,7 @@ object Query extends Configurable {
 
   def or(predicates: Predicate*) =
     new AggregatePredicate(configuration.dialect.or, predicates.toList)
+
+  def select(nodes: RelationNode[_]*): Select = new Select(nodes: _*)
+
 }

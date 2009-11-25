@@ -4,19 +4,16 @@ package ru.circumflex.orm
  * Wraps relational nodes (tables, views, virtual tables, subqueries and other stuff)
  * with an alias so that they may appear within SQL FROM clause.
  */
-abstract class RelationNode[R](val relation: Relation[R])
+abstract class RelationNode[R](val relation: Relation[R],
+                               var alias: String)
     extends Relation[R] with Configurable {
+
   def recordClass = relation.recordClass
 
   /**
    * Delegates to relation's configuration.
    */
   override def configuration = relation.configuration
-
-  /**
-   * An alias to refer the node from projections and criteria.
-   */
-  def alias: String
 
   /**
    * SQL representation of this node for use in FROM clause.
@@ -51,6 +48,11 @@ abstract class RelationNode[R](val relation: Relation[R])
     }
 
   /**
+   * Since this is a node, return itself.
+   */
+  def toNode = this
+
+  /**
    * Proxies relation's name.
    */
   def relationName = relation.relationName
@@ -76,13 +78,23 @@ abstract class RelationNode[R](val relation: Relation[R])
    */
   def constraints = relation.constraints
 
+  /**
+   * Reassigns an alias for this node.
+   */
+  def as(alias: String): this.type = {
+    this.alias = alias
+    return this
+  }
+
   override def toString = toSql
 
 }
 
 class TableNode[R](val table: Table[R],
-                   var alias: String)
-    extends RelationNode[R](table) {
+                   alias: String)
+    extends RelationNode[R](table, alias) {
+
+  def this(table: Table[R]) = this(table, "this")
 
   /**
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
@@ -118,7 +130,7 @@ class TableNode[R](val table: Table[R],
  */
 class JoinNode[L, R](val leftNode: RelationNode[L],
                      val rightNode: RelationNode[R])
-    extends RelationNode[L](leftNode) {
+    extends RelationNode[L](leftNode, leftNode.alias) {
   private var inverse: Boolean = false;
 
   /**
@@ -145,11 +157,6 @@ class JoinNode[L, R](val leftNode: RelationNode[L],
    * If parent is joined against child then this should yield <code>false</code>.
    */
   def isInverse: Boolean = inverse
-
-  /**
-   * Returns an alias of parent relation for this join.
-   */
-  def alias = leftNode.alias
 
   /**
    * Override join type if necessary.
