@@ -107,10 +107,7 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
 
 class CircumflexHashWrapper(val hash: HashModel, wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(hash, wrapper) with TemplateHashModel {
-  override def get(key: String) = hash.get(key) match {
-    case Some(value) => wrapper.wrap(value)
-    case None => super.get(key)
-  }
+  override def get(key: String) = wrapper.wrap(hash.get(key))
   override def isEmpty = false
 }
 

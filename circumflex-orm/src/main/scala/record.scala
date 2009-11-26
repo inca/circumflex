@@ -35,6 +35,8 @@ abstract class Record[R] extends JDBCHelper with HashModel {
   def isIdentified = primaryKey != None
 
   def get(key: String): Option[Any] = {
+    // workaround for method call
+    if (key == "isIdentified") return Some(isIdentified)
     // if key matches column name return a field
     relation.columns.find(_.columnName == key) match {
       case Some(col) => return getField(col)
