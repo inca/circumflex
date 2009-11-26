@@ -148,16 +148,16 @@ class ORMFilter extends AbstractCircumflexFilter {
     chain.doFilter(ctx.request, ctx.response)
     if (DefaultConnectionProvider.hasLiveConnection) try {
       DefaultConnectionProvider.getConnection.commit
-      log.trace("Committed current transaction.")
+      log.debug("Committed current transaction.")
     } catch {
       case e => {
         log.error("An error has occured while trying to commit current transaction.", e)
         DefaultConnectionProvider.getConnection.rollback
-        log.trace("Rolled back current transaction.")
+        log.debyg("Rolled back current transaction.")
       }
     } finally {
       DefaultConnectionProvider.getConnection.close
-      log.trace("Closed current connection.")
+      log.debug("Closed current connection.")
     }
   }
 }
