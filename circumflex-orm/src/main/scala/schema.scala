@@ -38,10 +38,12 @@ trait SchemaObject extends Configurable {
 /**
  * Base functionality for SQL schema.
  */
-class Schema(val schemaName: String) extends SchemaObject {
+class Schema extends SchemaObject {
   def sqlCreate = dialect.createSchema(this)
 
   def sqlDrop = dialect.dropSchema(this)
+
+  var schemaName = configuration.defaultSchemaName
 
   override def equals(obj: Any) = obj match {
     case sc: Schema => sc.schemaName.equalsIgnoreCase(this.schemaName)
@@ -54,7 +56,7 @@ class Schema(val schemaName: String) extends SchemaObject {
 /**
  * Default public schema singleton; used to avoid another abstract method on Table.
  */
-object DefaultSchema extends Schema("public")
+object DefaultSchema extends Schema
 
 /**
  * Executes DDL statements.

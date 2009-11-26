@@ -9,10 +9,17 @@ import javax.naming.InitialContext
 import javax.sql.DataSource
 import org.slf4j.LoggerFactory
 
+trait ConfigurationObject {
+  /**
+   * Returns a configuration resource bundle.
+   */
+  def configurationBundle = ResourceBundle.getBundle("cx")
+}
+
 /**
  * Defines a contract to return JDBC connections.
  */
-trait ConnectionProvider {
+trait ConnectionProvider extends ConfigurationObject {
   /**
    * Returns a JDBC connection.
    * @return JDBC connection
@@ -73,11 +80,6 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
  */
 class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
-
-  /**
-   * Returns a configuration resource bundle.
-   */
-  def configurationBundle = ResourceBundle.getBundle("cx")
 
   private val driver = configurationBundle.getString("orm.connection.driver")
   private val url = configurationBundle.getString("orm.connection.url")
@@ -169,7 +171,6 @@ class ORMFilter extends AbstractCircumflexFilter {
  */
 trait TypeConverter {
   def read(rs: ResultSet, alias: String): Option[Any]
-
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit
 }
 
@@ -201,12 +202,18 @@ object DefaultTypeConverter extends DefaultTypeConverter
  * You may want to provide your own implementation of all these methods
  * if you are not satisfied with default ones.
  */
-trait Configuration {
+trait Configuration extends ConfigurationObject {
+
   def connectionProvider: ConnectionProvider
-
   def dialect: Dialect
-
   def typeConverter: TypeConverter
+
+  def defaultSchemaName = try {
+    configurationBundle.getString("orm.defaultSchema")
+  } catch {
+    case _ => "public"
+  }
+
 }
 
 /**
@@ -216,9 +223,7 @@ trait Configuration {
  */
 object DefaultConfiguration extends Configuration {
   def connectionProvider = DefaultConnectionProvider
-
   def dialect = DefaultDialect
-
   def typeConverter = DefaultTypeConverter
 }
 
