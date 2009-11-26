@@ -1,9 +1,8 @@
 package ru.circumflex.freemarker
 
-import core.RouteContext
+import core.HashModel
 import _root_.freemarker.core.Environment
 import java.io.StringWriter
-import _root_.freemarker.ext.beans.BeansWrapper
 import _root_.freemarker.template._
 import java.util.Date
 import net.java.textilej.parser.builder.HtmlDocumentBuilder
@@ -17,20 +16,20 @@ import scala.collection.jcl.Conversions._
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any) = obj match {
     case null => null
-    case option:Option[Any] => option match {
+    case option: Option[Any] => option match {
       case Some(o) => wrap(o)
       case _ => null
     }
-    case model:TemplateModel => model
-    case ctx:RouteContext => new ScalaRequestContextWrapper(ctx, this)
-    case seq:Seq[Any] => new ScalaSeqWrapper(seq, this)
-    case map:Map[Any, Any] => new ScalaMapWrapper(map, this)
-    case it:Iterable[Any] => new ScalaIterableWrapper(it, this)
-    case it:Iterator[Any] => new ScalaIteratorWrapper(it, this)
-    case str:String => new SimpleScalar(str)
-    case date:Date => new SimpleDate(date, TemplateDateModel.UNKNOWN)
-    case num:Number => new SimpleNumber(num)
-    case bool:Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
+    case model: TemplateModel => model
+    case hash: HashModel => new CircumflexHashWrapper(hash, this)
+    case seq: Seq[Any] => new ScalaSeqWrapper(seq, this)
+    case map: scala.collection.Map[Any, Any] => new ScalaMapWrapper(map, this)
+    case it: Iterable[Any] => new ScalaIterableWrapper(it, this)
+    case it: Iterator[Any] => new ScalaIteratorWrapper(it, this)
+    case str: String => new SimpleScalar(str)
+    case date: Date => new SimpleDate(date, TemplateDateModel.UNKNOWN)
+    case num: Number => new SimpleNumber(num)
+    case bool: Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
     case obj => new ScalaBaseWrapper(obj, this)
   }
 }
@@ -41,7 +40,7 @@ class ScalaSeqWrapper[T](val seq: Seq[T], wrapper: ObjectWrapper)
   def size = seq.size
 }
 
-class ScalaMapWrapper[String,V](val map: Map[String,V], wrapper: ObjectWrapper)
+class ScalaMapWrapper[String,V](val map: scala.collection.Map[String,V], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(map, wrapper) {
   override def get(key: java.lang.String) = wrapper.wrap(
     map.get(key.asInstanceOf[String])
@@ -83,7 +82,7 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
       case other => other
     }
 
-  def get(key: String):TemplateModel = {
+  def get(key: String): TemplateModel = {
     val o = obj.asInstanceOf[Object]
     // try field
     findField(objectClass, key) match {
@@ -101,13 +100,18 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
     }
     throw new TemplateModelException("Could not resolve " + key + " of object type " + obj.asInstanceOf[Object].getClass + ".")
   }
+
   def isEmpty = false
+
 }
 
-class ScalaRequestContextWrapper(val ctx: RouteContext, wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(ctx, wrapper) with TemplateHashModel {
-  override def get(key: String) = wrapper.wrap(ctx(key))
-  override def isEmpty = ctx.params.isEmpty
+class CircumflexHashWrapper(val hash: HashModel, wrapper: ObjectWrapper)
+    extends ScalaBaseWrapper(hash, wrapper) with TemplateHashModel {
+  override def get(key: String) = hash.get(key) match {
+    case Some(value) => wrapper.wrap(value)
+    case None => super.get(key)
+  }
+  override def isEmpty = false
 }
 
 class TextileDirective extends TemplateDirectiveModel {

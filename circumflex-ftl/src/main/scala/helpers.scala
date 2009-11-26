@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletResponse
 
 trait FreemarkerHelper extends ContextAware {
 
-  private val ftlCfg: Configuration = new Configuration();
+  protected val ftlCfg: Configuration = new Configuration();
   ftlCfg.setTemplateLoader(new ClassTemplateLoader(getClass, "/"))
   ftlCfg.setObjectWrapper(new ScalaObjectWrapper())
   ftlCfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER)

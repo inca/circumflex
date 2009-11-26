@@ -1,5 +1,6 @@
 package ru.circumflex.orm
 
+import core.HashModel
 import collection.mutable.HashMap
 import java.sql.PreparedStatement
 import java.util.UUID
@@ -20,7 +21,7 @@ import java.util.UUID
  * used for equality testing (so unidentified records never match each other).</li>
  * </ul>
  */
-abstract class Record[R] extends JDBCHelper {
+abstract class Record[R] extends JDBCHelper with HashModel {
   private val uuid = UUID.randomUUID.toString
 
   private val fieldsMap = HashMap[Column[_, R], Any]()
@@ -32,6 +33,17 @@ abstract class Record[R] extends JDBCHelper {
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
 
   def isIdentified = primaryKey != None
+
+  def get(key: String): Option[Any] = {
+    // if key matches column name return a field
+    relation.columns.find(_.columnName == key) match {
+      case Some(col) => return getField(col)
+      case _ =>
+    }
+    // if key matches relation name of association, return their results
+    // TODO
+    return None
+  }
 
   /* FIELDS-RELATED STUFF */
 
@@ -164,11 +176,8 @@ class Field[T, R](val record: Record[R],
   def get: Option[T] = record.getField(column)
 
   def set(value: T): Unit = record.setField(column, value)
-
   def setNull: Unit = record.setField(column, None)
-
   def <=(value: T): Unit = set(value)
-
   def :=(value: T): Unit = set(value)
 
   override def toString = get match {
@@ -183,11 +192,8 @@ class ManyToOne[C, P](val record: Record[C],
   def get: Option[P] = record.getManyToOne(association)
 
   def set(value: P): Unit = record.setManyToOne(association, value)
-
   def setNull: Unit = record.setManyToOne(association, None)
-
   def <=(value: P): Unit = set(value)
-
   def :=(value: P): Unit = set(value)
 
   override def toString = get match {
