@@ -6,7 +6,6 @@ package ru.circumflex.orm
 class Sequence[R](val table: Table[R],
                   val column: Column[Long, R])
     extends SchemaObject with JDBCHelper {
-  override def configuration = table.configuration
 
   /**
    * Retrieves next sequence value by invoking backend NEXTVAL query.
@@ -14,7 +13,7 @@ class Sequence[R](val table: Table[R],
   def nextValue: Long = {
     val sql = dialect.selectSequenceNextVal(this)
     sqlLog.debug(sql)
-    auto(configuration.connectionProvider.getConnection.prepareStatement(sql)) {
+    auto(connectionProvider.getConnection.prepareStatement(sql)) {
       st => auto(st.executeQuery)(rs => if (rs.next) {
         return rs.getLong(1)
       } else

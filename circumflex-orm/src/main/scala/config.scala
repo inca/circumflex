@@ -9,22 +9,20 @@ import javax.naming.InitialContext
 import javax.sql.DataSource
 import org.slf4j.LoggerFactory
 
-trait ConfigurationObject {
-  /**
-   * Returns a configuration resource bundle.
-   */
-  def configurationBundle = ResourceBundle.getBundle("cx")
-}
-
 /**
  * Defines a contract to return JDBC connections.
  */
-trait ConnectionProvider extends ConfigurationObject {
+trait ConnectionProvider extends core.Configurable {
   /**
    * Returns a JDBC connection.
    * @return JDBC connection
    */
   def getConnection: Connection
+
+  /**
+   * Used to identify whether a connection returned by <code>getConnection</code> is live.
+   */
+  def hasLiveConnection: Boolean
 
 }
 
@@ -140,7 +138,7 @@ object DefaultConnectionProvider extends DefaultConnectionProvider
  * at the end of request processing cycle.
  * This filter should be the first in chain.
  */
-class ORMFilter extends AbstractCircumflexFilter {
+class ORMFilter extends AbstractCircumflexFilter with Configurable {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm.filter")
 
   /**
@@ -148,17 +146,17 @@ class ORMFilter extends AbstractCircumflexFilter {
    */
   def doFilter(ctx: RouteContext, chain: FilterChain) = {
     chain.doFilter(ctx.request, ctx.response)
-    if (DefaultConnectionProvider.hasLiveConnection) try {
-      DefaultConnectionProvider.getConnection.commit
+    if (connectionProvider.hasLiveConnection) try {
+      connectionProvider.getConnection.commit
       log.debug("Committed current transaction.")
     } catch {
       case e => {
         log.error("An error has occured while trying to commit current transaction.", e)
-        DefaultConnectionProvider.getConnection.rollback
+        connectionProvider.getConnection.rollback
         log.debug("Rolled back current transaction.")
       }
     } finally {
-      DefaultConnectionProvider.getConnection.close
+      connectionProvider.getConnection.close
       log.debug("Closed current connection.")
     }
   }
@@ -202,11 +200,11 @@ object DefaultTypeConverter extends DefaultTypeConverter
  * You may want to provide your own implementation of all these methods
  * if you are not satisfied with default ones.
  */
-trait Configuration extends ConfigurationObject {
+trait Configurable extends core.Configurable {
 
-  def connectionProvider: ConnectionProvider
-  def dialect: Dialect
-  def typeConverter: TypeConverter
+  def connectionProvider: ConnectionProvider = DefaultConnectionProvider
+  def dialect: Dialect = DefaultDialect
+  def typeConverter: TypeConverter = DefaultTypeConverter
 
   def defaultSchemaName = try {
     configurationBundle.getString("orm.defaultSchema")
@@ -215,15 +213,3 @@ trait Configuration extends ConfigurationObject {
   }
 
 }
-
-/**
- * Aggregates default implementations of ORM-related interfaces.
- * It serves as default configuration for all Table objects
- * unless their <code>configuration</code> method is overriden.
- */
-object DefaultConfiguration extends Configuration {
-  def connectionProvider = DefaultConnectionProvider
-  def dialect = DefaultDialect
-  def typeConverter = DefaultTypeConverter
-}
-

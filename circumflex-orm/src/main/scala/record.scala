@@ -103,7 +103,7 @@ abstract class Record[R] extends JDBCHelper with HashModel {
   /* PERSISTENCE-RELATED STUFF */
 
   def insert(): Int = {
-    val conn = relation.configuration.connectionProvider.getConnection
+    val conn = relation.connectionProvider.getConnection
     val sql = relation.dialect.insertRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
@@ -113,12 +113,12 @@ abstract class Record[R] extends JDBCHelper with HashModel {
   }
 
   def update(): Int = {
-    val conn = relation.configuration.connectionProvider.getConnection
+    val conn = relation.connectionProvider.getConnection
     val sql = relation.dialect.updateRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
       setParams(st, relation.nonPKColumns)
-      relation.configuration.typeConverter.write(
+      relation.typeConverter.write(
         st,
         primaryKey.get,
         relation.nonPKColumns.size + 1)
@@ -133,11 +133,11 @@ abstract class Record[R] extends JDBCHelper with HashModel {
   }
 
   def delete(): Int = {
-    val conn = relation.configuration.connectionProvider.getConnection
+    val conn = relation.connectionProvider.getConnection
     val sql = relation.dialect.deleteRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
-      relation.configuration.typeConverter.write(st, primaryKey.get, 1)
+      relation.typeConverter.write(st, primaryKey.get, 1)
       return st.executeUpdate
     })
   }
@@ -155,7 +155,7 @@ abstract class Record[R] extends JDBCHelper with HashModel {
         case Some(v) => v
         case _ => null
       }
-      relation.configuration.typeConverter.write(st, value, ix + 1)
+      relation.typeConverter.write(st, value, ix + 1)
     })
 
   /* EQUALS BOILERPLATE */

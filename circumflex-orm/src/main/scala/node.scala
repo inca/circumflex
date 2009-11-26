@@ -11,11 +11,6 @@ abstract class RelationNode[R](val relation: Relation[R],
   def recordClass = relation.recordClass
 
   /**
-   * Delegates to relation's configuration.
-   */
-  override def configuration = relation.configuration
-
-  /**
    * SQL representation of this node for use in FROM clause.
    */
   def toSql: String
@@ -106,7 +101,7 @@ class TableNode[R](val table: Table[R],
   /**
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
    */
-  def toSql = configuration.dialect.tableAlias(table, alias)
+  def toSql = dialect.tableAlias(table, alias)
 
   /**
    * Creates a record projection.
@@ -156,12 +151,12 @@ class JoinNode[L, R](val leftNode: RelationNode[L],
   /**
    * Override join type if necessary.
    */
-  def sqlJoinType: String = configuration.dialect.leftJoin
+  def sqlJoinType: String = dialect.leftJoin
 
   /**
    * Dialect should return properly joined parent and child nodes.
    */
-  def toSql = configuration.dialect.join(this)
+  def toSql = dialect.join(this)
 
   /**
    * Join nodes return parent node's projections joined with child node's ones.

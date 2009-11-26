@@ -25,7 +25,7 @@ trait Predicate extends Configurable {
  * Used to represent an empty WHERE clause (equivalent to always-true condition).
  */
 object EmptyPredicate extends Predicate {
-  def toSql = configuration.dialect.dummy
+  def toSql = dialect.dummy
 
   def parameters = Nil
 }

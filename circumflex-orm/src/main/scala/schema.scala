@@ -6,20 +6,6 @@ import java.sql.Connection
 import org.slf4j.LoggerFactory
 
 /**
- * Configuration is propagated to whatever extends this.
- */
-trait Configurable {
-  /**
-   * Configuration object is used for all persistence-related stuff.
-   * Override it if you want to use your own configuration implementation.
-   * @return DefaultConfiguration by default
-   */
-  def configuration: Configuration = DefaultConfiguration
-
-  def dialect = configuration.dialect
-}
-
-/**
  * Defines a contract for database schema objects.
  * They must provide SQL statement to create them and to drop them.
  */
@@ -43,7 +29,7 @@ class Schema extends SchemaObject {
 
   def sqlDrop = dialect.dropSchema(this)
 
-  var schemaName = configuration.defaultSchemaName
+  var schemaName = defaultSchemaName
 
   override def equals(obj: Any) = obj match {
     case sc: Schema => sc.schemaName.equalsIgnoreCase(this.schemaName)
@@ -94,7 +80,7 @@ class DDLExport extends Configurable
    */
   def create: Unit = {
     // obtain JDBC connection
-    autoClose(configuration.connectionProvider.getConnection)(conn => {
+    autoClose(connectionProvider.getConnection)(conn => {
       // we will commit every successful statement
       conn.setAutoCommit(true)
       // process database objects
@@ -110,7 +96,7 @@ class DDLExport extends Configurable
    */
   def drop: Unit = {
     // obtain JDBC connection
-    autoClose(configuration.connectionProvider.getConnection)(conn => {
+    autoClose(connectionProvider.getConnection)(conn => {
       // we will commit every successful statement
       conn.setAutoCommit(true)
       // process database objects

@@ -97,15 +97,15 @@ class Select extends Configurable with JDBCHelper {
    * Executes a query and Opens a JDBC result set.
    */
   def resultSet[A](actions: ResultSet => A): A =
-    auto(configuration.connectionProvider.getConnection.prepareStatement(toSql))(st => {
+    auto(connectionProvider.getConnection.prepareStatement(toSql))(st => {
       sqlLog.debug(toSql)
       var paramsCounter = 1;
       _predicate.parameters.foreach(p => {
-        configuration.typeConverter.write(st, p, paramsCounter)
+        typeConverter.write(st, p, paramsCounter)
         paramsCounter += 1
       })
       orders.flatMap(_.parameters).foreach(p => {
-        configuration.typeConverter.write(st, p, paramsCounter)
+        typeConverter.write(st, p, paramsCounter)
         paramsCounter += 1
       })
       auto(st.executeQuery)(actions)
@@ -150,7 +150,7 @@ class Select extends Configurable with JDBCHelper {
     })
   }
 
-  def toSql = configuration.dialect.select(this)
+  def toSql = dialect.select(this)
 
   override def toString = toSql
 }
@@ -165,13 +165,13 @@ class Order(val expression: String,
  * Some common helpers for making up query-related .
  */
 object Query extends Configurable {
-  def conn = configuration.connectionProvider.getConnection
+  def conn = connectionProvider.getConnection
 
-  def asc(expr: String): Order = new Order(configuration.dialect.orderAsc(expr), Nil)
+  def asc(expr: String): Order = new Order(dialect.orderAsc(expr), Nil)
 
   def asc(proj: FieldProjection[_, _]): Order = asc(proj.expr)
 
-  def desc(expr: String): Order = new Order(configuration.dialect.orderDesc(expr), Nil)
+  def desc(expr: String): Order = new Order(dialect.orderDesc(expr), Nil)
 
   def desc(proj: FieldProjection[_, _]): Order = desc(proj.expr)
 
@@ -191,10 +191,10 @@ object Query extends Configurable {
     new SimpleExpressionHelper(f.expr)
 
   def and(predicates: Predicate*) =
-    new AggregatePredicate(configuration.dialect.and, predicates.toList)
+    new AggregatePredicate(dialect.and, predicates.toList)
 
   def or(predicates: Predicate*) =
-    new AggregatePredicate(configuration.dialect.or, predicates.toList)
+    new AggregatePredicate(dialect.or, predicates.toList)
 
   def select(nodes: RelationNode[_]*): Select = new Select(nodes: _*)
 
