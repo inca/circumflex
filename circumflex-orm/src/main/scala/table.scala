@@ -239,6 +239,15 @@ abstract class Table[R] extends Relation[R]
     return col
   }
 
+  /**
+   * Helper method to create a boolean column.
+   */
+  def booleanColumn(name: String): BooleanColumn[R] = {
+    val col = new BooleanColumn(this, name)
+    addColumn(col)
+    return col
+  }
+
   /* DDL */
 
   /**

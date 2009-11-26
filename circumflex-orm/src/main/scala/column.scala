@@ -67,13 +67,13 @@ abstract class Column[T, R](val table: Table[R],
 }
 
 /**
- * String column (varchar-typed).
+ * String (varchar) column.
  */
 class StringColumn[R](table: Table[R], name: String)
     extends Column[String, R](table, name, table.dialect.stringType)
 
 /**
- * Long column (bigint-typed).
+ * Long (int8) column.
  */
 class LongColumn[R](table: Table[R], name: String)
     extends Column[Long, R](table, name, table.dialect.longType) {
@@ -85,5 +85,11 @@ class LongColumn[R](table: Table[R], name: String)
     this
   }
 }
+
+/**
+ * Boolean column.
+ */
+class BooleanColumn[R](table: Table[R], name: String)
+    extends Column[Boolean, R](table, name, table.dialect.booleanType)
 
 

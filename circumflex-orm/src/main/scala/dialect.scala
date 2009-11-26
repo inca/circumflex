@@ -17,8 +17,8 @@ trait Dialect {
   /* SQL TYPES */
 
   def longType = "int8"
-
   def stringType = "text"
+  def booleanType = "boolean"
 
   /* FOREIGN KEY ACTIONS */
 

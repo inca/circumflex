@@ -2,7 +2,6 @@ package ru.circumflex.orm
 
 class Category extends Record[Category] {
   def relation = Category
-  val id = field(Category.id)
   val name = field(Category.name)
 }
 
@@ -14,7 +13,6 @@ object Category extends GenericTable[Category] {
 
 class Book extends Record[Book] {
   def relation = Book
-  val id = field(Book.id)
   val title = field(Book.title)
   val category = manyToOne(Book.category)
 }
