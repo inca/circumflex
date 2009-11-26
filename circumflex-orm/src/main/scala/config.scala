@@ -153,7 +153,7 @@ class ORMFilter extends AbstractCircumflexFilter {
       case e => {
         log.error("An error has occured while trying to commit current transaction.", e)
         DefaultConnectionProvider.getConnection.rollback
-        log.debyg("Rolled back current transaction.")
+        log.debug("Rolled back current transaction.")
       }
     } finally {
       DefaultConnectionProvider.getConnection.close
