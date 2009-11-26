@@ -27,8 +27,6 @@ abstract class Record[R] extends JDBCHelper {
   private val manyToOneMap = HashMap[Association[R, _], Any]()
   private val oneToManyMap = HashMap[Association[_, R], Seq[Any]]()
 
-  val id = field(relation.primaryKey.column)
-
   def relation: Relation[R]
 
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
