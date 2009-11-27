@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import core.{RouteContext, AbstractCircumflexFilter}
+import core.{CircumflexContext, AbstractCircumflexFilter}
 import java.sql.{PreparedStatement, ResultSet, Connection}
 import java.util.{Date, MissingResourceException, ResourceBundle}
 import javax.servlet.FilterChain
@@ -144,7 +144,7 @@ class ORMFilter extends AbstractCircumflexFilter with Configurable {
   /**
    * Commits current transaction at the end of request processing cycle and closes current connection.
    */
-  def doFilter(ctx: RouteContext, chain: FilterChain) = {
+  def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
     chain.doFilter(ctx.request, ctx.response)
     if (connectionProvider.hasLiveConnection) try {
       connectionProvider.getConnection.commit

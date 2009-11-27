@@ -5,16 +5,12 @@ import java.util.ResourceBundle
 import javax.servlet._
 import http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
+import Circumflex._
 
 /**
  * Provides a base class for Circumflex filter implementations.
  */
 abstract class AbstractCircumflexFilter extends Filter with Configurable {
-
-  /**
-   * Request attribute key to store RouteContext object.
-   */
-  val ctxKey = "CircumflexContext"
 
   /**
    * Place your application initialization code here.
@@ -37,24 +33,21 @@ abstract class AbstractCircumflexFilter extends Filter with Configurable {
    * @return     <b>true</b> if the request should be processed
    *              <b>false</b> if the processing should be skipped
    */
-  def isProcessed(req: HttpServletRequest): Boolean
-  = !req.getRequestURI
-      .toLowerCase
-      .matches("(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js))")
+  def isProcessed(req: HttpServletRequest): Boolean =
+    !req.getRequestURI.toLowerCase.matches("(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js))")
 
   /**
-   * Instantiates a RouteContext object, binds it to current request,
+   * Instantiates a CircumflexContext object, binds it to current request,
    * consults <code>isProcessed</code>, whether the request should be processed
-   * and delegates to high-level equivalent <code>doFilter(RouteContext, FilterChain)</code>
+   * and delegates to high-level equivalent <code>doFilter(CircumflexContext, FilterChain)</code>
    * if necessary.
    */
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
     (req, res) match {
-      case (req: HttpServletRequest, res: HttpServletResponse) => {
-        // Instantiate a context if it does not yet exist
-        // and bind it with current request
-        if (req.getAttribute(ctxKey) == null) {
-          var ctx = new RouteContext(req, res, this, Map())
+      case (req: HttpServletRequest, res: HttpServletResponse) =>
+        if (isProcessed(req)) {
+          // Instantiate a context if it does not yet exist and bind it thread-locally.
+          if (ctx == null) Circumflex.initContext(req, res, this)
           // Put a Messages helper with current request's locale (if it exists)
           try {
             val bundleResource = configurationBundle.getString("cx.messages")
@@ -62,16 +55,14 @@ abstract class AbstractCircumflexFilter extends Filter with Configurable {
           } catch {
             case _ =>
           }
-          req.setAttribute(ctxKey, ctx)
-        }
-        val ctx = req.getAttribute(ctxKey).asInstanceOf[RouteContext]
-        // Perform processing
-        if (isProcessed(req)) {
-          doFilter(ctx, chain)
-        } else {
-          chain.doFilter(req, res)
-        }
-      } case _ =>
+          // chain a call and make sure the context is destroyed afterwards
+          try {
+            doFilter(ctx, chain)
+          } finally {
+            Circumflex.destroyContext()
+          }
+        } else chain.doFilter(req, res)
+      case _ =>
     }
 
   /**
@@ -79,7 +70,7 @@ abstract class AbstractCircumflexFilter extends Filter with Configurable {
    * @param ctx    Route Context passed to this filter
    * @param chain  filter chain to delegate calls to if necessary
    */
-  def doFilter(ctx: RouteContext, chain: FilterChain): Unit
+  def doFilter(ctx: CircumflexContext, chain: FilterChain): Unit
 
 }
 
@@ -107,7 +98,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * @param ctx    Route Context passed to this filter
    * @param chain  filter chain to delegate calls to if necessary
    */
-  def onNoMatch(ctx: RouteContext, chain: FilterChain) =
+  def onNoMatch(ctx: CircumflexContext, chain: FilterChain) =
     chain.doFilter(ctx.request, ctx.response)
 
   /**
@@ -117,7 +108,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * @param ctx    Route Context passed to this filter
    * @param chain  filter chain to delegate calls to if necessary
    */
-  def onRouterError(e: Throwable, ctx: RouteContext, chain: FilterChain) = {
+  def onRouterError(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
     log.error("Controller threw an exception, see stack trace for details.", e)
     ErrorResponse(ctx, 500, e.getMessage)(ctx.response)
   }
@@ -127,14 +118,14 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * @param ctx    Route Context passed to this filter
    * @param chain  filter chain to delegate calls to if necessary
    */
-  def doFilter(ctx: RouteContext, chain: FilterChain): Unit = {
+  def doFilter(ctx: CircumflexContext, chain: FilterChain): Unit = {
     log.debug(ctx.request.toString)
     // Set X-Powered-By header
     ctx.response.setHeader("X-Powered-By", "Circumflex v. 0.2")
     // Set character encoding
     ctx.request.setCharacterEncoding("UTF-8")
     try {
-      routerClass.getConstructor(classOf[RouteContext]).newInstance(ctx)
+      routerClass.getConstructor().newInstance()
       // Request not matched by router
       onNoMatch(ctx, chain)
     } catch {

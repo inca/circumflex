@@ -12,21 +12,21 @@ trait CaptchaHelper extends ContextAware {
 
   def captchaService: DefaultManageableImageCaptchaService = CaptchaService
 
-  def captchaId = routeContext.request.getSession.getId
+  def captchaId = ctx.request.getSession.getId
 
   def captchaFormat = "jpg";
 
   def renderCaptcha: HttpResponse = {
-    val img = captchaService.getImageChallengeForID(captchaId, routeContext.request.getLocale)
-    routeContext.statusCode = 200
-    routeContext.noCache()
-    routeContext.contentType = "image/" + captchaFormat
-    DirectStreamResponse(routeContext, out => ImageIO.write(img, captchaFormat, out))
+    val img = captchaService.getImageChallengeForID(captchaId, ctx.request.getLocale)
+    ctx.statusCode = 200
+    ctx.noCache()
+    ctx.contentType = "image/" + captchaFormat
+    DirectStreamResponse(ctx, out => ImageIO.write(img, captchaFormat, out))
   }
 
   def captchaParamName = "_captcha"
 
   def captchaPassed: Boolean = captchaService
-      .validateResponseForID(captchaId, routeContext.stringParam(captchaParamName))
+      .validateResponseForID(captchaId, ctx.stringParam(captchaParamName))
       .asInstanceOf[Boolean]
 }

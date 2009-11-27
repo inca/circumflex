@@ -5,15 +5,12 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
 trait ContextAware {
-  def routeContext: RouteContext
+  def ctx: CircumflexContext = Circumflex.ctx
 }
 
-
-class RequestRouter(var ctx: RouteContext) extends ContextAware {
+class RequestRouter extends ContextAware {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(ctx, text)
-
-  def routeContext = ctx
 
   val get = new RequestDispatcher("get")
   val getOrPost = new RequestDispatcher("get", "post")

@@ -1,7 +1,7 @@
 package ru.circumflex.freemarker
 
 import _root_.freemarker.template.{TemplateExceptionHandler, Template, Configuration}
-import core.{HttpResponse, RouteContext, ContextAware}
+import core.{HttpResponse, CircumflexContext, ContextAware}
 import _root_.freemarker.cache.ClassTemplateLoader
 import javax.servlet.http.HttpServletResponse
 
@@ -17,12 +17,12 @@ trait FreemarkerHelper extends ContextAware {
 
   def ftl(templateName:String) = {
     val template = freemarkerConf.getTemplate(templateName);
-    new FreemarkerResponse(routeContext, template)
+    new FreemarkerResponse(ctx, template)
   }
 
 }
 
-case class FreemarkerResponse(ctx: RouteContext, val template:Template) extends HttpResponse(ctx) {
+case class FreemarkerResponse(ctx: CircumflexContext, val template:Template) extends HttpResponse(ctx) {
   override def apply(response: HttpServletResponse) = {
     var ftlCtx = ctx;
     ftlCtx += "ctx" -> ctx;

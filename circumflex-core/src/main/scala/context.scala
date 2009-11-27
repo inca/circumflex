@@ -1,16 +1,16 @@
 package ru.circumflex.core
 
-
+import collection.mutable.HashMap
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
-class RouteContext(val request: HttpServletRequest,
-                   val response: HttpServletResponse,
-                   val filter: AbstractCircumflexFilter,
-                   val params: Map[String, Any])
+class CircumflexContext(val request: HttpServletRequest,
+                        val response: HttpServletResponse,
+                        val filter: AbstractCircumflexFilter)
     extends HashModel {
 
-  var stringHeaders: Map[String, String] = Map()
-  var dateHeaders: Map[String, Long] = Map()
+  val params = new HashMap[String, Any]
+  val stringHeaders = new HashMap[String, String]
+  val dateHeaders = new HashMap[String, Long]
   var statusCode = 200
   var contentType = "text/html"
 
@@ -38,10 +38,24 @@ class RouteContext(val request: HttpServletRequest,
     dateHeaders += "Expires" -> 0l
   }
 
-  def +(pair: Pair[String, Any]) = new RouteContext(request, response, filter, params + pair)
+  def +=(pair: Pair[String, Any]): Unit = params += pair
 
-  def ++(map: Map[String, Any]) = new RouteContext(request, response, filter, params ++ map)
+  def ++=(map: Map[String, Any]): Unit = params ++= map
 
   def apply(key: String): Option[Any] = get(key)
 
+}
+
+
+object Circumflex {
+  private val threadLocalContext = new ThreadLocal[CircumflexContext]
+
+  def ctx = threadLocalContext.get
+
+  def initContext(req: HttpServletRequest,
+                  res: HttpServletResponse,
+                  filter: AbstractCircumflexFilter) =
+    threadLocalContext.set(new CircumflexContext(req, res, filter))
+
+  def destroyContext() = threadLocalContext.set(null)
 }

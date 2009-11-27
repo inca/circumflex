@@ -1,13 +1,13 @@
 package ru.circumflex.hibernate
 
-import core.{RouteContext, AbstractCircumflexFilter}
+import core.{CircumflexContext, AbstractCircumflexFilter}
 import javax.servlet._
 import org.slf4j.LoggerFactory
 
 abstract class HibernateCircumflexFilter extends AbstractCircumflexFilter with TransactionContext {
   val log = LoggerFactory.getLogger("ru.circumflex.hibernate.filter")
 
-  def doFilter(ctx: RouteContext, chain: FilterChain) = {
+  def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
     log.debug("About to wrap a request into a contextual transaction.")
     transaction(provider.currentSession)(sess => {
       chain.doFilter(ctx.request, ctx.response)
