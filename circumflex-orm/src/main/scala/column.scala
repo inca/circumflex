@@ -1,5 +1,7 @@
 package ru.circumflex.orm
 
+import collection.mutable.ListBuffer
+
 /**
  * Base functionality for columns.
  */
@@ -10,11 +12,16 @@ abstract class Column[T, R](val table: Table[R],
   protected var _nullable = true;
   protected var _sequence: Option[Sequence[R]] = None;
 
+  def qualifiedName = table.tableName + "." + this.columnName
+
   /**
    * DSL-like way to qualify a column with NOT NULL constraint.
+   * It also adds NotNullValidator.
    */
-  def notNull: Column[T, R] = {
+  def notNull: this.type = {
     _nullable = false
+    table.validators +=
+        new RecordFieldValidator(this, new NotNullValidator(qualifiedName))
     return this
   }
 
@@ -31,7 +38,7 @@ abstract class Column[T, R](val table: Table[R],
   /**
    * DSL-like way to qualify a column with UNIQUE constraint.
    */
-  def unique: Column[T, R] = {
+  def unique: this.type = {
     table.unique(this)
     return this
   }
@@ -70,7 +77,25 @@ abstract class Column[T, R](val table: Table[R],
  * String (varchar) column.
  */
 class StringColumn[R](table: Table[R], name: String)
-    extends Column[String, R](table, name, table.dialect.stringType)
+    extends Column[String, R](table, name, table.dialect.stringType) {
+
+  /**
+   * DSL-like way to add NotEmptyValidator.
+   */
+  def notEmpty: this.type = {
+    table.validators += new RecordFieldValidator(this, new NotEmptyValidator(qualifiedName))
+    return this
+  }
+
+  /**
+   * DSL-like way to add PatternValidator.
+   */
+  def pattern(regex: String): this.type = {
+    table.validators += new RecordFieldValidator(this, new PatternValidator(qualifiedName, regex))
+    return this
+  }
+
+}
 
 /**
  * Long (int8) column.
@@ -80,7 +105,7 @@ class LongColumn[R](table: Table[R], name: String)
   /**
    * DSL-like way to create a sequence for this column.
    */
-  def autoIncrement: LongColumn[R] = {
+  def autoIncrement: this.type = {
     _sequence = Some(new Sequence(table, this))
     this
   }

@@ -24,9 +24,9 @@ import java.util.UUID
 abstract class Record[R] extends JDBCHelper with HashModel {
   private val uuid = UUID.randomUUID.toString
 
-  private val fieldsMap = HashMap[Column[_, R], Any]()
-  private val manyToOneMap = HashMap[Association[R, _], Any]()
-  private val oneToManyMap = HashMap[Association[_, R], Seq[Any]]()
+  val fieldsMap = HashMap[Column[_, R], Any]()
+  val manyToOneMap = HashMap[Association[R, _], Any]()
+  val oneToManyMap = HashMap[Association[_, R], Seq[Any]]()
 
   def relation: Relation[R]
 
@@ -102,7 +102,16 @@ abstract class Record[R] extends JDBCHelper with HashModel {
 
   /* PERSISTENCE-RELATED STUFF */
 
+  def validate(): Option[Seq[ValidationError]] = relation.validate(this)
+
+  def validate_!(): Unit = relation.validate_!(this)
+
   def insert(): Int = {
+    validate_!()
+    insert_!()
+  }
+
+  def insert_!(): Int = {
     val conn = relation.connectionProvider.getConnection
     val sql = relation.dialect.insertRecord(this)
     sqlLog.debug(sql)
@@ -113,6 +122,11 @@ abstract class Record[R] extends JDBCHelper with HashModel {
   }
 
   def update(): Int = {
+    validate_!()
+    update_!()
+  }
+
+  def update_!(): Int = {
     val conn = relation.connectionProvider.getConnection
     val sql = relation.dialect.updateRecord(this)
     sqlLog.debug(sql)
@@ -126,11 +140,12 @@ abstract class Record[R] extends JDBCHelper with HashModel {
     })
   }
 
-  def save() = if (isIdentified) update()
-  else {
-    generateFields
-    insert()
-  }
+  def save() =
+    if (isIdentified) update()
+    else {
+      generateFields
+      insert()
+    }
 
   def delete(): Int = {
     val conn = relation.connectionProvider.getConnection

@@ -1,5 +1,6 @@
 package ru.circumflex.orm
 
+import collection.mutable.ListBuffer
 import Query._
 
 /**
@@ -7,6 +8,11 @@ import Query._
  * It can be considered a table, a virtual table, a view, a subquery, etc.
  */
 abstract class Relation[R] extends Configurable {
+
+  /**
+   * Contains a validation sequence that each record must pass on validation event.
+   */
+  var validators = new ListBuffer[RecordValidator[R]]
 
   /**
    * Returns a class of record which this relation describes.
@@ -71,6 +77,24 @@ abstract class Relation[R] extends Configurable {
    * Creates a criteria object for this relation.
    */
   def createCriteria: Criteria[R] = new Criteria(this)
+
+  /**
+   * Returns None if record has passed validation. Otherwise returns
+   * a <code>ValidationError</code> sequence.
+   */
+  def validate(record: Record[R]): Option[Seq[ValidationError]] = {
+    val errors = validators.flatMap(_.apply(record))
+    if (errors.size == 0) None
+    else Some(errors)
+  }
+
+  /**
+   * Throws <code>ValidationException</code> if record has failed validation.
+   */
+  def validate_!(record: Record[R]) = validate(record) match {
+    case Some(errors) => throw new ValidationException(errors: _*)
+    case _ =>
+  }
 
   override def toString = qualifiedName
 
