@@ -140,11 +140,16 @@ abstract class Record[R] extends JDBCHelper with HashModel {
     })
   }
 
-  def save() =
-    if (isIdentified) update()
+  def save(): Int = {
+    validate_!()
+    save_!()
+  }
+
+  def save_!(): Int =
+    if (isIdentified) update_!()
     else {
       generateFields
-      insert()
+      insert_!()
     }
 
   def delete(): Int = {

@@ -35,40 +35,39 @@ class ValidationException(val errors: ValidationError *)
 }
 
 abstract class Validator(val source: String) {
-  def apply(value: Any): Option[ValidationError]
+  def apply(value: Any): Option[ValidationError] = value match {
+    case Some(value) => apply(value)
+    case value => validate(value)
+  }
+
+  def validate(value: Any): Option[ValidationError]
 }
 
 class NotNullValidator(source: String) extends Validator(source) {
 
-  def apply(value: Any) = value match {
-    case Some(value) => apply(value)
+  def validate(value: Any) = value match {
     case null | None => Some(new ValidationError(source, "validation.null"))
     case _ => None
   }
 
 }
 
-class NotEmptyValidator(source: String) extends NotNullValidator(source) {
+class NotEmptyValidator(source: String) extends Validator(source) {
 
-  override def apply(value: Any) = super.apply(value) match {
-    case None => value match {
-      case c: Collection[_] if (c.size == 0) => Some(new ValidationError(source, "validation.empty"))
-      case s: String if (s.trim.length == 0) => Some(new ValidationError(source, "validation.empty"))
-      case _ => None
-    }
-    case value => value
+  def validate(value: Any) = value match {
+    case c: Collection[_] if (c.size == 0) => Some(new ValidationError(source, "validation.empty"))
+    case s: String if (s.trim.length == 0) => Some(new ValidationError(source, "validation.empty"))
+    case _ => None
   }
 
 }
 
-class PatternValidator(source: String, regex: String) extends NotNullValidator(source) {
+class PatternValidator(source: String, regex: String) extends Validator(source) {
 
-  override def apply(value: Any) = super.apply(value) match {
-    case None => if (value.toString.matches(regex)) None
+  def validate(value: Any) =
+    if (value.toString.matches(regex)) None
     else Some(new ValidationError(
       source, "validation.pattern", "value" -> value.toString, "pattern" -> regex))
-    case value => value
-  }
 
 }
 
