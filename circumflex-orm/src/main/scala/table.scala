@@ -78,6 +78,12 @@ abstract class Relation[R] extends Configurable {
    */
   def createCriteria: Criteria[R] = new Criteria(this)
 
+  def addFieldValidator(col: Column[_, R], validator: Validator): RecordValidator[R] = {
+    val v = new RecordFieldValidator(col, validator)
+    this.validators += v
+    return v
+  }
+
   /**
    * Returns None if record has passed validation. Otherwise returns
    * a <code>ValidationError</code> sequence.

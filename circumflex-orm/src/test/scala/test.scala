@@ -7,9 +7,11 @@ class Category extends Record[Category] {
 }
 
 object Category extends GenericTable[Category] {
-  val name = stringColumn("name")       // Creates a column
-      .notNull                          // Creates NOT NULL constraint
-      .unique                           // Creates UNIQUE constraint
+  val name = stringColumn("name")         // Creates a column
+      .notNull                            // Creates NOT NULL constraint
+      .unique                             // Creates UNIQUE constraint
+      .validateNotEmpty                   // Adds NotEmpty validation
+      .validatePattern("^[a-zA-Z]{1,8}$") // Adds Pattern validation
 }
 
 class Book extends Record[Book] {
@@ -22,6 +24,7 @@ class Book extends Record[Book] {
 object Book extends GenericTable[Book] {
   val title = stringColumn("title")
       .notNull
+      .validateNotEmpty
   val category = longColumn("category_id")
       .references(Category)     // Creates an association with Category
       .onDeleteSetNull

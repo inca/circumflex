@@ -1,7 +1,5 @@
 package ru.circumflex.orm
 
-import collection.mutable.ListBuffer
-
 /**
  * Base functionality for columns.
  */
@@ -16,12 +14,9 @@ abstract class Column[T, R](val table: Table[R],
 
   /**
    * DSL-like way to qualify a column with NOT NULL constraint.
-   * It also adds NotNullValidator.
    */
   def notNull: this.type = {
     _nullable = false
-    table.validators +=
-        new RecordFieldValidator(this, new NotNullValidator(qualifiedName))
     return this
   }
 
@@ -82,16 +77,16 @@ class StringColumn[R](table: Table[R], name: String)
   /**
    * DSL-like way to add NotEmptyValidator.
    */
-  def notEmpty: this.type = {
-    table.validators += new RecordFieldValidator(this, new NotEmptyValidator(qualifiedName))
+  def validateNotEmpty: this.type = {
+    table.addFieldValidator(this, new NotEmptyValidator(qualifiedName))
     return this
   }
 
   /**
    * DSL-like way to add PatternValidator.
    */
-  def pattern(regex: String): this.type = {
-    table.validators += new RecordFieldValidator(this, new PatternValidator(qualifiedName, regex))
+  def validatePattern(regex: String): this.type = {
+    table.addFieldValidator(this, new PatternValidator(qualifiedName, regex))
     return this
   }
 
