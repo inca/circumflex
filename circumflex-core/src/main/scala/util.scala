@@ -1,6 +1,5 @@
 package ru.circumflex.core
 
-
 import collection.mutable.{HashMap, ListBuffer}
 
 object GroupBy {

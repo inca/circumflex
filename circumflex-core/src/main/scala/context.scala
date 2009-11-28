@@ -15,12 +15,12 @@ class CircumflexContext(val request: HttpServletRequest,
   var contentType = "text/html"
 
   def get(key: String) = params.get(key) match {
-    case Some(value) => Some(value)
-    case _ => {
+    case None => {
       val value = request.getParameter(key)
       if (value == null) None
       else Some(value)
     }
+    case value => value
   }
 
   def stringParam(key: String): Option[String] = params.get(key) match {
@@ -58,4 +58,13 @@ object Circumflex {
     threadLocalContext.set(new CircumflexContext(req, res, filter))
 
   def destroyContext() = threadLocalContext.set(null)
+}
+
+class CircumflexException(msg: String, cause: Throwable)
+    extends Exception(msg, cause) {
+
+  def this(msg: String) = this(msg, null)
+  
+  def this(cause: Throwable) = this(null, cause)
+
 }
