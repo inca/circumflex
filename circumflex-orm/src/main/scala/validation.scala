@@ -11,6 +11,8 @@ case class ValidationError(val source: String,
                            val errorKey: String,
                            val params: collection.Map[String, String]) {
 
+  def this(source: String, errorKey: String) = this(source, errorKey, Map())
+
   def toMsg(messages: Messages): String =
     messages.apply(source + "." + errorKey, params) match {
       case Some(m) => m
