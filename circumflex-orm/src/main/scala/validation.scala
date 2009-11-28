@@ -26,6 +26,8 @@ case class ValidationError(val source: String,
         case None => errorKey
       }
     }
+
+  def toMsg(): String = toMsg(Messages())
 }
 
 class ValidationException(val errors: ValidationError *)

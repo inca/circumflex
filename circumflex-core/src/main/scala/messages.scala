@@ -42,7 +42,7 @@ object Messages {
     if (Circumflex.ctx == null)
       throw new CircumflexException("CircumflexContext is not available.")
     Circumflex.ctx.get("msg") match {
-      case m: Messages => m
+      case Some(m: Messages) => m
       case _ => throw new CircumflexException("Messages object not found in CircumflexContext.")
     }
   }

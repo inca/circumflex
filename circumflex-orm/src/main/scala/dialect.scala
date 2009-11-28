@@ -101,7 +101,7 @@ trait Dialect {
    * Produces qualified sequence name (e.g. public.mytable_id_seq).
    */
   def sequenceName(seq: Sequence[_]) =
-    seq.table.tableName + "_" + seq.column.columnName + "_seq"
+    tableName(seq.table) + "_" + seq.column.columnName + "_seq"
 
   /**
    * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
