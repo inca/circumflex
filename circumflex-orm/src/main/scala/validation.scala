@@ -1,6 +1,6 @@
 package ru.circumflex.orm
 
-import core.Messages
+import core.{Messages, GroupBy}
 
 /**
  * Represents a validation error. It's <code>source</code> describes
@@ -19,5 +19,11 @@ case class ValidationError(val source: String,
         case None => errorKey
       }
     }
+
+}
+
+class ValidationException(val errors: ValidationError *) {
+
+  def errorsMap = GroupBy.apply[String, ValidationError](errors, e => e.source)
 
 }

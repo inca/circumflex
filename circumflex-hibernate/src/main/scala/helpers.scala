@@ -24,7 +24,7 @@ object Valid extends ValidationResult
 
 case class NotValid[T](val violations: Seq[ConstraintViolation[T]]) extends ValidationResult {
 
-  val byProperties: collection.Map[String, Seq[ConstraintViolation[T]]] =
+  val byProperties =
     GroupBy.apply[String, ConstraintViolation[T]](violations, cv => cv.getPropertyPath.toString)
 
 }
