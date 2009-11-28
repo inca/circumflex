@@ -64,10 +64,12 @@ class NotEmptyValidator(source: String) extends Validator(source) {
 
 class PatternValidator(source: String, regex: String) extends Validator(source) {
 
-  def validate(value: Any) =
-    if (value.toString.matches(regex)) None
-    else Some(new ValidationError(
-      source, "validation.pattern", "value" -> value.toString, "pattern" -> regex))
+  def validate(value: Any) = value match {
+    case s: String if s.matches(regex) => None
+    case v => Some(new ValidationError(
+      source, "validation.pattern", "value" -> v.toString, "pattern" -> regex))
+  }
+
 
 }
 
