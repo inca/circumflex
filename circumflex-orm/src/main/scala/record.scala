@@ -26,7 +26,9 @@ abstract class Record[R] extends JDBCHelper with HashModel {
 
   val fieldsMap = HashMap[Column[_, R], Any]()
   val manyToOneMap = HashMap[Association[R, _], Any]()
-  val oneToManyMap = HashMap[Association[_, R], Seq[Any]]()
+  val oneToManyMap = HashMap[Association[_, R], Seq[Any]]() {
+    def default(key: Association[_, R]): Seq[Any] = Nil
+  }
 
   def relation: Relation[R]
 
@@ -60,9 +62,10 @@ abstract class Record[R] extends JDBCHelper with HashModel {
       case Some(value) => fieldsMap += (col -> value)
       case _ => fieldsMap -= col
     }
-    // invalidate association caches
+    // invalidate associated many-to-one caches
     manyToOneMap.keys.filter(_.localColumn == col).foreach(manyToOneMap -= _)
-    oneToManyMap.keys.filter(_.localColumn == col).foreach(oneToManyMap -= _)
+    // invalidate one-to-many caches if identifier changed
+    if (col == relation.primaryKey.column) oneToManyMap.clear
   }
 
   /* ASSOCIATIONS-RELATED STUFF */
@@ -79,9 +82,8 @@ abstract class Record[R] extends JDBCHelper with HashModel {
             case Some(mto : P) =>
               manyToOneMap += (a -> mto)
               Some(mto)
-            case _ => None                  // no parent to fetch -- return None
-          }
-          case _ => None
+            case _ => None
+          } case _ => None
         }
       }
     }
@@ -98,6 +100,26 @@ abstract class Record[R] extends JDBCHelper with HashModel {
       manyToOneMap -= a
       setField(a.localColumn, None)
     }
+  }
+
+  def oneToMany[C](association: Association[C, R]) =
+    new OneToMany[C, R](this, association)
+
+  def getOneToMany[C](a: Association[C, R]): Seq[C] =
+    oneToManyMap.apply(a) match {
+      case Nil => primaryKey match {     // no cached children yet
+          case Some(refVal) => {         // lazy-fetch children if identified
+            val children = a.fetchOneToMany(refVal)
+            oneToManyMap += (a -> children)
+            children
+          }
+          case _ => Nil
+        }
+      case seq => seq   // children are already in cache
+    }
+
+  def setOneToMany[C](a: Association[C, R], value: Seq[C]): Unit = {
+    oneToManyMap += (a -> value)
   }
 
   /* PERSISTENCE-RELATED STUFF */
@@ -226,6 +248,23 @@ class ManyToOne[C, P](val record: Record[C],
   def setNull: Unit = record.setManyToOne(association, None)
   def <=(value: P): Unit = set(value)
   def :=(value: P): Unit = set(value)
+
+  override def toString = get match {
+    case Some(value) => value.toString
+    case None => ""
+  }
+
+}
+
+class OneToMany[C, P](val record: Record[P],
+                      val association: Association[C, P]) {
+
+  def get: Seq[C] = record.getOneToMany(association)
+
+  def set(value: Seq[C]): Unit = record.setOneToMany(association, value)
+  def setNull: Unit = record.setOneToMany(association, Nil)
+  def <=(value: Seq[C]): Unit = set(value)
+  def :=(value: Seq[C]): Unit = set(value)
 
   override def toString = get match {
     case Some(value) => value.toString
