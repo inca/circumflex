@@ -26,8 +26,8 @@ abstract class Record[R] extends JDBCHelper with HashModel {
 
   val fieldsMap = HashMap[Column[_, R], Any]()
   val manyToOneMap = HashMap[Association[R, _], Any]()
-  val oneToManyMap = HashMap[Association[_, R], Seq[Any]]() {
-    def default(key: Association[_, R]): Seq[Any] = Nil
+  val oneToManyMap = new HashMap[Association[_, R], Seq[Any]]() {
+    override def default(key: Association[_, R]): Seq[Any] = Nil
   }
 
   def relation: Relation[R]
@@ -115,7 +115,7 @@ abstract class Record[R] extends JDBCHelper with HashModel {
           }
           case _ => Nil
         }
-      case seq => seq   // children are already in cache
+      case seq => seq.asInstanceOf[Seq[C]]   // children are already in cache
     }
 
   def setOneToMany[C](a: Association[C, R], value: Seq[C]): Unit = {
@@ -266,9 +266,6 @@ class OneToMany[C, P](val record: Record[P],
   def <=(value: Seq[C]): Unit = set(value)
   def :=(value: Seq[C]): Unit = set(value)
 
-  override def toString = get match {
-    case Some(value) => value.toString
-    case None => ""
-  }
+  override def toString = get.toString
 
 }

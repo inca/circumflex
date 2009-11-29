@@ -56,6 +56,11 @@ class DDLExport extends Configurable
   private val constraints = HashSet[Constraint[_]]()
   private val sequences = HashSet[Sequence[_]]()
 
+  def this(tables: Table[_]*) = {
+    this()
+    tables.toList.foreach(addTable(_))
+  }
+
   /**
    * Adds a table to database objects list.
    */
