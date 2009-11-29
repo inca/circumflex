@@ -193,7 +193,13 @@ abstract class Record[R] extends JDBCHelper with HashModel {
 
 class Field[T, R](val record: Record[R],
                   val column: Column[T, R]) {
+
   def get: Option[T] = record.getField(column)
+
+  def getOrElse(defaultValue: T): T = get match {
+    case Some(value) => value
+    case _ => defaultValue
+  }
 
   def set(value: T): Unit = record.setField(column, value)
   def setNull: Unit = record.setField(column, None)
@@ -210,6 +216,11 @@ class ManyToOne[C, P](val record: Record[C],
                       val association: Association[C, P]) {
 
   def get: Option[P] = record.getManyToOne(association)
+
+  def getOrElse(defaultValue: P): P = get match {
+    case Some(value) => value
+    case _ => defaultValue
+  }
 
   def set(value: P): Unit = record.setManyToOne(association, value)
   def setNull: Unit = record.setManyToOne(association, None)
