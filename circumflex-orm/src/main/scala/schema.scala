@@ -69,6 +69,10 @@ class DDLExport extends Configurable
     return this
   }
 
+  def write(msg: String) = {
+    writers.foreach(_.write(msg + "\n"))
+  }
+
   /**
    * Adds a table to database objects list.
    */
@@ -132,7 +136,7 @@ class DDLExport extends Configurable
         log.trace("Error dropping sequence.", e)
       })
       log.info(msg)
-      writers.foreach(_.write(msg))
+      write(msg)
     }
 
   def dropConstraints(conn: Connection) =
@@ -147,7 +151,7 @@ class DDLExport extends Configurable
         log.trace("Error dropping constraint.", e)
       })
       log.info(msg)
-      writers.foreach(_.write(msg))
+      write(msg)
     }
 
   def dropTables(conn: Connection) =
@@ -162,7 +166,7 @@ class DDLExport extends Configurable
         log.trace("Error dropping table.", e)
       })
       log.info(msg)
-      writers.foreach(_.write(msg))
+      write(msg)
     }
 
   def dropSchemata(conn: Connection) =
@@ -177,7 +181,7 @@ class DDLExport extends Configurable
         log.trace("Error dropping schema.", e)
       })
       log.info(msg)
-      writers.foreach(_.write(msg))
+      write(msg)
     }
 
   def createSchemata(conn: Connection) =
@@ -192,7 +196,7 @@ class DDLExport extends Configurable
         log.trace("Error creating schema.", e)
       })
       log.info(msg)
-      writers.foreach(_.write(msg))
+      write(msg)
     }
 
   def createTables(conn: Connection) =
@@ -207,7 +211,7 @@ class DDLExport extends Configurable
         log.trace("Error creating table.", e)
       })
       log.info(msg)
-      writers.foreach(_.write(msg))
+      write(msg)
     }
 
   def createConstraints(conn: Connection) =
@@ -222,7 +226,7 @@ class DDLExport extends Configurable
         log.trace("Error creating constraint.", e)
       })
       log.info(msg)
-      writers.foreach(_.write(msg))
+      write(msg)
     }
 
   def createSequences(conn: Connection) =
@@ -237,7 +241,7 @@ class DDLExport extends Configurable
         log.trace("Error creating sequence.", e)
       })
       log.info(msg)
-      writers.foreach(_.write(msg))
+      write(msg)
     }
 
 }
