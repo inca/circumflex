@@ -65,7 +65,7 @@ class DDLExport extends Configurable
   }
 
   def addWriter(writers: Writer *): this.type = {
-    writers ++= writers.toList
+    this.writers ++= writers.toList
     return this
   }
 
