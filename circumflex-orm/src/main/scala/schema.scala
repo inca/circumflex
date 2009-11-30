@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 
 import collection.mutable.HashSet
+import java.io.Writer
 import java.sql.Connection
 import org.slf4j.LoggerFactory
 
@@ -56,15 +57,22 @@ class DDLExport extends Configurable
   private val constraints = HashSet[Constraint[_]]()
   private val sequences = HashSet[Sequence[_]]()
 
+  private val writers = HashSet[Writer]()
+
   def this(tables: Table[_]*) = {
     this()
     tables.toList.foreach(addTable(_))
   }
 
+  def addWriter(writers: Writer *): this.type = {
+    writers ++= writers.toList
+    return this
+  }
+
   /**
    * Adds a table to database objects list.
    */
-  def addTable(tab: Table[_]): DDLExport = {
+  def addTable(tab: Table[_]): this.type = {
     tables += tab
     schemata += tab.schema
     constraints ++= tab.constraints
@@ -114,98 +122,122 @@ class DDLExport extends Configurable
 
   def dropSequences(conn: Connection) =
     for (s <- sequences) {
+      var msg = ""
       autoClose(conn.prepareStatement(s.sqlDrop))(st => {
-        st.executeUpdate
         log.debug(s.sqlDrop)
-        log.info("DROP SEQUENCE {}: OK", s.sequenceName)
+        st.executeUpdate
+        msg = "DROP SEQUENCE " + s.sequenceName + ": OK"
       })(e => {
-        log.error("DROP SEQUENCE {}: {}", s.sequenceName, e.getMessage)
+        msg = "DROP SEQUENCE " + s.sequenceName + ": " + e.getMessage
         log.trace("Error dropping sequence.", e)
       })
+      log.info(msg)
+      writers.foreach(_.write(msg))
     }
 
   def dropConstraints(conn: Connection) =
     for (c <- constraints) {
+      var msg = ""
       autoClose(conn.prepareStatement(c.sqlDrop))(st => {
-        st.executeUpdate
         log.debug(c.sqlDrop)
-        log.info("DROP CONSTRAINT {}: OK", c.constraintName)
+        st.executeUpdate
+        msg = "DROP CONSTRAINT " + c.constraintName + ": OK"
       })(e => {
-        log.error("DROP CONSTRAINT {}: {}", c.constraintName, e.getMessage)
+        msg = "DROP CONSTRAINT " + c.constraintName + ": " + e.getMessage
         log.trace("Error dropping constraint.", e)
       })
+      log.info(msg)
+      writers.foreach(_.write(msg))
     }
 
   def dropTables(conn: Connection) =
     for (t <- tables) {
+      var msg = ""
       autoClose(conn.prepareStatement(t.sqlDrop))(st => {
-        st.executeUpdate
         log.debug(t.sqlDrop)
-        log.info("DROP TABLE {}: OK", t.tableName)
+        st.executeUpdate
+        msg = "DROP TABLE " + t.tableName + ": OK"
       })(e => {
-        log.error("DROP TABLE {}: {}", t.tableName, e.getMessage)
+        msg = "DROP TABLE " + t.tableName + ": " + e.getMessage
         log.trace("Error dropping table.", e)
       })
+      log.info(msg)
+      writers.foreach(_.write(msg))
     }
 
   def dropSchemata(conn: Connection) =
     for (s <- schemata) {
+      var msg = ""
       autoClose(conn.prepareStatement(s.sqlDrop))(st => {
-        st.executeUpdate
         log.debug(s.sqlDrop)
-        log.info("DROP SCHEMA {}: OK", s.schemaName)
+        st.executeUpdate
+        msg = "DROP SCHEMA " + s.schemaName + ": OK"
       })(e => {
-        log.error("DROP SCHEMA {}: {}", s.schemaName, e.getMessage)
+        msg = "DROP SCHEMA " + s.schemaName + ": " + e.getMessage
         log.trace("Error dropping schema.", e)
       })
+      log.info(msg)
+      writers.foreach(_.write(msg))
     }
 
   def createSchemata(conn: Connection) =
     for (s <- schemata) {
+      var msg = ""
       autoClose(conn.prepareStatement(s.sqlCreate))(st => {
-        st.executeUpdate
         log.debug(s.sqlCreate)
-        log.info("CREATE SCHEMA {}: OK", s.schemaName)
+        st.executeUpdate
+        msg = "CREATE SCHEMA " + s.schemaName + ": OK"
       })(e => {
-        log.error("CRAETE SCHEMA {}: {}", s.schemaName, e.getMessage)
+        msg = "CRAETE SCHEMA " + s.schemaName + ": " + e.getMessage
         log.trace("Error creating schema.", e)
       })
+      log.info(msg)
+      writers.foreach(_.write(msg))
     }
 
   def createTables(conn: Connection) =
     for (t <- tables) {
+      var msg = ""
       autoClose(conn.prepareStatement(t.sqlCreate))(st => {
-        st.executeUpdate
         log.debug(t.sqlCreate)
+        st.executeUpdate
         log.info("CREATE TABLE {}: OK", t.tableName)
       })(e => {
         log.error("CREATE TABLE {}: {}", t.tableName, e.getMessage)
         log.trace("Error creating table.", e)
       })
+      log.info(msg)
+      writers.foreach(_.write(msg))
     }
 
   def createConstraints(conn: Connection) =
     for (c <- constraints) {
+      var msg = ""
       autoClose(conn.prepareStatement(c.sqlCreate))(st => {
-        st.executeUpdate
         log.debug(c.sqlCreate)
-        log.info("CREATE CONSTRAINT {}: OK", c.constraintName)
+        st.executeUpdate
+        msg = "CREATE CONSTRAINT " + c.constraintName + ": OK"
       })(e => {
-        log.error("CREATE CONSTRAINT {}: {}", c.constraintName, e.getMessage)
+        msg = "CREATE CONSTRAINT " + c.constraintName + ": " + e.getMessage
         log.trace("Error creating constraint.", e)
       })
+      log.info(msg)
+      writers.foreach(_.write(msg))
     }
 
   def createSequences(conn: Connection) =
     for (s <- sequences) {
+      var msg = ""
       autoClose(conn.prepareStatement(s.sqlCreate))(st => {
-        st.executeUpdate
         log.debug(s.sqlCreate)
-        log.info("CREATE SEQUENCE {}: OK", s.sequenceName)
+        st.executeUpdate
+        msg = "CREATE SEQUENCE " + s.sequenceName + ": OK"
       })(e => {
-        log.error("CREATE SEQUENCE {}: {}", s.sequenceName, e.getMessage)
+        msg = "CREATE SEQUENCE " + s.sequenceName + ": " + e.getMessage
         log.trace("Error creating sequence.", e)
       })
+      log.info(msg)
+      writers.foreach(_.write(msg))
     }
 
 }
