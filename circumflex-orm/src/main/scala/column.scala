@@ -1,5 +1,8 @@
 package ru.circumflex.orm
 
+
+import java.util.Date
+
 /**
  * Base functionality for columns.
  */
@@ -111,5 +114,11 @@ class LongColumn[R](table: Table[R], name: String)
  */
 class BooleanColumn[R](table: Table[R], name: String)
     extends Column[Boolean, R](table, name, table.dialect.booleanType)
+
+/**
+ * Timestamp column.
+ */
+class TimestampColumn[R](table: Table[R], name: String)
+    extends Column[Date, R](table, name, table.dialect.timestampType)
 
 

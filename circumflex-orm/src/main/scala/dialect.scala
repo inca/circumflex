@@ -19,6 +19,7 @@ trait Dialect {
   def longType = "int8"
   def stringType = "text"
   def booleanType = "boolean"
+  def timestampType = "timestamptz"
 
   /* FOREIGN KEY ACTIONS */
 

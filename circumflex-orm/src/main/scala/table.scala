@@ -278,6 +278,15 @@ abstract class Table[R] extends Relation[R]
     return col
   }
 
+  /**
+   * Helper method to create a timestamp column.
+   */
+  def timestampColumn(name: String): TimestampColumn[R] = {
+    val col = new TimestampColumn(this, name)
+    addColumn(col)
+    return col
+  }
+
   /* DDL */
 
   /**
