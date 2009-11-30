@@ -205,9 +205,9 @@ class DDLExport extends Configurable
       autoClose(conn.prepareStatement(t.sqlCreate))(st => {
         log.debug(t.sqlCreate)
         st.executeUpdate
-        log.info("CREATE TABLE {}: OK", t.tableName)
+        msg = "CREATE TABLE " + t.tableName + ": OK"
       })(e => {
-        log.error("CREATE TABLE {}: {}", t.tableName, e.getMessage)
+        msg = "CREATE TABLE " + t.tableName + ": " + e.getMessage
         log.trace("Error creating table.", e)
       })
       log.info(msg)
