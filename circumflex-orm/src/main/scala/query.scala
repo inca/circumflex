@@ -184,7 +184,7 @@ object Query extends Configurable {
   implicit def predicateToOrder(predicate: Predicate): Order =
     new Order(predicate.toSql, predicate.parameters)
 
-  implicit def stringTonHelper(str: String): SimpleExpressionHelper =
+  implicit def stringToHelper(str: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(str)
 
   implicit def fieldProjectionToHelper(f: FieldProjection[_, _]): SimpleExpressionHelper =

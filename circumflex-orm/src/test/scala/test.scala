@@ -4,6 +4,7 @@ class Category extends Record[Category] {
   def relation = Category
   val id = field(Category.id)
   val name = field(Category.name)
+  val books = oneToMany(Book.category)
 }
 
 object Category extends GenericTable[Category] {
