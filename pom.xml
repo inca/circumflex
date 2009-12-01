@@ -23,6 +23,7 @@
     <module>circumflex-ftl</module>
     <module>circumflex-spring-security</module>
     <module>circumflex-captcha</module>
+    <module>circumflex-site</module>
   </modules>
 
   <properties>
