@@ -1,0 +1,158 @@
+body, h1, h2, h3, h4, form, p, ul, ol, dl {
+  margin:0
+}
+
+ul {
+  padding:0;
+}
+
+li {
+  list-style:none;
+}
+
+a, a:hover, a:visited {
+  text-decoration:none;
+  color:#8fff00;
+}
+
+a[target='_blank'] {
+  padding-right:14px;
+  background:url(/static/img/external.png) center right no-repeat;
+}
+
+img {
+  border:0;
+}
+
+body {
+  font-family: Verdana, sans-serif;
+  font-size: 16px;
+  background: url(/static/img/bkg.png) repeat;
+}
+
+.clearer {
+  clear:both;
+}
+
+#header {
+  height:260px;
+  background:transparent url("/static/img/header-bkg.png") repeat-x bottom center;
+}
+
+#headerContent {
+  background:transparent url("/static/img/header.png") bottom center no-repeat;
+  width:680px;
+  height:260px;
+  margin:0 auto;
+}
+
+/* Layout base */
+
+#nav ul {
+  margin-top:4px;
+}
+
+#nav li {
+  float:left;
+  margin:0 8px
+}
+
+#outer {
+  margin:-36px auto 0;
+  width:680px;
+}
+
+#content {
+  color:#333;
+  text-align:justify;
+}
+
+#footer {
+  clear:both;
+  margin:16px auto;
+  background:transparent url("/static/img/footer-bkg.png") no-repeat;
+  width:320px;
+  height:64px;
+  padding:16px;
+}
+
+#footer span, #footer a {
+  font-size:0.9em;
+  font-style:italic;
+  color:#fff;
+}
+
+#footer .years {
+  padding:16px;
+}
+
+#footer .home {
+  padding-left:32px;
+}
+
+/* Sections */
+
+.section {
+  overflow:hidden;
+}
+
+.paper .hdr {
+  background:transparent url("/static/img/paper-bkg.png") repeat-x;
+  padding:24px 16px 4px;
+  font-size:24px;
+  font-style:italic;
+}
+
+.section .body {
+  background:#fff;
+  border-bottom-left-radius:8px;
+  border-bottom-right-radius:8px;
+  -moz-border-radius-bottomleft:8px;
+  -moz-border-radius-bottomright:8px;
+  -webkit-border-bottom-left-radius:8px;
+  -webkit-border-bottom-right-radius:8px;
+  padding:8px 16px;
+}
+
+.section .body p {
+  padding:4px 0;
+  text-align:justify;
+  text-indent:32px;
+}
+
+.hollow {
+  color: white;
+  text-shadow: 0 0 16px #cfa;
+}
+
+.hollow a {
+  color: #cfa !important;
+}
+
+.hollow p {
+  text-indent:2.5em;
+}
+
+/* Bar */
+.bar .c {
+  height:32px;
+  margin:0 24px;
+  padding:8px 0;
+  color:#fff;
+}
+
+.bar .c * {
+  color:#fff;
+}
+
+.bar .green .w {
+  background:transparent url("/static/img/bar-w.png") no-repeat;
+}
+
+.bar .green .e {
+  background:transparent url("/static/img/bar-e.png") no-repeat top right;
+}
+
+.bar .green .c {
+  background:transparent url("/static/img/bar-c.png") repeat-x;
+}
