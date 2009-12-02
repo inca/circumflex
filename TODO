@@ -1,8 +1,0 @@
-[ ] put, delete POST[_method] wrap
-[ ] управление заголовками из контроллера
-[ ] helpers: redirect, sendfile (disposition, length, name), status, error (code, body), media_type, content_type, attachment, last_modified, etag
-[ ] опции, конфигурация по environmentам (production, development, test)
-[ ] обработка ошибок: свои обработчики (например, на исключения), стандартный со стектрейсом и прочим дампом 
-[ ] сессии
-[_] обработка статики
-[ ] тесты
