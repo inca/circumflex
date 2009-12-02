@@ -94,12 +94,15 @@ class CircumflexFilter extends AbstractCircumflexFilter {
 
   /**
    * Executed when no routes match current request.
-   * Default behavior is to call <code>chain.doFilter</code> to pass request along the chain.
+   * Default behavior is to send 404 NOT FOUND.
+   * You may override it, say, to call <code>chain.doFilter</code> to pass request along the chain.
    * @param ctx    Route Context passed to this filter
    * @param chain  filter chain to delegate calls to if necessary
    */
   def onNoMatch(ctx: CircumflexContext, chain: FilterChain) =
-    chain.doFilter(ctx.request, ctx.response)
+    ErrorResponse(ctx, 404, "The requested resource does not exist.")(ctx.response)
+//  chain.doFilter(ctx.request, ctx.response)
+    
 
   /**
    * Executed when router throws an exception.
