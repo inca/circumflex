@@ -1,3 +1,6 @@
+#set( $symbol_pound = '#' )
+#set( $symbol_dollar = '$' )
+#set( $symbol_escape = '\' )
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="2.5"
          xmlns="http://java.sun.com/xml/ns/javaee"
@@ -7,7 +10,7 @@
 
   <filter>
     <filter-name>Circumflex Core Filter</filter-name>
-    <filter-class>ru.circumflex.core.CircumflexFilter</filter-class>
+    <filter-class>${package}.core.CircumflexFilter</filter-class>
   </filter>
 
   <filter-mapping>

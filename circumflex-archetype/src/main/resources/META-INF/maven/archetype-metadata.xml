@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><archetype-descriptor name="circumflex-site">
+  <fileSets>
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory>src/main/webapp</directory>
+      <includes>
+        <include>**/*.xml</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory>src/main/resources</directory>
+      <includes>
+        <include>**/*.xml</include>
+        <include>**/*.properties</include>
+      </includes>
+    </fileSet>
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory>src/main/scala</directory>
+      <includes>
+        <include>**/*.scala</include>
+      </includes>
+    </fileSet>
+    <fileSet encoding="UTF-8">
+      <directory>src/main/webapp</directory>
+      <includes>
+        <include>**/*.png</include>
+        <include>**/*.ftl</include>
+        <include>**/*.gif</include>
+        <include>**/*.css</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+</archetype-descriptor>

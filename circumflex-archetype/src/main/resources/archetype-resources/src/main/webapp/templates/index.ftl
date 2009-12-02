@@ -1,6 +1,5 @@
 [#ftl]
 [#include "layout.ftl"]
-[@page title="Welcome"]
-<h1>Welcome to ${artifactId}!</h1>
-<p>Place your content here.</p>
+[@page]
+<h1>Welcome to Simple Circumflex Web Application!</h1>
 [/@page]
