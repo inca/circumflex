@@ -7,7 +7,10 @@
   <artifactId>circumflex-core</artifactId>
   <packaging>jar</packaging>
   <version>0.2</version>
-  <name>Circumflex Web Mini-Core</name>
+  <name>Circumflex Web Framework</name>
+  <description>Circumflex Web Framework (a.k.a. circumflex-core) is a lightweight
+    Front Controller pattern implementation for quick and robust Web application
+    development.</description>
 
   <parent>
     <groupId>ru.circumflex</groupId>

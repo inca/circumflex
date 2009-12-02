@@ -24,4 +24,8 @@
   your local Maven 2 repository.
 </p>
 [/@section]
+[@section theme="paper"
+          title="Configure new project"]
+
+[/@section]
 [/@page]

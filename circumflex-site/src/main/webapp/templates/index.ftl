@@ -2,7 +2,7 @@
 [#include "./layout.ftl"]
 [@page]
 
-[@section id="circumflex" theme="paper" title="Introducing Circumflex"]
+[@section id="circumflex" theme="paper" title="Introducing Circumflex ${msg['preved']}"]
 <p>Circumflex is a set of mini-frameworks and tiny helpers for quick and robust application
    development using <a href="http://scala-lang.org" target="_blank">Scala programming language</a>.
 </p>
@@ -65,8 +65,8 @@ class Main extends RequestRouter {
 <pre id="test.scala">${r'
 package myapp
 
-import ru.circumflex.core.RequestRouter
-import ftl.FreemarkerHelper
+import ru.circumflex.core._
+import ru.circumflex.freemarker._
 
 class Main extends RequestRouter with FreemarkerHelper {
   get("/test") = {

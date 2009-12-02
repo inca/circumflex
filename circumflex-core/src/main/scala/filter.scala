@@ -75,7 +75,9 @@ abstract class AbstractCircumflexFilter extends Filter with Configurable {
           if (ctx == null) Circumflex.initContext(req, res, this)
           // Put a Messages helper with current request's locale (if it exists)
           try {
-            val bundleResource = configurationBundle.getString("cx.messages")
+            val bundleResource = try {
+              configurationBundle.getString("cx.messages")
+            } catch { case _ => "Messages" }
             ctx += "msg" -> new Messages(ResourceBundle.getBundle(bundleResource, req.getLocale))
           } catch {
             case _ =>
@@ -126,8 +128,8 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    */
   def onNoMatch(ctx: CircumflexContext, chain: FilterChain) =
     ErrorResponse(ctx, 404, "The requested resource does not exist.")(ctx.response)
-//  chain.doFilter(ctx.request, ctx.response)
-    
+  //  chain.doFilter(ctx.request, ctx.response)
+
 
   /**
    * Executed when router throws an exception.
