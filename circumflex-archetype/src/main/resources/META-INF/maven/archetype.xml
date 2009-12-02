@@ -8,19 +8,7 @@
     <resource>src/main/scala/main.scala</resource>
     <resource>src/main/webapp/WEB-INF/web.xml</resource>
     <resource>src/main/webapp/static/css/main.css</resource>
-    <resource>src/main/webapp/static/img/bar-c.png</resource>
-    <resource>src/main/webapp/static/img/bar-e.png</resource>
-    <resource>src/main/webapp/static/img/bar-w.png</resource>
-    <resource>src/main/webapp/static/img/bkg.png</resource>
-    <resource>src/main/webapp/static/img/external.png</resource>
-    <resource>src/main/webapp/static/img/footer-bkg.png</resource>
-    <resource>src/main/webapp/static/img/header-bkg.png</resource>
-    <resource>src/main/webapp/static/img/header.png</resource>
-    <resource>src/main/webapp/static/img/loading.gif</resource>
-    <resource>src/main/webapp/static/img/paper-bkg.png</resource>
     <resource>src/main/webapp/templates/index.ftl</resource>
     <resource>src/main/webapp/templates/layout.ftl</resource>
-    <resource>src/main/webapp/templates/start.ftl</resource>
-    <resource>circumflex-site.iml</resource>
   </resources>
 </archetype>
