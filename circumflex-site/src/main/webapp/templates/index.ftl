@@ -4,7 +4,7 @@
 
 [@section id="circumflex" theme="paper" title="Introducing Circumflex"]
 <p>Circumflex is a set of mini-frameworks and tiny helpers for quick and robust application
-  development using <a href="http://scala-lang.org" target="_blank">Scala programming language</a>.
+   development using <a href="http://scala-lang.org" target="_blank">Scala programming language</a>.
 </p>
 <p>Circumflex features two mini-frameworks:</p>
 <ul>
@@ -12,29 +12,31 @@
   <li><a href="#circumflex-orm">Circumflex ORM Framework</a></li>
 </ul>
 <p>These framework provide Domain-Specific Languages that make the development process
-  natural and extremely productive.</p>
+   natural and extremely productive.</p>
 <p>Circumflex does not contain a comprehensive features list for every task a developer
-  might ever need; instead it allows developers to choose the tools and libraries that
-  best suit their particular needs.</p>
+   might ever need; instead it allows developers to choose the tools and libraries that
+   best suit their particular needs.</p>
 <p>Circumflex is designed to use the powers of Scala programming language and
   <a href="http://maven.apache.org" target="_blank">Apache Maven 2</a> software management
-  platform – these are the only assumptions Circumflex makes about your applications.</p>
+   platform – these are the only assumptions Circumflex makes about your applications.</p>
 <p>Circumflex has several key concepts.</p>
 <ul>
   <li>The application should not be burried in an endless pile of configuration files, that
-    are supposed to be maintained by non-programmer kinds. Circumflex components require minimum
-    initial configuration, while still allowing developers to easily override defaults if necessary.</li>
+      are supposed to be maintained by non-programmer kinds. Circumflex components require minimum
+      initial configuration, while still allowing developers to easily override defaults if necessary.</li>
   <li>Scala applications are easily integrated with Java libraries, but it is often very
-    inconveniant to use them from Scala code. Circumflex helpers for popular Java tools are
-    intended to eliminate these complexities.</li>
+      inconveniant to use them from Scala code. Circumflex helpers for popular Java tools are
+      intended to eliminate these complexities.</li>
   <li>All Circumflex components are relied on Scala support for Domain-Specific Languages (DSLs).
-  They can make the development process more natural and effective.</li>
+      They can make the development process more natural and effective.</li>
 </ul>
 [/@section]
 
-[@section id="circumflex-core" theme="paper" title="Circumflex Web Framework"]
+[@section id="circumflex-core"
+          theme="paper"
+          title="Circumflex Web Framework"]
 <p>Circumflex Web Framework (a.k.a. <em>circumflex-core</em>) is a lightweight Front Controller
-  pattern implementation for quick and robust Web application development.</p>
+   pattern implementation for quick and robust Web application development.</p>
 <p>Here is Circumflex hello-world application:</p>
 <pre id="hello.scala">
 package myapp
@@ -46,10 +48,10 @@ class Main extends RequestRouter {
 }
 </pre>
 <p>Circumflex Web Framework does not rely on specific view technology, however Circumflex
-  comes shipped with a helper for <a href="http://freemarker.org" target="_blank">FreeMarker</a>,
-  a powerful feature-rich generic template engine. Circumflex FreeMarker Helper (a.k.a.
+   comes shipped with a helper for <a href="http://freemarker.org" target="_blank">FreeMarker</a>,
+   a powerful feature-rich generic template engine. Circumflex FreeMarker Helper (a.k.a.
   <em>circumflex-ftl</em>) allows developers to use Scala core types as template's data model to
-    easily create full-fledged web applications.</p>
+   easily create full-fledged web applications.</p>
 <p>For example, the following template (<em>test.ftl</em>):</p>
 <pre>${r"
 [#ftl]
@@ -76,23 +78,25 @@ class Main extends RequestRouter with FreemarkerHelper {
 <p>will result in following markup:</p>
 <pre>${r'
 <ul>
-      <li>one</li>
+    <li>one</li>
     <li>two</li>
     <li>three</li>
 </ul>'?html}</pre>
 <p>The power and flexibility of Scala combined with various Circumflex helpers makes the
-  development of arbitrary complex applications almost that simple, too.</p>
+   development of arbitrary complex applications almost that simple, too.</p>
 [/@section]
 
-[@section id="circumflex-orm" theme="paper" title="Circumflex ORM Framework"]
+[@section id="circumflex-orm"
+          theme="paper"
+          title="Circumflex ORM Framework"]
 <p>Circumflex ORM Framework (a.k.a. <em>circumflex-orm</em>) is a lightweight Object-Relational
-  Mapping framework for Scala-based applications. It features schema generation, complex querying
-  and dialect support, while eliminating meta-data, configuration complexity, transaction
-  demarcation and other headaches of popular ORM's.</p>
+   Mapping framework for Scala-based applications. It features schema generation, complex querying
+   and dialect support, while eliminating meta-data, configuration complexity, transaction
+   demarcation and other headaches of popular ORM's.</p>
 <p>The key concept of Circumflex ORM is the <em>clarity</em>. Most popular ORMs try to hide SQL
-  details from a developer, making them somewhat "leaky abstractions": you cannot deal with
-  persistence well unless you know exactly what you are doing. Circumflex ORM let's you specify
-  the exact behavior in very conveniant DSL-like fashion.</p>
+   details from a developer, making them somewhat "leaky abstractions": you cannot deal with
+   persistence well unless you know exactly what you are doing. Circumflex ORM let's you specify
+   the exact behavior in very conveniant DSL-like fashion.</p>
 <p>Domain model validation is also a part of Circumflex ORM.</p>
 <p>Consider the following example:</p>
 <pre>
@@ -133,9 +137,9 @@ class Main extends RequestRouter with FreemarkerHelper {
   }
 </pre>
 <p>This is a typical domain model definition using Circumflex ORM. As you can see, there are
-  two kinds of top-level definitions, <em>records</em> and <em>tables</em>: tables describe,
-  how records will be queried and persisted. This information is quite enough to perform all
-  common operations:</p>
+   two kinds of top-level definitions, <em>records</em> and <em>tables</em>: tables describe,
+   how records will be queried and persisted. This information is quite enough to perform all
+   common operations:</p>
 <ul>
   <li>schema generation:
     <pre>new DDLExport(Category, Book).create   // creates database schema</pre>
@@ -184,7 +188,6 @@ cat.save    // validates and issues INSERT statement
 cat.name := "Romances"
 cat.save    // validates and issues UPDATE statement
 cat.delete  // issues DELETE statement</pre></li>
-  <li>and so on.</li>
 </ul>
 [/@section]
 [/@page]
