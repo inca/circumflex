@@ -10,7 +10,7 @@
 
   <filter>
     <filter-name>Circumflex Core Filter</filter-name>
-    <filter-class>${package}.core.CircumflexFilter</filter-class>
+    <filter-class>ru.circumflex.core.CircumflexFilter</filter-class>
   </filter>
 
   <filter-mapping>
