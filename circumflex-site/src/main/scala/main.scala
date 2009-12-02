@@ -37,5 +37,6 @@ class Main extends RequestRouter
   ctx += "host" -> header("Host").getOrElse("localhost")
 
   get("/") = ftl("index.ftl")
+  get("/start") = ftl("start.ftl")
 
 }

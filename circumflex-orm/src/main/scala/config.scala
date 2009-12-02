@@ -164,7 +164,7 @@ object DefaultConnectionProvider extends DefaultConnectionProvider
  * This filter should be the first in chain.
  */
 class ORMFilter extends AbstractCircumflexFilter with Configurable {
-  protected val log = LoggerFactory.getLogger("ru.circumflex.orm.filter")
+  protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   /**
    * Commits current transaction at the end of request processing cycle and closes current connection.

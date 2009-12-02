@@ -75,7 +75,7 @@ object DefaultSchema extends Schema
  */
 class DDLExport extends Configurable
     with JDBCHelper {
-  protected val log = LoggerFactory.getLogger("ru.circumflex.orm.ddl")
+  protected val log = LoggerFactory.getLogger("ru.circumflex.orm.SQL")
 
   private val schemata = HashSet[Schema]()
   private val tables = HashSet[Table[_]]()

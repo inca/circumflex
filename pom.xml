@@ -9,8 +9,8 @@
   <version>0.2</version>
   <name>Circumflex</name>
   <description>
-    Circumflex is a set of tiny helpers for quick Web application development
-    using Scala programming language.
+    Circumflex is a set of mini-frameworks and tiny helpers for quick application
+    development using Scala programming language.
     It's core implements a Front Controller pattern on top of the Java Servlet
     Technology, allowing the developers to choose tools and frameworks that suit
     their particular needs.

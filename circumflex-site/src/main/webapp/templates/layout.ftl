@@ -12,17 +12,15 @@
   </head>
   <body>
     <div id="header">
-      <div id="headerContent" title="Circumflex – lightweight Scala-based web application framework">
+      <div id="headerContent"
+           title="Circumflex – lightweight open-source Scala-based application frameworks">
       </div>
     </div>
     <div id="outer">
       [@bar id="nav"]
       <ul>
-        <li>one</li>
-        <li>two</li>
-        <li>three</li>
-        <li>four</li>
-        <li>five</li>
+        <li><a href="/">About</a></li>
+        <li><a href="/start">Quick Start</a></li>
       </ul>
       [/@bar]
       <div id="content">
