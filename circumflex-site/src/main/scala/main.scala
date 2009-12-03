@@ -38,5 +38,7 @@ class Main extends RequestRouter
 
   get("/") = ftl("index.ftl")
   get("/start") = ftl("start.ftl")
+  get("/core") = ftl("core.ftl")
+  get("/orm") = ftl("orm.ftl")
 
 }
