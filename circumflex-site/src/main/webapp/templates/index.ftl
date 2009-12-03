@@ -28,6 +28,7 @@
       intended to eliminate these complexities.</li>
   <li>All Circumflex components are relied on Scala support for Domain-Specific Languages (DSLs).
       They can make the development process more natural and effective.</li>
+  <li>Circumflex is completely free, with BSD-style license.</li>
 </ul>
 [@follow/]
 [/@section]
