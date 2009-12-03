@@ -4,7 +4,8 @@ body, h1, h2, h3, h4, form, p, ul, ol, dl {
 
 a, a:hover, a:visited {
   text-decoration:none;
-  color:#52bf18;
+/*  color:#52bf18; */
+  color:#666;
 }
 
 a[target='_blank'] {
