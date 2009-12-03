@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory
  * ResultSets and PreparedStatements.
  */
 trait JDBCHelper {
-  protected val sqlLog = LoggerFactory.getLogger("ru.circumflex.orm.SQL")
+  protected val sqlLog = LoggerFactory.getLogger("ru.circumflex.orm")
 
   def autoClose[A <: {def close(): Unit}, B](obj: A)
                                             (actions: A => B)

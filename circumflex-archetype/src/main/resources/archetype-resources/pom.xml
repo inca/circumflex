@@ -17,6 +17,10 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
+  <properties>
+    <port>8180</port>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>ru.circumflex</groupId>
@@ -83,6 +87,12 @@
         <configuration>
           <scanIntervalSeconds>5</scanIntervalSeconds>
           <contextPath>/</contextPath>
+          <connectors>
+            <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
+              <port>${port}</port>
+              <maxIdleTime>60000</maxIdleTime>
+            </connector>
+          </connectors>
         </configuration>
         <dependencies>
           <dependency>

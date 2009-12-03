@@ -25,7 +25,7 @@
 </p>
 [/@section]
 [@section theme="paper"
-          title="Configure new project"]
+          title="Create new project"]
 
 [/@section]
 [/@page]

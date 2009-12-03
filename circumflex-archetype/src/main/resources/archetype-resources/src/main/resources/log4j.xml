@@ -16,7 +16,15 @@
     <appender-ref ref="console"/>
   </root>
 
-  <category name="${package}.core.filter">
+  <category name="${package}">
+    <priority value="debug"/>
+  </category>
+
+  <category name="ru.circumflex.core">
+    <priority value="info"/>
+  </category>
+
+  <category name="ru.circumflex.orm">
     <priority value="info"/>
   </category>
 

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory
 
 class Messages(val msgBundle: ResourceBundle) extends HashModel {
 
-  val log = LoggerFactory.getLogger("ru.circumflex.core.messages")
+  val log = LoggerFactory.getLogger("ru.circumflex.core")
 
   def apply(key: String): Option[String] = try {
     Some(msgBundle.getString(key))

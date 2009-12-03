@@ -19,6 +19,13 @@ h1 {
   font-size:1.5em;
 }
 
+pre {
+  margin:0;
+  border:1px solid #777;
+  padding:8px;
+  background:#fff;
+}
+
 #footer {
   text-align: center;
 }

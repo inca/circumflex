@@ -117,7 +117,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
   /**
    * A logger instance
    */
-  val log = LoggerFactory.getLogger("ru.circumflex.core.filter")
+  val log = LoggerFactory.getLogger("ru.circumflex.core")
 
   /**
    * Executed when no routes match current request.
