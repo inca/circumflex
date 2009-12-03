@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?><project>
   <modelVersion>4.0.0</modelVersion>
   <groupId>ru.circumflex</groupId>
-  <artifactId>circumflex-site-archetype</artifactId>
+  <artifactId>circumflex-archetype</artifactId>
   <packaging>maven-archetype</packaging>
-  <name>circumflex-site-archetype</name>
+  <name>Circumflex Application Archetype</name>
   <version>0.2</version>
   <build>
     <extensions>
