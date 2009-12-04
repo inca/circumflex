@@ -57,9 +57,9 @@ class RequestRouter extends ContextAware {
 
   def headers(crit: (String, String)*) = new HeadersRegexMatcher(crit : _*)
 
-  def param(key: String) = ctx.stringParam(key)
+  def param(key: String): Option[String] = ctx.stringParam(key)
 
-  def method = param("_method").getOrElse(ctx.request.getMethod)
+  def method: String = param("_method").getOrElse(ctx.request.getMethod)
 
   def error(errorCode: Int, message: String) = ErrorResponse(errorCode, message)
   def error(errorCode: Int) = ErrorResponse(errorCode, "")

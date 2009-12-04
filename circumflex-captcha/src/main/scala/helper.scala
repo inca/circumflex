@@ -50,6 +50,6 @@ trait CaptchaHelper extends ContextAware {
   def captchaParamName = "_captcha"
 
   def captchaPassed: Boolean = captchaService
-      .validateResponseForID(captchaId, ctx.stringParam(captchaParamName))
+      .validateResponseForID(captchaId, ctx.stringParam(captchaParamName).getOrElse(""))
       .asInstanceOf[Boolean]
 }

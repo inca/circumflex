@@ -40,7 +40,7 @@ class CircumflexContext(val request: HttpServletRequest,
   var contentType = "text/html"
 
   def get(key: String): Option[Any] = params.get(key) match {
-    case Some(value) => Some(value)
+    case Some(value) if (value != null) => Some(value)
     case _ => {
       val value = request.getParameter(key)
       if (value == null) None
@@ -48,7 +48,10 @@ class CircumflexContext(val request: HttpServletRequest,
     }
   }
 
-  def stringParam(key: String): String = get(key).getOrElse("").toString
+  def stringParam(key: String): Option[String] = get(key) match {
+    case Some(value) => Some(value.toString)
+    case _ => None
+  }
 
   def getOrElse[A](key: String, default: A): A = get(key) match {
     case Some(value: A) => value;
