@@ -31,14 +31,9 @@ package ru.circumflex.orm
  */
 abstract class RelationNode[R](val relation: Relation[R],
                                var alias: String)
-    extends Relation[R] with Configurable {
+    extends Relation[R] with Configurable with SQLable {
 
   def recordClass = relation.recordClass
-
-  /**
-   * SQL representation of this node for use in FROM clause.
-   */
-  def toSql: String
 
   /**
    * Just proxies relation's primary key.
@@ -112,8 +107,6 @@ abstract class RelationNode[R](val relation: Relation[R],
    */
   def field[T](col: Column[T, R]): FieldProjection[T, R] =
     new FieldProjection(this, col)
-
-  override def toString = toSql
 
 }
 

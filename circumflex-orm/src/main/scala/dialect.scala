@@ -351,7 +351,9 @@ trait Dialect {
    * Produces INSERT INTO .. SELECT statement.
    */
   def insertSelect(dml: InsertSelect[_]): String =
-    "insert into " + dml.relation.qualifiedName + "\n\t" + select(dml.query)
+    "insert into " + dml.relation.qualifiedName +
+        " (\n\t" + dml.relation.columns.map(_.columnName).mkString(",\n\t") +
+        ") " + select(dml.query)
 
   /* UPDATE STATEMENTS */
 
@@ -371,5 +373,12 @@ trait Dialect {
   def deleteRecord(record: Record[_]): String =
     "delete from " + record.relation.qualifiedName +
         "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
+
+  /**
+   * Produces a DELETE statement.
+   */
+  def delete(dml: Delete[_]): String = "delete from " + dml.relation.qualifiedName +
+    "\nwhere\n\t" + dml.where.toSql;
+
 
 }

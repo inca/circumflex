@@ -31,18 +31,12 @@ import java.sql.ResultSet
 /**
  * Result set projection.
  */
-trait Projection[T] {
+trait Projection[T] extends SQLable {
   /**
    * Extract a value from result set.
    */
   def read(rs: ResultSet): Option[T]
 
-  /**
-   * SQL representation of this projection for use in SELECT clause.
-   */
-  def toSql: String
-
-  override def toString = toSql
 }
 
 /**
@@ -75,7 +69,6 @@ class FieldProjection[T, R](val alias: String,
   def expr = node.dialect.qualifyColumn(column, node.alias)
 
   def toSql = node.dialect.columnAlias(column, alias, node.alias)
-
 }
 
 /**

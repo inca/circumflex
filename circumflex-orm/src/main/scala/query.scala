@@ -56,7 +56,7 @@ class Select extends Configurable with JDBCHelper {
    * Adds specified node to FROM clause.
    * All projections are added too.
    */
-  def addFrom[R](node: RelationNode[R]): Select = {
+  def addFrom[R](node: RelationNode[R]): this.type = {
     this.relations += node
     this.projections ++= node.projections
     return this
@@ -66,13 +66,13 @@ class Select extends Configurable with JDBCHelper {
    * Adds specified table to FROM clause (assigning it query-unique alias).
    * All projections are added too.
    */
-  def addFrom[R](rel: Relation[R]): Select =
+  def addFrom[R](rel: Relation[R]): this.type =
     addFrom(makeNode(rel))
 
   /**
    * Sets WHERE clause of this query.
    */
-  def where(predicate: Predicate): Select = {
+  def where(predicate: Predicate): this.type = {
     this._predicate = predicate
     return this
   }
@@ -85,7 +85,7 @@ class Select extends Configurable with JDBCHelper {
   /**
    * Adds an order to ORDER BY clause.
    */
-  def addOrder(order: Order): Select = {
+  def addOrder(order: Order): this.type = {
     this.orders += order
     return this
   }
@@ -93,7 +93,7 @@ class Select extends Configurable with JDBCHelper {
   /**
    * Sets maximum results for this query. Use -1 for infinite-sized queries.
    */
-  def limit(value: Int): Select = {
+  def limit(value: Int): this.type = {
     _limit = value
     return this
   }
@@ -101,7 +101,7 @@ class Select extends Configurable with JDBCHelper {
   /**
    * Sets the offset for this query.
    */
-  def offset(value: Int): Select = {
+  def offset(value: Int): this.type = {
     _offset = value
     return this
   }

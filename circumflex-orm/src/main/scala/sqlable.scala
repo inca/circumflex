@@ -25,51 +25,10 @@
 
 package ru.circumflex.orm
 
-import collection.mutable.ListBuffer
-import Query._
+trait SQLable {
 
-/**
- * Contains functionality for INSERT-SELECT operations.
- * The query must be prepared first with projections matching target relation's
- * columns.
- */
-class InsertSelect[R](val relation: Relation[R], val query: Select)
-    extends Configurable with JDBCHelper with SQLable {
+  def toSql: String
 
-  def executeUpdate: Int = {
-    val conn = relation.connectionProvider.getConnection
-    val sql = toSql
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      query.setParams(st, 1)
-      return st.executeUpdate
-    })
-  }
-
-  def toSql: String = dialect.insertSelect(this)
-}
-
-/**
- * Contains functionality for DELETE operations. 
- */
-class Delete[R](val relation: Relation[R])
-    extends JDBCHelper with SQLable{
-
-  private var _predicate: Predicate = EmptyPredicate
-
-  /**
-   * Sets WHERE clause of this query.
-   */
-  def where(predicate: Predicate): this.type = {
-    this._predicate = predicate
-    return this
-  }
-
-  /**
-   * Returns the WHERE clause of this query.
-   */
-  def where: Predicate = this._predicate
-
-  def toSql: String = dialect.delete(this)
+  override def toString = toSql
 
 }

@@ -14,10 +14,6 @@
   </root>
 
   <category name="ru.circumflex.orm">
-    <priority value="info"/>
-  </category>
-
-  <category name="ru.circumflex.orm.SQL">
     <priority value="debug"/>
   </category>
 

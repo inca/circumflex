@@ -28,22 +28,13 @@ package ru.circumflex.orm
 /**
  * Predicates form a criteria tree that is used to filter results.
  */
-trait Predicate extends Configurable {
-  /**
-   * SQL representation of this predicate for use in WHERE clause.
-   * It should resolve to parameterized expression that yields boolean SQL value
-   * when executed.
-   */
-  def toSql: String
-
+trait Predicate extends Configurable with SQLable {
   /**
    * The list of parameters that should be applied to this predicate.
    * Essentially these are set on JDBC prepared statement object.
    * The parameters count and order must match predicate's SQL representation.
    */
   def parameters: Seq[Any]
-
-  override def toString = toSql
 }
 
 /**
