@@ -26,7 +26,6 @@ pre, .highlight {
   -webkit-border-radius:8px;
   padding:8px;
   margin:4px 0;
-  text-shadow: 2px 2px 6px #777;
 }
 
 pre {
@@ -35,6 +34,7 @@ pre {
 
 .highlight * {
   font-style:italic;
+  text-shadow: 2px 2px 6px #777;
 }
 
 img {

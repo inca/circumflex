@@ -104,6 +104,9 @@ cat.name := "Romances"
 cat.save    // validates and issues UPDATE statement
 cat.delete  // issues DELETE statement</pre></li>
 </ul>
+<p>Circumflex ORM supports projections, joins, ordering, arbitrary predicates and even dynamic schema
+  creation. However, some features like subqueries, associations prefetching and aggregate projections
+  are still under active development.</p>
 [@follow/]
 [/@section]
 [/@page]
