@@ -7,17 +7,23 @@
   <a href='http://github.com/inca/circumflex' target='_blank'>GitHub</a>:
 </p>
 <pre>$ git clone git://github.com/inca/circumflex.git</pre>
+<p>Circumflex, like all Scala applications, runs on Java VM. Make sure that latest
+  <a href="http://java.sun.com/javase/downloads/index.jsp" target="_blank">Java 6 SDK</a>
+   is installed on your system.</p>
 <p>Circumflex uses <a href="http://maven.apache.org" target="_blank">Apache Maven 2</a>
    for build management. If you don't already have Maven 2,
-  <a href="http://maven.apache.org/download.html#Installation" target="_blank">install it</a>.
-   If you are unfamiliar with Maven, you should probably read the
+  <a href="http://maven.apache.org/download.html#Installation" target="_blank">install it</a>. Note,
+   that some operating systems (e.g. Mac OS X 10.5 and higher) are shipped with Maven 2 by
+   default. On some systems it is also preferrable to install Maven 2 via package managers.
+   For example, on Debian or Ubuntu systems you may install Maven 2 by executing the following line:</p>
+<pre>$ sudo apt-get install maven2</pre>
+<p>If you are unfamiliar with Maven, you should probably read the
   <a href="http://maven.apache.org/guides/getting-started/maven-in-five-minutes.html"
      target="_blank">
     Maven in 5 Minutes
   </a> article or
   <a href="http://maven.apache.org/guides/getting-started/index.html"
-     target="_blank">Getting Started Guide</a>.
-</p>
+     target="_blank">Getting Started Guide</a>.</p>
 <p>Once you are ready to build, execute the following in Circumflex root directory:</p>
 <pre>$ mvn clean install</pre>
 <p>After the build has successfully finished, Circumflex with all it's dependencies will be
@@ -105,12 +111,12 @@ The following lines indicate that your application is ready to serve requests:
       <li><strong>resources/log4j.xml</strong>
         – logger configuration for your project, you may use it to obtain more verbose information
         about the application's runtime activity, for example the following changes:
-        <pre>${r'
+        <pre>${'
 <category name="ru.circumflex.core">
   <priority value="debug"/>
 </category>'?html}</pre>
         <p>will result in every incoming request being logged to your console.
-          If you are not familiar with <em>Apache log4j</em>, take a moment to observe the
+           If you are not familiar with <em>Apache log4j</em>, take a moment to observe the
           <a href="http://logging.apache.org/log4j/1.2/manual.html" target="_blank">
             Short introduction to log4j</a> article.</p>
       </li>

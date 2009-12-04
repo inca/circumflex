@@ -48,7 +48,7 @@
       <li><strong>resources/log4j.xml</strong>
         – logger configuration for your project, you may use it to obtain more verbose information
         about the application's runtime activity, for example the following changes:
-        <pre>${r'
+        <pre>${'
 <category name="ru.circumflex.core">
   <priority value="debug"/>
 </category>'?html}</pre> will result in every incoming request being logged to your console.

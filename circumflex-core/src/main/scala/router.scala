@@ -63,16 +63,16 @@ class RequestRouter extends ContextAware {
 
   def method = param("_method").getOrElse(ctx.request.getMethod)
 
-  def error(errorCode: Int, message: String) = ErrorResponse(ctx, errorCode, message)
-  def error(errorCode: Int) = ErrorResponse(ctx, errorCode, "")
+  def error(errorCode: Int, message: String) = ErrorResponse(errorCode, message)
+  def error(errorCode: Int) = ErrorResponse(errorCode, "")
 
-  def redirect(location: String) = RedirectResponse(ctx, location)
+  def redirect(location: String) = RedirectResponse(location)
 
   def done: HttpResponse = done(200)
 
   def done(statusCode: Int): HttpResponse = {
     ctx.statusCode = statusCode
-    EmptyResponse(ctx)
+    EmptyResponse()
   }
 
   def requireParams(names: String*) = names.toList.foreach(name => {

@@ -42,7 +42,7 @@ class Main extends RequestRouter with FreemarkerHelper {
   }
 }'?html}</pre>
 <p>will result in following markup:</p>
-<pre>${r'
+<pre>${'
 <ul>
     <li>one</li>
     <li>two</li>
