@@ -5,12 +5,8 @@
           theme="paper"
           title="Table Of Contents"]
 <ul>
-  <li>Circumflex Web framework
-    <ul>
-      <li><a href="#context">Circumflex Context</a></li>
-      <li><a href="#routers">Request Routers</a></li>
-    </ul>
-  </li>
+  <li><a href="#context">Circumflex Context</a></li>
+  <li><a href="#routers">Request Routers</a></li>
 </ul>
 [/@section]
 

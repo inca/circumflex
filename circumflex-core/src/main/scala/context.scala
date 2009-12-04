@@ -39,19 +39,16 @@ class CircumflexContext(val request: HttpServletRequest,
   var statusCode = 200
   var contentType = "text/html"
 
-  def get(key: String) = params.get(key) match {
-    case None => {
+  def get(key: String): Option[Any] = params.get(key) match {
+    case Some(value) => Some(value)
+    case _ => {
       val value = request.getParameter(key)
       if (value == null) None
       else Some(value)
     }
-    case value => value
   }
 
-  def stringParam(key: String): Option[String] = get(key) match {
-    case Some(value) => Some(value.toString)
-    case _ => None
-  }
+  def stringParam(key: String): String = get(key).getOrElse("").toString
 
   def getOrElse[A](key: String, default: A): A = get(key) match {
     case Some(value: A) => value;

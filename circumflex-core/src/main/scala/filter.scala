@@ -127,7 +127,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * @param chain  filter chain to delegate calls to if necessary
    */
   def onNoMatch(ctx: CircumflexContext, chain: FilterChain) =
-    ErrorResponse(ctx, 404, "The requested resource does not exist.")(ctx.response)
+    ErrorResponse(404, "The requested resource does not exist.")(ctx.response)
   //  chain.doFilter(ctx.request, ctx.response)
 
 
@@ -140,7 +140,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    */
   def onRouterError(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
     log.error("Controller threw an exception, see stack trace for details.", e)
-    ErrorResponse(ctx, 500, e.getMessage)(ctx.response)
+    ErrorResponse(500, e.getMessage)(ctx.response)
   }
 
   /**

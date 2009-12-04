@@ -25,8 +25,6 @@
 
 package ru.circumflex.core
 
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
 trait ContextAware {
@@ -35,7 +33,7 @@ trait ContextAware {
 
 class RequestRouter extends ContextAware {
 
-  implicit def textToResponse(text: String): HttpResponse = TextResponse(ctx, text)
+  implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
 
   val get = new RequestDispatcher("get")
   val getOrPost = new RequestDispatcher("get", "post")

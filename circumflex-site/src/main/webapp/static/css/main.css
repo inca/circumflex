@@ -115,11 +115,12 @@ body {
   overflow:hidden;
 }
 
-.paper .hdr {
+.paper .hdr, .paper h1 {
   background:transparent url("/static/img/paper-bkg.png") repeat-x;
-  padding:24px 16px 4px;
+  padding:18px 16px 4px;
   font-size:24px;
   font-style:italic;
+  font-weight:normal;
 }
 
 .paper .hdr a {
@@ -134,7 +135,7 @@ body {
   -moz-border-radius-bottomright:8px;
   -webkit-border-bottom-left-radius:8px;
   -webkit-border-bottom-right-radius:8px;
-  padding:0 16px 8px;
+  padding:0 8px 8px;
 }
 
 .section .body p {

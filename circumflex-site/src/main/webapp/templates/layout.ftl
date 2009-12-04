@@ -42,7 +42,7 @@
 <div class="section"
      [#if id != ""]id="${id}"[/#if]>
   <div class="${theme}" style="${style}">
-    <div class="hdr">${title}</div>
+    <h1>${title}</h1>
     <div class="body">
       [#nested/]
       <div class="clearer"></div>

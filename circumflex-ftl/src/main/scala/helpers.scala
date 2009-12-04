@@ -36,7 +36,7 @@ trait FreemarkerHelper extends ContextAware {
 
   def ftl(templateName:String) = {
     val template = freemarkerConf.getTemplate(templateName);
-    new FreemarkerResponse(ctx, template)
+    new FreemarkerResponse(template)
   }
 
 }
