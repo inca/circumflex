@@ -40,5 +40,12 @@ class Main extends RequestRouter
   get("/start") = ftl("start.ftl")
   get("/core") = ftl("core.ftl")
   get("/orm") = ftl("orm.ftl")
+  get("/guide") = ftl("guide.ftl")
+
+  // Guide examples
+
+  get("/guide/hello/(.+)") = "Saying hello to " + ctx("uri$1").get
+  get("/guide/hello", headers("Host" -> "(.*)", "User-Agent" -> "(.*)")) =
+      "Host is " + ctx("Host$1").get + "; user agent is " + ctx("User-Agent$1").get
 
 }

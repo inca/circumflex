@@ -1,6 +1,6 @@
 [#ftl]
 [#include "./layout.ftl"]
-[@page title="Quick Start"]
+[@page title="Quick Start Guide"]
 [@section theme="paper"
           title="Build from sources"]
 <p>You can obtain latest Circumflex sources at

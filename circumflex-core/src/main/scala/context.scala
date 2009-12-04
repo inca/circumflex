@@ -48,13 +48,14 @@ class CircumflexContext(val request: HttpServletRequest,
     case value => value
   }
 
-  def stringParam(key: String): Option[String] = params.get(key) match {
-    case Some(value: String) => Some(value)
-    case _ => {
-      val value = request.getParameter(key)
-      if (value == null) None
-      else Some(value)
-    }
+  def stringParam(key: String): Option[String] = get(key) match {
+    case Some(value) => Some(value.toString)
+    case _ => None
+  }
+
+  def getOrElse[A](key: String, default: A): A = get(key) match {
+    case Some(value: A) => value;
+    case _ => default
   }
 
   def noCache() = {

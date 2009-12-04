@@ -23,6 +23,7 @@
   <ul>
     <li><a href="/">About</a></li>
     <li><a href="/start">Quick Start Guide</a></li>
+    <li><a href="/guide">Users Guide</a></li>
   </ul>
   [/@bar]
   <div id="content">

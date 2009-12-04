@@ -7,15 +7,14 @@
 <p>Circumflex Web Framework (a.k.a. <em>circumflex-core</em>) is a lightweight Front Controller
   pattern implementation for quick and robust Web application development.</p>
 <p>Here is Circumflex hello-world application:</p>
-<pre id="hello.scala">
+<pre id="hello.scala">${r'
 package myapp
 
 import ru.circumflex.core.RequestRouter
 
 class Main extends RequestRouter {
   get("/") = "Hello world!"
-}
-</pre>
+}'?html}</pre>
 <p>Circumflex Web Framework does not rely on specific view technology, however Circumflex
   comes shipped with a helper for <a href="http://freemarker.org" target="_blank">FreeMarker</a>,
   a powerful feature-rich generic template engine. Circumflex FreeMarker Helper (a.k.a.
@@ -28,8 +27,7 @@ class Main extends RequestRouter {
   [#list myList as elem]
   <li>${elem}</li>
   [/#list]
-</ul>"?html}
-</pre>
+</ul>"?html}</pre>
 <p>and following code:</p>
 <pre id="test.scala">${r'
 package myapp
@@ -42,8 +40,7 @@ class Main extends RequestRouter with FreemarkerHelper {
     ctx += "myList" -> List("one", "two", "three")
     ftl("test.ftl")
   }
-}
-'?html}</pre>
+}'?html}</pre>
 <p>will result in following markup:</p>
 <pre>${r'
 <ul>
