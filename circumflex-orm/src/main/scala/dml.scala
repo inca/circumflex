@@ -25,43 +25,23 @@
 
 package ru.circumflex.orm
 
-/**
- * Base functionality for SQL sequences.
- */
-class Sequence[R](val table: Table[R],
-                  val column: Column[Long, R])
-    extends SchemaObject with JDBCHelper {
+import collection.mutable.ListBuffer
+import Query._
 
-  /**
-   * Returns the NEXTVAL projection for this sequence.
-   */
-  def nextVal(alias: String) = new SequenceNextValProjection(this, alias)
+class InsertSelect[R](val relation: Relation[R], val query: Select)
+    extends Configurable with JDBCHelper {
 
-  /**
-   * Returns the CURRVAL projection for this sequence.
-   */
-  def currVal(alias: String) = new SequenceCurrValProjection(this, alias)
-
-  /**
-   * Retrieves next sequence value by invoking backend NEXTVAL query.
-   */
-  def nextValue: Long = {
-    val sql = dialect.selectSequenceNextVal(this)
+  def executeUpdate: Int = {
+    val conn = relation.connectionProvider.getConnection
+    val sql = toSql
     sqlLog.debug(sql)
-    auto(connectionProvider.getConnection.prepareStatement(sql)) {
-      st => auto(st.executeQuery)(rs => if (rs.next) {
-        return rs.getLong(1)
-      } else
-        throw new ORMException("Sequence NEXTVAL did not return a result: " + this.sequenceName))
-    }
+    auto(conn.prepareStatement(sql))(st => {
+      query.setParams(st, 1)
+      return st.executeUpdate
+    })
   }
 
-  /* DDL */
+  def toSql: String = dialect.insertSelect(this)
 
-  def sqlCreate = dialect.createSequence(this)
-
-  def sqlDrop = dialect.dropSequence(this)
-
-  def sequenceName = dialect.sequenceName(this)
-
+  override def toString = toSql
 }

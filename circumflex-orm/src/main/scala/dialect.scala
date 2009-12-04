@@ -243,13 +243,23 @@ trait Dialect {
   def dropSchema(schema: Schema) =
     "drop schema " + schema.schemaName
 
+  /* SEQUENCES STUFF */
+
+  def sequenceCurrVal(seq: Sequence[_]): String = "currval('" + sequenceName(seq) + "')"
+  def sequenceCurrVal(seq: Sequence[_], alias: String): String =
+    sequenceCurrVal(seq) + " as " + alias
+
+  def sequenceNextVal(seq: Sequence[_]): String = "nextval('" + sequenceName(seq) + "')"
+  def sequenceNextVal(seq: Sequence[_], alias: String): String =
+    sequenceNextVal(seq) + " as " + alias
+
   /* SELECT STATEMENTS AND RELATED */
 
   /**
    * Produces a statement to select a single next sequence value.
    */
   def selectSequenceNextVal(seq: Sequence[_]) =
-    "select nextval('" + sequenceName(seq) + "')"
+    "select " + sequenceNextVal(seq)
 
   def columnAlias(col: Column[_, _], columnAlias: String, tableAlias: String) =
     qualifyColumn(col, tableAlias) + " as " + columnAlias
@@ -336,6 +346,12 @@ trait Dialect {
     "insert into " + record.relation.qualifiedName +
         " (\n\t" + record.relation.columns.map(_.columnName).mkString(",\n\t") +
         ") values (" + record.relation.columns.map(_ => "?").mkString(", ") + ")"
+
+  /**
+   * Produces INSERT INTO .. SELECT statement.
+   */
+  def insertSelect(dml: InsertSelect[_]): String =
+    "insert into " + dml.relation.qualifiedName + "\n\t" + select(dml.query)
 
   /* UPDATE STATEMENTS */
 

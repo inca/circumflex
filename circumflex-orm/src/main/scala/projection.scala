@@ -78,6 +78,30 @@ class FieldProjection[T, R](val alias: String,
 
 }
 
+/**
+ * Represents a projection for sequence's NEXTVAL clause.
+ */
+class SequenceNextValProjection[R](val seq: Sequence[R], val alias: String)
+    extends AliasedProjection[Long] {
+
+  def read(rs: ResultSet): Option[Long] =
+    seq.typeConverter.read(rs, alias).asInstanceOf[Option[Long]]
+
+  def toSql = seq.dialect.sequenceNextVal(seq, alias)
+}
+
+/**
+ * Represents a projection for sequence's CURRVAL clause.
+ */
+class SequenceCurrValProjection[R](val seq: Sequence[R], val alias: String)
+    extends AliasedProjection[Long] {
+
+  def read(rs: ResultSet): Option[Long] =
+    seq.typeConverter.read(rs, alias).asInstanceOf[Option[Long]]
+
+  def toSql = seq.dialect.sequenceCurrVal(seq, alias)
+}
+
 class RecordProjection[R](val node: RelationNode[R])
     extends Projection[R] {
   val columnProjections: Seq[FieldProjection[Any, R]] =

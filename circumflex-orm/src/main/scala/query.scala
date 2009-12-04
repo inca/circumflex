@@ -26,8 +26,7 @@
 package ru.circumflex.orm
 
 import collection.mutable.ListBuffer
-import java.sql.ResultSet
-
+import java.sql.{PreparedStatement, ResultSet}
 class Select extends Configurable with JDBCHelper {
   private var aliasCounter = 0;
 
@@ -117,6 +116,23 @@ class Select extends Configurable with JDBCHelper {
    */
   def offset = this._offset
 
+  /**
+   * Sets prepared statement params of this query starting from specified index.
+   * Returns the new starting index of prepared statement.
+   */
+  def setParams(st: PreparedStatement, startIndex: Int): Int = {
+    var paramsCounter = startIndex;
+    _predicate.parameters.foreach(p => {
+      typeConverter.write(st, p, paramsCounter)
+      paramsCounter += 1
+    })
+    orders.flatMap(_.parameters).foreach(p => {
+      typeConverter.write(st, p, paramsCounter)
+      paramsCounter += 1
+    })
+    return paramsCounter
+  }
+
 
   /**
    * Executes a query and Opens a JDBC result set.
@@ -124,15 +140,7 @@ class Select extends Configurable with JDBCHelper {
   def resultSet[A](actions: ResultSet => A): A =
     auto(connectionProvider.getConnection.prepareStatement(toSql))(st => {
       sqlLog.debug(toSql)
-      var paramsCounter = 1;
-      _predicate.parameters.foreach(p => {
-        typeConverter.write(st, p, paramsCounter)
-        paramsCounter += 1
-      })
-      orders.flatMap(_.parameters).foreach(p => {
-        typeConverter.write(st, p, paramsCounter)
-        paramsCounter += 1
-      })
+      setParams(st, 1)
       auto(st.executeQuery)(actions)
     })
 
