@@ -231,4 +231,6 @@ object Query extends Configurable {
 
   def select(nodes: RelationNode[_]*): Select = new Select(nodes: _*)
 
+  def delete[R](rel: Relation[R]): Delete[R] = new Delete(rel);
+
 }

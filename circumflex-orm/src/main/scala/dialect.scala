@@ -315,8 +315,9 @@ trait Dialect {
    * Produces SELECT statement.
    */
   def select(q: Select): String = {
-    var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t") +
-        "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
+    var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t")
+    if (q.relations.size > 0)
+      result += "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
     if (q.where != EmptyPredicate) result += "\nwhere\n\t" + q.where.toSql
     if (q.orders.size > 0)
       result += "\norder by\n\t" + q.orders.map(_.expression).mkString(",\n\t")

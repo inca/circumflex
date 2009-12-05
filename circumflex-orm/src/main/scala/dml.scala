@@ -26,6 +26,7 @@
 package ru.circumflex.orm
 
 import collection.mutable.ListBuffer
+import java.sql.PreparedStatement
 import Query._
 
 /**
@@ -36,6 +37,9 @@ import Query._
 class InsertSelect[R](val relation: Relation[R], val query: Select)
     extends Configurable with JDBCHelper with SQLable {
 
+  /**
+   * Executes a query.
+   */
   def executeUpdate: Int = {
     val conn = relation.connectionProvider.getConnection
     val sql = toSql
@@ -69,6 +73,32 @@ class Delete[R](val relation: Relation[R])
    * Returns the WHERE clause of this query.
    */
   def where: Predicate = this._predicate
+
+  /**
+   * Executes a query.
+   */
+  def executeUpdate: Int = {
+    val conn = relation.connectionProvider.getConnection
+    val sql = toSql
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      setParams(st, 1)
+      return st.executeUpdate
+    })
+  }
+
+  /**
+   * Sets prepared statement params of this query starting from specified index.
+   * Returns the new starting index of prepared statement.
+   */
+  def setParams(st: PreparedStatement, startIndex: Int): Int = {
+    var paramsCounter = startIndex;
+    _predicate.parameters.foreach(p => {
+      typeConverter.write(st, p, paramsCounter)
+      paramsCounter += 1
+    })
+    return paramsCounter
+  }
 
   def toSql: String = dialect.delete(this)
 
