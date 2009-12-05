@@ -42,6 +42,8 @@ class RequestRouter extends ContextAware {
   val put = new RequestDispatcher("put")
   val delete = new RequestDispatcher("delete")
   val head = new RequestDispatcher("head")
+  val options = new RequestDispatcher("options")
+  val any = new RequestDispatcher("get", "post", "put", "delete", "head", "options")
 
   val header = new HeadersHelper
 
