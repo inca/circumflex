@@ -103,3 +103,95 @@ class Delete[R](val relation: Relation[R])
   def toSql: String = dialect.delete(this)
 
 }
+
+/**
+ * Contains functionality for UPDATE operations.
+ */
+class Update[R](val relation: Relation[R])
+    extends JDBCHelper with SQLable{
+
+  private var _predicate: Predicate = EmptyPredicate
+  private val _setClause = new ListBuffer[Pair[Column[_, R],Any]]()
+
+  /**
+   * Sets WHERE clause of this query.
+   */
+  def where(predicate: Predicate): this.type = {
+    this._predicate = predicate
+    return this
+  }
+
+  /**
+   * Returns the WHERE clause of this query.
+   */
+  def where: Predicate = this._predicate
+
+  /**
+   * Adds column-value pair to SET clause.
+   */
+  def set[T](column: Column[T, R], value: T): this.type = {
+    _setClause += (column -> value)
+    return this
+  }
+
+  /**
+   * Adds column-value pair to SET clause for parent association
+   * (assuming association;s local column and value's id).
+   */
+  def set[P](association: Association[R, P], value: Record[P]): this.type = {
+    _setClause += (association.localColumn -> value.primaryKey.get)
+    return this
+  }
+
+  /**
+   * Adds column-NULL pair to SET clause.
+   */
+  def setNull(column: Column[_, R]): this.type = {
+    _setClause += (column.asInstanceOf[Column[Any, R]] -> null)
+    return this
+  }
+
+  /**
+   * Adds column-NULL pair to SET clause for parent association.
+   */
+  def setNull(association: Association[R, _]): this.type =
+    setNull(association.localColumn)
+
+  /**
+   * Returns the SET clause of this query.
+   */
+  def setClause = _setClause
+
+  /**
+   * Executes a query.
+   */
+  def executeUpdate: Int = {
+    val conn = relation.connectionProvider.getConnection
+    val sql = toSql
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      setParams(st, 1)
+      return st.executeUpdate
+    })
+  }
+
+  /**
+   * Sets prepared statement params of this query starting from specified index.
+   * Returns the new starting index of prepared statement.
+   */
+  def setParams(st: PreparedStatement, startIndex: Int): Int = {
+    var paramsCounter = startIndex;
+    _setClause.foreach(p => {
+      typeConverter.write(st, p._2, paramsCounter)
+      paramsCounter += 1
+    })
+    _predicate.parameters.foreach(p => {
+      typeConverter.write(st, p, paramsCounter)
+      paramsCounter += 1
+    })
+    return paramsCounter
+  }
+
+  def toSql: String = dialect.update(this)
+
+}

@@ -366,6 +366,16 @@ trait Dialect {
         "\nset\n\t" + record.relation.nonPKColumns.map(_.columnName + " = ?").mkString(",\n\t") +
         "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
 
+  /**
+   * Produces UPDATE statement.
+   */
+  def update(dml: Update[_]): String = {
+    var result = "update " + dml.relation.qualifiedName +
+        "\nset\n\t" + dml.setClause.map(_._1.columnName + " = ?").mkString(",\n\t")
+    if (dml.where != EmptyPredicate) result += "\nwhere\n\t" + dml.where.toSql
+    return result
+  }
+
   /* DELETE STATEMENTS */
 
   /**
@@ -376,10 +386,13 @@ trait Dialect {
         "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
 
   /**
-   * Produces a DELETE statement.
+   * Produces DELETE statement.
    */
-  def delete(dml: Delete[_]): String = "delete from " + dml.relation.qualifiedName +
-    "\nwhere\n\t" + dml.where.toSql;
+  def delete(dml: Delete[_]): String = {
+    var result = "delete from " + dml.relation.qualifiedName
+    if (dml.where != EmptyPredicate) result += "\nwhere\n\t" + dml.where.toSql
+    return result
+  }
 
 
 }

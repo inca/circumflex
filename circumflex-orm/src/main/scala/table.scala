@@ -332,11 +332,11 @@ abstract class Table[R] extends Relation[R]
  */
 abstract class GenericTable[R] extends Table[R] {
 
-  val idSeq = id.sequence.get
-
   val id = longColumn("id")
       .autoIncrement
       .notNull
+
+  val idSeq = id.sequence.get
 
   def primaryKey = pk(id)
 
