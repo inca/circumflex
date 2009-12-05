@@ -82,8 +82,11 @@ class Criteria[R](val relation: Relation[R]) {
     return this
   }
 
+  protected def makePredicate: Predicate =
+    if (restrictions.size > 0) and(restrictions: _*) else EmptyPredicate
+
   protected def prepareQuery: Select =
-    query.where(if (restrictions.size > 0) and(restrictions: _*) else EmptyPredicate)
+    query.where(makePredicate)
 
   /**
    * Executes the query and retrieves records list.
@@ -103,5 +106,10 @@ class Criteria[R](val relation: Relation[R]) {
    * or it will always yield a single row.
    */
   def first: Option[R] = prepareQuery.unique.map(_.apply(0).asInstanceOf[R])
+
+  /**
+   * Executes the DELETE statement for this relation using specified criteria.
+   */
+  def delete: Int = new Delete(relation).where(makePredicate).executeUpdate
 
 }
