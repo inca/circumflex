@@ -241,7 +241,7 @@ trait Dialect {
    * Produces DROP SCHEMA statement.
    */
   def dropSchema(schema: Schema) =
-    "drop schema " + schema.schemaName
+    "drop schema " + schema.schemaName + " cascade"
 
   /* SEQUENCES STUFF */
 
