@@ -34,6 +34,7 @@ trait ContextAware {
 class RequestRouter extends ContextAware {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
+  implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
 
   val get = new RequestDispatcher("get")
   val getOrPost = new RequestDispatcher("get", "post")
