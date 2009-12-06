@@ -27,47 +27,63 @@ package ru.circumflex.orm
 
 import collection.mutable.ListBuffer
 import java.sql.{PreparedStatement, ResultSet}
-class Select extends Configurable with JDBCHelper {
+
+class Select extends Configurable with JDBCHelper with SQLable {
   private var aliasCounter = 0;
 
-  val projections = new ListBuffer[Projection[_]]
-  val relations = new ListBuffer[RelationNode[_]]
-  val orders = new ListBuffer[Order]
+  private var _projections: Seq[Projection[_]] = Nil
+  private var _relations: Seq[RelationNode[_]] = Nil
+  private var _orders: Seq[Order] = Nil
   private var _predicate: Predicate = EmptyPredicate
   private var _limit: Int = -1
   private var _offset: Int = 0
 
   def this(nodes: RelationNode[_]*) = {
-    this ()
-    relations ++= nodes.toList
-    nodes.foreach(n => projections ++= n.projections)
+    this()
+    nodes.toList.foreach(addFrom(_))
   }
 
   /**
-   * Wraps a table into RelationNode, assigning it a query-unique alias.
+   * Returns the WHERE clause of this query.
    */
-  def makeNode[R](rel: Relation[R]): RelationNode[R] = {
-    val alias = "_" + rel.relationName.take(3).mkString + aliasCounter
-    aliasCounter += 1
-    return rel.as(alias)
-  }
+  def where: Predicate = this._predicate
+
+  /**
+   * Returns the ORDER BY clause of this query.
+   */
+  def orders = _orders
+
+  /**
+   * Returns the FROM clause of this query.
+   */
+  def relations = _relations
+
+  /**
+   * Returns the SELECT clause of this query.
+   */
+  def projections = _projections
 
   /**
    * Adds specified node to FROM clause.
+   * All nodes with "this" alias are assigned query-unique alias.
    * All projections are added too.
    */
   def addFrom[R](node: RelationNode[R]): this.type = {
-    this.relations += node
-    this.projections ++= node.projections
+    val n = if (node.alias == "this") {
+      aliasCounter += 1
+      node.as("this_" + aliasCounter)
+    } else node
+    this._relations ++= List(n)
+    addProjection(node.projections: _*)
     return this
   }
 
   /**
-   * Adds specified table to FROM clause (assigning it query-unique alias).
+   * Adds specified relation to FROM clause (assigning it query-unique alias).
    * All projections are added too.
    */
   def addFrom[R](rel: Relation[R]): this.type =
-    addFrom(makeNode(rel))
+    addFrom(rel.as("this"))
 
   /**
    * Sets WHERE clause of this query.
@@ -77,16 +93,30 @@ class Select extends Configurable with JDBCHelper {
     return this
   }
 
+  def clearProjections: this.type = {
+    this._projections = Nil
+    return this
+  }
+
   /**
-   * Returns the WHERE clause of this query.
+   * Adds specified projections to SELECT clause.
+   * All projections with "this" alias are assigned query-unique alias.
    */
-  def where: Predicate = this._predicate
+  def addProjection(projections: Projection[_]*): this.type = {
+    this._projections ++= projections.toList.map {
+      case p: AliasedProjection[_] if (p.alias == "this") =>
+        aliasCounter += 1
+        p.as("this_" + aliasCounter)
+      case p => p
+    }
+    return this
+  }
 
   /**
    * Adds an order to ORDER BY clause.
    */
-  def addOrder(order: Order): this.type = {
-    this.orders += order
+  def addOrder(order: Order*): this.type = {
+    this._orders ++= order.toList
     return this
   }
 
@@ -126,7 +156,7 @@ class Select extends Configurable with JDBCHelper {
       typeConverter.write(st, p, paramsCounter)
       paramsCounter += 1
     })
-    orders.flatMap(_.parameters).foreach(p => {
+    _orders.flatMap(_.parameters).foreach(p => {
       typeConverter.write(st, p, paramsCounter)
       paramsCounter += 1
     })
@@ -151,7 +181,7 @@ class Select extends Configurable with JDBCHelper {
   def list(): Seq[Array[Any]] = resultSet(rs => {
     val result = new ListBuffer[Array[Any]]()
     while (rs.next) {
-      val tuple = projections.map(_.read(rs).getOrElse(null))
+      val tuple = _projections.map(_.read(rs).getOrElse(null))
       result += tuple.toArray
     }
     return result
@@ -164,7 +194,7 @@ class Select extends Configurable with JDBCHelper {
    */
   def unique(): Option[Array[Any]] = resultSet(rs => {
     if (!rs.next) return None
-    else if (rs.isLast) return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
+    else if (rs.isLast) return Some(_projections.map(_.read(rs).getOrElse(null)).toArray)
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
 
@@ -179,13 +209,12 @@ class Select extends Configurable with JDBCHelper {
     limit(1)
     resultSet(rs => {
       if (!rs.next) return None
-      else return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
+      else return Some(_projections.map(_.read(rs).getOrElse(null)).toArray)
     })
   }
 
   def toSql = dialect.select(this)
 
-  override def toString = toSql
 }
 
 /**
@@ -199,6 +228,13 @@ class Order(val expression: String,
  */
 object Query extends Configurable {
   def conn = connectionProvider.getConnection
+
+  /* NODE HELPERS */
+
+  implicit def relationToNode[R](rel: Relation[R]): RelationNode[R] =
+    rel.as("this")
+
+  /* ORDER HELPERS */
 
   def asc(expr: String): Order = new Order(dialect.orderAsc(expr), Nil)
 
@@ -217,6 +253,8 @@ object Query extends Configurable {
   implicit def predicateToOrder(predicate: Predicate): Order =
     new Order(predicate.toSql, predicate.parameters)
 
+  /* PREDICATE HELPERS */
+
   implicit def stringToHelper(str: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(str)
 
@@ -229,10 +267,31 @@ object Query extends Configurable {
   def or(predicates: Predicate*) =
     new AggregatePredicate(dialect.or, predicates.toList)
 
-  def select(nodes: RelationNode[_]*): Select = new Select(nodes: _*)
+  /* PROJECTION HELPERS */
+
+  def scalar(expr: String) = new ScalarProjection(expr, "this", false)
+
+  implicit def stringToScalar(expr: String): ScalarProjection = scalar(expr)
+
+  /* QUERY HELPERS */
+
+  def select(projections: Projection[_]*) = new SelectHelper(projections.toList)
 
   def update[R](rel: Relation[R]): Update[R] = new Update(rel)
 
   def delete[R](rel: Relation[R]): Delete[R] = new Delete(rel);
+
+}
+
+class SelectHelper(val projections: Seq[Projection[_]]) {
+
+  def from(nodes: RelationNode[_]*): Select = {
+    val q = new Select(nodes: _*)
+    if (projections.size > 0) {
+      q.clearProjections
+      q.addProjection(projections: _*)
+    }
+    return q
+  }
 
 }

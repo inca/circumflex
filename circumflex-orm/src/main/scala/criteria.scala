@@ -35,7 +35,7 @@ import Query._
  */
 class Criteria[R](val relation: Relation[R]) {
 
-  protected val query: Select = select().addFrom(relation)
+  protected val query: Select = new Select().addFrom(relation)
   protected val restrictions = new ListBuffer[Predicate]()
 
   def rootNode: RelationNode[R] = query.relations(0).asInstanceOf[RelationNode[R]]

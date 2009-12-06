@@ -111,8 +111,8 @@ abstract class RelationNode[R](val relation: Relation[R],
 }
 
 class TableNode[R](val table: Table[R],
-                   alias: String)
-    extends RelationNode[R](table, alias) {
+                   a: String)
+    extends RelationNode[R](table, a) {
 
   def this(table: Table[R]) = this(table, "this")
 
