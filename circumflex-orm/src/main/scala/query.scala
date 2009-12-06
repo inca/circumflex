@@ -223,10 +223,13 @@ class Select extends Configurable with JDBCHelper with SQLable {
 class Order(val expression: String,
             val parameters: Seq[Any])
 
+object Query extends QueryHelper
+
 /**
- * Some common helpers for making up query-related .
+ * Some common helpers for making up query-related stuff.
  */
-object Query extends Configurable {
+trait QueryHelper extends Configurable {
+
   def conn = connectionProvider.getConnection
 
   /* NODE HELPERS */
@@ -266,6 +269,9 @@ object Query extends Configurable {
 
   def or(predicates: Predicate*) =
     new AggregatePredicate(dialect.or, predicates.toList)
+
+  def not(predicate: Predicate) =
+    new SimpleExpression(dialect.not + " (" + predicate.toSql + ")", predicate.parameters)
 
   /* PROJECTION HELPERS */
 

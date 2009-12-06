@@ -96,6 +96,9 @@ trait Dialect {
 
   def not = "not"
 
+  def parameterizedIn(params: Seq[_]) =
+    " in (" + params.map(p => "?").mkString(", ") + ")"
+
   /* ORDER SPECIFICATOR KEYWORDS */
 
   def asc = "asc"

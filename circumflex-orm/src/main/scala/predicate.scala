@@ -74,6 +74,8 @@ class SimpleExpressionHelper(val expr: String) extends Configurable {
 
   def like(value: String) = new SimpleExpression(expr + dialect.like, List(value))
 
+  def in(params: Seq[Any]) = new SimpleExpression(expr + dialect.parameterizedIn(params), params) 
+
   def between(lowerValue: Any, upperValue: Any) =
     new SimpleExpression(expr + dialect.between, List(lowerValue, upperValue))
 }
