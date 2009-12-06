@@ -103,11 +103,33 @@ abstract class Relation[R] extends Configurable {
    */
   def createCriteria: Criteria[R] = new Criteria(this)
 
-  def addFieldValidator(col: Column[_, R], validator: Validator): RecordValidator[R] = {
-    val v = new RecordFieldValidator(col, validator)
-    this.validators += v
-    return v
-  }
+  /* SIMPLE QUERIES */
+
+  /**
+   * Queries a record by it's primary key.
+   */
+  def get(pk: Any): Option[R] =
+    createCriteria.add(_.field(primaryKey.column) eq pk).unique
+
+  /**
+   * Queries all records.
+   */
+  def all(): Seq[R] =
+    createCriteria.list
+
+  /**
+   * Queries specified amount of records.
+   */
+  def all(limit: Int): Seq[R] =
+    createCriteria.limit(limit).list
+
+  /**
+   * Queries specified amount of records, starting from specified offset.
+   */
+  def all(limit: Int, offset: Int): Seq[R] =
+    createCriteria.limit(limit).offset(offset).list
+
+  /* VALIDATION */
 
   /**
    * Returns None if record has passed validation. Otherwise returns
@@ -125,6 +147,12 @@ abstract class Relation[R] extends Configurable {
   def validate_!(record: Record[R]) = validate(record) match {
     case Some(errors) => throw new ValidationException(errors: _*)
     case _ =>
+  }
+
+  def addFieldValidator(col: Column[_, R], validator: Validator): RecordValidator[R] = {
+    val v = new RecordFieldValidator(col, validator)
+    this.validators += v
+    return v
   }
 
   override def toString = qualifiedName
@@ -232,20 +260,6 @@ abstract class Table[R] extends Relation[R]
    */
   def addConstraint(constrs: Constraint[R]*) =
     _constraints ++= constrs.toList
-
-  /* SIMPLE QUERIES */
-
-  /**
-   * Queries a record by it's primary key.
-   */
-  def get(pk: Any): Option[R] =
-    createCriteria.add(_.field(primaryKey.column) eq pk).unique
-
-  /**
-   * Queries all records.
-   */
-  def all(): Seq[R] =
-    createCriteria.list
 
   /* HELPERS */
 
