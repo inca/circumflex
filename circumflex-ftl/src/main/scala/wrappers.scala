@@ -26,6 +26,7 @@
 package ru.circumflex.freemarker
 
 import core.HashModel
+import orm.{Field => ORMField, ManyToOne, OneToMany}
 import _root_.freemarker.core.Environment
 import java.io.StringWriter
 import _root_.freemarker.template._
@@ -40,6 +41,7 @@ import scala.collection.jcl.Conversions._
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any) = obj match {
+    // Basic types
     case null => null
     case option: Option[Any] => option match {
       case Some(o) => wrap(o)
@@ -55,6 +57,11 @@ class ScalaObjectWrapper extends ObjectWrapper {
     case date: Date => new SimpleDate(date, TemplateDateModel.UNKNOWN)
     case num: Number => new SimpleNumber(num)
     case bool: Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
+    // ORM stuff
+    case field: ORMField[_, _] => wrap(field.get)
+    case mto: ManyToOne[_, _] => wrap(mto.get)
+    case otm: OneToMany[_, _] => wrap(otm.get)
+    // Everything else
     case obj => new ScalaBaseWrapper(obj, this)
   }
 }
