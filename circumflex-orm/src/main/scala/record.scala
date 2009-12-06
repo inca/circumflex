@@ -46,7 +46,7 @@ import java.util.UUID
  * used for equality testing (so unidentified records never match each other).</li>
  * </ul>
  */
-abstract class Record[R] extends JDBCHelper with HashModel {
+abstract class Record[R] extends JDBCHelper {
   private val uuid = UUID.randomUUID.toString
 
   val fieldsMap = HashMap[Column[_, R], Any]()
@@ -60,17 +60,6 @@ abstract class Record[R] extends JDBCHelper with HashModel {
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
 
   def isIdentified = primaryKey != None
-
-  def get(key: String): Option[Any] = {
-    // if key matches column name return a field
-    relation.columns.find(_.columnName == key) match {
-      case Some(col) => return getField(col)
-      case _ =>
-    }
-    // if key matches relation name of association, return their results
-    // TODO
-    return None
-  }
 
   /* FIELDS-RELATED STUFF */
 
