@@ -88,6 +88,8 @@ trait Dialect {
 
   def like = " like ?"
 
+  def ilike = " ilike ?"
+
   def between = " between ? and ?"
 
   def and = " and\n\t"
