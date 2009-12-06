@@ -65,14 +65,14 @@ trait AliasedProjection[T] extends Projection[T] {
   def sqlAliases = List(alias)
 }
 
-class ScalarProjection(val expression: String,
-                       val alias: String,
-                       override val grouping: Boolean)
-    extends AliasedProjection[Any] with Configurable {
+class ScalarProjection[T](val expression: String,
+                          val alias: String,
+                          override val grouping: Boolean)
+    extends AliasedProjection[T] with Configurable {
 
   def as(alias: String) = new ScalarProjection(expression, alias, grouping)
 
-  def read(rs: ResultSet) = typeConverter.read(rs, alias)
+  def read(rs: ResultSet) = typeConverter.read(rs, alias).asInstanceOf[Option[T]]
 
   def toSql = dialect.scalarAlias(expression, alias)
 }

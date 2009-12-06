@@ -269,9 +269,22 @@ object Query extends Configurable {
 
   /* PROJECTION HELPERS */
 
-  def scalar(expr: String) = new ScalarProjection(expr, "this", false)
+  def scalar(expr: String) = new ScalarProjection[Any](expr, "this", false)
 
-  implicit def stringToScalar(expr: String): ScalarProjection = scalar(expr)
+  implicit def stringToScalar(expr: String): ScalarProjection[Any] = scalar(expr)
+
+  def count(expr: String) =
+    new ScalarProjection[Int]("count(" + expr + ")", "this", true)
+  def countDistinct(expr: String) =
+    new ScalarProjection[Int]("count( distinct " + expr + ")", "this", true)
+  def max(expr: String) =
+    new ScalarProjection[Any]("max(" + expr + ")", "this", true)
+  def min(expr: String) =
+    new ScalarProjection[Any]("min(" + expr + ")", "this", true)
+  def sum(expr: String) =
+    new ScalarProjection[Any]("sum(" + expr + ")", "this", true)
+  def avg(expr: String) =
+    new ScalarProjection[Any]("avg(" + expr + ")", "this", true)
 
   /* QUERY HELPERS */
 
