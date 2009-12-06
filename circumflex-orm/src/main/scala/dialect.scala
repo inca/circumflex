@@ -264,6 +264,8 @@ trait Dialect {
   def columnAlias(col: Column[_, _], columnAlias: String, tableAlias: String) =
     qualifyColumn(col, tableAlias) + " as " + columnAlias
 
+  def scalarAlias(expression: String, alias: String) = expression + " as " + alias
+
   /**
    * Produces table with alias (e.g. "public.mytable my").
    */
@@ -319,6 +321,10 @@ trait Dialect {
     if (q.relations.size > 0)
       result += "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
     if (q.where != EmptyPredicate) result += "\nwhere\n\t" + q.where.toSql
+    if (q.projections.exists(_.grouping)) {  // GROUP BY clause may be required
+      val gb = q.projections.filter(!_.grouping)
+      if (gb.size > 0) result += "\ngroup by\n\t" + gb.flatMap(_.sqlAliases).mkString(",\n\t")
+    }
     if (q.orders.size > 0)
       result += "\norder by\n\t" + q.orders.map(_.expression).mkString(",\n\t")
     if (q.limit > -1)

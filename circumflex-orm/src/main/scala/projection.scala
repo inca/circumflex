@@ -37,31 +37,61 @@ trait Projection[T] extends SQLable {
    */
   def read(rs: ResultSet): Option[T]
 
+  /**
+   * Return true for aggregate projections.
+   * If at least one grouping projection presents in query, then all non-grouping projections
+   * should appear to GROUP BY clause.
+   */
+  def grouping: Boolean = false
+
+  /**
+   * Returns the list of aliases, from which this projection is composed.
+   */
+  def sqlAliases: Seq[String]
+
 }
 
 /**
- * Defines a contract for projections with assigned aliases
+ * Defines a contract for single-column projections with assigned aliases
  * so that they may be used in ORDER BY/HAVING clauses.
  */
 trait AliasedProjection[T] extends Projection[T] {
   def alias: String
+  /**
+   * Change an alias of this projection.
+   */
+  def as(alias: String): AliasedProjection[T]
+
+  def sqlAliases = List(alias)
 }
 
-class FieldProjection[T, R](val alias: String,
-                            val node: RelationNode[R],
-                            val column: Column[T, R])
+class ScalarProjection(val expression: String,
+                       val alias: String,
+                       override val grouping: Boolean)
+    extends AliasedProjection[Any] with Configurable {
+
+  def as(alias: String) = new ScalarProjection(expression, alias, grouping)
+
+  def read(rs: ResultSet) = typeConverter.read(rs, alias)
+
+  def toSql = dialect.scalarAlias(expression, alias)
+}
+
+/**
+ * Represents a projection for single field of a record.
+ */
+class FieldProjection[T, R](val node: RelationNode[R],
+                            val column: Column[T, R],
+                            val alias: String)
     extends AliasedProjection[T] {
 
   def this(node: RelationNode[R], column: Column[T, R]) =
-    this (node.alias + "_" + column.columnName, node, column)
+    this(node, column, node.alias + "_" + column.columnName)
 
   def read(rs: ResultSet): Option[T] =
     node.typeConverter.read(rs, alias).asInstanceOf[Option[T]]
 
-  /**
-   * Change an alias of this projection.
-   */
-  def as(alias: String) = new FieldProjection(alias, node, column)
+  def as(alias: String) = new FieldProjection(node, column, alias)
 
   /**
    * Returns a column name qualified with node's alias.
@@ -77,6 +107,8 @@ class FieldProjection[T, R](val alias: String,
 class SequenceNextValProjection[R](val seq: Sequence[R], val alias: String)
     extends AliasedProjection[Long] {
 
+  def as(alias: String) = new SequenceNextValProjection(seq, alias)
+
   def read(rs: ResultSet): Option[Long] =
     seq.typeConverter.read(rs, alias).asInstanceOf[Option[Long]]
 
@@ -89,14 +121,20 @@ class SequenceNextValProjection[R](val seq: Sequence[R], val alias: String)
 class SequenceCurrValProjection[R](val seq: Sequence[R], val alias: String)
     extends AliasedProjection[Long] {
 
+  def as(alias: String) = new SequenceCurrValProjection(seq, alias)
+
   def read(rs: ResultSet): Option[Long] =
     seq.typeConverter.read(rs, alias).asInstanceOf[Option[Long]]
 
   def toSql = seq.dialect.sequenceCurrVal(seq, alias)
 }
 
+/**
+ * Represents a record projection (it groups all field projections).
+ */
 class RecordProjection[R](val node: RelationNode[R])
     extends Projection[R] {
+
   val columnProjections: Seq[FieldProjection[Any, R]] =
   node.relation.columns.map(col => new FieldProjection(node, col.asInstanceOf[Column[Any, R]]))
 
@@ -110,6 +148,8 @@ class RecordProjection[R](val node: RelationNode[R])
     if (record.isIdentified) return Some(record.asInstanceOf[R])
     else return None
   }
+
+  def sqlAliases = columnProjections.flatMap(_.sqlAliases)
 
   def toSql = node.dialect.selectClause(columnProjections.map(_.toSql): _*)
 }
