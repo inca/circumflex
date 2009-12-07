@@ -25,8 +25,6 @@
 
 package ru.circumflex.core
 
-import org.mortbay.jetty.Server
-
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
 trait ContextAware {

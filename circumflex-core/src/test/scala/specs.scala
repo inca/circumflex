@@ -23,32 +23,33 @@
  * SUCH DAMAGE.
  */
 
-package ru.circumflex.core
-import javax.servlet.Filter
-import org.mortbay.jetty.servlet.{ServletHolder, DefaultServlet, Context}
-import org.mortbay.jetty.{Handler, Server}
+package ru.circumflex.core.test
 
-/**
- * A helper that allows standalone Circumflex execution based on
- * Jetty server.
- */
-trait StandaloneServer extends Configurable {
+import core._
+import org.mortbay.jetty.testing.HttpTester
+import org.specs.runner.JUnit4
+import org.specs.Specification
 
-  def port: Int = 8181
+class SimpleRouter extends RequestRouter {
+  get("/") = "hello"
+}
 
-  def webappRoot: String = "src/main/webapp"
+object SimpleMock extends MockServer
 
-  def filters: Seq[Class[_ <: Filter]] = List(classOf[CircumflexFilter])
+object SimpleSpec extends Specification {
+  doBeforeSpec(SimpleMock.start)
+  doAfterSpec(SimpleMock.stop)
 
-  val jetty = new Server(port)
-
-  val context = new Context(jetty, "/", Context.SESSIONS)
-  context.setResourceBase(webappRoot)
-  context.addServlet(new ServletHolder(new DefaultServlet), "/*")
-
-  filters.foreach(f => context.addFilter(f, "/*", Handler.ALL))
-
-  def start = jetty.start
-  def stop = jetty.stop
+  "get(\"/\") = \"hello\"" in {
+    val req = new HttpTester()
+    req.setMethod("GET")
+    req.setVersion("HTTP/1.1")
+    req.setHeader("Host", "test")
+    req.setURI("/")
+    val res = SimpleMock.process(req)
+    res.getContent must_== "hello"
+  }
 
 }
+
+class SpecsTest extends JUnit4(SimpleSpec)

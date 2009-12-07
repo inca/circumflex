@@ -23,32 +23,28 @@
  * SUCH DAMAGE.
  */
 
-package ru.circumflex.core
-import javax.servlet.Filter
-import org.mortbay.jetty.servlet.{ServletHolder, DefaultServlet, Context}
-import org.mortbay.jetty.{Handler, Server}
+package ru.circumflex.core.test
 
-/**
- * A helper that allows standalone Circumflex execution based on
- * Jetty server.
- */
-trait StandaloneServer extends Configurable {
+import org.mortbay.jetty.Handler
+import org.mortbay.jetty.servlet.{DefaultServlet}
+import org.mortbay.jetty.testing.{HttpTester, ServletTester}
+trait MockServer extends StandaloneServer {
 
-  def port: Int = 8181
+  val tester = new ServletTester()
+  tester.setContextPath("/")
+  tester.setResourceBase(webappRoot)
+  tester.addServlet(classOf[DefaultServlet], "/*")
+  filters.foreach(f => tester.addFilter(f, "/*", Handler.ALL))
 
-  def webappRoot: String = "src/main/webapp"
+  override def start = tester.start
+  override def stop = tester.stop
 
-  def filters: Seq[Class[_ <: Filter]] = List(classOf[CircumflexFilter])
+  def process(request: String): HttpTester = {
+    val result = new HttpTester
+    result.parse(tester.getResponses(request))
+    return result
+  }
 
-  val jetty = new Server(port)
-
-  val context = new Context(jetty, "/", Context.SESSIONS)
-  context.setResourceBase(webappRoot)
-  context.addServlet(new ServletHolder(new DefaultServlet), "/*")
-
-  filters.foreach(f => context.addFilter(f, "/*", Handler.ALL))
-
-  def start = jetty.start
-  def stop = jetty.stop
-
+  def process(request: HttpTester): HttpTester =
+    process(request.generate)
 }
