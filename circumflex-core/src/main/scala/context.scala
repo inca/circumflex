@@ -39,6 +39,9 @@ class CircumflexContext(val request: HttpServletRequest,
   var statusCode = 200
   var contentType = "text/html"
 
+  def method: String =
+    get("_method").getOrElse(request.getMethod).toString
+
   def get(key: String): Option[Any] = params.get(key) match {
     case Some(value) if (value != null) => Some(value)
     case _ => {

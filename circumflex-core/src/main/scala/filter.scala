@@ -29,6 +29,8 @@ import java.lang.reflect.InvocationTargetException
 import java.util.ResourceBundle
 import javax.servlet._
 import http.{HttpServletResponse, HttpServletRequest}
+import org.mortbay.jetty.Handler
+import org.mortbay.jetty.servlet.{FilterHolder, FilterMapping}
 import org.slf4j.LoggerFactory
 import Circumflex._
 

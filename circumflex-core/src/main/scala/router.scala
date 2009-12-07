@@ -25,6 +25,8 @@
 
 package ru.circumflex.core
 
+import org.mortbay.jetty.Server
+
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
 trait ContextAware {
@@ -62,8 +64,6 @@ class RequestRouter extends ContextAware {
 
   def param(key: String): Option[String] = ctx.stringParam(key)
 
-  def method: String = param("_method").getOrElse(ctx.request.getMethod)
-
   def error(errorCode: Int, message: String) = ErrorResponse(errorCode, message)
   def error(errorCode: Int) = ErrorResponse(errorCode, "")
 
@@ -81,43 +81,44 @@ class RequestRouter extends ContextAware {
       throw new RouteMatchedException(Some(error(400, "Missing " + name + " parameter.")))
   })
 
-  class RequestDispatcher(val matchingMethods: String*) {
+}
 
-    protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
-      matchingMethods.find(method.equalsIgnoreCase(_)) match {
-        case Some(_) => {
-          var params = Map[String, String]()
-          matchers.toList.foreach(rm => rm(ctx.request) match {
-            case None => return
-            case Some(p) => params ++= p
-          })
-          // All matchers succeeded
-          ctx ++= params
-          throw RouteMatchedException(Some(response))
-        } case _ =>
-      }
+class RequestDispatcher(val matchingMethods: String*)
+   extends ContextAware {
 
-    def update(uriRegex: String, response: =>HttpResponse): Unit =
-      dispatch(response, new UriRegexMatcher(uriRegex))
-
-    def update(uriRegex: String, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-      dispatch(response, new UriRegexMatcher(uriRegex), matcher1)
-  }
-
-  class HeadersHelper {
-
-    def apply(name: String): Option[String] = {
-      val value = ctx.request.getHeader(name)
-      if (value == null) None
-      else Some(value)
+  protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
+    matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
+      case Some(_) => {
+        var params = Map[String, String]()
+        matchers.toList.foreach(rm => rm(ctx.request) match {
+          case None => return
+          case Some(p) => params ++= p
+        })
+        // All matchers succeeded
+        ctx ++= params
+        throw RouteMatchedException(Some(response))
+      } case _ =>
     }
 
-    def update(name: String, value: String) = ctx.stringHeaders += name -> value
+  def update(uriRegex: String, response: =>HttpResponse): Unit =
+    dispatch(response, new UriRegexMatcher(uriRegex))
 
-    def update(name: String, value: Long) = ctx.dateHeaders += name -> value
+  def update(uriRegex: String, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
+    dispatch(response, new UriRegexMatcher(uriRegex), matcher1)
+}
 
-    def update(name: String, value: java.util.Date) = ctx.dateHeaders += name -> value.getTime
+class HeadersHelper extends ContextAware {
 
+  def apply(name: String): Option[String] = {
+    val value = ctx.request.getHeader(name)
+    if (value == null) None
+    else Some(value)
   }
+
+  def update(name: String, value: String) = ctx.stringHeaders += name -> value
+
+  def update(name: String, value: Long) = ctx.dateHeaders += name -> value
+
+  def update(name: String, value: java.util.Date) = ctx.dateHeaders += name -> value.getTime
 
 }
