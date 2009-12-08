@@ -37,7 +37,10 @@ class SimpleRouter extends RequestRouter {
 object SimpleMock extends MockServer
 
 object SimpleSpec extends Specification {
-  doBeforeSpec(SimpleMock.start)
+  doBeforeSpec({
+    Circumflex.cfg("cx.router") = classOf[SimpleRouter]
+    SimpleMock.start
+  })
   doAfterSpec(SimpleMock.stop)
 
   "get(\"/\") = \"hello\"" in {
