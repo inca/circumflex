@@ -25,7 +25,7 @@
 
 package ru.circumflex.orm
 
-
+import ORM._
 import java.sql.ResultSet
 
 /**
@@ -68,7 +68,7 @@ trait AliasedProjection[T] extends Projection[T] {
 class ScalarProjection[T](val expression: String,
                           val alias: String,
                           override val grouping: Boolean)
-    extends AliasedProjection[T] with Configurable {
+    extends AliasedProjection[T] {
 
   def as(alias: String) = new ScalarProjection(expression, alias, grouping)
 
@@ -89,16 +89,16 @@ class FieldProjection[T, R](val node: RelationNode[R],
     this(node, column, node.alias + "_" + column.columnName)
 
   def read(rs: ResultSet): Option[T] =
-    node.typeConverter.read(rs, alias).asInstanceOf[Option[T]]
+    typeConverter.read(rs, alias).asInstanceOf[Option[T]]
 
   def as(alias: String) = new FieldProjection(node, column, alias)
 
   /**
    * Returns a column name qualified with node's alias.
    */
-  def expr = node.dialect.qualifyColumn(column, node.alias)
+  def expr = dialect.qualifyColumn(column, node.alias)
 
-  def toSql = node.dialect.columnAlias(column, alias, node.alias)
+  def toSql = dialect.columnAlias(column, alias, node.alias)
 }
 
 /**
@@ -110,9 +110,9 @@ class SequenceNextValProjection[R](val seq: Sequence[R], val alias: String)
   def as(alias: String) = new SequenceNextValProjection(seq, alias)
 
   def read(rs: ResultSet): Option[Long] =
-    seq.typeConverter.read(rs, alias).asInstanceOf[Option[Long]]
+    typeConverter.read(rs, alias).asInstanceOf[Option[Long]]
 
-  def toSql = seq.dialect.sequenceNextVal(seq, alias)
+  def toSql = dialect.sequenceNextVal(seq, alias)
 }
 
 /**
@@ -124,9 +124,9 @@ class SequenceCurrValProjection[R](val seq: Sequence[R], val alias: String)
   def as(alias: String) = new SequenceCurrValProjection(seq, alias)
 
   def read(rs: ResultSet): Option[Long] =
-    seq.typeConverter.read(rs, alias).asInstanceOf[Option[Long]]
+    typeConverter.read(rs, alias).asInstanceOf[Option[Long]]
 
-  def toSql = seq.dialect.sequenceCurrVal(seq, alias)
+  def toSql = dialect.sequenceCurrVal(seq, alias)
 }
 
 /**
@@ -151,5 +151,5 @@ class RecordProjection[R](val node: RelationNode[R])
 
   def sqlAliases = columnProjections.flatMap(_.sqlAliases)
 
-  def toSql = node.dialect.selectClause(columnProjections.map(_.toSql): _*)
+  def toSql = dialect.selectClause(columnProjections.map(_.toSql): _*)
 }

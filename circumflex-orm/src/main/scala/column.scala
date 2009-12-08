@@ -27,6 +27,7 @@ package ru.circumflex.orm
 
 
 import java.util.Date
+import ORM._
 
 /**
  * Base functionality for columns.
@@ -100,7 +101,7 @@ abstract class Column[T, R](val table: Table[R],
  * String (varchar) column.
  */
 class StringColumn[R](table: Table[R], name: String)
-    extends Column[String, R](table, name, table.dialect.stringType) {
+    extends Column[String, R](table, name, dialect.stringType) {
 
   /**
    * DSL-like way to add NotEmptyValidator.
@@ -124,7 +125,7 @@ class StringColumn[R](table: Table[R], name: String)
  * Long (int8) column.
  */
 class LongColumn[R](table: Table[R], name: String)
-    extends Column[Long, R](table, name, table.dialect.longType) {
+    extends Column[Long, R](table, name, dialect.longType) {
   /**
    * DSL-like way to create a sequence for this column.
    */
@@ -138,12 +139,12 @@ class LongColumn[R](table: Table[R], name: String)
  * Boolean column.
  */
 class BooleanColumn[R](table: Table[R], name: String)
-    extends Column[Boolean, R](table, name, table.dialect.booleanType)
+    extends Column[Boolean, R](table, name, dialect.booleanType)
 
 /**
  * Timestamp column.
  */
 class TimestampColumn[R](table: Table[R], name: String)
-    extends Column[Date, R](table, name, table.dialect.timestampType)
+    extends Column[Date, R](table, name, dialect.timestampType)
 
 

@@ -26,18 +26,19 @@
 package ru.circumflex.orm
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import core.{CircumflexContext, AbstractCircumflexFilter}
+import core.{CircumflexContext, AbstractCircumflexFilter, Circumflex}
 import java.sql.{PreparedStatement, ResultSet, Connection}
 import java.util.{Date, MissingResourceException, ResourceBundle}
 import javax.servlet.FilterChain
 import javax.naming.InitialContext
 import javax.sql.DataSource
 import org.slf4j.LoggerFactory
+import ORM._
 
 /**
  * Defines a contract to return JDBC connections.
  */
-trait ConnectionProvider extends core.Configurable {
+trait ConnectionProvider {
   /**
    * Returns a JDBC connection.
    * @return JDBC connection
@@ -104,33 +105,45 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
 class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
-  private val driver = configurationBundle.getString("orm.connection.driver")
-  private val url = configurationBundle.getString("orm.connection.url")
-  private val username = configurationBundle.getString("orm.connection.username")
-  private val password = configurationBundle.getString("orm.connection.password")
-  private val isolation: Int = try {
-    configurationBundle.getString("orm.connection.isolation") match {
-      case "none" => Connection.TRANSACTION_NONE
-      case "read_uncommited" => Connection.TRANSACTION_READ_UNCOMMITTED
-      case "read_commited" => Connection.TRANSACTION_READ_COMMITTED
-      case "repeatable_read" => Connection.TRANSACTION_REPEATABLE_READ
-      case "serializable" => Connection.TRANSACTION_SERIALIZABLE
-    }
-  } catch {
-    case e: MissingResourceException => Connection.TRANSACTION_READ_COMMITTED
-    case e => throw e
+  private val driver = Circumflex.cfg("orm.connection.driver") match {
+    case Some(s: String) => s
+    case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver")
   }
 
-  /**
-   * Retrieves a datasource from JNDI or, if failed, constructs a pooled datasource using c3p0.
-   */
-  def dataSource: DataSource = try {
-    val jndiName = configurationBundle.getString("orm.connection.datasource")
-    val ctx = new InitialContext
-    val ds = ctx.lookup(jndiName).asInstanceOf[DataSource]
-    log.info("Using JNDI datasource ({}).", jndiName)
-    return ds
-  } catch {
+  private val url = Circumflex.cfg("orm.connection.url") match {
+    case Some(s: String) => s
+    case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
+  }
+
+  private val username = Circumflex.cfg("orm.connection.username") match {
+    case Some(s: String) => s
+    case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.username'.")
+  }
+
+  private val password = Circumflex.cfg("orm.connection.password") match {
+    case Some(s: String) => s
+    case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.password'.")
+  }
+
+  private val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
+    case Some("none") => Connection.TRANSACTION_NONE
+    case Some("read_uncommited") => Connection.TRANSACTION_READ_UNCOMMITTED
+    case Some("read_commited") => Connection.TRANSACTION_READ_COMMITTED
+    case Some("repeatable_read") => Connection.TRANSACTION_REPEATABLE_READ
+    case Some("serializable") => Connection.TRANSACTION_SERIALIZABLE
+    case _ => {
+      log.info("Using READ COMMITED isolation, override 'orm.connection.isolation' if necesssary.")
+      Connection.TRANSACTION_READ_COMMITTED
+    }
+  }
+
+  private val ds: DataSource = Circumflex.cfg("orm.connection.datasource") match {
+    case Some(jndiName: String) => {
+      val ctx = new InitialContext
+      val ds = ctx.lookup(jndiName).asInstanceOf[DataSource]
+      log.info("Using JNDI datasource ({}).", jndiName)
+      ds
+    }
     case _ => {
       log.info("Using c3p0 connection pooling.")
       val ds = new ComboPooledDataSource()
@@ -138,17 +151,21 @@ class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
       ds.setJdbcUrl(url)
       ds.setUser(username)
       ds.setPassword(password)
-      return ds
+      ds
     }
   }
 
-  private val ds = dataSource
+  /**
+   * Returns configured datasource instance. It is retrieved from JNDI if 'orm.connection.datasource'
+   * is specified; or constructs a pooled datasource using c3p0 otherwise.
+   */
+  def dataSource: DataSource = ds
 
   /**
    * Opens a new JDBC connection.
    */
   def openConnection: Connection = {
-    val conn = ds.getConnection
+    val conn = dataSource.getConnection
     conn.setAutoCommit(false)
     conn.setTransactionIsolation(isolation)
     return conn
@@ -163,8 +180,8 @@ object DefaultConnectionProvider extends DefaultConnectionProvider
  * at the end of request processing cycle.
  * This filter should be the first in chain.
  */
-class ORMFilter extends AbstractCircumflexFilter with Configurable {
-  protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
+class ORMFilter extends AbstractCircumflexFilter {
+  override protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   /**
    * Commits current transaction at the end of request processing cycle and closes current connection.
@@ -218,23 +235,3 @@ class DefaultTypeConverter extends TypeConverter {
 }
 
 object DefaultTypeConverter extends DefaultTypeConverter
-
-/**
- * Aggregates all ORM-related interfaces into configuration object.
- * We use configuration object with Table objects.
- * You may want to provide your own implementation of all these methods
- * if you are not satisfied with default ones.
- */
-trait Configurable extends core.Configurable {
-
-  def connectionProvider: ConnectionProvider = DefaultConnectionProvider
-  def dialect: Dialect = DefaultDialect
-  def typeConverter: TypeConverter = DefaultTypeConverter
-
-  def defaultSchemaName = try {
-    configurationBundle.getString("orm.defaultSchema")
-  } catch {
-    case _ => "public"
-  }
-
-}

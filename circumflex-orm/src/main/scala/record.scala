@@ -29,6 +29,7 @@ import core.HashModel
 import collection.mutable.HashMap
 import java.sql.PreparedStatement
 import java.util.UUID
+import ORM._
 
 /**
  * Contains base functionality for objects that can be retrieved from and
@@ -148,8 +149,8 @@ abstract class Record[R] extends JDBCHelper {
   }
 
   def insert_!(): Int = {
-    val conn = relation.connectionProvider.getConnection
-    val sql = relation.dialect.insertRecord(this)
+    val conn = connectionProvider.getConnection
+    val sql = dialect.insertRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
       setParams(st, relation.columns)
@@ -163,12 +164,12 @@ abstract class Record[R] extends JDBCHelper {
   }
 
   def update_!(): Int = {
-    val conn = relation.connectionProvider.getConnection
-    val sql = relation.dialect.updateRecord(this)
+    val conn = connectionProvider.getConnection
+    val sql = dialect.updateRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
       setParams(st, relation.nonPKColumns)
-      relation.typeConverter.write(
+      typeConverter.write(
         st,
         primaryKey.get,
         relation.nonPKColumns.size + 1)
@@ -189,11 +190,11 @@ abstract class Record[R] extends JDBCHelper {
     }
 
   def delete(): Int = {
-    val conn = relation.connectionProvider.getConnection
-    val sql = relation.dialect.deleteRecord(this)
+    val conn = connectionProvider.getConnection
+    val sql = dialect.deleteRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
-      relation.typeConverter.write(st, primaryKey.get, 1)
+      typeConverter.write(st, primaryKey.get, 1)
       return st.executeUpdate
     })
   }
@@ -211,7 +212,7 @@ abstract class Record[R] extends JDBCHelper {
         case Some(v) => v
         case _ => null
       }
-      relation.typeConverter.write(st, value, ix + 1)
+      typeConverter.write(st, value, ix + 1)
     })
 
   /* EQUALS BOILERPLATE */

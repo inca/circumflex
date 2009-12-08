@@ -25,13 +25,15 @@
 
 package ru.circumflex.orm
 
+import ORM._
+
 /**
  * Wraps relational nodes (tables, views, virtual tables, subqueries and other stuff)
  * with an alias so that they may appear within SQL FROM clause.
  */
 abstract class RelationNode[R](val relation: Relation[R],
                                var alias: String)
-    extends Relation[R] with Configurable with SQLable {
+    extends Relation[R] with SQLable {
 
   def recordClass = relation.recordClass
 

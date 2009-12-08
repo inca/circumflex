@@ -26,7 +26,9 @@
 package ru.circumflex.core
 
 import collection.mutable.HashMap
+import java.util.ResourceBundle
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+import org.slf4j.LoggerFactory
 
 class CircumflexContext(val request: HttpServletRequest,
                         val response: HttpServletResponse,
@@ -77,6 +79,42 @@ class CircumflexContext(val request: HttpServletRequest,
 
 
 object Circumflex {
+
+  private val log = LoggerFactory.getLogger("ru.circumflex.core")
+
+  /* CONFIGURATION */
+
+  private val _cfg = new HashMap[String, Any]
+  val cfg = new ConfigurationHelper
+
+  try {     // read configuration from "cx.properties" by default
+    val bundle = ResourceBundle.getBundle("cx")
+    val keys = bundle.getKeys
+    while (keys.hasMoreElements) {
+      val k = keys.nextElement
+      cfg(k) = bundle.getString(k)
+    }
+  } catch {
+    case _ => log.warn("Could not read configuration parameters from cx.properties.")
+  }
+
+  /**
+   * For DSL-like configuration
+   */
+  class ConfigurationHelper {
+
+    def apply(key: String): Option[Any] = _cfg.get(key)
+
+    def apply(key: String, default: Any): Any = _cfg.getOrElse(key, default)
+
+    def update(key: String, value: Any): Unit =
+      _cfg += key -> value
+
+  }
+
+
+  /* CONTEXT */
+
   private val threadLocalContext = new ThreadLocal[CircumflexContext]
 
   def ctx = threadLocalContext.get
@@ -87,13 +125,14 @@ object Circumflex {
     threadLocalContext.set(new CircumflexContext(req, res, filter))
 
   def destroyContext() = threadLocalContext.set(null)
+
 }
 
 class CircumflexException(msg: String, cause: Throwable)
     extends Exception(msg, cause) {
 
   def this(msg: String) = this(msg, null)
-  
+
   def this(cause: Throwable) = this(null, cause)
 
 }

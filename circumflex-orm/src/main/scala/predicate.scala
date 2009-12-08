@@ -25,10 +25,12 @@
 
 package ru.circumflex.orm
 
+import ORM._
+
 /**
  * Predicates form a criteria tree that is used to filter results.
  */
-trait Predicate extends Configurable with SQLable {
+trait Predicate extends SQLable {
   /**
    * The list of parameters that should be applied to this predicate.
    * Essentially these are set on JDBC prepared statement object.
@@ -55,7 +57,7 @@ class SimpleExpression(val expression: String,
 /**
  * Contains some common predicates.
  */
-class SimpleExpressionHelper(val expr: String) extends Configurable {
+class SimpleExpressionHelper(val expr: String) {
   def eq(value: Any) = new SimpleExpression(expr + dialect.eq, List(value))
 
   def ne(value: Any) = new SimpleExpression(expr + dialect.ne, List(value))

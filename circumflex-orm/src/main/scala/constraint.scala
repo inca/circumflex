@@ -25,6 +25,8 @@
 
 package ru.circumflex.orm
 
+import ORM._
+
 /**
  * Base superclass with functionality for generating SQL constraints.
  */
@@ -61,9 +63,9 @@ abstract class Constraint[R](val table: Table[R])
 class PrimaryKey[T, R](table: Table[R],
                        val column: Column[T, R])
     extends Constraint[R](table) {
-  def constraintName = table.dialect.primaryKeyName(this)
+  def constraintName = dialect.primaryKeyName(this)
 
-  def sqlDefinition = table.dialect.primaryKeyDefinition(this)
+  def sqlDefinition = dialect.primaryKeyDefinition(this)
 }
 
 /**
@@ -72,9 +74,9 @@ class PrimaryKey[T, R](table: Table[R],
 class UniqueKey[R](table: Table[R],
                    val columns: Seq[Column[_, R]])
     extends Constraint[R](table) {
-  def constraintName = table.dialect.uniqueKeyName(this)
+  def constraintName = dialect.uniqueKeyName(this)
 
-  def sqlDefinition = table.dialect.uniqueKeyDefinition(this)
+  def sqlDefinition = dialect.uniqueKeyDefinition(this)
 }
 
 /**
@@ -102,9 +104,9 @@ class ForeignKey[T, C, P](table: Table[C],
   var onDelete: ForeignKeyAction = NoAction
   var onUpdate: ForeignKeyAction = NoAction
 
-  def constraintName = table.dialect.foreignKeyName(this)
+  def constraintName = dialect.foreignKeyName(this)
 
-  def sqlDefinition = table.dialect.foreignKeyDefinition(this)
+  def sqlDefinition = dialect.foreignKeyDefinition(this)
 
   def onDeleteNoAction: ForeignKey[T, C, P] = {
     onDelete = NoAction

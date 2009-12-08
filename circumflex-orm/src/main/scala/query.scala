@@ -25,10 +25,11 @@
 
 package ru.circumflex.orm
 
+import ORM._
 import collection.mutable.ListBuffer
 import java.sql.{PreparedStatement, ResultSet}
 
-class Select extends Configurable with JDBCHelper with SQLable {
+class Select extends JDBCHelper with SQLable {
   private var aliasCounter = 0;
 
   private var _projections: Seq[Projection[_]] = Nil
@@ -228,7 +229,7 @@ object Query extends QueryHelper
 /**
  * Some common helpers for making up query-related stuff.
  */
-trait QueryHelper extends Configurable {
+trait QueryHelper {
 
   def conn = connectionProvider.getConnection
 

@@ -28,6 +28,7 @@ package ru.circumflex.core.test
 import org.mortbay.jetty.Handler
 import org.mortbay.jetty.servlet.{DefaultServlet}
 import org.mortbay.jetty.testing.{HttpTester, ServletTester}
+
 trait MockServer extends StandaloneServer {
 
   val tester = new ServletTester()

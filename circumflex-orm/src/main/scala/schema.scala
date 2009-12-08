@@ -25,7 +25,7 @@
 
 package ru.circumflex.orm
 
-
+import ORM._
 import collection.mutable.HashSet
 import java.io.Writer
 import java.sql.Connection
@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory
  * Defines a contract for database schema objects.
  * They must provide SQL statement to create them and to drop them.
  */
-trait SchemaObject extends Configurable {
+trait SchemaObject {
   /**
    * SQL statement to create this database object.
    */
@@ -73,8 +73,7 @@ object DefaultSchema extends Schema
 /**
  * Executes DDL statements.
  */
-class DDLExport extends Configurable
-    with JDBCHelper {
+class DDLExport extends JDBCHelper {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   private val schemata = HashSet[Schema]()

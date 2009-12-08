@@ -29,15 +29,15 @@ import java.lang.reflect.InvocationTargetException
 import java.util.ResourceBundle
 import javax.servlet._
 import http.{HttpServletResponse, HttpServletRequest}
-import org.mortbay.jetty.Handler
-import org.mortbay.jetty.servlet.{FilterHolder, FilterMapping}
 import org.slf4j.LoggerFactory
 import Circumflex._
 
 /**
  * Provides a base class for Circumflex filter implementations.
  */
-abstract class AbstractCircumflexFilter extends Filter with Configurable {
+abstract class AbstractCircumflexFilter extends Filter {
+
+  protected val log = LoggerFactory.getLogger("ru.circumflex.core")
 
   /**
    * Place your application initialization code here.
@@ -76,10 +76,11 @@ abstract class AbstractCircumflexFilter extends Filter with Configurable {
           // Instantiate a context if it does not yet exist and bind it thread-locally.
           if (ctx == null) Circumflex.initContext(req, res, this)
           // Put a Messages helper with current request's locale (if it exists)
+          val bundleResource = Circumflex.cfg("cx.messages") match {
+            case Some(s: String) => s
+            case _ => "Messages"
+          }
           try {
-            val bundleResource = try {
-              configurationBundle.getString("cx.messages")
-            } catch { case _ => "Messages" }
             ctx += "msg" -> new Messages(ResourceBundle.getBundle(bundleResource, req.getLocale))
           } catch {
             case _ =>
@@ -112,14 +113,11 @@ abstract class AbstractCircumflexFilter extends Filter with Configurable {
  */
 class CircumflexFilter extends AbstractCircumflexFilter {
 
-  val routerClass: Class[RequestRouter] =
-  Class.forName(configurationBundle.getString("cx.router"))
-      .asInstanceOf[Class[RequestRouter]]
-
-  /**
-   * A logger instance
-   */
-  val log = LoggerFactory.getLogger("ru.circumflex.core")
+  val routerClass: Class[RequestRouter] = Circumflex.cfg("cx.router") match {
+    case Some(s: String) => Class.forName(s).asInstanceOf[Class[RequestRouter]]
+    case Some(c: Class[RequestRouter]) => c
+    case _ => throw new CircumflexException("Could not initialize Request Router; configure 'cx.router' properly.")
+  }
 
   /**
    * Executed when no routes match current request.

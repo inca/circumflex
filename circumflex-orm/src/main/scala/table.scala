@@ -27,12 +27,13 @@ package ru.circumflex.orm
 
 import collection.mutable.ListBuffer
 import Query._
+import ORM._
 
 /**
  * Designates a relation that can be used to retrieve certain type of records.
  * It can be considered a table, a virtual table, a view, a subquery, etc.
  */
-abstract class Relation[R] extends Configurable {
+abstract class Relation[R] {
 
   /**
    * Contains a validation sequence that each record must pass on validation event.

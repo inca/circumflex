@@ -25,6 +25,8 @@
 
 package ru.circumflex.orm
 
+import ORM._
+
 /**
  * Base functionality for SQL sequences.
  */

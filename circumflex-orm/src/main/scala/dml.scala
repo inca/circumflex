@@ -28,6 +28,7 @@ package ru.circumflex.orm
 import collection.mutable.ListBuffer
 import java.sql.PreparedStatement
 import Query._
+import ORM._
 
 /**
  * Contains functionality for INSERT-SELECT operations.
@@ -35,13 +36,13 @@ import Query._
  * columns.
  */
 class InsertSelect[R](val relation: Relation[R], val query: Select)
-    extends Configurable with JDBCHelper with SQLable {
+    extends JDBCHelper with SQLable {
 
   /**
    * Executes a query.
    */
   def executeUpdate: Int = {
-    val conn = relation.connectionProvider.getConnection
+    val conn = connectionProvider.getConnection
     val sql = toSql
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
@@ -78,7 +79,7 @@ class Delete[R](val relation: Relation[R])
    * Executes a query.
    */
   def executeUpdate: Int = {
-    val conn = relation.connectionProvider.getConnection
+    val conn = connectionProvider.getConnection
     val sql = toSql
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
@@ -166,7 +167,7 @@ class Update[R](val relation: Relation[R])
    * Executes a query.
    */
   def executeUpdate: Int = {
-    val conn = relation.connectionProvider.getConnection
+    val conn = connectionProvider.getConnection
     val sql = toSql
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {

@@ -32,7 +32,7 @@ import org.mortbay.jetty.{Handler, Server}
  * A helper that allows standalone Circumflex execution based on
  * Jetty server.
  */
-trait StandaloneServer extends Configurable {
+trait StandaloneServer {
 
   def port: Int = 8181
 
