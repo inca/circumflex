@@ -167,6 +167,7 @@
           </executions>
           <configuration>
             <scalaVersion>${scala.version}</scalaVersion>
+            <useFsc>true</useFsc>
           </configuration>
         </plugin>
         <plugin>

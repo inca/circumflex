@@ -25,26 +25,26 @@
 
 package ru.circumflex.core
 
+import Circumflex._
+
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
-trait ContextAware {
-  def ctx: CircumflexContext = Circumflex.ctx
-}
-
-class RequestRouter extends ContextAware {
+class RequestRouter {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
 
-  val get = new RequestDispatcher("get")
-  val getOrPost = new RequestDispatcher("get", "post")
-  val getOrHead = new RequestDispatcher("get", "head")
-  val post = new RequestDispatcher("post")
-  val put = new RequestDispatcher("put")
-  val delete = new RequestDispatcher("delete")
-  val head = new RequestDispatcher("head")
-  val options = new RequestDispatcher("options")
-  val any = new RequestDispatcher("get", "post", "put", "delete", "head", "options")
+  def ctx = Circumflex.ctx
+
+  val get = new Route("get")
+  val getOrPost = new Route("get", "post")
+  val getOrHead = new Route("get", "head")
+  val post = new Route("post")
+  val put = new Route("put")
+  val delete = new Route("delete")
+  val head = new Route("head")
+  val options = new Route("options")
+  val any = new Route("get", "post", "put", "delete", "head", "options")
 
   val header = new HeadersHelper
 
@@ -81,8 +81,7 @@ class RequestRouter extends ContextAware {
 
 }
 
-class RequestDispatcher(val matchingMethods: String*)
-   extends ContextAware {
+class Route(val matchingMethods: String*) {
 
   protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
     matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
@@ -105,7 +104,7 @@ class RequestDispatcher(val matchingMethods: String*)
     dispatch(response, new UriRegexMatcher(uriRegex), matcher1)
 }
 
-class HeadersHelper extends ContextAware {
+class HeadersHelper {
 
   def apply(name: String): Option[String] = {
     val value = ctx.request.getHeader(name)

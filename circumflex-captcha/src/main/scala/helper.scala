@@ -26,12 +26,13 @@
 package ru.circumflex.captcha
 
 import com.octo.captcha.service.image.DefaultManageableImageCaptchaService
-import core.{ContextAware, HttpResponse, DirectStreamResponse}
+import core.{HttpResponse, DirectStreamResponse, Circumflex}
+import Circumflex._
 import javax.imageio.ImageIO
 
 object CaptchaService extends DefaultManageableImageCaptchaService
 
-trait CaptchaHelper extends ContextAware {
+trait CaptchaHelper {
 
   def captchaService: DefaultManageableImageCaptchaService = CaptchaService
 

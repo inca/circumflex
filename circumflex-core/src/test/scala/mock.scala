@@ -25,6 +25,7 @@
 
 package ru.circumflex.core.test
 
+import javax.servlet.http.Cookie
 import org.mortbay.jetty.Handler
 import org.mortbay.jetty.servlet.{DefaultServlet}
 import org.mortbay.jetty.testing.{HttpTester, ServletTester}
@@ -40,12 +41,64 @@ trait MockServer extends StandaloneServer {
   override def start = tester.start
   override def stop = tester.stop
 
-  def process(request: String): HttpTester = {
+  /* Methods */
+
+  def get(uri: String) = new MockRequest(this, "GET", uri)
+
+  def post(uri: String) = new MockRequest(this, "POST", uri)
+
+  def put(uri: String) = new MockRequest(this, "PUT", uri)
+
+  def delete(uri: String) = new MockRequest(this, "DELETE", uri)
+
+  def head(uri: String) = new MockRequest(this, "HEAD", uri)
+
+  def options(uri: String) = new MockRequest(this, "OPTIONS", uri)
+
+}
+
+class MockRequest(val mockServer: MockServer, val method: String, val uri: String) {
+
+  private val req = new HttpTester
+
+  req.setMethod(method)
+  req.setURI(uri)
+  req.setVersion("HTTP/1.1")
+  req.setHeader("Host", "localhost")
+
+  def setHeader(name: String, value: String): this.type = {
+    req.setHeader(name, value)
+    return this
+  }
+
+  def setDateHeader(name: String, value: Long): this.type = {
+    req.setDateHeader(name, value)
+    return this
+  }
+
+  def setLongHeader(name: String, value: Long): this.type = {
+    req.setLongHeader(name, value)
+    return this
+  }
+
+  def setContent(content: String): this.type = {
+    req.setContent(content)
+    return this
+  }
+
+  def setCookie(cookie: Cookie): this.type = {
+    req.addSetCookie(cookie)
+    return this
+  }
+
+  override def toString = req.generate
+
+  def execute(): HttpTester = {
     val result = new HttpTester
-    result.parse(tester.getResponses(request))
+    result.parse(mockServer.tester.getResponses(req.generate))
     return result
   }
 
-  def process(request: HttpTester): HttpTester =
-    process(request.generate)
 }
+
+object MockApp extends MockServer

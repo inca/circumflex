@@ -25,34 +25,61 @@
 
 package ru.circumflex.core.test
 
-import core._
-import org.mortbay.jetty.testing.HttpTester
 import org.specs.runner.JUnit4
 import org.specs.Specification
 
-class SimpleRouter extends RequestRouter {
-  get("/") = "hello"
-}
+class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
-object SimpleMock extends MockServer
+object CircumflexCoreSpec extends Specification {
 
-object SimpleSpec extends Specification {
-  doBeforeSpec({
-    Circumflex.cfg("cx.router") = classOf[SimpleRouter]
-    SimpleMock.start
-  })
-  doAfterSpec(SimpleMock.stop)
+  class MainRouter extends RequestRouter {
 
-  "get(\"/\") = \"hello\"" in {
-    val req = new HttpTester()
-    req.setMethod("GET")
-    req.setVersion("HTTP/1.1")
-    req.setHeader("Host", "test")
-    req.setURI("/")
-    val res = SimpleMock.process(req)
-    res.getContent must_== "hello"
+    get("/") = "preved"
+
+    get("/ctx") = if (ctx == null) "null" else ctx.toString
+
+    get("/capture/?", headers("Accept" -> "([^/]+)/([^/]+)")) =
+        "Accept$1 is " + param("Accept$1").getOrElse("") + "; " +
+        "Accept$2 is " + param("Accept$2").getOrElse("")
+
+    get("/capture/(.*)") = "uri$1 is " + param("uri$1").getOrElse("")
+    
+  }
+
+  doBeforeSpec{
+    Circumflex.cfg("cx.router") = classOf[MainRouter]
+    MockApp.start
+  }
+
+  doAfterSpec { MockApp.stop }
+
+  "RequestRouter" should {
+    "match the request against it's routes until first match" in {
+      MockApp.get("/").execute().getContent must_== "preved"
+    }
+    "return to the filter if no routes match (default filter's behavior is 404)" in {
+      MockApp.get("/this/does/not/match/any/routes").execute().getStatus must_== 404
+    }
+  }
+
+  "CircumflexContext" should {
+    "be available thread-locally in Circumflex application scope" in {
+      MockApp.get("/ctx").execute().getContent mustNotBe "null"
+    }
+    "be destroyed after the request processing has finished" in {
+      MockApp.get("/").execute
+      Circumflex.ctx mustBe null
+    }
+    "contain captured groups from URI" in {
+      MockApp.get("/capture/preved").execute().getContent must_== "uri$1 is preved"
+    }
+    "contain captured groups from headers" in {
+      MockApp.get("/capture")
+          .setHeader("Accept", "text/plain")
+          .execute()
+          .getContent must_== "Accept$1 is text; Accept$2 is plain"
+    }
+    
   }
 
 }
-
-class SpecsTest extends JUnit4(SimpleSpec)

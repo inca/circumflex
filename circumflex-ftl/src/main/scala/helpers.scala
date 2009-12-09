@@ -27,10 +27,11 @@ package ru.circumflex.freemarker
 
 import _root_.freemarker.cache.{MultiTemplateLoader, WebappTemplateLoader, ClassTemplateLoader}
 import _root_.freemarker.template.{TemplateExceptionHandler, Template, Configuration}
-import core.{HttpResponse, ContextAware, Circumflex}
+import core.{HttpResponse, Circumflex}
+import Circumflex._
 import javax.servlet.http.HttpServletResponse
 
-trait FreemarkerHelper extends ContextAware {
+trait FreemarkerHelper {
 
   def freemarkerConf: Configuration = DefaultConfiguration
 

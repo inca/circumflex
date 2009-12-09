@@ -27,6 +27,7 @@ package ru.circumflex.core
 
 import java.io.OutputStream
 import javax.servlet.http.HttpServletResponse
+import Circumflex._
 
 /**
  * Author: incarnate
@@ -34,7 +35,7 @@ import javax.servlet.http.HttpServletResponse
  * Time: 8: 48: 13 PM
  */
 
-trait HttpResponse extends ContextAware {
+trait HttpResponse {
   def apply(response: HttpServletResponse) = {
     response.setCharacterEncoding("UTF-8")
     response.setContentType(ctx.contentType)
