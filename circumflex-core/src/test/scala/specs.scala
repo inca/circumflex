@@ -47,6 +47,14 @@ object CircumflexCoreSpec extends Specification {
     get("/redirect") = redirect("/")
     get("/rewrite") = rewrite("/")
     get("/error") = error(503, "preved")
+    get("/contentType\\.(.+)") = {
+      ctx.contentType = param("uri$1") match {
+        case Some("html") => "text/html"
+        case Some("css") => "text/css"
+        case _ => "application/octet-stream"
+      }
+      done(200)
+    }
   }
 
   doBeforeSpec{
@@ -87,7 +95,7 @@ object CircumflexCoreSpec extends Specification {
       r.getHeader("Location") must_== "http://localhost/"
     }
     "process rewrites" in {
-      MockApp.get("/rewrite").execute().getContent must_== "preved" 
+      MockApp.get("/rewrite").execute().getContent must_== "preved"
     }
     "process errors" in {
       MockApp.get("/error").execute().getStatus must_== 503
@@ -110,6 +118,12 @@ object CircumflexCoreSpec extends Specification {
           .setHeader("Accept", "text/plain")
           .execute()
           .getContent must_== "Accept$1 is text; Accept$2 is plain"
+    }
+    "set response content type" in {
+      MockApp.get("/contentType.html").execute()
+          .getHeader("Content-Type") must beMatching("text/html(\\s*;\\s*charset=.*)?")
+      MockApp.get("/contentType.css").execute()
+          .getHeader("Content-Type") must beMatching("text/css(\\s*;\\s*charset=.*)?")
     }
 
 
