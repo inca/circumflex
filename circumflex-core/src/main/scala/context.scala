@@ -26,6 +26,7 @@
 package ru.circumflex.core
 
 import collection.mutable.HashMap
+import java.net.URLDecoder
 import java.util.ResourceBundle
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
@@ -35,6 +36,7 @@ class CircumflexContext(val request: HttpServletRequest,
                         val filter: AbstractCircumflexFilter)
     extends HashModel {
 
+  val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
   val params = new HashMap[String, Any]
   val stringHeaders = new HashMap[String, String]
   val dateHeaders = new HashMap[String, Long]

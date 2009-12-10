@@ -25,9 +25,9 @@
 
 package ru.circumflex.core
 
+import java.net.URLDecoder
 import javax.servlet.http.HttpServletRequest
 import util.matching.Regex
-
 
 trait RequestMatcher {
 
@@ -51,7 +51,7 @@ trait RequestMatcher {
 case class UriRegexMatcher(val uriRegex: String) extends RequestMatcher {
 
   def apply(request: HttpServletRequest) =
-    extractMatches(uriRegex.r, request.getRequestURI, "uri$")
+    extractMatches(uriRegex.r, URLDecoder.decode(request.getRequestURI, "UTF-8"), "uri$")
 
 }
 

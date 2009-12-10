@@ -63,7 +63,7 @@ class RequestRouter {
   def param(key: String): Option[String] = ctx.stringParam(key)
 
   def error(errorCode: Int, message: String) = ErrorResponse(errorCode, message)
-  def error(errorCode: Int) = ErrorResponse(errorCode, "")
+  def error(errorCode: Int) = ErrorResponse(errorCode, "no message available")
 
   def redirect(location: String) = RedirectResponse(location)
 

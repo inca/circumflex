@@ -61,7 +61,7 @@ abstract class AbstractCircumflexFilter extends Filter {
    *              <b>false</b> if the processing should be skipped
    */
   def isProcessed(req: HttpServletRequest): Boolean =
-    !req.getRequestURI.toLowerCase.matches("(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js))")
+    !req.getRequestURI.toLowerCase.matches("(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js)|(swf))")
 
   /**
    * Instantiates a CircumflexContext object, binds it to current request,
