@@ -104,10 +104,18 @@ class MockRequest(val mockServer: MockServer, val method: String, val uri: Strin
     return this
   }
 
+  def get_? = req.getMethod.equalsIgnoreCase("GET")
+  def post_? = req.getMethod.equalsIgnoreCase("POST")
+  def put_? = req.getMethod.equalsIgnoreCase("PUT")
+  def delete_? = req.getMethod.equalsIgnoreCase("DELETE")
+  def head_? = req.getMethod.equalsIgnoreCase("HEAD")
+  def options_? = req.getMethod.equalsIgnoreCase("OPTIONS")
+
   override def toString = req.generate
 
   def execute(): HttpTester = {
     val result = new HttpTester
+    if (post_?) req.setHeader("Content-Type", "application/x-www-form-urlencoded")
     result.parse(mockServer.tester.getResponses(req.generate))
     return result
   }

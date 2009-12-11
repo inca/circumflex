@@ -88,6 +88,10 @@ object CircumflexCoreSpec extends Specification {
     }
     "interpret '_method' parameter as HTTP method" in {
       MockApp.get("/put?_method=PUT").execute().getContent must_== "preved"
+      MockApp.post("/put")
+          .setContent("_method=PUT")
+          .execute()
+          .getContent must_== "preved"
     }
     "send redirects" in {
       val r = MockApp.get("/redirect").execute()
