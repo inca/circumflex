@@ -25,6 +25,7 @@
 
 package ru.circumflex.core
 
+import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.util.ResourceBundle
 import javax.servlet._
@@ -53,15 +54,24 @@ abstract class AbstractCircumflexFilter extends Filter {
 
   /**
    * Determines, if a filter should process the request.
-   * Used primarily for static resources, where no processing is required.
-   * Default behavior is to match requestUri against following regex:
-   * <code>(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js))</code>
+   * The default behavior is controlled by "cx.process_?" parameter:
+   * <ul>
+   *   <li><code>String</code> or <code>Regex</code> -- request URI is matched against specified regex;
+   * the filter processes request if URI <em>does not match</em> specified regex;</li>
+   *   <li><code>HttpServletRequest => Boolean</code> or <code>() => Boolean</code< functions --
+   *  the filter processes request depending on the result of function invocation.</li>
+   * </ul>
    * @param req   the request instance
    * @return     <b>true</b> if the request should be processed
-   *              <b>false</b> if the processing should be skipped
+   *             <b>false</b> if the processing should be skipped
    */
-  def isProcessed(req: HttpServletRequest): Boolean =
-    !req.getRequestURI.toLowerCase.matches("(/static/.*)|(.*\\.(gif)|(png)|(jpg)|(jpeg)|(pdf)|(css)|(js)|(swf))")
+  def isProcessed(req: HttpServletRequest): Boolean = Circumflex.cfg("cx.process_?") match {
+    case Some(s: String) => !req.getRequestURI.toLowerCase.matches(s)
+    case Some(func: Function0[Boolean]) => func.apply()
+    case Some(func: Function1[HttpServletRequest, Boolean]) => func.apply(req)
+    case _ => true
+  }
+
 
   /**
    * Instantiates a CircumflexContext object, binds it to current request,
@@ -72,6 +82,7 @@ abstract class AbstractCircumflexFilter extends Filter {
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
     (req, res) match {
       case (req: HttpServletRequest, res: HttpServletResponse) =>
+        // TODO serve static files
         if (isProcessed(req)) {
           // Instantiate a context if it does not yet exist and bind it thread-locally.
           if (ctx == null) Circumflex.initContext(req, res, this)

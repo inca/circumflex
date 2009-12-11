@@ -32,14 +32,27 @@ import org.mortbay.jetty.testing.{HttpTester, ServletTester}
 
 trait MockServer extends StandaloneServer {
 
-  val tester = new ServletTester()
-  tester.setContextPath("/")
-  tester.setResourceBase(webappRoot)
-  tester.addServlet(classOf[DefaultServlet], "/*")
-  filters.foreach(f => tester.addFilter(f, "/*", Handler.ALL))
+  protected var _tester: ServletTester = null
 
-  override def start = tester.start
-  override def stop = tester.stop
+  def tester = _tester
+
+  def initTester() = {
+    _tester = new ServletTester()
+    _tester.setContextPath("/")
+    _tester.setResourceBase(Circumflex.cfg("cx.root") match {
+      case Some(s: String) => s
+      case _ => "src/main/webapp"
+    })
+    _tester.addServlet(classOf[DefaultServlet], "/*")
+    filters.foreach(f => _tester.addFilter(f, "/*", Handler.ALL))
+  }
+
+  override def start = {
+    initTester()
+    _tester.start
+  }
+
+  override def stop = if (_tester != null) _tester.stop
 
   /* Methods */
 

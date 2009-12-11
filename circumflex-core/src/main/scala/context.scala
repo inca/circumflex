@@ -89,6 +89,17 @@ object Circumflex {
   private val _cfg = new HashMap[String, Any]
   val cfg = new ConfigurationHelper
 
+  /* CONFIGURATION DEFAULTS */
+
+  // filter processes request?
+  val f: HttpServletRequest => Boolean = r => r.getRequestURI.toLowerCase.matches("/static/.*")
+  _cfg += "cx.processed_?" -> f
+  // webapp root
+  _cfg += "cx.root" -> "src/main/webapp"
+  // static files directory
+  _cfg += "cx.public" -> "src/main/webapp/public"
+
+
   try {     // read configuration from "cx.properties" by default
     val bundle = ResourceBundle.getBundle("cx")
     val keys = bundle.getKeys

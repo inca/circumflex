@@ -34,21 +34,31 @@ import org.mortbay.jetty.{Handler, Server}
  */
 trait StandaloneServer {
 
-  def port: Int = 8181
-
-  def webappRoot: String = "src/main/webapp"
-
   def filters: Seq[Class[_ <: Filter]] = List(classOf[CircumflexFilter])
 
-  val jetty = new Server(port)
+  protected var jetty: Server = null
+  protected var context: Context = null
 
-  val context = new Context(jetty, "/", Context.SESSIONS)
-  context.setResourceBase(webappRoot)
-  context.addServlet(new ServletHolder(new DefaultServlet), "/*")
+  def init() = {
+    jetty = new Server(Circumflex.cfg("cx.port") match {
+      case Some(p: Int) => p
+      case Some(s: String) => try { s.toInt } catch { case _ => 8181 }
+      case _ => 8181
+    })
+    context = new Context(jetty, "/", Context.SESSIONS)
+    context.setResourceBase(Circumflex.cfg("cx.root") match {
+      case Some(s: String) => s
+      case _ => "src/main/webapp"
+    })
+    context.addServlet(new ServletHolder(new DefaultServlet), "/*")
+    filters.foreach(f => context.addFilter(f, "/*", Handler.ALL))
+  }
 
-  filters.foreach(f => context.addFilter(f, "/*", Handler.ALL))
+  def start = {
+    init()
+    jetty.start
+  }
 
-  def start = jetty.start
-  def stop = jetty.stop
+  def stop = if (jetty != null) jetty.stop
 
 }
