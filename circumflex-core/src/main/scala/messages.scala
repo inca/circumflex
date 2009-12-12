@@ -25,17 +25,26 @@
 
 package ru.circumflex.core
 
-import java.util.{MissingResourceException, ResourceBundle}
+import java.util.{Locale, MissingResourceException, ResourceBundle}
 import org.slf4j.LoggerFactory
 
-class Messages(val msgBundle: ResourceBundle) extends HashModel {
+class Messages(val baseName: String, val locale: Locale) extends HashModel {
 
   val log = LoggerFactory.getLogger("ru.circumflex.core")
+
+  val msgBundle: ResourceBundle = try {
+    ResourceBundle.getBundle(baseName, locale)
+  } catch {
+    case e => {
+      log.trace("ResourceBundle for messages instance not found: " + baseName)
+      null
+    }
+  }
 
   def apply(key: String): Option[String] = try {
     Some(msgBundle.getString(key))
   } catch {
-    case e: MissingResourceException => None
+    case e => None
   }
 
   def apply(key: String, params: collection.Map[String, String]): Option[String] =
@@ -68,7 +77,7 @@ object Messages {
       throw new CircumflexException("CircumflexContext is not available.")
     Circumflex.ctx.get("msg") match {
       case Some(m: Messages) => m
-      case _ => throw new CircumflexException("Messages object not found in CircumflexContext.")
+      case _ => throw new CircumflexException("Messages instance not found in CircumflexContext.")
     }
   }
 }

@@ -26,8 +26,9 @@
 package ru.circumflex.core
 
 import collection.mutable.HashMap
+import java.io.File
 import java.net.URLDecoder
-import java.util.ResourceBundle
+import java.util.{Locale, ResourceBundle}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
 
@@ -91,13 +92,15 @@ object Circumflex {
 
   /* CONFIGURATION DEFAULTS */
 
-  // filter processes request?
-  val f: HttpServletRequest => Boolean = r => r.getRequestURI.toLowerCase.matches("/static/.*")
-  _cfg += "cx.processed_?" -> f
+  // should filter process request?
+  val f: HttpServletRequest => Boolean = r => !r.getRequestURI.toLowerCase.matches("/public/.*")
+  _cfg += "cx.process_?" -> f
   // webapp root
   _cfg += "cx.root" -> "src/main/webapp"
-  // static files directory
-  _cfg += "cx.public" -> "src/main/webapp/public"
+  // static files directory (relative to webapp root)
+  _cfg += "cx.public" -> "public"
+  // resource bundle for messages
+  _cfg += "cx.messages" -> "Messages"
 
 
   try {     // read configuration from "cx.properties" by default
@@ -109,6 +112,16 @@ object Circumflex {
     }
   } catch {
     case _ => log.warn("Could not read configuration parameters from cx.properties.")
+  }
+
+  val webappRoot: File = cfg("cx.root") match {
+    case Some(s: String) => new File(s.replaceAll("/", File.separator))
+    case _ => throw new CircumflexException("'cx.root' not configured.")
+  }
+
+  val publicRoot = cfg("cx.public") match {
+    case Some(s: String) => new File(webappRoot, s.replaceAll("/", File.separator))
+    case _ => throw new CircumflexException("'cx.public' not configured.")
   }
 
   /**
@@ -125,6 +138,12 @@ object Circumflex {
 
   }
 
+  /* MESSAGES */
+
+  def msg(locale: Locale): Messages = cfg("cx.messages") match {
+    case Some(s: String) => new Messages(s, locale)
+    case _ => throw new CircumflexException("'cx.messages' not configured.")
+  }
 
   /* CONTEXT */
 
@@ -134,8 +153,14 @@ object Circumflex {
 
   def initContext(req: HttpServletRequest,
                   res: HttpServletResponse,
-                  filter: AbstractCircumflexFilter) =
+                  filter: AbstractCircumflexFilter) = {
     threadLocalContext.set(new CircumflexContext(req, res, filter))
+    try {
+      ctx += "msg" -> msg(req.getLocale)
+    } catch {
+      case e => log.debug("Could not instantiate context messages.", e)
+    }
+  }
 
   def destroyContext() = threadLocalContext.set(null)
 
