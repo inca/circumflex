@@ -34,8 +34,6 @@ import org.slf4j.LoggerFactory
 
 trait FreemarkerHelper {
 
-  val log = LoggerFactory.getLogger("ru.circumflex.ftl")
-
   def freemarkerConf: Configuration = DefaultConfiguration
 
   def ftl(templateName:String): HttpResponse = {
