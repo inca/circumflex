@@ -29,13 +29,13 @@
             an XML configuration file that specifies, how your application will be deployed into
             <em>Servlet Container</em>.
             By default it just maps all URLs to <em>Circumflex Filter</em>.</li>
-          <li><strong>static</strong>
+          <li><strong>public</strong>
             – a directory for static resources, e.g. stylesheets,
-            scripts, images, etc.; resources under that directory are served directly by the
+            scripts, images, etc.; resources under this directory are served directly by the
             container and are not processed by <em>Circumflex Filter</em>.</li>
           <li><strong>templates</strong>
-            – a default location for FreeMarker templates;
-            they are resolved relatively to this location by <em>Circumflex FreeMarker helper</em>.</li>
+            – a default location for FreeMarker templates; they are resolved relatively to this
+            location by <em>Circumflex FreeMarker helper</em>.</li>
         </ul>
       </li>
       <li><strong>resources/Messages.properties</strong>
@@ -51,7 +51,11 @@
         <pre>${'
 <category name="ru.circumflex.core">
   <priority value="debug"/>
-</category>'?html}</pre> will result in every incoming request being logged to your console.
+</category>'?html}</pre>
+        <p>will result in every incoming request being logged to your console.
+           If you are not familiar with <em>Apache log4j</em>, take a moment to observe the
+          <a href="http://logging.apache.org/log4j/1.2/manual.html" target="_blank">
+            Short introduction to log4j</a> article.</p>
       </li>
     </ul>
   </li>

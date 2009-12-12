@@ -8,7 +8,7 @@
     <link rel="stylesheet"
           type="text/css"
           media="screen"
-          href="/static/css/main.css"/>
+          href="/css/main.css"/>
     <title>Simple Circumflex Application</title>
   </head>
   <body>
