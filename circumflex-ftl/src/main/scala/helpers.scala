@@ -27,17 +27,26 @@ package ru.circumflex.freemarker
 
 import _root_.freemarker.cache.{MultiTemplateLoader, WebappTemplateLoader, ClassTemplateLoader}
 import _root_.freemarker.template.{TemplateExceptionHandler, Template, Configuration}
-import core.{HttpResponse, Circumflex}
+import core._
 import Circumflex._
 import javax.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 
 trait FreemarkerHelper {
 
+  val log = LoggerFactory.getLogger("ru.circumflex.ftl")
+
   def freemarkerConf: Configuration = DefaultConfiguration
 
-  def ftl(templateName:String) = {
+  def ftl(templateName:String): HttpResponse = {
     val template = freemarkerConf.getTemplate(templateName);
-    new FreemarkerResponse(template)
+    try {
+      return new FreemarkerResponse(template)
+    } catch {
+      case e =>
+        log.error("Could not process FreeMarker template.", e)
+        return new ErrorResponse(404, "The requested resource could not be found.")
+    }
   }
 
 }
