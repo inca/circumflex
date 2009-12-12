@@ -83,7 +83,7 @@ class CircumflexContext(val request: HttpServletRequest,
 
 object Circumflex {
 
-  private val log = LoggerFactory.getLogger("ru.circumflex.core")
+  val log = LoggerFactory.getLogger("ru.circumflex.core")
 
   /* CONFIGURATION */
 
