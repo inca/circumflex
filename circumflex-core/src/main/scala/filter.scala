@@ -143,8 +143,6 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    */
   def onNoMatch(ctx: CircumflexContext, chain: FilterChain) =
     ErrorResponse(404, "The requested resource does not exist.")(ctx.response)
-  //  chain.doFilter(ctx.request, ctx.response)
-
 
   /**
    * Executed when router throws an exception.
