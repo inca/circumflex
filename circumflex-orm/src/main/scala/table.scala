@@ -25,6 +25,7 @@
 
 package ru.circumflex.orm
 
+import collection.mutable.ListBuffer
 import Query._
 import ORM._
 
@@ -44,6 +45,11 @@ abstract class Table[R] extends Relation[R]
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
   private var _cachedRecordClass: Class[R] = null;
+
+  /**
+   * Contains a validation sequence that each record must pass on validation event.
+   */
+  var validators = new ListBuffer[RecordValidator[R]]
 
   /**
    * Uses companion object runtime convention to find a record class.
@@ -185,6 +191,32 @@ abstract class Table[R] extends Relation[R]
     val col = new TimestampColumn(this, name)
     addColumn(col)
     return col
+  }
+
+  /* VALIDATION */
+
+  /**
+   * Returns None if record has passed validation. Otherwise returns
+   * a <code>ValidationError</code> sequence.
+   */
+  def validate(record: Record[R]): Option[Seq[ValidationError]] = {
+    val errors = validators.flatMap(_.apply(record))
+    if (errors.size == 0) None
+    else Some(errors)
+  }
+
+  /**
+   * Throws <code>ValidationException</code> if record has failed validation.
+   */
+  def validate_!(record: Record[R]) = validate(record) match {
+    case Some(errors) => throw new ValidationException(errors: _*)
+    case _ =>
+  }
+
+  def addFieldValidator(col: Column[_, R], validator: Validator): RecordValidator[R] = {
+    val v = new RecordFieldValidator(col, validator)
+    this.validators += v
+    return v
   }
 
   /* DDL */
