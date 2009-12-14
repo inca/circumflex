@@ -38,7 +38,9 @@ import ORM._
  * the only requirement is to implement the <code>recordClass</code> method.
  */
 abstract class Table[R] extends Relation[R]
+    with SchemaObject
     with JDBCHelper {
+  
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
   private var _cachedRecordClass: Class[R] = null;

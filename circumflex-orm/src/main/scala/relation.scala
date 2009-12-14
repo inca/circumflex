@@ -33,7 +33,7 @@ import ORM._
  * Designates a relation that can be used to retrieve certain type of records.
  * It can be considered a table, a virtual table, a view, a subquery, etc.
  */
-trait Relation[R] extends SchemaObject {
+trait Relation[R] {
 
   /**
    * Contains a validation sequence that each record must pass on validation event.
