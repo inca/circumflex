@@ -25,149 +25,8 @@
 
 package ru.circumflex.orm
 
-import collection.mutable.ListBuffer
 import Query._
 import ORM._
-
-/**
- * Designates a relation that can be used to retrieve certain type of records.
- * It can be considered a table, a virtual table, a view, a subquery, etc.
- */
-abstract class Relation[R] {
-
-  /**
-   * Contains a validation sequence that each record must pass on validation event.
-   */
-  var validators = new ListBuffer[RecordValidator[R]]
-
-  /**
-   * Returns a class of record which this relation describes.
-   */
-  def recordClass: Class[R]
-
-  /**
-   * The mandatory primary key constraint for this relation.
-   */
-  def primaryKey: PrimaryKey[_, R];
-
-  /**
-   * Unqualified relation name.
-   */
-  def relationName: String
-
-  /**
-   * Qualified relation name for use in SQL statements.
-   */
-  def qualifiedName: String
-
-  /**
-   * Returns columns that correspond to this relation.
-   */
-  def columns: Seq[Column[_, R]]
-
-  /**
-   * Returns all constraints defined for this relation.
-   */
-  def constraints: Seq[Constraint[R]]
-
-  /**
-   * Returns all associations defined for this relation.
-   */
-  def associations: Seq[Association[_, _]]
-
-  /**
-   * If possible, return an association from this relation as parent to
-   * specified relation as child.
-   */
-  def getChildAssociation[C](child: Relation[C]): Option[Association[C, R]] =
-    child.getParentAssociation(this)
-
-  /**
-   * If possible, return an association from this relation as child to
-   * specified relation as parent.
-   */
-  def getParentAssociation[P](parent: Relation[P]): Option[Association[R, P]]
-
-  /**
-   * Returns column list excluding primary key column.
-   */
-  def nonPKColumns: Seq[Column[_, R]] =
-    columns.filter(_ != primaryKey.column)
-
-  /**
-   * Returns a node that represents this relation.
-   */
-  def as(alias: String): RelationNode[R]
-
-  /**
-   * Creates a criteria object for this relation.
-   */
-  def createCriteria: Criteria[R] = new Criteria(this)
-
-  /* SIMPLE QUERIES */
-
-  /**
-   * Queries a record by it's primary key.
-   */
-  def get(pk: Any): Option[R] =
-    createCriteria.add(_.field(primaryKey.column) eq pk).unique
-
-  /**
-   * Queries all records.
-   */
-  def all(): Seq[R] =
-    createCriteria.list
-
-  /**
-   * Queries specified amount of records.
-   */
-  def all(limit: Int): Seq[R] =
-    createCriteria.limit(limit).list
-
-  /**
-   * Queries specified amount of records, starting from specified offset.
-   */
-  def all(limit: Int, offset: Int): Seq[R] =
-    createCriteria.limit(limit).offset(offset).list
-
-  /* VALIDATION */
-
-  /**
-   * Returns None if record has passed validation. Otherwise returns
-   * a <code>ValidationError</code> sequence.
-   */
-  def validate(record: Record[R]): Option[Seq[ValidationError]] = {
-    val errors = validators.flatMap(_.apply(record))
-    if (errors.size == 0) None
-    else Some(errors)
-  }
-
-  /**
-   * Throws <code>ValidationException</code> if record has failed validation.
-   */
-  def validate_!(record: Record[R]) = validate(record) match {
-    case Some(errors) => throw new ValidationException(errors: _*)
-    case _ =>
-  }
-
-  def addFieldValidator(col: Column[_, R], validator: Validator): RecordValidator[R] = {
-    val v = new RecordFieldValidator(col, validator)
-    this.validators += v
-    return v
-  }
-
-  override def toString = qualifiedName
-
-  override def equals(obj: Any) = obj match {
-    case rel: Relation[R] =>
-      rel.getClass.equals(this.getClass) &&
-          rel.qualifiedName.equalsIgnoreCase(this.qualifiedName)
-    case _ => false
-  }
-
-  override def hashCode = this.getClass.hashCode * 31 +
-      this.qualifiedName.toLowerCase.hashCode
-}
 
 /**
  * Contains metadata necessary for generating domain model schema,
@@ -179,7 +38,6 @@ abstract class Relation[R] {
  * the only requirement is to implement the <code>recordClass</code> method.
  */
 abstract class Table[R] extends Relation[R]
-    with SchemaObject
     with JDBCHelper {
   private var _columns: Seq[Column[_, R]] = Nil
   private var _constraints: Seq[Constraint[R]] = Nil
@@ -241,9 +99,9 @@ abstract class Table[R] extends Relation[R]
   def columns = _columns
 
   /**
-   * Table's constraint list.
+   * Table's constraints list.
    */
-  def constraints = _constraints
+  def constraints: Seq[Constraint[R]] = _constraints
 
   /**
    * Creates an alias to use this table in SQL FROM clause.

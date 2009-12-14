@@ -86,11 +86,6 @@ abstract class RelationNode[R](val relation: Relation[R],
   def associations = relation.associations
 
   /**
-   * Returns constraints defined on underlying relation.
-   */
-  def constraints = relation.constraints
-
-  /**
    * Reassigns an alias for this node.
    */
   def as(alias: String): this.type = {

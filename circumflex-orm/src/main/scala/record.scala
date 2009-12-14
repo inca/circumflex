@@ -25,7 +25,6 @@
 
 package ru.circumflex.orm
 
-import core.HashModel
 import collection.mutable.HashMap
 import java.sql.PreparedStatement
 import java.util.UUID
