@@ -184,9 +184,9 @@ class DDLExport extends JDBCHelper {
       autoClose(conn.prepareStatement(t.sqlDrop))(st => {
         log.debug(t.sqlDrop)
         st.executeUpdate
-        msg = "DROP TABLE " + t.tableName + ": OK"
+        msg = "DROP TABLE " + t.relationName + ": OK"
       })(e => {
-        msg = "DROP TABLE " + t.tableName + ": " + e.getMessage
+        msg = "DROP TABLE " + t.relationName + ": " + e.getMessage
         log.trace("Error dropping table.", e)
       })
       log.info(msg)
@@ -229,9 +229,9 @@ class DDLExport extends JDBCHelper {
       autoClose(conn.prepareStatement(t.sqlCreate))(st => {
         log.debug(t.sqlCreate)
         st.executeUpdate
-        msg = "CREATE TABLE " + t.tableName + ": OK"
+        msg = "CREATE TABLE " + t.relationName + ": OK"
       })(e => {
-        msg = "CREATE TABLE " + t.tableName + ": " + e.getMessage
+        msg = "CREATE TABLE " + t.relationName + ": " + e.getMessage
         log.trace("Error creating table.", e)
       })
       log.info(msg)

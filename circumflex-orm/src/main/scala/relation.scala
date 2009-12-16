@@ -35,15 +35,22 @@ import ORM._
  */
 trait Relation[R] {
 
-  /**
-   * Contains a validation sequence that each record must pass on validation event.
-   */
-  var validators = new ListBuffer[RecordValidator[R]]
+  protected val _validators = new ListBuffer[RecordValidator[R]]
+  protected val _columns = new ListBuffer[Column[_, R]]
+  protected val _constraints = new ListBuffer[Constraint[R]]
+  protected val _associations = new ListBuffer[Association[R, _]]
+
+  private var _cachedRecordClass: Class[R] = null;
 
   /**
    * Returns a class of record which this relation describes.
    */
-  def recordClass: Class[R]
+  def recordClass: Class[R] = {
+    if (_cachedRecordClass == null)
+      _cachedRecordClass = Class.forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"))
+          .asInstanceOf[Class[R]]
+    return _cachedRecordClass
+  }
 
   /**
    * The mandatory primary key constraint for this relation.
@@ -51,24 +58,50 @@ trait Relation[R] {
   def primaryKey: PrimaryKey[_, R];
 
   /**
-   * Unqualified relation name.
+   * Returns Schema object, that will containt specified table.
+   * Defaults to DefaultSchema singleton.
    */
-  def relationName: String
+  def schema: Schema = DefaultSchema
 
   /**
-   * Qualified relation name for use in SQL statements.
+   * Provides schema name.
    */
-  def qualifiedName: String
+  def schemaName: String = schema.schemaName
+
+  /**
+   * Unqualified relation name. Defaults to unqualified record class name.
+   */
+  def relationName: String = recordClass.getSimpleName.toLowerCase
+
+  /**
+   * Returns relation's qualified name.
+   */
+  def qualifiedName: String = dialect.qualifyRelation(this)
+
+  /**
+   * Returns validators that correspond to this relation.
+   */
+  def validators: Seq[RecordValidator[R]] = _validators
 
   /**
    * Returns columns that correspond to this relation.
    */
-  def columns: Seq[Column[_, R]]
+  def columns: Seq[Column[_, R]] = _columns
 
   /**
-   * Returns all associations defined for this relation.
+   * Returns constraints that correspond to this relation.
    */
-  def associations: Seq[Association[_, _]]
+  def constraints: Seq[Constraint[R]] = _constraints
+
+  /**
+   * Returns associations that correspond to this relation.
+   */
+  def associations: Seq[Association[R, _]] = _associations
+
+  /**
+   * Returns sequences associated with this table.
+   */
+  def sequences = columns.flatMap(_.sequence)
 
   /**
    * If possible, return an association from this relation as parent to
@@ -95,12 +128,12 @@ trait Relation[R] {
    */
   def as(alias: String): RelationNode[R]
 
+  /* SIMPLE QUERIES */
+
   /**
    * Creates a criteria object for this relation.
    */
   def createCriteria: Criteria[R] = new Criteria(this)
-
-  /* SIMPLE QUERIES */
 
   /**
    * Queries a record by it's primary key.
@@ -126,6 +159,72 @@ trait Relation[R] {
   def all(limit: Int, offset: Int): Seq[R] =
     createCriteria.limit(limit).offset(offset).list
 
+  /* OBJECT DEFINITIONS */
+
+  /**
+   * Helper method to create primary key constraint.
+   */
+  def pk[T](column: Column[T, R]): PrimaryKey[T, R] = {
+    val pk = new PrimaryKey(this, column)
+    return pk;
+  }
+
+  /**
+   * Helper method to create unique constraint.
+   */
+  def unique(columns: Column[_, R]*): UniqueKey[R] = {
+    val constr = new UniqueKey(this, columns.toList)
+    _constraints += constr
+    return constr
+  }
+
+  /**
+   * Helper method to create a foreign key constraint.
+   */
+  def foreignKey[T, P](parentRelation: Relation[P],
+                       column: Column[T, R]): ForeignKey[T, R, P] = {
+    val fk = new ForeignKey(this, parentRelation, column)
+    _constraints += fk
+    _associations += fk
+    return fk
+  }
+
+  /**
+   * Helper method to create a bigint column.
+   */
+  def longColumn(name: String): LongColumn[R] = {
+    val col = new LongColumn(this, name)
+    _columns += col
+    return col
+  }
+
+  /**
+   * Helper method to create a string column.
+   */
+  def stringColumn(name: String): StringColumn[R] = {
+    val col = new StringColumn(this, name)
+    _columns += col
+    return col
+  }
+
+  /**
+   * Helper method to create a boolean column.
+   */
+  def booleanColumn(name: String): BooleanColumn[R] = {
+    val col = new BooleanColumn(this, name)
+    _columns += col
+    return col
+  }
+
+  /**
+   * Helper method to create a timestamp column.
+   */
+  def timestampColumn(name: String): TimestampColumn[R] = {
+    val col = new TimestampColumn(this, name)
+    _columns += col
+    return col
+  }
+
   /* VALIDATION */
 
   /**
@@ -148,18 +247,16 @@ trait Relation[R] {
 
   def addFieldValidator(col: Column[_, R], validator: Validator): RecordValidator[R] = {
     val v = new RecordFieldValidator(col, validator)
-    this.validators += v
+    _validators += v
     return v
   }
 
   override def toString = qualifiedName
 
   override def equals(obj: Any) = obj match {
-    case rel: Relation[R] =>
-          rel.qualifiedName.equalsIgnoreCase(this.qualifiedName)
+    case rel: Relation[R] => rel.qualifiedName.equalsIgnoreCase(this.qualifiedName)
     case _ => false
   }
 
-  override def hashCode = this.getClass.hashCode * 31 +
-      this.qualifiedName.toLowerCase.hashCode
+  override def hashCode = this.qualifiedName.toLowerCase.hashCode
 }

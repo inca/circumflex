@@ -140,7 +140,7 @@ class Update[R](val relation: Relation[R])
    * (assuming association;s local column and value's id).
    */
   def set[P](association: Association[R, P], value: Record[P]): this.type = {
-    _setClause += (association.localColumn -> value.primaryKey.get)
+    _setClause += (association.childColumn -> value.primaryKey.get)
     return this
   }
 
@@ -156,7 +156,7 @@ class Update[R](val relation: Relation[R])
    * Adds column-NULL pair to SET clause for parent association.
    */
   def setNull(association: Association[R, _]): this.type =
-    setNull(association.localColumn)
+    setNull(association.childColumn)
 
   /**
    * Returns the SET clause of this query.

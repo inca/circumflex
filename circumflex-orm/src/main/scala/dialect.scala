@@ -113,32 +113,35 @@ trait Dialect {
    * Produces qualified name of a table
    * (e.g. "myschema.mytable").
    */
-  def tableName(tab: Table[_]) =
-    tab.schemaName + "." + tab.tableName
+  def qualifyRelation(rel: Relation[_]) =
+    rel.schemaName + "." + rel.relationName
+
+  def qualifyColumn(col: Column[_, _]) =
+    col.relation.relationName + "." + col.columnName
 
   /**
    * Produces PK name (e.g. mytable_pkey).
    */
   def primaryKeyName(pk: PrimaryKey[_, _]) =
-    pk.table.tableName + "_" + pk.column.columnName + "_pkey"
+    pk.relation.relationName + "_" + pk.column.columnName + "_pkey"
 
   /**
    * Produces unique constraint name (e.g. mytable_name_value_key).
    */
   def uniqueKeyName(uniq: UniqueKey[_]) =
-    uniq.table.tableName + "_" + uniq.columns.map(_.columnName).mkString("_") + "_key"
+    uniq.relation.relationName + "_" + uniq.columns.map(_.columnName).mkString("_") + "_key"
 
   /**
    * Produces qualified sequence name (e.g. public.mytable_id_seq).
    */
   def sequenceName(seq: Sequence[_]) =
-    tableName(seq.table) + "_" + seq.column.columnName + "_seq"
+    qualifyRelation(seq.relation) + "_" + seq.column.columnName + "_seq"
 
   /**
    * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
    */
   def foreignKeyName(fk: ForeignKey[_, _, _]) =
-    fk.table.tableName + "_" + fk.localColumn.columnName + "_fkey"
+    fk.relation.relationName + "_" + fk.childColumn.columnName + "_fkey"
 
   /* DEFINITIONS */
 
@@ -166,8 +169,8 @@ trait Dialect {
    * (e.g. "foreign key (ref_id) references public.ref(id) on delete cascade on update no action").
    */
   def foreignKeyDefinition(fk: ForeignKey[_, _, _]) =
-    "foreign key (" + fk.localColumn.columnName + ") references " +
-        tableName(fk.referenceTable) + " (" + fk.referenceColumn.columnName + ")\n\t\t" +
+    "foreign key (" + fk.childColumn.columnName + ") references " +
+        qualifyRelation(fk.parentRelation) + " (" + fk.parentColumn.columnName + ")\n\t\t" +
         "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +
         "on update " + foreignKeyAction(fk.onUpdate)
 
@@ -196,45 +199,45 @@ trait Dialect {
    * Produces CREATE TABLE statement without constraints.
    */
   def createTable(tab: Table[_]) =
-    "create table " + tableName(tab) + " (\n\t" +
+    "create table " + qualifyRelation(tab) + " (\n\t" +
         tab.columns.map(_.sqlDefinition).mkString(",\n\t") + ",\n\t" +
         tab.primaryKey.sqlFullDefinition + "\n)"
 
   /**
    * Produces ALTER TABLE statement with abstract action.
    */
-  def alterTable(tab: Table[_], action: String) =
-    "alter table " + tableName(tab) + "\n\t" + action
+  def alterTable(rel: Relation[_], action: String) =
+    "alter table " + qualifyRelation(rel) + "\n\t" + action
 
   /**
    * Produces ALTER TABLE statement with ADD CONSTRAINT action.
    */
   def alterTableAddConstraint(constraint: Constraint[_]) =
-    alterTable(constraint.table, "add " + constraintDefinition(constraint));
+    alterTable(constraint.relation, "add " + constraintDefinition(constraint));
 
   /**
    * Produces ALTER TABLE statement with ADD COLUMN action.
    */
   def alterTableAddColumn(column: Column[_, _]) =
-    alterTable(column.table, "add column " + columnDefinition(column));
+    alterTable(column.relation, "add column " + columnDefinition(column));
 
   /**
    * Produces ALTER TABLE statement with DROP CONSTRAINT action.
    */
   def alterTableDropConstraint(constraint: Constraint[_]) =
-    alterTable(constraint.table, "drop constraint " + constraint.constraintName);
+    alterTable(constraint.relation, "drop constraint " + constraint.constraintName);
 
   /**
    * Produces ALTER TABLE statement with DROP COLUMN action.
    */
   def alterTableDropColumn(column: Column[_, _]) =
-    alterTable(column.table, "drop column " + column.columnName);
+    alterTable(column.relation, "drop column " + column.columnName);
 
   /**
    * Produces DROP TABLE statement
    */
   def dropTable(tab: Table[_]) =
-    "drop table " + tableName(tab)
+    "drop table " + qualifyRelation(tab)
 
   /**
    * Produces DROP SEQUENCE statement.
@@ -310,8 +313,8 @@ trait Dialect {
   protected def joinOn(association: Association[_, _],
                        parentAlias: String,
                        childAlias: String) =
-    "on (" + qualifyColumn(association.referenceColumn, parentAlias) + " = " +
-        qualifyColumn(association.localColumn, childAlias) + ")"
+    "on (" + qualifyColumn(association.parentColumn, parentAlias) + " = " +
+        qualifyColumn(association.childColumn, childAlias) + ")"
 
   /**
    * Formats provided projections for use in SELECT clause (just comma-delimited mkString).

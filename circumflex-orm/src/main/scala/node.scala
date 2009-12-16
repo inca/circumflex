@@ -35,7 +35,7 @@ abstract class RelationNode[R](val relation: Relation[R],
                                var alias: String)
     extends Relation[R] with SQLable {
 
-  def recordClass = relation.recordClass
+  override def recordClass = relation.recordClass
 
   /**
    * Just proxies relation's primary key.
@@ -50,7 +50,12 @@ abstract class RelationNode[R](val relation: Relation[R],
   /**
    * Returns columns of underlying relation.
    */
-  def columns = relation.columns
+  override def columns = relation.columns
+
+  /**
+   * Returns associations defined on underlying relation.
+   */
+  override def associations = relation.associations
 
   /**
    * Retrieves an association path by delegating calls to underlying relations.
@@ -67,23 +72,13 @@ abstract class RelationNode[R](val relation: Relation[R],
   /**
    * Proxies relation's name.
    */
-  def relationName = relation.relationName
-
-  /**
-   * Proxies relation's qualified name.
-   */
-  def qualifiedName = relation.qualifiedName
+  override def relationName = relation.relationName
 
   /**
    * Creates a join with specified node.
    */
   def join[J](node: RelationNode[J]): JoinNode[R, J] =
     new JoinNode(this, node)
-
-  /**
-   * Returns associations defined on underlying relation.
-   */
-  def associations = relation.associations
 
   /**
    * Reassigns an alias for this node.
@@ -112,15 +107,12 @@ class TableNode[R](val table: Table[R],
    */
   def toSql = dialect.tableAlias(table, alias)
 
-  /**
-   * Creates a record projection.
-   */
-  def projections = List(record)
+  def projections = List(*)
 
   /**
    * Creates a record projection.
    */
-  def record = new RecordProjection[R](this)
+  def * = new RecordProjection[R](this)
 
 }
 
@@ -130,6 +122,7 @@ class TableNode[R](val table: Table[R],
 class JoinNode[L, R](val leftNode: RelationNode[L],
                      val rightNode: RelationNode[R])
     extends RelationNode[L](leftNode, leftNode.alias) {
+
   private var inverse: Boolean = false;
 
   /**

@@ -30,7 +30,7 @@ import ORM._
 /**
  * Base functionality for SQL sequences.
  */
-class Sequence[R](val table: Table[R],
+class Sequence[R](val relation: Relation[R],
                   val column: Column[Long, R])
     extends SchemaObject with JDBCHelper {
 

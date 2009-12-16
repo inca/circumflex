@@ -30,8 +30,7 @@ import ORM._
 /**
  * Base superclass with functionality for generating SQL constraints.
  */
-abstract class Constraint[R](val table: Table[R])
-    extends SchemaObject {
+abstract class Constraint[R](val relation: Relation[R]) extends SchemaObject {
 
   /**
    * Constraint name (should be dialect-specific).
@@ -60,9 +59,9 @@ abstract class Constraint[R](val table: Table[R])
 /**
  * Primary key constraint.
  */
-class PrimaryKey[T, R](table: Table[R],
+class PrimaryKey[T, R](relation: Relation[R],
                        val column: Column[T, R])
-    extends Constraint[R](table) {
+    extends Constraint[R](relation) {
   def constraintName = dialect.primaryKeyName(this)
 
   def sqlDefinition = dialect.primaryKeyDefinition(this)
@@ -71,9 +70,10 @@ class PrimaryKey[T, R](table: Table[R],
 /**
  * Unique constraint.
  */
-class UniqueKey[R](table: Table[R],
+class UniqueKey[R](relation: Relation[R],
                    val columns: Seq[Column[_, R]])
-    extends Constraint[R](table) {
+    extends Constraint[R](relation) {
+
   def constraintName = dialect.uniqueKeyName(this)
 
   def sqlDefinition = dialect.uniqueKeyDefinition(this)
@@ -93,13 +93,10 @@ object SetDefaultAction extends ForeignKeyAction
 /**
  * Foreign key constraint.
  */
-class ForeignKey[T, C, P](table: Table[C],
-                          val referenceTable: Table[P],
-                          val localColumn: Column[T, C])
-    extends Constraint[C](table) with Association[C, P] {
-  def parentRelation = referenceTable
-
-  def childRelation = table
+class ForeignKey[T, C, P](val childRelation: Relation[C],
+                          val parentRelation: Relation[P],
+                          val childColumn: Column[T, C])
+    extends Constraint[C](childRelation) with Association[C, P] {
 
   var onDelete: ForeignKeyAction = NoAction
   var onUpdate: ForeignKeyAction = NoAction

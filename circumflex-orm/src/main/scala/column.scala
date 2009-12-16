@@ -32,14 +32,14 @@ import ORM._
 /**
  * Base functionality for columns.
  */
-abstract class Column[T, R](val table: Table[R],
+abstract class Column[T, R](val relation: Relation[R],
                             val columnName: String,
                             val sqlType: String)
     extends SchemaObject {
   protected var _nullable = true;
   protected var _sequence: Option[Sequence[R]] = None;
 
-  def qualifiedName = table.tableName + "." + this.columnName
+  def qualifiedName = dialect.qualifyColumn(this)
 
   /**
    * DSL-like way to qualify a column with NOT NULL constraint.
@@ -63,15 +63,15 @@ abstract class Column[T, R](val table: Table[R],
    * DSL-like way to qualify a column with UNIQUE constraint.
    */
   def unique: this.type = {
-    table.unique(this)
+    relation.unique(this)
     return this
   }
 
   /**
    * DSL-like way to transform a column to foreign key association.
    */
-  def references[P](referenceTable: Table[P]): ForeignKey[T, R, P] =
-    table.foreignKey(referenceTable, this)
+  def references[P](parentRelation: Relation[P]): ForeignKey[T, R, P] =
+    relation.foreignKey(parentRelation, this)
 
   /* DDL */
 
@@ -88,26 +88,26 @@ abstract class Column[T, R](val table: Table[R],
 
   override def equals(obj: Any) = obj match {
     case col: Column[T, R] =>
-      col.table.equals(this.table) &&
+      col.relation.equals(this.relation) &&
           col.columnName.equalsIgnoreCase(this.columnName)
     case _ => false
   }
 
-  override def hashCode = this.table.hashCode * 31 +
+  override def hashCode = this.relation.hashCode * 31 +
       this.columnName.toLowerCase.hashCode
 }
 
 /**
  * String (varchar) column.
  */
-class StringColumn[R](table: Table[R], name: String)
-    extends Column[String, R](table, name, dialect.stringType) {
+class StringColumn[R](relation: Relation[R], name: String)
+    extends Column[String, R](relation, name, dialect.stringType) {
 
   /**
    * DSL-like way to add NotEmptyValidator.
    */
   def validateNotEmpty: this.type = {
-    table.addFieldValidator(this, new NotEmptyValidator(qualifiedName))
+    relation.addFieldValidator(this, new NotEmptyValidator(qualifiedName))
     return this
   }
 
@@ -115,7 +115,7 @@ class StringColumn[R](table: Table[R], name: String)
    * DSL-like way to add PatternValidator.
    */
   def validatePattern(regex: String): this.type = {
-    table.addFieldValidator(this, new PatternValidator(qualifiedName, regex))
+    relation.addFieldValidator(this, new PatternValidator(qualifiedName, regex))
     return this
   }
 
@@ -124,13 +124,13 @@ class StringColumn[R](table: Table[R], name: String)
 /**
  * Long (int8) column.
  */
-class LongColumn[R](table: Table[R], name: String)
-    extends Column[Long, R](table, name, dialect.longType) {
+class LongColumn[R](relation: Relation[R], name: String)
+    extends Column[Long, R](relation, name, dialect.longType) {
   /**
    * DSL-like way to create a sequence for this column.
    */
   def autoIncrement: this.type = {
-    _sequence = Some(new Sequence(table, this))
+    _sequence = Some(new Sequence(relation, this))
     this
   }
 }
@@ -138,13 +138,13 @@ class LongColumn[R](table: Table[R], name: String)
 /**
  * Boolean column.
  */
-class BooleanColumn[R](table: Table[R], name: String)
-    extends Column[Boolean, R](table, name, dialect.booleanType)
+class BooleanColumn[R](relation: Relation[R], name: String)
+    extends Column[Boolean, R](relation, name, dialect.booleanType)
 
 /**
  * Timestamp column.
  */
-class TimestampColumn[R](table: Table[R], name: String)
-    extends Column[Date, R](table, name, dialect.timestampType)
+class TimestampColumn[R](relation: Relation[R], name: String)
+    extends Column[Date, R](relation, name, dialect.timestampType)
 
 
