@@ -355,9 +355,9 @@ trait Dialect {
    * Produces INSERT INTO .. VALUES statement.
    */
   def insertRecord(record: Record[_]): String =
-    "insert into " + record.relation.qualifiedName +
-        " (\n\t" + record.relation.columns.map(_.columnName).mkString(",\n\t") +
-        ") values (" + record.relation.columns.map(_ => "?").mkString(", ") + ")"
+    "insert into " + record.table.qualifiedName +
+        " (\n\t" + record.table.columns.map(_.columnName).mkString(",\n\t") +
+        ") values (" + record.table.columns.map(_ => "?").mkString(", ") + ")"
 
   /**
    * Produces INSERT INTO .. SELECT statement.
@@ -373,9 +373,9 @@ trait Dialect {
    * Produces UPDATE statement with primary key criteria.
    */
   def updateRecord(record: Record[_]): String =
-    "update " + record.relation.qualifiedName +
-        "\nset\n\t" + record.relation.nonPKColumns.map(_.columnName + " = ?").mkString(",\n\t") +
-        "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
+    "update " + record.table.qualifiedName +
+        "\nset\n\t" + record.table.nonPKColumns.map(_.columnName + " = ?").mkString(",\n\t") +
+        "\nwhere\n\t" + record.table.primaryKey.column.columnName + " = ?"
 
   /**
    * Produces UPDATE statement.
@@ -393,8 +393,8 @@ trait Dialect {
    * Produces DELETE statement with primary key criteria.
    */
   def deleteRecord(record: Record[_]): String =
-    "delete from " + record.relation.qualifiedName +
-        "\nwhere\n\t" + record.relation.primaryKey.column.columnName + " = ?"
+    "delete from " + record.table.qualifiedName +
+        "\nwhere\n\t" + record.table.primaryKey.column.columnName + " = ?"
 
   /**
    * Produces DELETE statement.

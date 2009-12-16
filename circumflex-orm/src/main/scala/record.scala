@@ -35,8 +35,8 @@ import ORM._
  * persisted to database relations.
  * There's a couple of things one must know about records.
  * <ul>
- * <li>Each record instance "knows" about it's main relation through
- * <code>relation</code> method.</li>
+ * <li>Each record instance "knows" about it's main table through
+ * <code>table</code> method.</li>
  * <li>Records carry the data around using <em>fields</em; internally they are
  * stored in <code>fieldsMap</code> in a "column-to-value" form.</li>
  * <li>Each record has a primary key field which identifies the record in database.
@@ -55,9 +55,9 @@ abstract class Record[R] extends JDBCHelper {
     override def default(key: Association[_, R]): Seq[Any] = Nil
   }
 
-  def relation: Relation[R]
+  def table: Table[R]
 
-  def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
+  def primaryKey: Option[_] = fieldsMap.get(table.primaryKey.column)
 
   def isIdentified = primaryKey != None
 
@@ -79,7 +79,7 @@ abstract class Record[R] extends JDBCHelper {
     // invalidate associated many-to-one caches
     manyToOneMap.keys.filter(_.localColumn == col).foreach(manyToOneMap -= _)
     // invalidate one-to-many caches if identifier changed
-    if (col == relation.primaryKey.column) oneToManyMap.clear
+    if (col == table.primaryKey.column) oneToManyMap.clear
   }
 
   /* ASSOCIATIONS-RELATED STUFF */
@@ -138,9 +138,9 @@ abstract class Record[R] extends JDBCHelper {
 
   /* PERSISTENCE-RELATED STUFF */
 
-  def validate(): Option[Seq[ValidationError]] = relation.validate(this)
+  def validate(): Option[Seq[ValidationError]] = table.validate(this)
 
-  def validate_!(): Unit = relation.validate_!(this)
+  def validate_!(): Unit = table.validate_!(this)
 
   def insert(): Int = {
     validate_!()
@@ -152,7 +152,7 @@ abstract class Record[R] extends JDBCHelper {
     val sql = dialect.insertRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
-      setParams(st, relation.columns)
+      setParams(st, table.columns)
       return st.executeUpdate
     })
   }
@@ -167,11 +167,11 @@ abstract class Record[R] extends JDBCHelper {
     val sql = dialect.updateRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
-      setParams(st, relation.nonPKColumns)
+      setParams(st, table.nonPKColumns)
       typeConverter.write(
         st,
         primaryKey.get,
-        relation.nonPKColumns.size + 1)
+        table.nonPKColumns.size + 1)
       return st.executeUpdate
     })
   }
@@ -199,7 +199,7 @@ abstract class Record[R] extends JDBCHelper {
   }
 
   def generateFields(): Unit =
-    relation.columns.flatMap(_.sequence).foreach(seq => {
+    table.columns.flatMap(_.sequence).foreach(seq => {
       val nextval = seq.nextValue
       this.setField(seq.column, nextval)
     })
@@ -217,14 +217,14 @@ abstract class Record[R] extends JDBCHelper {
   /* EQUALS BOILERPLATE */
 
   override def equals(obj: Any) = obj match {
-    case r: Record[R] if (r.relation == this.relation) =>
+    case r: Record[R] if (r.table == this.table) =>
       this.primaryKey.getOrElse(this.uuid) == r.primaryKey.getOrElse(r.uuid)
     case _ => false
   }
 
   override def hashCode = this.primaryKey.getOrElse(uuid).hashCode
 
-  override def toString = relation.relationName + ": " + this.fieldsMap.toString
+  override def toString = table.relationName + ": " + this.fieldsMap.toString
 }
 
 class Field[T, R](val record: Record[R],
