@@ -199,7 +199,7 @@ abstract class Table[R] extends Relation[R]
 /**
  * Just a helper that defines long primary key column "id" with sequence.
  */
-abstract class GenericTable[R] extends Table[R] {
+class GenericTable[R] extends Table[R] {
 
   val id = longColumn("id")
       .autoIncrement

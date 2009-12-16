@@ -35,7 +35,7 @@ import ORM._
  * persisted to database relations.
  * There's a couple of things one must know about records.
  * <ul>
- * <li>Each record instance "knows" about it's main table through
+ * <li>Each record instance "knows" about it's table through
  * <code>table</code> method.</li>
  * <li>Records carry the data around using <em>fields</em; internally they are
  * stored in <code>fieldsMap</code> in a "column-to-value" form.</li>
