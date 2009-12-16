@@ -75,10 +75,30 @@ abstract class RelationNode[R](val relation: Relation[R],
   override def relationName = relation.relationName
 
   /**
-   * Creates a join with specified node.
+   * Creates a join with specified parent node using specified association.
    */
-  def join[J](node: RelationNode[J]): JoinNode[R, J] =
-    new JoinNode(this, node)
+  def join[J](node: RelationNode[J], association: Association[R, J]): ChildToParentJoin[R, J] =
+    new ChildToParentJoin(this, node, association)
+
+  /**
+   * Creates a join with specified child node using specified association.
+   */
+  def join[J](node: RelationNode[J], association: Association[J, R]): ParentToChildJoin[R, J] =
+    new ParentToChildJoin(this, node, association)
+
+  /**
+   * Tries to create either type of join depending on inferred association.
+   */
+  def join[J](node: RelationNode[J]): JoinNode[R, J] = getParentAssociation(node) match {
+    case Some(a) =>              // this is child; node is parent
+      new ChildToParentJoin(this, node, a.asInstanceOf[Association[R, J]])
+    case None => getChildAssociation(node) match {
+      case Some(a) =>            // this is parent; node is child
+        new ParentToChildJoin(this, node, a.asInstanceOf[Association[J, R]])
+      case None =>
+        throw new ORMException("Failed to join " + this + " with " + node + ": no associations found.")
+    }
+  }
 
   /**
    * Reassigns an alias for this node.
@@ -119,36 +139,9 @@ class TableNode[R](val table: Table[R],
 /**
  * Represents a join node between parent and child relation.
  */
-class JoinNode[L, R](val leftNode: RelationNode[L],
-                     val rightNode: RelationNode[R])
+abstract class JoinNode[L, R](val leftNode: RelationNode[L],
+                              val rightNode: RelationNode[R])
     extends RelationNode[L](leftNode, leftNode.alias) {
-
-  private var inverse: Boolean = false;
-
-  /**
-   * Evaluates an association between parent and child; throws an exception if
-   * failed.
-   */
-  val association: Association[_, _] = leftNode.getParentAssociation(rightNode) match {
-    case Some(a) => {
-      this.inverse = true
-      a
-    }
-    case None => leftNode.getChildAssociation(rightNode) match {
-      case Some(a) => {
-        this.inverse = false
-        a
-      }
-      case None => throw new ORMException("Failed to join " + leftNode +
-          " with " + rightNode + ": no associations found.")
-    }
-  }
-
-  /**
-   * Determines whether this join is "inverse", that is the child is joined against parent.
-   * If parent is joined against child then this should yield <code>false</code>.
-   */
-  def isInverse: Boolean = inverse
 
   /**
    * Override join type if necessary.
@@ -156,13 +149,23 @@ class JoinNode[L, R](val leftNode: RelationNode[L],
   def sqlJoinType: String = dialect.leftJoin
 
   /**
-   * Dialect should return properly joined parent and child nodes.
-   */
-  def toSql = dialect.join(this)
-
-  /**
    * Join nodes return parent node's projections joined with child node's ones.
    */
   def projections = leftNode.projections ++ rightNode.projections
 
+  /**
+   * Dialect should return properly joined parent and child nodes.
+   */
+  def toSql = dialect.join(this)
+
 }
+
+class ChildToParentJoin[L, R](childNode: RelationNode[L],
+                              parentNode: RelationNode[R],
+                              val association: Association[L, R])
+    extends JoinNode[L, R](childNode, parentNode)
+
+class ParentToChildJoin[L, R](parentNode: RelationNode[L],
+                              childNode: RelationNode[R],
+                              val association: Association[R, L])
+    extends JoinNode[L, R](parentNode, childNode)

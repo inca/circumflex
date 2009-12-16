@@ -295,16 +295,15 @@ trait Dialect {
   protected def joinInternal(node: RelationNode[_], on: String): String = {
     var result = ""
     node match {
-      case j: JoinNode[_, _] => {
-        val parentAlias = if (j.isInverse) j.rightNode.alias else j.leftNode.alias
-        val childAlias = if (j.isInverse) j.leftNode.alias else j.rightNode.alias
+      case j: ChildToParentJoin[_, _] =>
         result += joinInternal(j.leftNode, on) + "\n\t\t" + j.sqlJoinType + " " +
-            joinInternal(j.rightNode, joinOn(j.association, parentAlias, childAlias))
-      }
-      case _ => {
+            joinInternal(j.rightNode, joinOn(j.association, j.rightNode.alias, j.leftNode.alias))
+      case j: ParentToChildJoin[_, _] =>
+        result += joinInternal(j.leftNode, on) + "\n\t\t" + j.sqlJoinType + " " +
+            joinInternal(j.rightNode, joinOn(j.association, j.leftNode.alias, j.rightNode.alias))
+      case _ =>
         result += node.toSql
         if (on != null) result += "\n\t\t\t" + on
-      }
     }
     return result
   }
