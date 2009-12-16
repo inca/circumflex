@@ -94,16 +94,10 @@ abstract class RelationNode[R](val relation: Relation[R],
   }
 
   /**
-   * Creates a field projection with specified alias.
-   */
-  def field[T](col: Column[T, R], alias: String): FieldProjection[T, R] =
-    new FieldProjection(this, col, alias)
-
-  /**
    * Creates a field projection with default alias.
    */
-  def field[T](col: Column[T, R]): FieldProjection[T, R] =
-    new FieldProjection(this, col)
+  def projection[T](col: Column[T, R]): ColumnProjection[T, R] =
+    new ColumnProjection(this, col)
 
 }
 

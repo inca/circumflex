@@ -37,12 +37,12 @@ class Sequence[R](val table: Table[R],
   /**
    * Returns the NEXTVAL projection for this sequence.
    */
-  def nextVal(alias: String) = new SequenceNextValProjection(this, alias)
+  def nextVal = new SequenceNextValProjection(this)
 
   /**
    * Returns the CURRVAL projection for this sequence.
    */
-  def currVal(alias: String) = new SequenceCurrValProjection(this, alias)
+  def currVal = new SequenceCurrValProjection(this)
 
   /**
    * Retrieves next sequence value by invoking backend NEXTVAL query.

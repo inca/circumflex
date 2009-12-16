@@ -105,7 +105,7 @@ class Select extends JDBCHelper with SQLable {
    */
   def addProjection(projections: Projection[_]*): this.type = {
     this._projections ++= projections.toList.map {
-      case p: AliasedProjection[_] if (p.alias == "this") =>
+      case p: AtomicProjection[_] if (p.alias == "this") =>
         aliasCounter += 1
         p.as("this_" + aliasCounter)
       case p => p
@@ -242,16 +242,16 @@ trait QueryHelper {
 
   def asc(expr: String): Order = new Order(dialect.orderAsc(expr), Nil)
 
-  def asc(proj: FieldProjection[_, _]): Order = asc(proj.expr)
+  def asc(proj: ColumnProjection[_, _]): Order = asc(proj.expr)
 
   def desc(expr: String): Order = new Order(dialect.orderDesc(expr), Nil)
 
-  def desc(proj: FieldProjection[_, _]): Order = desc(proj.expr)
+  def desc(proj: ColumnProjection[_, _]): Order = desc(proj.expr)
 
   implicit def stringToOrder(expr: String): Order =
     new Order(expr, Nil)
 
-  implicit def projectionToOrder(proj: FieldProjection[_, _]): Order =
+  implicit def projectionToOrder(proj: ColumnProjection[_, _]): Order =
     new Order(proj.expr, Nil)
 
   implicit def predicateToOrder(predicate: Predicate): Order =
@@ -262,7 +262,7 @@ trait QueryHelper {
   implicit def stringToHelper(str: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(str)
 
-  implicit def fieldProjectionToHelper(f: FieldProjection[_, _]): SimpleExpressionHelper =
+  implicit def fieldProjectionToHelper(f: ColumnProjection[_, _]): SimpleExpressionHelper =
     new SimpleExpressionHelper(f.expr)
 
   def and(predicates: Predicate*) =
@@ -276,22 +276,22 @@ trait QueryHelper {
 
   /* PROJECTION HELPERS */
 
-  def scalar(expr: String) = new ScalarProjection[Any](expr, "this", false)
+  def scalar(expr: String) = new ScalarProjection[Any](expr, false)
 
   implicit def stringToScalar(expr: String): ScalarProjection[Any] = scalar(expr)
 
   def count(expr: String) =
-    new ScalarProjection[Int]("count(" + expr + ")", "this", true)
+    new ScalarProjection[Int]("count(" + expr + ")",  true)
   def countDistinct(expr: String) =
-    new ScalarProjection[Int]("count( distinct " + expr + ")", "this", true)
+    new ScalarProjection[Int]("count( distinct " + expr + ")", true)
   def max(expr: String) =
-    new ScalarProjection[Any]("max(" + expr + ")", "this", true)
+    new ScalarProjection[Any]("max(" + expr + ")", true)
   def min(expr: String) =
-    new ScalarProjection[Any]("min(" + expr + ")", "this", true)
+    new ScalarProjection[Any]("min(" + expr + ")", true)
   def sum(expr: String) =
-    new ScalarProjection[Any]("sum(" + expr + ")", "this", true)
+    new ScalarProjection[Any]("sum(" + expr + ")", true)
   def avg(expr: String) =
-    new ScalarProjection[Any]("avg(" + expr + ")", "this", true)
+    new ScalarProjection[Any]("avg(" + expr + ")", true)
 
   /* QUERY HELPERS */
 

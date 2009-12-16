@@ -55,9 +55,9 @@ trait Association[C, P] {
   def referenceColumn: Column[_, P] = parentRelation.primaryKey.column
 
   def fetchManyToOne(localValue: Any): Option[P] =
-    parentRelation.createCriteria.add(_.field(referenceColumn).eq(localValue)).unique
+    parentRelation.createCriteria.add(_.projection(referenceColumn).eq(localValue)).unique
 
   def fetchOneToMany(referenceValue: Any): Seq[C] =
-    childRelation.createCriteria.add(_.field(localColumn).eq(referenceValue)).list
+    childRelation.createCriteria.add(_.projection(localColumn).eq(referenceValue)).list
 
 }

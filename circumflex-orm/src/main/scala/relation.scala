@@ -106,7 +106,7 @@ trait Relation[R] {
    * Queries a record by it's primary key.
    */
   def get(pk: Any): Option[R] =
-    createCriteria.add(_.field(primaryKey.column) eq pk).unique
+    createCriteria.add(_.projection(primaryKey.column) eq pk).unique
 
   /**
    * Queries all records.
