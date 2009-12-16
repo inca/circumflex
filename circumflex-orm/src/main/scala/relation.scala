@@ -81,7 +81,8 @@ trait Relation[R] {
    * If possible, return an association from this relation as child to
    * specified relation as parent.
    */
-  def getParentAssociation[P](parent: Relation[P]): Option[Association[R, P]]
+  def getParentAssociation[P](relation: Relation[P]): Option[Association[R, P]] =
+    associations.find(_.parentRelation == relation).asInstanceOf[Option[Association[R, P]]]
 
   /**
    * Returns column list excluding primary key column.

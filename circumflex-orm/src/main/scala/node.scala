@@ -55,7 +55,7 @@ abstract class RelationNode[R](val relation: Relation[R],
   /**
    * Retrieves an association path by delegating calls to underlying relations.
    */
-  def getParentAssociation[P](parent: Relation[P]): Option[Association[R, P]] =
+  override def getParentAssociation[P](parent: Relation[P]): Option[Association[R, P]] =
     parent match {
       case parentNode: RelationNode[P] => getParentAssociation(parentNode.relation)
       case _ => relation match {

@@ -65,12 +65,6 @@ abstract class Table[R] extends Relation[R]
   }
 
   /**
-   * Gets an association to parent by scanning declared foreign keys.
-   */
-  def getParentAssociation[P](relation: Relation[P]): Option[Association[R, P]] =
-    associations.find(_.parentRelation == relation).asInstanceOf[Option[Association[R, P]]]
-
-  /**
    * Returns Schema object, that will containt specified table.
    * Defaults to DefaultSchema singleton.
    */
