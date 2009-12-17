@@ -25,10 +25,12 @@
 
 package ru.circumflex.orm
 
+import ORM._
+
 /**
  * Represents an SQL view.
  */
-abstract class View[R] extends Relation[R] {
+abstract class View[R] extends Relation[R] with SchemaObject {
 
   /**
    * Returns view's query.
@@ -41,6 +43,11 @@ abstract class View[R] extends Relation[R] {
     return col
   }
 
+  def as(alias: String) = new ViewNode(this, alias)
+
+  def sqlDrop = dialect.dropView(this)
+
+  def sqlCreate = dialect.createView(this)
 }
 
 

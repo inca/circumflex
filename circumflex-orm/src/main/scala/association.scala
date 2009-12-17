@@ -49,10 +49,20 @@ trait Association[C, P] {
   def childColumn: Column[_, C]
 
   /**
+   * Alias for childColumn
+   */
+  def localColumn = childColumn
+
+  /**
    * Returns a referenced (a.k.a. parent) column that matches local column.
    * In normal circumstances this matches parent's primary key.
    */
   def parentColumn: Column[_, P] = parentRelation.primaryKey.column
+
+  /**
+   * Alias for parentColumn
+   */
+  def referenceColumn = parentColumn
 
   def fetchManyToOne(localValue: Any): Option[P] =
     parentRelation.createCriteria.add(_.projection(parentColumn).eq(localValue)).unique

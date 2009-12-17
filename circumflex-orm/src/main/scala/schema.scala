@@ -78,6 +78,7 @@ class DDLExport extends JDBCHelper {
 
   private val schemata = HashSet[Schema]()
   private val tables = HashSet[Table[_]]()
+  private val views = HashSet[View[_]]()
   private val constraints = HashSet[Constraint[_]]()
   private val sequences = HashSet[Sequence[_]]()
 
@@ -109,6 +110,15 @@ class DDLExport extends JDBCHelper {
   }
 
   /**
+   * Adds a view to database objects list.
+   */
+  def addView(view: View[_]): this.type = {
+    views += view
+    schemata += view.schema
+    return this
+  }
+
+  /**
    * Executes DROP and CREATE script.
    */
   def dropCreate: Unit = {
@@ -129,6 +139,7 @@ class DDLExport extends JDBCHelper {
       createTables(conn)
       createConstraints(conn)
       createSequences(conn)
+      createViews(conn)
     })(e => log.error("Connection failure occured while exporing DDL.", e))
   }
 
@@ -141,12 +152,28 @@ class DDLExport extends JDBCHelper {
       // we will commit every successful statement
       conn.setAutoCommit(true)
       // process database objects
+      dropViews(conn)
       dropSequences(conn)
       dropConstraints(conn)
       dropTables(conn)
       dropSchemata(conn)
     })(e => log.error("Connection failure occured while exporing DDL.", e))
   }
+
+  def dropViews(conn: Connection) =
+    for (v <- views) {
+      var msg = ""
+      autoClose(conn.prepareStatement(v.sqlDrop))(st => {
+        log.debug(v.sqlDrop)
+        st.executeUpdate
+        msg = "DROP VIEW " + v.relationName + ": OK"
+      })(e => {
+        msg = "DROP VIEW " + v.relationName + ": " + e.getMessage
+        log.trace("Error dropping view.", e)
+      })
+      log.info(msg)
+      write(msg)
+    }
 
   def dropSequences(conn: Connection) =
     for (s <- sequences) {
@@ -263,6 +290,21 @@ class DDLExport extends JDBCHelper {
       })(e => {
         msg = "CREATE SEQUENCE " + s.sequenceName + ": " + e.getMessage
         log.trace("Error creating sequence.", e)
+      })
+      log.info(msg)
+      write(msg)
+    }
+
+  def createViews(conn: Connection) =
+    for (v <- views) {
+      var msg = ""
+      autoClose(conn.prepareStatement(v.sqlCreate))(st => {
+        log.debug(v.sqlCreate)
+        st.executeUpdate
+        msg = "CREATE VIEW " + v.relationName + ": OK"
+      })(e => {
+        msg = "CREATE VIEW " + v.relationName + ": " + e.getMessage
+        log.trace("Error creating view.", e)
       })
       log.info(msg)
       write(msg)

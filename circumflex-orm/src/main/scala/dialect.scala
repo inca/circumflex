@@ -208,6 +208,14 @@ trait Dialect {
         tab.primaryKey.sqlFullDefinition + "\n)"
 
   /**
+   * Produces CREATE VIEW statement.
+   */
+  def createView(view: View[_]) =
+    "create view " + qualifyRelation(view) + " (\n\t" +
+        view.columns.map(_.columnName).mkString(",\n\t") + ")\nas " +
+        inlineSelect(view.query)
+
+  /**
    * Produces ALTER TABLE statement with abstract action.
    */
   def alterTable(rel: Relation[_], action: String) =
@@ -242,6 +250,12 @@ trait Dialect {
    */
   def dropTable(tab: Table[_]) =
     "drop table " + qualifyRelation(tab)
+
+  /**
+   * Produces DROP VIEW statement
+   */
+  def dropView(view: View[_]) =
+    "drop view " + qualifyRelation(view)
 
   /**
    * Produces DROP SEQUENCE statement.

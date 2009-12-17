@@ -84,7 +84,7 @@ abstract class Column[T, R](val relation: Relation[R],
 
   def sqlDrop = dialect.alterTableDropColumn(this)
 
-  override def toString = sqlDefinition
+  override def toString = columnName
 
   override def equals(obj: Any) = obj match {
     case col: Column[T, R] =>

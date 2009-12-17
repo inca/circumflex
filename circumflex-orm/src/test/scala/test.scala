@@ -56,3 +56,23 @@ object Book extends GenericTable[Book] {
       .onDeleteSetNull
       .onUpdateCascade
 }
+
+class CategoryStatistics extends Record[CategoryStatistics] {
+  def relation = CategoryStatistics
+}
+
+object CategoryStatistics extends View[CategoryStatistics] {
+
+  import Query._
+
+  val category = column("category_id")
+      .references(Category)
+
+  val booksCount = column("books_count")
+
+  def query = select("c.id", count("b.id"))
+      .from(Category as "c" join (Book as "b"))
+
+  def primaryKey = pk(category.localColumn)
+  
+}
