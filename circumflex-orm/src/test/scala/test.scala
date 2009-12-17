@@ -59,16 +59,18 @@ object Book extends GenericTable[Book] {
 
 class CategoryStatistics extends Record[CategoryStatistics] {
   def relation = CategoryStatistics
+  val category = manyToOne(CategoryStatistics.category)
+  val booksCount = field(CategoryStatistics.booksCount)
 }
 
 object CategoryStatistics extends View[CategoryStatistics] {
 
   import Query._
 
-  val category = column("category_id")
+  val category = column[Long]("category_id")
       .references(Category)
 
-  val booksCount = column("books_count")
+  val booksCount = column[Long]("books_count")
 
   def query = select("c.id", count("b.id"))
       .from(Category as "c" join (Book as "b"))

@@ -105,13 +105,21 @@ class Select extends JDBCHelper with SQLable {
    */
   def addProjection(projections: Projection[_]*): this.type = {
     this._projections ++= projections.toList.map {
-      case p: AtomicProjection[_] if (p.alias == "this") =>
-        aliasCounter += 1
-        p.as("this_" + aliasCounter)
+      case p: AtomicProjection[_] => ensureProjectionAlias(p)
+      case p: CompositeProjection[_] => {
+        p.atomicProjections.foreach(ensureProjectionAlias(_))
+        p
+      }
       case p => p
     }
     return this
   }
+
+  def ensureProjectionAlias[T](projection: AtomicProjection[T]): AtomicProjection[T] =
+    if (projection.alias == "this") {
+      aliasCounter += 1
+      projection.as("this_" + aliasCounter)
+    } else projection
 
   /**
    * Adds an order to ORDER BY clause.
