@@ -52,5 +52,5 @@ abstract class View[R] extends Relation[R] with SchemaObject {
 
 
 class ViewColumn[T, R](relation: Relation[R], name: String)
-    extends Column[T, R] (relation, name, "UNKNOWN")
+    extends Column[T, R] (relation, name, "")
 
