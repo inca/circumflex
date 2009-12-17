@@ -50,7 +50,6 @@ abstract class View[R] extends Relation[R] with SchemaObject {
   def sqlCreate = dialect.createView(this)
 }
 
-
 class ViewColumn[T, R](relation: Relation[R], name: String)
     extends Column[T, R] (relation, name, "")
 

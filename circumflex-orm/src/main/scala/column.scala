@@ -32,7 +32,7 @@ import ORM._
 /**
  * Base functionality for columns.
  */
-abstract class Column[T, R](val relation: Relation[R],
+class Column[T, R](val relation: Relation[R],
                             val columnName: String,
                             val sqlType: String)
     extends SchemaObject {
