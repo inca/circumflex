@@ -36,7 +36,7 @@ import Circumflex._
  */
 
 trait HttpResponse {
-  def apply(response: HttpServletResponse) = {
+  def apply(response: HttpServletResponse) = if (!response.isCommitted) {
     response.setCharacterEncoding("UTF-8")
     response.setContentType(ctx.contentType)
     response.setStatus(ctx.statusCode)
@@ -48,7 +48,10 @@ trait HttpResponse {
 case class EmptyResponse extends HttpResponse
 
 case class ErrorResponse(val errorCode: Int, val msg: String) extends HttpResponse {
-  override def apply(response: HttpServletResponse) = response.sendError(errorCode, msg)
+  override def apply(response: HttpServletResponse) = {
+    ctx.statusCode = errorCode
+    response.sendError(errorCode, msg)
+  }
 }
 
 case class RedirectResponse(val url: String) extends HttpResponse {
