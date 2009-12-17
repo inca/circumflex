@@ -136,6 +136,26 @@ class TableNode[R](val table: Table[R],
 
 }
 
+class ViewNode[R](val view: View[R],
+                  a: String)
+    extends RelationNode[R](view, a) {
+
+  def this(view: View[R]) = this(view, "this")
+
+  /**
+   * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
+   */
+  def toSql = dialect.viewAlias(view, alias)
+
+  def projections = List(*)
+
+  /**
+   * Creates a record projection.
+   */
+  def * = new RecordProjection[R](this)
+
+}
+
 /**
  * Represents a join node between parent and child relation.
  */

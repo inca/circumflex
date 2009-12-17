@@ -27,7 +27,7 @@ package ru.circumflex.orm
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import core.{CircumflexContext, AbstractCircumflexFilter, Circumflex}
-import java.sql.{PreparedStatement, ResultSet, Connection}
+import java.sql.{Timestamp, PreparedStatement, ResultSet, Connection}
 import java.util.{Date, MissingResourceException, ResourceBundle}
 import javax.servlet.FilterChain
 import javax.naming.InitialContext
@@ -210,28 +210,30 @@ class ORMFilter extends AbstractCircumflexFilter {
  * If you intend to use custom types, provide your own implementation.
  */
 trait TypeConverter {
-  def read(rs: ResultSet, alias: String): Option[Any]
-  def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit
-}
 
-/**
- * Default implementation of type converter.
- * This implementation only handles <code>java.util.Date</code>
- * and unwraps Scala <code>Option[T]</code>.
- * You may subclass it to provide support for custom types.
- */
-class DefaultTypeConverter extends TypeConverter {
   def read(rs: ResultSet, alias: String): Option[Any] = {
     val result = rs.getObject(alias)
     if (rs.wasNull) return None
     else return Some(result)
   }
 
-  def write(st: PreparedStatement, parameter: Any, paramIndex: Int) = parameter match {
-    case (p: Date) => st.setTimestamp(paramIndex, new java.sql.Timestamp(p.getTime))
+  def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit = parameter match {
     case Some(p) => write(st, p, paramIndex)
-    case _ => st.setObject(paramIndex, parameter)
+    case None | null => st.setObject(paramIndex, null)
+    case value => st.setObject(paramIndex, convert(value))
+  }
+
+  def convert(value: Any): Any = value match {
+    case (p: Date) => new Timestamp(p.getTime)
+    case value => value
+  }
+
+  def toString(value: Any): String = convert(value) match {
+    case None | null => "null"
+    case s: String => dialect.quoteLiteral(s)
+    case d: Timestamp => dialect.quoteLiteral(d.toString)
+    case other => other.toString
   }
 }
 
-object DefaultTypeConverter extends DefaultTypeConverter
+object DefaultTypeConverter extends TypeConverter

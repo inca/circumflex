@@ -107,6 +107,10 @@ trait Dialect {
 
   def desc = "desc"
 
+  /* COMMON STUFF */
+
+  def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
+
   /* GENERATED NAMES */
 
   /**
@@ -280,6 +284,11 @@ trait Dialect {
   def tableAlias(tab: Table[_], alias: String) = tab.qualifiedName + " as " + alias
 
   /**
+   * Produces table with alias (e.g. "public.mytable my").
+   */
+  def viewAlias(view: View[_], alias: String) = view.qualifiedName + " as " + alias
+
+  /**
    * Qualifies a column with table alias (e.g. "p.id")
    */
   def qualifyColumn(col: Column[_, _], tableAlias: String) = tableAlias + "." + col.columnName
@@ -321,7 +330,7 @@ trait Dialect {
   def selectClause(projections: String*) = projections.mkString(",\n\t")
 
   /**
-   * Produces SELECT statement.
+   * Produces SELECT statement with ? parameters.
    */
   def select(q: Select): String = {
     var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t")
@@ -334,6 +343,27 @@ trait Dialect {
     }
     if (q.orders.size > 0)
       result += "\norder by\n\t" + q.orders.map(_.expression).mkString(",\n\t")
+    if (q.limit > -1)
+      result += "\nlimit " + q.limit
+    if (q.offset > 0)
+      result += "\noffset " + q.offset
+    return result
+  }
+
+  /**
+   * Produces SELECT statement with inlined parameters.
+   */
+  def inlineSelect(q: Select): String = {
+    var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t")
+    if (q.relations.size > 0)
+      result += "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
+    if (q.where != EmptyPredicate) result += "\nwhere\n\t" + q.where.toInlineSql
+    if (q.projections.exists(_.grouping)) {  // GROUP BY clause may be required
+      val gb = q.projections.filter(!_.grouping)
+      if (gb.size > 0) result += "\ngroup by\n\t" + gb.flatMap(_.sqlAliases).mkString(",\n\t")
+    }
+    if (q.orders.size > 0)
+      result += "\norder by\n\t" + q.orders.map(_.toInlineSql).mkString(",\n\t")
     if (q.limit > -1)
       result += "\nlimit " + q.limit
     if (q.offset > 0)

@@ -216,13 +216,25 @@ class Select extends JDBCHelper with SQLable {
 
   def toSql = dialect.select(this)
 
+  def toInlineSql = dialect.inlineSelect(this)
+
 }
 
 /**
  * Represents an order for queries.
  */
 class Order(val expression: String,
-            val parameters: Seq[Any])
+            val parameters: Seq[Any]) {
+
+  def toInlineSql: String = {
+    var result = expression
+    parameters.foreach(p => {
+      result = result.replaceFirst("\\?", typeConverter.toString(p))
+    })
+    return result
+  }
+
+}
 
 object Query extends QueryHelper
 
