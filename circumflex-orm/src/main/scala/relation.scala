@@ -193,7 +193,7 @@ trait Relation[R] {
    * Helper method to create an arbitrary column.
    */
   def column[T](name: String, sqlType: String): Column[T, R] = {
-    val col = new Column(this, name, sqlType)
+    val col = new Column[T, R](this, name, sqlType)
     _columns += col
     return col
   }
