@@ -64,7 +64,6 @@ class CategoryStatistics extends Record[CategoryStatistics] {
 }
 
 object CategoryStatistics extends View[CategoryStatistics] {
-
   import Query._
 
   val category = column[Long]("category_id")
@@ -77,4 +76,22 @@ object CategoryStatistics extends View[CategoryStatistics] {
 
   def primaryKey = pk(category.localColumn)
   
+}
+
+class BookWithCategory extends Record[BookWithCategory] {
+  def relation = BookWithCategory
+}
+
+object BookWithCategory extends View[BookWithCategory] {
+  import Query._
+
+  val b = Book as "b"
+  val c = Category as "c"
+
+  val book = inlineRecord(b)
+  val category = inlineRecord(c)
+
+  def query = select(b.*, c.*).from(b join c)
+
+  def primaryKey = pk(book.pkColumn)
 }

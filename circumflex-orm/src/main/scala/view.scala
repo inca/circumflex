@@ -33,6 +33,11 @@ import ORM._
 abstract class View[R] extends Relation[R] with SchemaObject {
 
   /**
+   * Views are not updatable by default.
+   */
+  override def readOnly = true
+
+  /**
    * Returns view's query.
    */
   def query: Select
@@ -43,6 +48,12 @@ abstract class View[R] extends Relation[R] with SchemaObject {
     return col
   }
 
+  def inlineRecord[I](node: RelationNode[I]): ViewInlineRecord[I, R] = {
+    val ir = new ViewInlineRecord(this, node)
+    _columns ++= ir.localColumns
+    return ir
+  }
+
   def as(alias: String) = new ViewNode(this, alias)
 
   def sqlDrop = dialect.dropView(this)
@@ -50,6 +61,15 @@ abstract class View[R] extends Relation[R] with SchemaObject {
   def sqlCreate = dialect.createView(this)
 }
 
-class ViewColumn[T, R](relation: Relation[R], name: String)
-    extends Column[T, R] (relation, name, "")
+class ViewColumn[T, R](view: View[R], name: String)
+    extends Column[T, R] (view, name, "")
+
+class ViewInlineRecord[I, R](view: View[R], node: RelationNode[I]) {
+
+  val localColumns: Seq[Column[_, R]] = node.columns.map(
+    col => col.cloneForView(view))
+
+  val pkColumn: Column[_, R] = node.primaryKey.column.cloneForView(view)
+
+}
 

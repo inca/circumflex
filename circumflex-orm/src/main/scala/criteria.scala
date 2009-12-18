@@ -105,7 +105,7 @@ class Criteria[R](val relation: Relation[R]) {
    * the criteria object after <code>first</code> is called, set query limit manually
    * or it will always yield a single row.
    */
-  def first: Option[R] = prepareQuery.unique.map(_.apply(0).asInstanceOf[R])
+  def first: Option[R] = prepareQuery.first.map(_.apply(0).asInstanceOf[R])
 
   /**
    * Executes the DELETE statement for this relation using specified criteria.

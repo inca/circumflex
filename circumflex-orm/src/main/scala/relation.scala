@@ -43,6 +43,11 @@ trait Relation[R] {
   private var _cachedRecordClass: Class[R] = null;
 
   /**
+   * Determines, whether DML operations are allowed on this relation.
+   */
+  def readOnly: Boolean = false
+
+  /**
    * Returns a class of record which this relation describes.
    */
   def recordClass: Class[R] = {

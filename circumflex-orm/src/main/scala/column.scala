@@ -33,11 +33,14 @@ import ORM._
  * Base functionality for columns.
  */
 class Column[T, R](val relation: Relation[R],
-                            val columnName: String,
-                            val sqlType: String)
+                   val columnName: String,
+                   val sqlType: String)
     extends SchemaObject {
   protected var _nullable = true;
   protected var _sequence: Option[Sequence[R]] = None;
+
+  def cloneForView[V](view: View[V]): Column[T, V] =
+    new Column[T, V](view, relation.relationName + "_" + columnName, sqlType)
 
   def qualifiedName = dialect.qualifyColumn(this)
 

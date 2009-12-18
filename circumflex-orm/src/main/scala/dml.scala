@@ -38,6 +38,9 @@ import ORM._
 class InsertSelect[R](val relation: Relation[R], val query: Select)
     extends JDBCHelper with SQLable {
 
+  if (relation.readOnly)
+      throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+
   /**
    * Executes a query.
    */
@@ -59,6 +62,9 @@ class InsertSelect[R](val relation: Relation[R], val query: Select)
  */
 class Delete[R](val relation: Relation[R])
     extends JDBCHelper with SQLable{
+
+  if (relation.readOnly)
+      throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
   private var _predicate: Predicate = EmptyPredicate
 
@@ -110,6 +116,9 @@ class Delete[R](val relation: Relation[R])
  */
 class Update[R](val relation: Relation[R])
     extends JDBCHelper with SQLable{
+
+  if (relation.readOnly)
+      throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
   private var _predicate: Predicate = EmptyPredicate
   private val _setClause = new ListBuffer[Pair[Column[_, R],Any]]()
