@@ -166,9 +166,9 @@ class DDLExport extends JDBCHelper {
       autoClose(conn.prepareStatement(v.sqlDrop))(st => {
         log.debug(v.sqlDrop)
         st.executeUpdate
-        msg = "DROP VIEW " + v.relationName + ": OK"
+        msg = "DROP VIEW " + v.qualifiedName + ": OK"
       })(e => {
-        msg = "DROP VIEW " + v.relationName + ": " + e.getMessage
+        msg = "DROP VIEW " + v.qualifiedName + ": " + e.getMessage
         log.trace("Error dropping view.", e)
       })
       log.info(msg)
@@ -211,9 +211,9 @@ class DDLExport extends JDBCHelper {
       autoClose(conn.prepareStatement(t.sqlDrop))(st => {
         log.debug(t.sqlDrop)
         st.executeUpdate
-        msg = "DROP TABLE " + t.relationName + ": OK"
+        msg = "DROP TABLE " + t.qualifiedName + ": OK"
       })(e => {
-        msg = "DROP TABLE " + t.relationName + ": " + e.getMessage
+        msg = "DROP TABLE " + t.qualifiedName + ": " + e.getMessage
         log.trace("Error dropping table.", e)
       })
       log.info(msg)
@@ -256,9 +256,9 @@ class DDLExport extends JDBCHelper {
       autoClose(conn.prepareStatement(t.sqlCreate))(st => {
         log.debug(t.sqlCreate)
         st.executeUpdate
-        msg = "CREATE TABLE " + t.relationName + ": OK"
+        msg = "CREATE TABLE " + t.qualifiedName + ": OK"
       })(e => {
-        msg = "CREATE TABLE " + t.relationName + ": " + e.getMessage
+        msg = "CREATE TABLE " + t.qualifiedName + ": " + e.getMessage
         log.trace("Error creating table.", e)
       })
       log.info(msg)
@@ -301,9 +301,9 @@ class DDLExport extends JDBCHelper {
       autoClose(conn.prepareStatement(v.sqlCreate))(st => {
         log.debug(v.sqlCreate)
         st.executeUpdate
-        msg = "CREATE VIEW " + v.relationName + ": OK"
+        msg = "CREATE VIEW " + v.qualifiedName + ": OK"
       })(e => {
-        msg = "CREATE VIEW " + v.relationName + ": " + e.getMessage
+        msg = "CREATE VIEW " + v.qualifiedName + ": " + e.getMessage
         log.trace("Error creating view.", e)
       })
       log.info(msg)
