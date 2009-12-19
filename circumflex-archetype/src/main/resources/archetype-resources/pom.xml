@@ -10,13 +10,6 @@
   <packaging>war</packaging>
   <name>Simple Circumflex Application</name>
 
-  <parent>
-    <groupId>ru.circumflex</groupId>
-    <artifactId>circumflex-parent</artifactId>
-    <version>0.2</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-
   <properties>
     <port>8180</port>
   </properties>
