@@ -36,18 +36,16 @@ trait FreemarkerHelper {
 
   def freemarkerConf: Configuration = DefaultConfiguration
 
-  def ftl(template: String): HttpResponse = {
-    val template = freemarkerConf.getTemplate(template);
-    try {
-      return new FreemarkerResponse(template)
+  def ftl(template: String): HttpResponse = try {
+      return new FreemarkerResponse(freemarkerConf.getTemplate(template))
     } catch {
       case e =>
         log.error("Could not process FreeMarker template.", e)
         return new ErrorResponse(404, "The requested resource could not be found.")
     }
-  }
+  
 
-  def ftl(template: String, statusCode: Int) = {
+  def ftl(template: String, statusCode: Int): HttpResponse = {
     ctx.statusCode = statusCode
     ftl(template)
   }
