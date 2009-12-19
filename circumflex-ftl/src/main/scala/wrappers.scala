@@ -25,8 +25,8 @@
 
 package ru.circumflex.freemarker
 
-import core.HashModel
-import orm.{Field => ORMField, ManyToOne, OneToMany}
+import ru.circumflex.core.HashModel
+import ru.circumflex.orm.{Field => ORMField, ManyToOne, OneToMany}
 import _root_.freemarker.core.Environment
 import java.io.StringWriter
 import _root_.freemarker.template._
@@ -93,9 +93,12 @@ class ScalaIteratorWrapper[T](val it: Iterator[T], wrapper: ObjectWrapper)
   def iterator = this
 }
 
-class ScalaMethodWrapper(val target: Any, val methodName: String, val wrapper: ObjectWrapper)
+class ScalaMethodWrapper(val target: Any,
+                         val methodName: String,
+                         val wrapper: ObjectWrapper)
     extends TemplateMethodModel {
-  def exec(arguments: java.util.List[_]) = wrapper.wrap(MethodUtils.invokeMethod(target, methodName, arguments.toArray))
+  def exec(arguments: java.util.List[_]) =
+    wrapper.wrap(MethodUtils.invokeMethod(target, methodName, arguments.toArray))
 }
 
 class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends TemplateHashModel {
@@ -127,7 +130,10 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
     } catch { case _ => }
     // try method
     findMethod(objectClass, key) match {
-      case Some(method) => return new ScalaMethodWrapper(obj, method.getName, wrapper)
+      case Some(method) if (method.getParameterTypes.length == 0) =>
+        return wrapper.wrap(method.invoke(obj))
+      case Some(method) =>
+        return new ScalaMethodWrapper(obj, method.getName, wrapper)
       case _ =>
     }
     throw new TemplateModelException("Could not resolve " + key + " of object type " + obj.asInstanceOf[Object].getClass + ".")

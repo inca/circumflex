@@ -25,7 +25,7 @@
 
 package ru.circumflex.orm
 
-import core.{Messages, GroupBy, CircumflexException}
+import ru.circumflex.core.{Messages, GroupBy, CircumflexException}
 
 /**
  * Represents a validation error. It's <code>source</code> describes
