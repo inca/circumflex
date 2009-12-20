@@ -49,11 +49,9 @@ import ORM._
 abstract class Record[R] extends JDBCHelper {
   private val uuid = UUID.randomUUID.toString
 
-  val fieldsMap = HashMap[Column[_, R], Any]()
-  val manyToOneMap = HashMap[Association[R, _], Any]()
-  val oneToManyMap = new HashMap[Association[_, R], Seq[Any]]() {
-    override def default(key: Association[_, R]): Seq[Any] = Nil
-  }
+  val fieldsMap = new HashMap[Column[_, R], Any]()
+  val manyToOneMap = new HashMap[Association[R, _], Any]()
+  val oneToManyMap = new HashMap[Association[_, R], Seq[Any]]()
 
   def relation: Relation[R]
 
@@ -63,7 +61,7 @@ abstract class Record[R] extends JDBCHelper {
 
   /* FIELDS-RELATED STUFF */
 
-  def field[T](col: Column[T, R]) = new Field(this, col)
+  def field[T](col: Column[T, R]) = new ColumnField(this, col)
 
   def getField[T](col: Column[T, R]): Option[T] =
     fieldsMap.get(col).asInstanceOf[Option[T]]
@@ -81,6 +79,11 @@ abstract class Record[R] extends JDBCHelper {
     // invalidate one-to-many caches if identifier changed
     if (col == relation.primaryKey.column) oneToManyMap.clear
   }
+
+  /* INLINE RECORD PROXY */
+
+  def proxy[I](inlineRecord: ViewInlineRecord[I, R]) =
+    new InlineRecordProxy(this, inlineRecord)
 
   /* ASSOCIATIONS-RELATED STUFF */
 
@@ -120,16 +123,16 @@ abstract class Record[R] extends JDBCHelper {
     new OneToMany[C, R](this, association)
 
   def getOneToMany[C](a: Association[C, R]): Seq[C] =
-    oneToManyMap.apply(a) match {
-      case Nil => primaryKey match {     // no cached children yet
-          case Some(refVal) => {         // lazy-fetch children if identified
-            val children = a.fetchOneToMany(refVal)
-            oneToManyMap += (a -> children)
-            children
-          }
-          case _ => Nil
+    oneToManyMap.get(a) match {
+      case None => primaryKey match {     // no cached children yet
+        case Some(refVal) => {            // lazy-fetch children if identified
+          val children = a.fetchOneToMany(refVal)
+          oneToManyMap += (a -> children)
+          children
         }
-      case seq => seq.asInstanceOf[Seq[C]]   // children are already in cache
+        case _ => Nil
+      }
+      case Some(seq: Seq[C]) => seq   // children are already in cache
     }
 
   def setOneToMany[C](a: Association[C, R], value: Seq[C]): Unit = {
@@ -233,74 +236,81 @@ abstract class Record[R] extends JDBCHelper {
   override def toString = relation.relationName + ": " + this.fieldsMap.toString
 }
 
-class Field[T, R](val record: Record[R],
-                  val column: Column[T, R]) {
+trait Field[T] {
 
   def default(value: T): this.type = {
     set(value)
     return this
   }
 
-  def get: Option[T] = record.getField(column)
+  def get: Option[T]
 
   def getOrElse(defaultValue: T): T = get match {
     case Some(value) => value
     case _ => defaultValue
   }
 
-  def set(value: T): Unit = record.setField(column, value)
-  def setNull: Unit = record.setField(column, None)
+  def set(value: T): Unit
+
+  def setNull: Unit
+
   def <=(value: T): Unit = set(value)
+
   def :=(value: T): Unit = set(value)
 
   override def toString = get match {
     case Some(value) => value.toString
     case None => ""
   }
-}
-
-class ManyToOne[C, P](val record: Record[C],
-                      val association: Association[C, P]) {
-
-  def default(value: P): this.type = {
-    set(value)
-    return this
-  }
-
-  def get: Option[P] = record.getManyToOne(association)
-
-  def getOrElse(defaultValue: P): P = get match {
-    case Some(value) => value
-    case _ => defaultValue
-  }
-
-  def set(value: P): Unit = record.setManyToOne(association, value)
-  def setNull: Unit = record.setManyToOne(association, None)
-  def <=(value: P): Unit = set(value)
-  def :=(value: P): Unit = set(value)
-
-  override def toString = get match {
-    case Some(value) => value.toString
-    case None => ""
-  }
 
 }
 
-class OneToMany[C, P](val record: Record[P],
-                      val association: Association[C, P]) {
+trait Collection[T] {
 
-  def default(values: C*): this.type = {
+  def default(values: T*): this.type = {
     set(values.toList)
     return this
   }
 
-  def get: Seq[C] = record.getOneToMany(association)
+  def get: Seq[T]
 
-  def set(value: Seq[C]): Unit = record.setOneToMany(association, value)
-  def setNull: Unit = record.setOneToMany(association, Nil)
-  def <=(value: Seq[C]): Unit = set(value)
-  def :=(value: Seq[C]): Unit = set(value)
+  def set(value: Seq[T]): Unit
+
+  def setNull: Unit
+
+  def <=(value: Seq[T]): Unit = set(value)
+
+  def :=(value: Seq[T]): Unit = set(value)
 
   override def toString = get.toString
+}
+
+
+class ColumnField[T, R](val record: Record[R],
+                        val column: Column[T, R])
+        extends Field[T] {
+
+  def get: Option[T] = record.getField(column)
+  def set(value: T): Unit = record.setField(column, value)
+  def setNull: Unit = record.setField(column, None)
+}
+
+class ManyToOne[C, P](val record: Record[C],
+                      val association: Association[C, P])
+        extends Field[P] {
+
+  def get: Option[P] = record.getManyToOne(association)
+  def set(value: P): Unit = record.setManyToOne(association, value)
+  def setNull: Unit = record.setManyToOne(association, None)
+
+}
+
+class OneToMany[C, P](val record: Record[P],
+                      val association: Association[C, P])
+        extends Collection[C] {
+
+  def get: Seq[C] = record.getOneToMany(association)
+  def set(value: Seq[C]): Unit = record.setOneToMany(association, value)
+  def setNull: Unit = record.setOneToMany(association, Nil)
 
 }

@@ -178,7 +178,7 @@ class DDLExport extends JDBCHelper {
   }
 
   def dropAuxiliaryObjects(conn: Connection) =
-    for (o <- auxiliaryObjects) {
+    for (o <- auxiliaryObjects.reverse) {
       var msg = ""
       autoClose(conn.prepareStatement(o.sqlDrop))(st => {
         log.debug(o.sqlDrop)

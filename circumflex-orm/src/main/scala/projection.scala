@@ -138,8 +138,7 @@ class RecordProjection[R](val node: RelationNode[R])
         .getConstructor()
         .newInstance()
         .asInstanceOf[Record[R]]
-    _columnProjections.foreach(
-      p => record.setField(p.column, p.read(rs)))
+    _columnProjections.foreach(p => record.setField(p.column, p.read(rs)))
     if (record.isIdentified) return Some(record.asInstanceOf[R])
     else return None
   }

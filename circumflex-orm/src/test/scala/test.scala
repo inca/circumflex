@@ -114,6 +114,8 @@ object CategoryStatistics extends View[CategoryStatistics] {
 
 class BookWithCategory extends Record[BookWithCategory] {
   def relation = BookWithCategory
+  val book = proxy(BookWithCategory.book)
+  val category = proxy(BookWithCategory.category)
 }
 
 object BookWithCategory extends View[BookWithCategory] {

@@ -82,8 +82,10 @@ class NotNullValidator(source: String) extends Validator(source) {
 class NotEmptyValidator(source: String) extends Validator(source) {
 
   def validate(value: Any) = value match {
-    case c: Collection[_] if (c.size == 0) => Some(new ValidationError(source, "validation.empty"))
-    case s: String if (s.trim.length == 0) => Some(new ValidationError(source, "validation.empty"))
+    case c: scala.Collection[_] if (c.size == 0) =>
+      Some(new ValidationError(source, "validation.empty"))
+    case s: String if (s.trim.length == 0) =>
+      Some(new ValidationError(source, "validation.empty"))
     case _ => None
   }
 
@@ -96,7 +98,6 @@ class PatternValidator(source: String, regex: String) extends Validator(source) 
     case v => Some(new ValidationError(
       source, "validation.pattern", "value" -> v.toString, "pattern" -> regex))
   }
-
 
 }
 

@@ -26,7 +26,7 @@
 package ru.circumflex.freemarker
 
 import ru.circumflex.core.HashModel
-import ru.circumflex.orm.{Field => ORMField, ManyToOne, OneToMany}
+import ru.circumflex.orm.{Field => ORMField, Collection => ORMCollection}
 import _root_.freemarker.core.Environment
 import java.io.StringWriter
 import _root_.freemarker.template._
@@ -58,9 +58,8 @@ class ScalaObjectWrapper extends ObjectWrapper {
     case num: Number => new SimpleNumber(num)
     case bool: Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
     // ORM stuff
-    case field: ORMField[_, _] => wrap(field.get)
-    case mto: ManyToOne[_, _] => wrap(mto.get)
-    case otm: OneToMany[_, _] => wrap(otm.get)
+    case field: ORMField[_] => wrap(field.get)
+    case coll: ORMCollection[_] => wrap(coll.get)
     // Everything else
     case obj => new ScalaBaseWrapper(obj, this)
   }
