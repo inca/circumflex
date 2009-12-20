@@ -53,7 +53,7 @@ trait Relation[R] {
   def recordClass: Class[R] = {
     if (_cachedRecordClass == null)
       _cachedRecordClass = Class.forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"))
-          .asInstanceOf[Class[R]]
+              .asInstanceOf[Class[R]]
     return _cachedRecordClass
   }
 
@@ -169,16 +169,19 @@ trait Relation[R] {
   /**
    * Helper method to create primary key constraint.
    */
-  def pk[T](column: Column[T, R]): PrimaryKey[T, R] = {
-    val pk = new PrimaryKey(this, column)
+  protected[orm] def pk[T](column: Column[T, R]): PrimaryKey[T, R] = {
+    val constrName = relationName + "_" + column.columnName + "_pkey";
+    val pk = new PrimaryKey(this, constrName , column)
     return pk;
   }
 
   /**
    * Helper method to create unique constraint.
    */
-  def unique(columns: Column[_, R]*): UniqueKey[R] = {
-    val constr = new UniqueKey(this, columns.toList)
+  protected[orm] def unique(columns: Column[_, R]*): UniqueKey[R] = {
+    val constrName = relationName + "_" +
+            columns.map(_.columnName).mkString("_") + "_key"
+    val constr = new UniqueKey(this, constrName, columns.toList)
     _constraints += constr
     return constr
   }
@@ -186,18 +189,30 @@ trait Relation[R] {
   /**
    * Helper method to create a foreign key constraint.
    */
-  def foreignKey[T, P](parentRelation: Relation[P],
+  protected[orm] def foreignKey[T, P](parentRelation: Relation[P],
                        column: Column[T, R]): ForeignKey[T, R, P] = {
-    val fk = new ForeignKey(this, parentRelation, column)
+    val constrName = relationName + "_" + column.columnName + "_fkey"
+    val fk = new ForeignKey(this, parentRelation, constrName, column)
     _constraints += fk
     _associations += fk
     return fk
   }
 
   /**
+   * Helper method to create a check constraint.
+   */
+  protected[orm] def check(expression: String): CheckConstraint[R] = {
+    val constrName = relationName + "_" +
+        expression.toList.takeWhile(_ != ' ').mkString + "_check"
+    val chk = new CheckConstraint(this, constrName, expression)
+    _constraints += chk
+    return chk
+  }
+
+  /**
    * Helper method to create an arbitrary column.
    */
-  def column[T](name: String, sqlType: String): Column[T, R] = {
+  protected[orm] def column[T](name: String, sqlType: String): Column[T, R] = {
     val col = new Column[T, R](this, name, sqlType)
     _columns += col
     return col
@@ -206,7 +221,7 @@ trait Relation[R] {
   /**
    * Helper method to create a bigint column.
    */
-  def longColumn(name: String): LongColumn[R] = {
+  protected[orm] def longColumn(name: String): LongColumn[R] = {
     val col = new LongColumn(this, name)
     _columns += col
     return col
@@ -215,7 +230,7 @@ trait Relation[R] {
   /**
    * Helper method to create a string column.
    */
-  def stringColumn(name: String): StringColumn[R] = {
+  protected[orm] def stringColumn(name: String): StringColumn[R] = {
     val col = new StringColumn(this, name)
     _columns += col
     return col
@@ -224,7 +239,7 @@ trait Relation[R] {
   /**
    * Helper method to create a boolean column.
    */
-  def booleanColumn(name: String): BooleanColumn[R] = {
+  protected[orm] def booleanColumn(name: String): BooleanColumn[R] = {
     val col = new BooleanColumn(this, name)
     _columns += col
     return col
@@ -233,7 +248,7 @@ trait Relation[R] {
   /**
    * Helper method to create a timestamp column.
    */
-  def timestampColumn(name: String): TimestampColumn[R] = {
+  protected[orm] def timestampColumn(name: String): TimestampColumn[R] = {
     val col = new TimestampColumn(this, name)
     _columns += col
     return col
@@ -259,7 +274,7 @@ trait Relation[R] {
     case _ =>
   }
 
-  def addFieldValidator(col: Column[_, R], validator: Validator): RecordValidator[R] = {
+  protected[orm] def addFieldValidator(col: Column[_, R], validator: Validator): RecordValidator[R] = {
     val v = new RecordFieldValidator(col, validator)
     _validators += v
     return v

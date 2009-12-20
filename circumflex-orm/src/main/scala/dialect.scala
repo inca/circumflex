@@ -111,8 +111,6 @@ trait Dialect {
 
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
 
-  /* GENERATED NAMES */
-
   /**
    * Produces qualified name of a table
    * (e.g. "myschema.mytable").
@@ -124,28 +122,10 @@ trait Dialect {
     col.relation.relationName + "." + col.columnName
 
   /**
-   * Produces PK name (e.g. mytable_pkey).
-   */
-  def primaryKeyName(pk: PrimaryKey[_, _]) =
-    pk.relation.relationName + "_" + pk.column.columnName + "_pkey"
-
-  /**
-   * Produces unique constraint name (e.g. mytable_name_value_key).
-   */
-  def uniqueKeyName(uniq: UniqueKey[_]) =
-    uniq.relation.relationName + "_" + uniq.columns.map(_.columnName).mkString("_") + "_key"
-
-  /**
    * Produces qualified sequence name (e.g. public.mytable_id_seq).
    */
   def sequenceName(seq: Sequence[_]) =
     qualifyRelation(seq.relation) + "_" + seq.column.columnName + "_seq"
-
-  /**
-   * Produces foreign key constraint name (e.g. mytable_reftable_fkey).
-   */
-  def foreignKeyName(fk: ForeignKey[_, _, _]) =
-    fk.relation.relationName + "_" + fk.childColumn.columnName + "_fkey"
 
   /* DEFINITIONS */
 
@@ -178,6 +158,11 @@ trait Dialect {
         "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +
         "on update " + foreignKeyAction(fk.onUpdate)
 
+  /**
+   * Produces check constraint definition (e.g. "check (age between 18 and 40)").
+   */
+  def checkConstraintDefinition(check: CheckConstraint[_]) =
+    "check (" + check.expression + ")"
 
   /**
    * Produces constraint definition (e.g. "constraint mytable_pkey primary key(id)").
