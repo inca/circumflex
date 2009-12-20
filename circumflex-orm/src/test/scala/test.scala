@@ -43,9 +43,8 @@ object Category extends GenericTable[Category] {
 
   check("name ~ '" + namePattern +"'")
 
-  auxiliaryObjects += CategoryTriggerFunction
-  auxiliaryObjects += CategoryTrigger
-  
+  addAuxiliaryObjects(CategoryTriggerFunction, CategoryTrigger)
+
 }
 
 object CategoryTriggerFunction extends SchemaObject {
@@ -58,8 +57,7 @@ object CategoryTriggerFunction extends SchemaObject {
     RAISE NOTICE 'PREVED!!!11';
     RETURN NEW;
   END;
-  $BODY$ LANGUAGE 'plpgsql'
-  """
+  $BODY$ LANGUAGE 'plpgsql'"""
 
   def sqlDrop = "DROP FUNCTION orm.category_trig_func()"
 }

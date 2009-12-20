@@ -182,6 +182,13 @@ trait Relation[R] {
   }
 
   /**
+   * Adds associated auxiliary object.
+   */
+  protected[orm] def addAuxiliaryObjects(objects: SchemaObject*) = {
+    this.auxiliaryObjects ++= objects.toList
+  }
+
+  /**
    * Adds a unique constraint.
    */
   protected[orm] def unique(columns: Column[_, R]*): UniqueKey[R] = {
