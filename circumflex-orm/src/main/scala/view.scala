@@ -59,6 +59,8 @@ abstract class View[R] extends Relation[R] with SchemaObject {
   def sqlDrop = dialect.dropView(this)
 
   def sqlCreate = dialect.createView(this)
+
+  def objectName = qualifiedName
 }
 
 class ViewColumn[T, R](view: View[R], name: String)

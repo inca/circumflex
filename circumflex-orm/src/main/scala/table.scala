@@ -56,6 +56,7 @@ abstract class Table[R] extends Relation[R]
    */
   def sqlDrop = dialect.dropTable(this)
 
+  def objectName = qualifiedName
 }
 
 /**

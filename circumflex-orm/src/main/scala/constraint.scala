@@ -38,6 +38,8 @@ abstract class Constraint[R](val relation: Relation[R],
 
   def sqlDrop: String = dialect.alterTableDropConstraint(this)
 
+  def objectName = constraintName
+
   /**
    * A "short" constraint definition (constraint-specific part only,
    * e.g. "PRIMARY KEY (id)" or "UNIQUE (name)", dialect-specific).

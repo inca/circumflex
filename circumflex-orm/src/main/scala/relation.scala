@@ -39,6 +39,7 @@ trait Relation[R] {
   protected val _columns = new ListBuffer[Column[_, R]]
   protected val _constraints = new ListBuffer[Constraint[R]]
   protected val _associations = new ListBuffer[Association[R, _]]
+  protected val _auxiliaryObjects = new ListBuffer[SchemaObject];
 
   private var _cachedRecordClass: Class[R] = null;
 
@@ -107,6 +108,11 @@ trait Relation[R] {
    * Returns sequences associated with this table.
    */
   def sequences = columns.flatMap(_.sequence)
+
+  /**
+   * Returns auxiliary objects associated with this table.
+   */
+  def auxiliaryObjects = _auxiliaryObjects
 
   /**
    * If possible, return an association from this relation as parent to

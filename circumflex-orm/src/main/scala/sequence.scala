@@ -66,4 +66,5 @@ class Sequence[R](val relation: Relation[R],
 
   def sequenceName = dialect.sequenceName(this)
 
+  def objectName = sequenceName
 }
