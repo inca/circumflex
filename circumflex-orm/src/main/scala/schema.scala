@@ -29,7 +29,7 @@ import ORM._
 import java.io.Writer
 import java.sql.Connection
 import org.slf4j.LoggerFactory
-import collection.mutable.HashSet
+import collection.mutable.{HashSet, ListBuffer}
 
 /**
  * Defines a contract for database schema objects.
@@ -83,14 +83,14 @@ object DefaultSchema extends Schema
 class DDLExport extends JDBCHelper {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
-  private val schemata = HashSet[Schema]()
-  private val tables = HashSet[Table[_]]()
-  private val views = HashSet[View[_]]()
-  private val constraints = HashSet[Constraint[_]]()
-  private val sequences = HashSet[Sequence[_]]()
-  private val auxiliaryObjects = HashSet[SchemaObject]()
+  val schemata = new HashSet[Schema]()
+  val tables = new HashSet[Table[_]]()
+  val views = new HashSet[View[_]]()
+  val constraints = new HashSet[Constraint[_]]()
+  val sequences = new HashSet[Sequence[_]]()
+  val auxiliaryObjects = new ListBuffer[SchemaObject]()
 
-  private val writers = HashSet[Writer]()
+  val writers = new HashSet[Writer]()
 
   def this(tables: Table[_]*) = {
     this()

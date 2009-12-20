@@ -33,15 +33,47 @@ class Category extends Record[Category] {
 }
 
 object Category extends GenericTable[Category] {
-  val namePattern = "^[a-zA-Z]{1,8}$"
+  val namePattern = "^[a-zA-Z]+$"
 
-  val name = stringColumn("name")         // Creates a column
-      .notNull                            // Creates NOT NULL constraint
-      .unique                             // Creates UNIQUE constraint
-      .validateNotEmpty                   // Adds NotEmpty validation
-      .validatePattern(namePattern)       // Adds Pattern validation
+  val name = stringColumn("name")             // Creates a column
+          .notNull                            // Creates NOT NULL constraint
+          .unique                             // Creates UNIQUE constraint
+          .validateNotEmpty                   // Adds NotEmpty validation
+          .validatePattern(namePattern)       // Adds Pattern validation
 
   check("name ~ '" + namePattern +"'")
+
+  auxiliaryObjects += CategoryTriggerFunction
+  auxiliaryObjects += CategoryTrigger
+  
+}
+
+object CategoryTriggerFunction extends SchemaObject {
+
+  def objectName = "orm.category_trig_func"
+
+  def sqlCreate = """
+  CREATE FUNCTION orm.category_trig_func() RETURNS TRIGGER AS $BODY$
+  BEGIN
+    RAISE NOTICE 'PREVED!!!11';
+    RETURN NEW;
+  END;
+  $BODY$ LANGUAGE 'plpgsql'
+  """
+
+  def sqlDrop = "DROP FUNCTION orm.category_trig_func()"
+}
+
+object CategoryTrigger extends SchemaObject {
+
+  def objectName = "category_trig"
+
+  def sqlCreate = "CREATE TRIGGER category_trig\n" +
+          "AFTER INSERT OR UPDATE ON orm.category\n" +
+          "FOR EACH ROW EXECUTE PROCEDURE orm.category_trig_func()"
+
+  def sqlDrop = "DROP TRIGGER category_trig ON orm.category"
+
 }
 
 class Book extends Record[Book] {
@@ -53,12 +85,12 @@ class Book extends Record[Book] {
 
 object Book extends GenericTable[Book] {
   val title = stringColumn("title")
-      .notNull
-      .validateNotEmpty
+          .notNull
+          .validateNotEmpty
   val category = longColumn("category_id")
-      .references(Category)     // Creates an association with Category
-      .onDeleteSetNull
-      .onUpdateCascade
+          .references(Category)     // Creates an association with Category
+          .onDeleteSetNull
+          .onUpdateCascade
 }
 
 class CategoryStatistics extends Record[CategoryStatistics] {
@@ -71,15 +103,15 @@ object CategoryStatistics extends View[CategoryStatistics] {
   import Query._
 
   val category = column[Long]("category_id")
-      .references(Category)
+          .references(Category)
 
   val booksCount = column[Long]("books_count")
 
   def query = select("c.id", count("b.id"))
-      .from(Category as "c" join (Book as "b"))
+          .from(Category as "c" join (Book as "b"))
 
   def primaryKey = pk(category.localColumn)
-  
+
 }
 
 class BookWithCategory extends Record[BookWithCategory] {
