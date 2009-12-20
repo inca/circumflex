@@ -33,11 +33,15 @@ class Category extends Record[Category] {
 }
 
 object Category extends GenericTable[Category] {
+  val namePattern = "^[a-zA-Z]{1,8}$"
+
   val name = stringColumn("name")         // Creates a column
       .notNull                            // Creates NOT NULL constraint
       .unique                             // Creates UNIQUE constraint
       .validateNotEmpty                   // Adds NotEmpty validation
-      .validatePattern("^[a-zA-Z]{1,8}$") // Adds Pattern validation
+      .validatePattern(namePattern)       // Adds Pattern validation
+
+  check("name ~ '" + namePattern +"'")
 }
 
 class Book extends Record[Book] {
