@@ -40,7 +40,7 @@ abstract class View[R] extends Relation[R] with SchemaObject {
   /**
    * Returns view's query.
    */
-  def query: Select
+  def query: SQLQuery
 
   protected[orm] def column[T](columnName: String): ViewColumn[T, R] = {
     val col = new ViewColumn[T, R](this, columnName)

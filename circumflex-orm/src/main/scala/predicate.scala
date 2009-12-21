@@ -38,10 +38,6 @@ trait Predicate extends SQLable {
    */
   def parameters: Seq[Any]
 
-  /**
-   * Returns an SQL representation of this predicate with inlined parameters.
-   */
-  def toInlineSql: String
 }
 
 /**
@@ -49,8 +45,6 @@ trait Predicate extends SQLable {
  */
 object EmptyPredicate extends Predicate {
   def toSql = dialect.dummy
-
-  def toInlineSql = toSql
 
   def parameters = Nil
 }
@@ -60,14 +54,6 @@ class SimpleExpression(val expression: String,
     extends Predicate {
 
   def toSql = expression
-
-  def toInlineSql: String = {
-    var result = toSql
-    parameters.foreach(p => {
-      result = result.replaceFirst("\\?", typeConverter.toString(p))
-    })
-    return result
-  }
 
 }
 
@@ -116,7 +102,4 @@ class AggregatePredicate(val operator: String,
     if (predicates.size == 0) EmptyPredicate.toSql
     else "(" + predicates.map(_.toSql).mkString(operator) + ")"
 
-  def toInlineSql: String =
-    if (predicates.size == 0) EmptyPredicate.toInlineSql
-    else "(" + predicates.map(_.toInlineSql).mkString(operator) + ")"
 }

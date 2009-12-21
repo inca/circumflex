@@ -30,29 +30,35 @@ import java.sql.PreparedStatement
 import Query._
 import ORM._
 
-/**
- * Contains functionality for INSERT-SELECT operations.
- * The query must be prepared first with projections matching target relation's
- * columns.
- */
-class InsertSelect[R](val relation: Relation[R], val query: Select)
-    extends JDBCHelper with SQLable {
-
-  if (relation.readOnly)
-      throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+trait DMLQuery extends Query {
 
   /**
-   * Executes a query.
+   * Executes a query, returns number of affected rows.
    */
   def executeUpdate: Int = {
     val conn = connectionProvider.getConnection
     val sql = toSql
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
-      query.setParams(st, 1)
+      setParams(st, 1)
       return st.executeUpdate
     })
   }
+
+}
+
+/**
+ * Contains functionality for INSERT-SELECT operations.
+ * The query must be prepared first with projections matching target relation's
+ * columns.
+ */
+class InsertSelect[R](val relation: Relation[R], val query: Select)
+    extends DMLQuery {
+
+  if (relation.readOnly)
+      throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+
+  def parameters = query.parameters
 
   def toSql: String = dialect.insertSelect(this)
 }
@@ -61,12 +67,14 @@ class InsertSelect[R](val relation: Relation[R], val query: Select)
  * Contains functionality for DELETE operations. 
  */
 class Delete[R](val relation: Relation[R])
-    extends JDBCHelper with SQLable{
+    extends DMLQuery {
 
   if (relation.readOnly)
       throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
   private var _predicate: Predicate = EmptyPredicate
+
+  def parameters = _predicate.parameters
 
   /**
    * Sets WHERE clause of this query.
@@ -81,32 +89,6 @@ class Delete[R](val relation: Relation[R])
    */
   def where: Predicate = this._predicate
 
-  /**
-   * Executes a query.
-   */
-  def executeUpdate: Int = {
-    val conn = connectionProvider.getConnection
-    val sql = toSql
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(st, 1)
-      return st.executeUpdate
-    })
-  }
-
-  /**
-   * Sets prepared statement parameters of this query starting from specified index.
-   * Returns the new starting index of prepared statement.
-   */
-  def setParams(st: PreparedStatement, startIndex: Int): Int = {
-    var paramsCounter = startIndex;
-    _predicate.parameters.foreach(p => {
-      typeConverter.write(st, p, paramsCounter)
-      paramsCounter += 1
-    })
-    return paramsCounter
-  }
-
   def toSql: String = dialect.delete(this)
 
 }
@@ -115,13 +97,15 @@ class Delete[R](val relation: Relation[R])
  * Contains functionality for UPDATE operations.
  */
 class Update[R](val relation: Relation[R])
-    extends JDBCHelper with SQLable{
+    extends DMLQuery {
 
   if (relation.readOnly)
       throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
   private var _predicate: Predicate = EmptyPredicate
   private val _setClause = new ListBuffer[Pair[Column[_, R],Any]]()
+
+  def parameters = _setClause.map(_._2) ++ _predicate.parameters
 
   /**
    * Sets WHERE clause of this query.
@@ -171,36 +155,6 @@ class Update[R](val relation: Relation[R])
    * Returns the SET clause of this query.
    */
   def setClause = _setClause
-
-  /**
-   * Executes a query.
-   */
-  def executeUpdate: Int = {
-    val conn = connectionProvider.getConnection
-    val sql = toSql
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(st, 1)
-      return st.executeUpdate
-    })
-  }
-
-  /**
-   * Sets prepared statement parameters of this query starting from specified index.
-   * Returns the new starting index of prepared statement.
-   */
-  def setParams(st: PreparedStatement, startIndex: Int): Int = {
-    var paramsCounter = startIndex;
-    _setClause.foreach(p => {
-      typeConverter.write(st, p._2, paramsCounter)
-      paramsCounter += 1
-    })
-    _predicate.parameters.foreach(p => {
-      typeConverter.write(st, p, paramsCounter)
-      paramsCounter += 1
-    })
-    return paramsCounter
-  }
 
   def toSql: String = dialect.update(this)
 

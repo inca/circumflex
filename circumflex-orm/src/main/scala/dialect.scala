@@ -198,7 +198,7 @@ trait Dialect {
   def createView(view: View[_]) =
     "create view " + qualifyRelation(view) + " (\n\t" +
         view.columns.map(_.columnName).mkString(",\n\t") + ")\nas " +
-        inlineSelect(view.query)
+        view.query.toInlineSql
 
   /**
    * Produces ALTER TABLE statement with abstract action.
@@ -342,27 +342,6 @@ trait Dialect {
     }
     if (q.orders.size > 0)
       result += "\norder by\n\t" + q.orders.map(_.expression).mkString(",\n\t")
-    if (q.limit > -1)
-      result += "\nlimit " + q.limit
-    if (q.offset > 0)
-      result += "\noffset " + q.offset
-    return result
-  }
-
-  /**
-   * Produces SELECT statement with inlined parameters.
-   */
-  def inlineSelect(q: Select): String = {
-    var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t")
-    if (q.relations.size > 0)
-      result += "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
-    if (q.where != EmptyPredicate) result += "\nwhere\n\t" + q.where.toInlineSql
-    if (q.projections.exists(_.grouping)) {  // GROUP BY clause may be required
-      val gb = q.projections.filter(!_.grouping)
-      if (gb.size > 0) result += "\ngroup by\n\t" + gb.flatMap(_.sqlAliases).mkString(",\n\t")
-    }
-    if (q.orders.size > 0)
-      result += "\norder by\n\t" + q.orders.map(_.toInlineSql).mkString(",\n\t")
     if (q.limit > -1)
       result += "\nlimit " + q.limit
     if (q.offset > 0)

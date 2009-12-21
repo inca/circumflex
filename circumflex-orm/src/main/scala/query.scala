@@ -29,15 +29,75 @@ import ORM._
 import collection.mutable.ListBuffer
 import java.sql.{PreparedStatement, ResultSet}
 
-trait Query extends SQLable {
+trait Query extends SQLable with JDBCHelper {
 
+  /**
+   * Query parameters.
+   */
   def parameters: Seq[Any]
 
-  def toInlineSql: String
+  /**
+   * Inlines query parameters and returns resulting SQL.
+   */
+  def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
+    sql.replaceFirst("\\?", typeConverter.toString(p)))
+
+  /**
+   * Sets prepared statement parameters of this query starting from specified index.
+   * Returns the new starting index of prepared statement.
+   */
+  def setParams(st: PreparedStatement, startIndex: Int): Int = {
+    var paramsCounter = startIndex;
+    parameters.foreach(p => {
+      typeConverter.write(st, p, paramsCounter)
+      paramsCounter += 1
+    })
+    return paramsCounter
+  }
 
 }
 
-class Select extends Query with JDBCHelper {
+trait SQLQuery extends Query {
+
+  def projections: Seq[Projection[_]]
+
+  /**
+   * Executes a query, opens a JDBC result set and executes provided actions.
+   */
+  def resultSet[A](actions: ResultSet => A): A =
+    auto(connectionProvider.getConnection.prepareStatement(toSql))(st => {
+      sqlLog.debug(toSql)
+      setParams(st, 1)
+      auto(st.executeQuery)(actions)
+    })
+
+
+  /**
+   * Executes a query and returns a list of tuples, designated by query projections.
+   */
+  def list(): Seq[Array[Any]] = resultSet(rs => {
+    val result = new ListBuffer[Array[Any]]()
+    while (rs.next) {
+      val tuple = projections.map(_.read(rs).getOrElse(null))
+      result += tuple.toArray
+    }
+    return result
+  })
+
+  /**
+   * Executes a query and returns a unique result.
+   * An exception is thrown if result set yields more than one row.
+   * </ul>
+   */
+  def unique(): Option[Array[Any]] = resultSet(rs => {
+    if (!rs.next) return None
+    else if (rs.isLast) return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
+    else throw new ORMException("Unique result expected, but multiple rows found.")
+  })
+
+}
+
+class Select extends SQLQuery {
   private var aliasCounter = 0;
 
   private var _projections: Seq[Projection[_]] = Nil
@@ -51,6 +111,8 @@ class Select extends Query with JDBCHelper {
     this()
     nodes.toList.foreach(addFrom(_))
   }
+
+  def parameters: Seq[Any] = _predicate.parameters ++ _orders.flatMap(_.parameters)
 
   /**
    * Returns the WHERE clause of this query.
@@ -163,56 +225,6 @@ class Select extends Query with JDBCHelper {
    */
   def offset = this._offset
 
-  def parameters: Seq[Any] = _predicate.parameters ++ _orders.flatMap(_.parameters)
-
-  /**
-   * Sets prepared statement parameters of this query starting from specified index.
-   * Returns the new starting index of prepared statement.
-   */
-  def setParams(st: PreparedStatement, startIndex: Int): Int = {
-    var paramsCounter = startIndex;
-    parameters.foreach(p => {
-      typeConverter.write(st, p, paramsCounter)
-      paramsCounter += 1
-    })
-    return paramsCounter
-  }
-
-
-  /**
-   * Executes a query and Opens a JDBC result set.
-   */
-  def resultSet[A](actions: ResultSet => A): A =
-    auto(connectionProvider.getConnection.prepareStatement(toSql))(st => {
-      sqlLog.debug(toSql)
-      setParams(st, 1)
-      auto(st.executeQuery)(actions)
-    })
-
-
-  /**
-   * Executes a query and returns a list of tuples, designated by query projections.
-   */
-  def list(): Seq[Array[Any]] = resultSet(rs => {
-    val result = new ListBuffer[Array[Any]]()
-    while (rs.next) {
-      val tuple = _projections.map(_.read(rs).getOrElse(null))
-      result += tuple.toArray
-    }
-    return result
-  })
-
-  /**
-   * Executes a query and returns a unique result.
-   * An exception is thrown if result set yields more than one row.
-   * </ul>
-   */
-  def unique(): Option[Array[Any]] = resultSet(rs => {
-    if (!rs.next) return None
-    else if (rs.isLast) return Some(_projections.map(_.read(rs).getOrElse(null)).toArray)
-    else throw new ORMException("Unique result expected, but multiple rows found.")
-  })
-
   /**
    * Executes a query and returns the first result.
    * WARNING! This call implicitly sets the query limit to 1. If you plan to reuse
@@ -230,25 +242,13 @@ class Select extends Query with JDBCHelper {
 
   def toSql = dialect.select(this)
 
-  def toInlineSql = dialect.inlineSelect(this)
-
 }
 
 /**
  * Represents an order for queries.
  */
 class Order(val expression: String,
-            val parameters: Seq[Any]) {
-
-  def toInlineSql: String = {
-    var result = expression
-    parameters.foreach(p => {
-      result = result.replaceFirst("\\?", typeConverter.toString(p))
-    })
-    return result
-  }
-
-}
+            val parameters: Seq[Any])
 
 object Query extends QueryHelper
 
