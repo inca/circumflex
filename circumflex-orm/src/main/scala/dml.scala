@@ -95,7 +95,7 @@ class Delete[R](val relation: Relation[R])
   }
 
   /**
-   * Sets prepared statement params of this query starting from specified index.
+   * Sets prepared statement parameters of this query starting from specified index.
    * Returns the new starting index of prepared statement.
    */
   def setParams(st: PreparedStatement, startIndex: Int): Int = {
@@ -186,7 +186,7 @@ class Update[R](val relation: Relation[R])
   }
 
   /**
-   * Sets prepared statement params of this query starting from specified index.
+   * Sets prepared statement parameters of this query starting from specified index.
    * Returns the new starting index of prepared statement.
    */
   def setParams(st: PreparedStatement, startIndex: Int): Int = {

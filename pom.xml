@@ -16,6 +16,7 @@
   <modules>
     <module>circumflex-core</module>
     <module>circumflex-orm</module>
+    <module>circumflex-orm-i18n</module>
     <module>circumflex-hibernate</module>
     <module>circumflex-ftl</module>
     <module>circumflex-spring-security</module>

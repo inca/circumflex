@@ -29,7 +29,15 @@ import ORM._
 import collection.mutable.ListBuffer
 import java.sql.{PreparedStatement, ResultSet}
 
-class Select extends JDBCHelper with SQLable {
+trait Query extends SQLable {
+
+  def parameters: Seq[Any]
+
+  def toInlineSql: String
+
+}
+
+class Select extends Query with JDBCHelper {
   private var aliasCounter = 0;
 
   private var _projections: Seq[Projection[_]] = Nil
@@ -155,17 +163,15 @@ class Select extends JDBCHelper with SQLable {
    */
   def offset = this._offset
 
+  def parameters: Seq[Any] = _predicate.parameters ++ _orders.flatMap(_.parameters)
+
   /**
-   * Sets prepared statement params of this query starting from specified index.
+   * Sets prepared statement parameters of this query starting from specified index.
    * Returns the new starting index of prepared statement.
    */
   def setParams(st: PreparedStatement, startIndex: Int): Int = {
     var paramsCounter = startIndex;
-    _predicate.parameters.foreach(p => {
-      typeConverter.write(st, p, paramsCounter)
-      paramsCounter += 1
-    })
-    _orders.flatMap(_.parameters).foreach(p => {
+    parameters.foreach(p => {
       typeConverter.write(st, p, paramsCounter)
       paramsCounter += 1
     })
