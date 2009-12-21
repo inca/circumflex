@@ -163,6 +163,18 @@ abstract class JoinNode[L, R](val leftNode: RelationNode[L],
                               val rightNode: RelationNode[R])
     extends RelationNode[L](leftNode, leftNode.alias) {
 
+  private var _auxiliaryConditions: Seq[String] = Nil
+
+  def auxiliaryConditions = _auxiliaryConditions
+
+  /**
+   * Adds an auxiliary condition to this join.
+   */
+  def on(condition: String): this.type = {
+    _auxiliaryConditions ++= List(condition)
+    return this
+  }
+
   /**
    * Override join type if necessary.
    */
