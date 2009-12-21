@@ -26,7 +26,6 @@
 package ru.circumflex.orm
 
 import collection.mutable.HashMap
-import java.sql.PreparedStatement
 import java.util.UUID
 import ORM._
 
@@ -46,7 +45,7 @@ import ORM._
  * used for equality testing (so unidentified records never match each other).</li>
  * </ul>
  */
-abstract class Record[R] extends JDBCHelper {
+abstract class Record[R] {
   private val uuid = UUID.randomUUID.toString
 
   val fieldsMap = new HashMap[Column[_, R], Any]()
@@ -145,85 +144,23 @@ abstract class Record[R] extends JDBCHelper {
 
   def validate_!(): Unit = relation.validate_!(this)
 
-  def insert(): Int = {
-    validate_!()
-    insert_!()
-  }
+  def insert(): Int = relation.insert(this)
 
-  def insert_!(): Int = {
-    if (relation.readOnly)
-      throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-    val conn = connectionProvider.getConnection
-    val sql = dialect.insertRecord(this)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(st, relation.columns)
-      return st.executeUpdate
-    })
-  }
+  def insert_!(): Int = relation.insert_!(this)
 
-  def update(): Int = {
-    validate_!()
-    update_!()
-  }
+  def update(): Int = relation.update(this)
 
-  def update_!(): Int = {
-    if (relation.readOnly)
-      throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-    val conn = connectionProvider.getConnection
-    val sql = dialect.updateRecord(this)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(st, relation.nonPKColumns)
-      typeConverter.write(
-        st,
-        primaryKey.get,
-        relation.nonPKColumns.size + 1)
-      return st.executeUpdate
-    })
-  }
+  def update_!(): Int = relation.update_!(this)
 
-  def save(): Int = {
-    validate_!()
-    save_!()
-  }
+  def save(): Int = relation.save(this)
 
-  def save_!(): Int =
-    if (isIdentified) update_!()
-    else {
-      generateFields
-      insert_!()
-    }
+  def save_!(): Int = relation.save_!(this)
 
-  def delete(): Int = {
-    if (relation.readOnly)
-      throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-    val conn = connectionProvider.getConnection
-    val sql = dialect.deleteRecord(this)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      typeConverter.write(st, primaryKey.get, 1)
-      return st.executeUpdate
-    })
-  }
+  def delete(): Int = relation.delete(this)
 
-  def generateFields(): Unit =
-    relation.columns.flatMap(_.sequence).foreach(seq => {
-      val nextval = seq.nextValue
-      this.setField(seq.column, nextval)
-    })
+  def generateFields(): Unit = relation.generateFields(this)
 
-  private def setParams(st: PreparedStatement, cols: Seq[Column[_, R]]) =
-    (0 until cols.size).foreach(ix => {
-      val col = cols(ix)
-      val value = this.getField(col) match {
-        case Some(v) => v
-        case _ => null
-      }
-      typeConverter.write(st, value, ix + 1)
-    })
-
-  /* EQUALS BOILERPLATE */
+  /* EQUALITY AND OTHER STUFF */
 
   override def equals(obj: Any) = obj match {
     case r: Record[R] if (r.relation == this.relation) =>

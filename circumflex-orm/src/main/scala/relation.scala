@@ -28,12 +28,13 @@ package ru.circumflex.orm
 import collection.mutable.ListBuffer
 import Query._
 import ORM._
+import java.sql.PreparedStatement
 
 /**
  * Designates a relation that can be used to retrieve certain type of records.
  * It can be considered a table, a virtual table, a view, a subquery, etc.
  */
-trait Relation[R] {
+trait Relation[R]  extends JDBCHelper {
 
   protected val _validators = new ListBuffer[RecordValidator[R]]
   protected val _columns = new ListBuffer[Column[_, R]]
@@ -203,7 +204,7 @@ trait Relation[R] {
    * Adds a foreign key constraint.
    */
   protected[orm] def foreignKey[T, P](parentRelation: Relation[P],
-                       column: Column[T, R]): ForeignKey[T, R, P] = {
+                                      column: Column[T, R]): ForeignKey[T, R, P] = {
     val constrName = relationName + "_" + column.columnName + "_fkey"
     val fk = new ForeignKey(this, parentRelation, constrName, column)
     _constraints += fk
@@ -223,7 +224,7 @@ trait Relation[R] {
    */
   protected[orm] def check(expression: String): CheckConstraint[R] = {
     val constrName = relationName + "_" +
-        expression.toList.takeWhile(_ != ' ').mkString + "_check"
+            expression.toList.takeWhile(_ != ' ').mkString + "_check"
     return check(constrName, expression)
   }
 
@@ -301,6 +302,88 @@ trait Relation[R] {
     _validators += v
     return v
   }
+
+  /* PERSISTENCE STUFF */
+
+  private def setParams(record: Record[R], st: PreparedStatement, cols: Seq[Column[_, R]]) =
+    (0 until cols.size).foreach(ix => {
+      val col = cols(ix)
+      val value = record.getField(col) match {
+        case Some(v) => v
+        case _ => null
+      }
+      typeConverter.write(st, value, ix + 1)
+    })
+
+  def insert(record: Record[R]): Int = {
+    validate_!(record)
+    insert_!(record)
+  }
+
+  def insert_!(record: Record[R]): Int = {
+    if (readOnly)
+      throw new ORMException("The relation " + qualifiedName + " is read-only.")
+    val conn = connectionProvider.getConnection
+    val sql = dialect.insertRecord(record)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      setParams(record, st, columns)
+      return st.executeUpdate
+    })
+  }
+
+  def update(record: Record[R]): Int = {
+    validate_!(record)
+    update_!(record)
+  }
+
+  def update_!(record: Record[R]): Int = {
+    if (readOnly)
+      throw new ORMException("The relation " + qualifiedName + " is read-only.")
+    val conn = connectionProvider.getConnection
+    val sql = dialect.updateRecord(record)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      setParams(record, st, nonPKColumns)
+      typeConverter.write(
+        st,
+        record.primaryKey.get,
+        nonPKColumns.size + 1)
+      return st.executeUpdate
+    })
+  }
+
+  def save(record: Record[R]): Int = {
+    validate_!(record)
+    save_!(record)
+  }
+
+  def save_!(record: Record[R]): Int =
+    if (record.isIdentified) update_!(record)
+    else {
+      generateFields(record)
+      insert_!(record)
+    }
+
+  def delete(record: Record[R]): Int = {
+    if (readOnly)
+      throw new ORMException("The relation " + qualifiedName + " is read-only.")
+    val conn = connectionProvider.getConnection
+    val sql = dialect.deleteRecord(record)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      typeConverter.write(st, record.primaryKey.get, 1)
+      return st.executeUpdate
+    })
+  }
+
+  def generateFields(record: Record[R]): Unit =
+    columns.flatMap(_.sequence).foreach(seq => {
+      val nextval = seq.nextValue
+      record.setField(seq.column, nextval)
+    })
+
+  /* EQUALITY AND OTHER STUFF */
 
   override def toString = qualifiedName
 
