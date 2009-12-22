@@ -26,9 +26,9 @@
 package ru.circumflex.orm
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import core.{CircumflexContext, AbstractCircumflexFilter, Circumflex}
+import ru.circumflex.core.{CircumflexContext, AbstractCircumflexFilter, Circumflex}
 import java.sql.{Timestamp, PreparedStatement, ResultSet, Connection}
-import java.util.{Date, MissingResourceException, ResourceBundle}
+import java.util.Date
 import javax.servlet.FilterChain
 import javax.naming.InitialContext
 import javax.sql.DataSource

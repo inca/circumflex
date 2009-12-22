@@ -25,7 +25,7 @@
 
 package ru.circumflex.orm
 
-import core.Circumflex
+import ru.circumflex.core.Circumflex
 
 /**
  * Aggregates all ORM-related interfaces into configuration object.
@@ -60,14 +60,14 @@ object ORM {
    * Returns SQL type converter.
    * Can be overriden with "orm.typeConverter" configuration parameter.
    */
-  def typeConverter: TypeConverter = Circumflex.cfg("orm.typeConverter") match {
+  val typeConverter: TypeConverter = Circumflex.cfg("orm.typeConverter") match {
     case Some(tc: TypeConverter) => tc
     case Some(c: Class[TypeConverter]) => c.newInstance
     case Some(s: String) => Class.forName(s).asInstanceOf[Class[TypeConverter]].newInstance
     case _ => DefaultTypeConverter
   }
 
-  def defaultSchemaName = Circumflex.cfg("orm.defaultSchema") match {
+  val defaultSchemaName = Circumflex.cfg("orm.defaultSchema") match {
     case Some(s: String) => s
     case _ => "public"
   }
