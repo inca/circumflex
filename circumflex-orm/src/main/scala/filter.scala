@@ -105,27 +105,27 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
 class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
-  private val driver = Circumflex.cfg("orm.connection.driver") match {
+  protected val driver = Circumflex.cfg("orm.connection.driver") match {
     case Some(s: String) => s
     case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver")
   }
 
-  private val url = Circumflex.cfg("orm.connection.url") match {
+  protected val url = Circumflex.cfg("orm.connection.url") match {
     case Some(s: String) => s
     case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
   }
 
-  private val username = Circumflex.cfg("orm.connection.username") match {
+  protected val username = Circumflex.cfg("orm.connection.username") match {
     case Some(s: String) => s
     case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.username'.")
   }
 
-  private val password = Circumflex.cfg("orm.connection.password") match {
+  protected val password = Circumflex.cfg("orm.connection.password") match {
     case Some(s: String) => s
     case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.password'.")
   }
 
-  private val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
+  protected val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
     case Some("none") => Connection.TRANSACTION_NONE
     case Some("read_uncommited") => Connection.TRANSACTION_READ_UNCOMMITTED
     case Some("read_commited") => Connection.TRANSACTION_READ_COMMITTED
@@ -137,7 +137,7 @@ class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
     }
   }
 
-  private val ds: DataSource = Circumflex.cfg("orm.connection.datasource") match {
+  protected val ds: DataSource = Circumflex.cfg("orm.connection.datasource") match {
     case Some(jndiName: String) => {
       val ctx = new InitialContext
       val ds = ctx.lookup(jndiName).asInstanceOf[DataSource]

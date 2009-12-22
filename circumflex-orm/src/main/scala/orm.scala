@@ -33,7 +33,6 @@ import ru.circumflex.core.Circumflex
  * if you are not satisfied with default ones.
  */
 object ORM {
-
   /**
    * Returns connection provider.
    * Can be overriden with "orm.connectionProvider" configuration parameter.

@@ -50,3 +50,5 @@ trait JDBCHelper {
     autoClose(obj)(actions)(throw _)
 
 }
+
+object JDBCHelper extends JDBCHelper

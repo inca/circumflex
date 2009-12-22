@@ -44,7 +44,7 @@ class ORMI18nFilter extends ORMFilter {
    */
   override def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
     // set cx.lang setting
-    setLang(ORM.connectionProvider.getConnection, ctx.request.getLocale.getLanguage)
+    setLang(ctx.request.getLocale.getLanguage)
     // delegate to ORMFilter
     super.doFilter(ctx, chain)
   }
@@ -62,11 +62,14 @@ object ORMI18N extends JDBCHelper {
     case _ => "cx.lang"
   }
 
-  val setLangQuery = "set " + langSetting + " = ?"
+  def setLangQuery(lang: String) =
+    "set " + langSetting + " = '" + lang.replaceAll("'","''") + "'"
+
+  def setLang(lang: String) = setLang(ORM.connectionProvider.getConnection, lang)
 
   def setLang(conn: Connection, lang: String) =
-    auto(conn.prepareStatement(setLangQuery))(st => {
-      st.setString(1, lang.trim.toLowerCase)
+    auto(conn.prepareStatement(setLangQuery(lang)))(st => {
+      sqlLog.debug(setLangQuery(lang))
       st.executeUpdate
       log.debug("Set transaction language to " + lang)
     })
