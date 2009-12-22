@@ -23,53 +23,26 @@
  * SUCH DAMAGE.
  */
 
-package ru.circumflex.orm
+package ru.circumflex.orm.i18n
 
-import ORM._
+import ru.circumflex.orm._
 
-
-/**
- * Contains metadata necessary for generating domain model schema,
- * as well as quering, inserting, updating, validating and deleting
- * records.
- * In general there should be only one table instance per record class
- * (the best practice is to implement it with a companion object for
- * record class). However, it is also possible to create tables dynamically,
- * the only requirement is to implement the <code>recordClass</code> method.
- */
-abstract class Table[R] extends Relation[R]
-        with JDBCHelper
-        with SchemaObject {
-
-  def as(alias: String) = new TableNode(this, alias)
-
-  /* DDL */
-
-  /**
-   * Produces SQL CREATE TABLE statement for this table.
-   * Constraints are not included there.
-   */
-  def sqlCreate = dialect.createTable(this)
-
-  /**
-   * Produces SQL DROP TABLE statement.
-   */
-  def sqlDrop = dialect.dropTable(this)
-
-  def objectName = qualifiedName
+class Lot extends Record[Lot] {
+  def relation = Lot
 }
 
-/**
- * Just a helper that defines long primary key column "id" with sequence.
- */
-trait LongIdPK[R] extends Relation[R] {
+object Lot extends LocalizableView[Lot] with LongIdPK[Lot] {
 
-  val id = longColumn("id")
-          .autoIncrement
+  val key = stringColumn("key")
+          .notNull
+          .unique
+
+  val name = stringColumn("name")
           .notNull
 
-  val idSeq = id.sequence.get
+  val notes = stringColumn("notes")
+          .notNull
 
-  def primaryKey = pk(id)
+  localize(name, notes)
 
 }

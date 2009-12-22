@@ -32,7 +32,7 @@ class Category extends Record[Category] {
   val books = oneToMany(Book.category)
 }
 
-object Category extends GenericTable[Category] {
+object Category extends Table[Category] with LongIdPK[Category] {
   val namePattern = "^[a-zA-Z]+$"
 
   val name = stringColumn("name")             // Creates a column
@@ -81,7 +81,7 @@ class Book extends Record[Book] {
   val category = manyToOne(Book.category)
 }
 
-object Book extends GenericTable[Book] {
+object Book extends Table[Book] with LongIdPK[Book] {
   val title = stringColumn("title")
           .notNull
           .validateNotEmpty

@@ -26,3 +26,32 @@
 package ru.circumflex.orm.i18n
 
 import ru.circumflex.orm._
+import collection.mutable.ListBuffer
+
+/**
+ * An updatable view for storing partially localizable data.
+ */
+abstract class LocalizableView[R] extends View[R] {
+
+  protected val _localizableColumns = new ListBuffer[Column[_, R]]
+
+  /**
+   * Columns that hold localizable data.
+   */
+  def localizableColumns = _localizableColumns
+
+  /**
+   * View is updatable.
+   */
+  override def readOnly = false
+
+  /**
+   * Add localizable columns.
+   */
+  def localize(cols: Column[_, R]*) =
+    _localizableColumns ++= cols.toList
+
+  def query = select().from()
+
+}
+

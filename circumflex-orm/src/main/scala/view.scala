@@ -30,7 +30,8 @@ import ORM._
 /**
  * Represents an SQL view.
  */
-abstract class View[R] extends Relation[R] with SchemaObject {
+abstract class View[R] extends Relation[R]
+        with SchemaObject {
 
   /**
    * Views are not updatable by default.
