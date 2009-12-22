@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory
 /**
  * Opens "localized transaction" for each request.
  */
-class ORMI18nFilter extends ORMFilter {
+class ORMI18NFilter extends ORMFilter {
 
   import ORMI18N._
 
@@ -44,7 +44,7 @@ class ORMI18nFilter extends ORMFilter {
    */
   override def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
     // set cx.lang setting
-    setLang(ctx.request.getLocale.getLanguage)
+    setLanguage(ctx.request.getLocale.getLanguage)
     // delegate to ORMFilter
     super.doFilter(ctx, chain)
   }
@@ -65,13 +65,15 @@ object ORMI18N extends JDBCHelper {
   def setLangQuery(lang: String) =
     "set " + langSetting + " = '" + lang.replaceAll("'","''") + "'"
 
-  def setLang(lang: String) = setLang(ORM.connectionProvider.getConnection, lang)
+  def setLanguage(lang: String): Unit = setLanguage(ORM.connectionProvider.getConnection, lang)
 
-  def setLang(conn: Connection, lang: String) =
-    auto(conn.prepareStatement(setLangQuery(lang)))(st => {
-      sqlLog.debug(setLangQuery(lang))
+  def setLanguage(conn: Connection, lang: String): Unit = {
+    val q = setLangQuery(lang.trim.toLowerCase);
+    auto(conn.prepareStatement(q))(st => {
+      sqlLog.debug(q)
       st.executeUpdate
       log.debug("Set transaction language to " + lang)
     })
+  }
 
 }
