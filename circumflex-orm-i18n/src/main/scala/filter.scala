@@ -30,19 +30,19 @@ import ru.circumflex.core._
 import javax.servlet.FilterChain
 import java.sql.Connection
 import java.lang.String
-import org.apache.log4j.spi.LoggerFactory
+import org.slf4j.LoggerFactory
 
 /**
  * Opens "localized transaction" for each request.
  */
-class ORMI18nFilter extends ORMFilter with JDBCHelper {
+class ORMI18nFilter extends ORMFilter {
 
   import ORMI18N._
 
   /**
    * Starts a "localized transaction" and delegates to ORMFilter.
    */
-  def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
+  override def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
     // set cx.lang setting
     setLang(ORM.connectionProvider.getConnection, ctx.request.getLocale.getLanguage)
     // delegate to ORMFilter
@@ -53,9 +53,9 @@ class ORMI18nFilter extends ORMFilter with JDBCHelper {
 /**
  * ORM Internationalization features configuration.
  */
-object ORMI18N {
+object ORMI18N extends JDBCHelper {
 
-  val log = LoggerFactory.getLog("ru.circumflex.orm")
+  val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   val langSetting = Circumflex.cfg("orm.i18n.langSetting") match {
     case Some(s: String) => s
