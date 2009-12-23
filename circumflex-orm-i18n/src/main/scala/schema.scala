@@ -42,15 +42,15 @@ abstract class LocalizableView[R] extends View[R] with LongIdPK[R] {
   def localize(cols: Column[_, R]*) =
     localeTable.addColumns(cols: _*)
 
-  private val tNode = rawTable as "t"
+  private val rNode = rawTable as "r"
   private val lNode = localeTable as "l"
-  private val joinNode = tNode.join(lNode)
+  private val joinNode = rNode.join(lNode)
           .on("l.cx_lang = " + ORMI18N.getLangExpression)
 
   def projections = columns.map(col =>
     if (lNode.columns.contains(col))
-      scalar("coalesce(l." + col.columnName + ", t." + col.columnName + ")")
-    else scalar("t." + col.columnName))
+      scalar("coalesce(l." + col.columnName + ", r." + col.columnName + ")")
+    else scalar("r." + col.columnName))
 
   def query = select(projections: _*).from(joinNode)
 
@@ -81,7 +81,7 @@ class RawDataTable[R](val localizableView: LocalizableView[R])
   override def readOnly = false
   override def recordClass = localizableView.recordClass
   override def schema = localizableView.schema
-  override def relationName = localizableView.relationName + "_raw"
+  override def relationName = localizableView.relationName + "_r"
   override def columns = localizableView.columns
   override def associations = localizableView.associations
   
