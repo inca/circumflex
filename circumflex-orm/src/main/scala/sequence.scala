@@ -66,5 +66,9 @@ class Sequence[R](val relation: Relation[R],
 
   def sequenceName = dialect.sequenceName(this)
 
+  def nextValSql = dialect.sequenceNextVal(this)
+
+  def currValSql = dialect.sequenceCurrVal(this)
+
   def objectName = sequenceName
 }

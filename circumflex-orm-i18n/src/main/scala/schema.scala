@@ -117,11 +117,12 @@ class LocalizableViewInsertRule[R](val localizableView: LocalizableView[R])
           ")\n\t\t\tvalues (" +
           localizableView.columns.map(c => "new." + c.columnName).mkString(", ") +
           ");\n\t\t" + "insert into " + localizableView.localeTable.qualifiedName +
-          " (cx_lang, cx_item_id, " +
+          " (id, cx_lang, cx_item_id, " +
           localizableView.localizableColumns
                   .map(_.columnName)
                   .mkString(", ") +
-          ")\n\t\t\tvalues (" + ORMI18N.getLangExpression + ", new.id, " +
+          ")\n\t\t\tvalues (" + localizableView.localeTable.idSeq.nextValSql + ", " +
+          ORMI18N.getLangExpression + ", new.id, " +
           localizableView.localizableColumns
                   .map(c => "new." + c.columnName)
                   .mkString(", ") + ");\n\t)"
@@ -146,11 +147,12 @@ class LocalizableViewUpdateRule[R](val localizableView: LocalizableView[R])
           "where cx_lang = " + ORMI18N.getLangExpression +
           " and cx_item_id = old.id;\n\t\t" +
           "insert into " + localizableView.localeTable.qualifiedName +
-          " (cx_lang, cx_item_id, " +
+          " (id, cx_lang, cx_item_id, " +
           localizableView.localizableColumns
                   .map(_.columnName)
                   .mkString(", ") +
-          ")\n\t\t\tvalues (" + ORMI18N.getLangExpression + ", new.id, " +
+          ")\n\t\t\tvalues (" + localizableView.localeTable.idSeq.nextValSql + ", " +
+          ORMI18N.getLangExpression + ", new.id, " +
           localizableView.localizableColumns
                   .map(c => "new." + c.columnName)
                   .mkString(", ") +
