@@ -26,15 +26,17 @@
 package ru.circumflex.orm.i18n
 
 import ru.circumflex.orm._
+import Query._
 
 /**
  * An updatable view for storing partially localizable data.
  */
-abstract class LocalizableView[R]
+abstract class LocalizableTable[R]
         extends Table[R]
                 with LongIdPK[R] {
 
   val localeTable: LocaleDataTable[R] = new LocaleDataTable(this)
+  val localizedView: LocalizedView[R] = new LocalizedView(this)
 
   /**
    * Add localizable columns.
@@ -42,25 +44,56 @@ abstract class LocalizableView[R]
   def localize(cols: Column[_, R]*) =
     localeTable.addColumns(cols: _*)
 
+  override def insert_!(record: Record[R]) =
+    localizedView.insert_!(record)
+  override def update_!(record: Record[R]) =
+    localizedView.update_!(record)
+  override def delete(record: Record[R]) =
+    localizedView.delete(record)
+
 }
 
-class LocaleDataTable[R](val localizableView: LocalizableView[R])
+class LocaleDataTable[R](val localizableTable: LocalizableTable[R])
         extends Table[R]
                 with LongIdPK[R] {
 
-  override def schema = localizableView.schema
-  override def relationName = localizableView.relationName + "_l"
+  override def schema = localizableTable.schema
+  override def relationName = localizableTable.relationName + "_l"
 
   val lang = stringColumn("cx_lang")
           .notNull
 
   val item = longColumn("cx_item_id")
           .notNull
-          .references(localizableView)
+          .references(localizableTable)
           .onDeleteCascade
           .onUpdateCascade
 
   unique(lang, item.localColumn)
+
+}
+
+class LocalizedView[R](val localizableTable: LocalizableTable[R])
+        extends View[R] {
+
+  override def readOnly = false
+  override def recordClass = localizableTable.recordClass
+  override def schema = localizableTable.schema
+  override def relationName = localizableTable.relationName + "_localized"
+  override def columns = localizableTable.columns
+  def primaryKey = localizableTable.primaryKey
+
+  private val tNode = localizableTable as "t"
+  private val lNode = localizableTable.localeTable as "l"
+  private val joinNode = tNode.join(lNode)
+          .on("l.cx_lang = " + ORMI18N.getLangExpression)
+
+  def projections = columns.map(col =>
+    if (lNode.columns.contains(col))
+      scalar("coalesce(l." + col.columnName + ", t." + col.columnName + ")")
+    else scalar("t." + col.columnName))
+
+  def query = select(projections: _*).from(joinNode)
 
 }
 

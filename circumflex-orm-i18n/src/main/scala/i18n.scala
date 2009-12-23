@@ -65,6 +65,8 @@ object ORMI18N extends JDBCHelper {
   def setLangQuery(lang: String) =
     "set " + langSetting + " = '" + lang.replaceAll("'","''") + "'"
 
+  def getLangExpression = "current_setting('" + langSetting + "')"
+
   def setLanguage(lang: String): Unit = setLanguage(ORM.connectionProvider.getConnection, lang)
 
   def setLanguage(conn: Connection, lang: String): Unit = {
