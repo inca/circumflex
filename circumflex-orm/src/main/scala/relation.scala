@@ -227,12 +227,17 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
     return check(constrName, expression)
   }
 
+  protected[orm] def addColumns(cols: Column[_, R]*): this.type = {
+    _columns ++= cols.toList
+    return this
+  }
+
   /**
    * Adds an arbitrary column.
    */
   protected[orm] def column[T](name: String, sqlType: String): Column[T, R] = {
     val col = new Column[T, R](this, name, sqlType)
-    _columns += col
+    addColumns(col)
     return col
   }
 
@@ -241,7 +246,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   protected[orm] def longColumn(name: String): LongColumn[R] = {
     val col = new LongColumn(this, name)
-    _columns += col
+    addColumns(col)
     return col
   }
 
@@ -250,7 +255,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   protected[orm] def stringColumn(name: String): StringColumn[R] = {
     val col = new StringColumn(this, name)
-    _columns += col
+    addColumns(col)
     return col
   }
 
@@ -259,7 +264,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   protected[orm] def booleanColumn(name: String): BooleanColumn[R] = {
     val col = new BooleanColumn(this, name)
-    _columns += col
+    addColumns(col)
     return col
   }
 
@@ -268,7 +273,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   protected[orm] def timestampColumn(name: String): TimestampColumn[R] = {
     val col = new TimestampColumn(this, name)
-    _columns += col
+    addColumns(col)
     return col
   }
 

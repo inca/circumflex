@@ -45,13 +45,13 @@ abstract class View[R] extends Relation[R]
 
   protected[orm] def column[T](columnName: String): ViewColumn[T, R] = {
     val col = new ViewColumn[T, R](this, columnName)
-    _columns += col
+    addColumns(col)
     return col
   }
 
   protected[orm] def inlineRecord[I](node: RelationNode[I]): ViewInlineRecord[I, R] = {
     val ir = new ViewInlineRecord(this, node)
-    _columns ++= ir.localColumns
+    addColumns(ir.localColumns: _*)
     return ir
   }
 

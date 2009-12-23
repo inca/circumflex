@@ -26,25 +26,41 @@
 package ru.circumflex.orm.i18n
 
 import ru.circumflex.orm._
-import collection.mutable.ListBuffer
 
 /**
  * An updatable view for storing partially localizable data.
  */
-abstract class LocalizableView[R] extends Table[R] {
+abstract class LocalizableView[R]
+        extends Table[R]
+                with LongIdPK[R] {
 
-  protected val _localizableColumns = new ListBuffer[Column[_, R]]
-
-  /**
-   * Columns that hold localizable data.
-   */
-  def localizableColumns = _localizableColumns
+  val localeTable: LocaleDataTable[R] = new LocaleDataTable(this)
 
   /**
    * Add localizable columns.
    */
   def localize(cols: Column[_, R]*) =
-    _localizableColumns ++= cols.toList
+    localeTable.addColumns(cols: _*)
+
+}
+
+class LocaleDataTable[R](val localizableView: LocalizableView[R])
+        extends Table[R]
+                with LongIdPK[R] {
+
+  override def schema = localizableView.schema
+  override def relationName = localizableView.relationName + "_l"
+
+  val lang = stringColumn("cx_lang")
+          .notNull
+
+  val item = longColumn("cx_item_id")
+          .notNull
+          .references(localizableView)
+          .onDeleteCascade
+          .onUpdateCascade
+
+  unique(lang, item.localColumn)
 
 }
 
