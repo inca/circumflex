@@ -31,7 +31,7 @@ import collection.mutable.ListBuffer
 /**
  * An updatable view for storing partially localizable data.
  */
-abstract class LocalizableView[R] extends View[R] {
+abstract class LocalizableView[R] extends Table[R] {
 
   protected val _localizableColumns = new ListBuffer[Column[_, R]]
 
@@ -41,17 +41,10 @@ abstract class LocalizableView[R] extends View[R] {
   def localizableColumns = _localizableColumns
 
   /**
-   * View is updatable.
-   */
-  override def readOnly = false
-
-  /**
    * Add localizable columns.
    */
   def localize(cols: Column[_, R]*) =
     _localizableColumns ++= cols.toList
-
-  def query = select().from()
 
 }
 
