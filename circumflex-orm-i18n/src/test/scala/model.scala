@@ -29,6 +29,9 @@ import ru.circumflex.orm._
 
 class Foo extends Record[Foo] {
   def relation = Foo
+  val key = field(Foo.key)
+  val name = field(Foo.name)
+  val notes = field(Foo.notes)
 }
 
 object Foo extends LocalizableView[Foo]
@@ -50,6 +53,8 @@ object Foo extends LocalizableView[Foo]
 
 class Bar extends Record[Bar] {
   def relation = Bar
+  val name = field(Bar.name)
+  val foo = manyToOne(Bar.foo)
 }
 
 object Bar extends LocalizableView[Bar]
