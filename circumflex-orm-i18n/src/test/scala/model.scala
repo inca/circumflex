@@ -31,7 +31,7 @@ class Foo extends Record[Foo] {
   def relation = Foo
 }
 
-object Foo extends LocalizableTable[Foo]
+object Foo extends LocalizableView[Foo]
         with LongIdPK[Foo] {
 
   val key = stringColumn("key")
@@ -52,7 +52,7 @@ class Bar extends Record[Bar] {
   def relation = Bar
 }
 
-object Bar extends LocalizableTable[Bar]
+object Bar extends LocalizableView[Bar]
         with LongIdPK[Bar] {
 
   val name = stringColumn("name")
