@@ -33,7 +33,7 @@ import java.sql.PreparedStatement
  * Designates a relation that can be used to retrieve certain type of records.
  * It can be considered a table, a virtual table, a view, a subquery, etc.
  */
-trait Relation[R] extends JDBCHelper with QueryHelper {
+abstract class Relation[R] extends JDBCHelper with QueryHelper {
 
   protected val _validators = new ListBuffer[RecordValidator[R]]
   protected val _columns = new ListBuffer[Column[_, R]]

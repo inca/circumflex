@@ -55,3 +55,4 @@ abstract class LocalizableView[R] extends View[R] {
 
 }
 
+

@@ -27,11 +27,12 @@ package ru.circumflex.orm.i18n
 
 import ru.circumflex.orm._
 
-class Lot extends Record[Lot] {
-  def relation = Lot
+class Foo extends Record[Foo] {
+  def relation = Foo
 }
 
-object Lot extends LocalizableView[Lot] with LongIdPK[Lot] {
+object Foo extends LocalizableView[Foo]
+        with LongIdPK[Foo] {
 
   val key = stringColumn("key")
           .notNull
@@ -44,5 +45,24 @@ object Lot extends LocalizableView[Lot] with LongIdPK[Lot] {
           .notNull
 
   localize(name, notes)
+
+}
+
+class Bar extends Record[Bar] {
+  def relation = Bar
+}
+
+object Bar extends LocalizableView[Bar]
+        with LongIdPK[Bar] {
+
+  val name = stringColumn("name")
+          .notNull
+
+  val foo = longColumn("foo_id")
+          .notNull
+          .references(Foo)
+          .onDeleteCascade
+
+  localize(name)
 
 }
