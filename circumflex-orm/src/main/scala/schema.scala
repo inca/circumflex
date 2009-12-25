@@ -92,9 +92,12 @@ class DDLExport extends JDBCHelper {
 
   val writers = new HashSet[Writer]()
 
-  def this(tables: Table[_]*) = {
+  val infoMsgs = new ListBuffer[String]()
+  val errMsgs = new ListBuffer[String]()
+
+  def this(objList: SchemaObject*) = {
     this()
-    tables.toList.foreach(addTable(_))
+    objList.toList.foreach(addObject(_))
   }
 
   def addWriter(writers: Writer *): this.type = {
@@ -106,30 +109,25 @@ class DDLExport extends JDBCHelper {
     writers.foreach(_.write(msg + "\n"))
   }
 
-  /**
-   * Adds a table to database objects list.
-   */
-  def addTable(tab: Table[_]): this.type = {
-    tables += tab
-    schemata += tab.schema
-    constraints ++= tab.constraints
-    sequences ++= tab.sequences
-    auxiliaryObjects ++= tab.auxiliaryObjects
-    return this
-  }
-
-  /**
-   * Adds a view to database objects list.
-   */
-  def addView(view: View[_]): this.type = {
-    views += view
-    schemata += view.schema
-    auxiliaryObjects ++= view.auxiliaryObjects
-    return this
-  }
-
-  def addAuxiliaryObject(obj: SchemaObject): this.type = {
-    auxiliaryObjects += obj
+  def addObject(obj: SchemaObject): this.type = {
+    obj match {
+      case t: Table[_] => {
+        tables += t
+        addObject(t.schema)
+        t.constraints.foreach(o => addObject(o))
+        t.sequences.foreach(o => addObject(o))
+        t.auxiliaryObjects.foreach(o => addObject(o))
+      }
+      case v: View[_] => {
+        views += v
+        schemata += v.schema
+        v.auxiliaryObjects.foreach(o => addObject(o))
+      }
+      case s: Sequence[_] => sequences += s
+      case c: Constraint[_] => constraints += c
+      case s: Schema => schemata += s
+      case o => auxiliaryObjects += o
+    }
     return this
   }
 
@@ -144,217 +142,196 @@ class DDLExport extends JDBCHelper {
   /**
    * Executes CREATE script.
    */
-  def create: Unit = {
-    // obtain JDBC connection
+  def create: Unit =
     autoClose(connectionProvider.getConnection)(conn => {
       // we will commit every successful statement
+      val autoCommit = conn.getAutoCommit
       conn.setAutoCommit(true)
+      // clear statistics
+      infoMsgs.clear
+      errMsgs.clear
       // process database objects
+      log.info("Executing schema create script.")
       createSchemata(conn)
       createTables(conn)
       createConstraints(conn)
       createSequences(conn)
       createViews(conn)
       createAuxiliaryObjects(conn)
+      // restore previous auto-commit setting
+      conn.setAutoCommit(autoCommit)
+      // report log and statistics
+      infoMsgs.foreach(log.info(_))
+      errMsgs.foreach(log.info(_))
+      log.info("Create schema script finished.")
+      log.info("{} statements executes successfully.", infoMsgs.size)
+      log.info("{} statements failed.", errMsgs.size)
+      infoMsgs.foreach(write(_))
+      errMsgs.foreach(write(_))
     })(e => log.error("Connection failure occured while exporing DDL.", e))
-  }
 
   /**
    * Executes DROP script.
    */
-  def drop: Unit = {
-    // obtain JDBC connection
+  def drop: Unit =
     autoClose(connectionProvider.getConnection)(conn => {
       // we will commit every successful statement
+      val autoCommit = conn.getAutoCommit
       conn.setAutoCommit(true)
+      // clear statistics
+      infoMsgs.clear
+      errMsgs.clear
       // process database objects
+      log.info("Executing schema drop script.")
       dropAuxiliaryObjects(conn)
       dropViews(conn)
       dropSequences(conn)
       dropConstraints(conn)
       dropTables(conn)
       dropSchemata(conn)
+      // restore previous auto-commit setting
+      conn.setAutoCommit(autoCommit)
+      // report log and statistics
+      infoMsgs.foreach(log.info(_))
+      errMsgs.foreach(log.info(_))
+      log.info("Drop schema script finished.")
+      log.info("{} statements executes successfully.", infoMsgs.size)
+      log.info("{} statements failed.", errMsgs.size)
+      infoMsgs.foreach(write(_))
+      errMsgs.foreach(write(_))
     })(e => log.error("Connection failure occured while exporing DDL.", e))
-  }
 
   def dropAuxiliaryObjects(conn: Connection) =
-    for (o <- auxiliaryObjects.reverse) {
-      var msg = ""
+    for (o <- auxiliaryObjects.reverse)
       autoClose(conn.prepareStatement(o.sqlDrop))(st => {
         log.debug(o.sqlDrop)
         st.executeUpdate
-        msg = "DROP OBJECT " + o.objectName + ": OK"
+        infoMsgs += ("DROP OBJECT " + o.objectName + ": OK")
       })(e => {
-        msg = "DROP OBJECT " + o.objectName + ": " + e.getMessage
+        errMsgs += ("DROP OBJECT " + o.objectName + ": " + e.getMessage)
         log.trace("Error dropping auxiliary object.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def dropViews(conn: Connection) =
     for (v <- views) {
-      var msg = ""
       autoClose(conn.prepareStatement(v.sqlDrop))(st => {
         log.debug(v.sqlDrop)
         st.executeUpdate
-        msg = "DROP VIEW " + v.objectName + ": OK"
+        infoMsgs += ("DROP VIEW " + v.objectName + ": OK")
       })(e => {
-        msg = "DROP VIEW " + v.objectName + ": " + e.getMessage
+        errMsgs += ("DROP VIEW " + v.objectName + ": " + e.getMessage)
         log.trace("Error dropping view.", e)
       })
-      log.info(msg)
-      write(msg)
     }
 
   def dropSequences(conn: Connection) =
-    for (s <- sequences) {
-      var msg = ""
+    for (s <- sequences)
       autoClose(conn.prepareStatement(s.sqlDrop))(st => {
         log.debug(s.sqlDrop)
         st.executeUpdate
-        msg = "DROP SEQUENCE " + s.objectName + ": OK"
+        infoMsgs += ("DROP SEQUENCE " + s.objectName + ": OK")
       })(e => {
-        msg = "DROP SEQUENCE " + s.objectName + ": " + e.getMessage
+        errMsgs += ("DROP SEQUENCE " + s.objectName + ": " + e.getMessage)
         log.trace("Error dropping sequence.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def dropConstraints(conn: Connection) =
-    for (c <- constraints) {
-      var msg = ""
+    for (c <- constraints)
       autoClose(conn.prepareStatement(c.sqlDrop))(st => {
         log.debug(c.sqlDrop)
         st.executeUpdate
-        msg = "DROP CONSTRAINT " + c.objectName + ": OK"
+        infoMsgs += ("DROP CONSTRAINT " + c.objectName + ": OK")
       })(e => {
-        msg = "DROP CONSTRAINT " + c.objectName + ": " + e.getMessage
+        errMsgs += ("DROP CONSTRAINT " + c.objectName + ": " + e.getMessage)
         log.trace("Error dropping constraint.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def dropTables(conn: Connection) =
-    for (t <- tables) {
-      var msg = ""
+    for (t <- tables)
       autoClose(conn.prepareStatement(t.sqlDrop))(st => {
         log.debug(t.sqlDrop)
         st.executeUpdate
-        msg = "DROP TABLE " + t.objectName + ": OK"
+        infoMsgs += ("DROP TABLE " + t.objectName + ": OK")
       })(e => {
-        msg = "DROP TABLE " + t.objectName + ": " + e.getMessage
+        errMsgs += ("DROP TABLE " + t.objectName + ": " + e.getMessage)
         log.trace("Error dropping table.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def dropSchemata(conn: Connection) =
-    for (s <- schemata) {
-      var msg = ""
+    for (s <- schemata)
       autoClose(conn.prepareStatement(s.sqlDrop))(st => {
         log.debug(s.sqlDrop)
         st.executeUpdate
-        msg = "DROP SCHEMA " + s.objectName + ": OK"
+        infoMsgs += ("DROP SCHEMA " + s.objectName + ": OK")
       })(e => {
-        msg = "DROP SCHEMA " + s.objectName + ": " + e.getMessage
+        errMsgs += ("DROP SCHEMA " + s.objectName + ": " + e.getMessage)
         log.trace("Error dropping schema.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def createSchemata(conn: Connection) =
-    for (s <- schemata) {
-      var msg = ""
+    for (s <- schemata)
       autoClose(conn.prepareStatement(s.sqlCreate))(st => {
         log.debug(s.sqlCreate)
         st.executeUpdate
-        msg = "CREATE SCHEMA " + s.objectName + ": OK"
+        infoMsgs += ("CREATE SCHEMA " + s.objectName + ": OK")
       })(e => {
-        msg = "CRAETE SCHEMA " + s.objectName + ": " + e.getMessage
+        errMsgs += ("CRAETE SCHEMA " + s.objectName + ": " + e.getMessage)
         log.trace("Error creating schema.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def createTables(conn: Connection) =
-    for (t <- tables) {
-      var msg = ""
+    for (t <- tables)
       autoClose(conn.prepareStatement(t.sqlCreate))(st => {
         log.debug(t.sqlCreate)
         st.executeUpdate
-        msg = "CREATE TABLE " + t.objectName + ": OK"
+        infoMsgs += ("CREATE TABLE " + t.objectName + ": OK")
       })(e => {
-        msg = "CREATE TABLE " + t.objectName + ": " + e.getMessage
+        errMsgs += ("CREATE TABLE " + t.objectName + ": " + e.getMessage)
         log.trace("Error creating table.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def createConstraints(conn: Connection) =
-    for (c <- constraints) {
-      var msg = ""
+    for (c <- constraints)
       autoClose(conn.prepareStatement(c.sqlCreate))(st => {
         log.debug(c.sqlCreate)
         st.executeUpdate
-        msg = "CREATE CONSTRAINT " + c.objectName + ": OK"
+        infoMsgs += ("CREATE CONSTRAINT " + c.objectName + ": OK")
       })(e => {
-        msg = "CREATE CONSTRAINT " + c.objectName + ": " + e.getMessage
+        errMsgs += ("CREATE CONSTRAINT " + c.objectName + ": " + e.getMessage)
         log.trace("Error creating constraint.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def createSequences(conn: Connection) =
-    for (s <- sequences) {
-      var msg = ""
+    for (s <- sequences)
       autoClose(conn.prepareStatement(s.sqlCreate))(st => {
         log.debug(s.sqlCreate)
         st.executeUpdate
-        msg = "CREATE SEQUENCE " + s.objectName + ": OK"
+        infoMsgs += ("CREATE SEQUENCE " + s.objectName + ": OK")
       })(e => {
-        msg = "CREATE SEQUENCE " + s.objectName + ": " + e.getMessage
+        errMsgs += ("CREATE SEQUENCE " + s.objectName + ": " + e.getMessage)
         log.trace("Error creating sequence.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def createViews(conn: Connection) =
-    for (v <- views) {
-      var msg = ""
+    for (v <- views)
       autoClose(conn.prepareStatement(v.sqlCreate))(st => {
         log.debug(v.sqlCreate)
         st.executeUpdate
-        msg = "CREATE VIEW " + v.objectName + ": OK"
+        infoMsgs += ("CREATE VIEW " + v.objectName + ": OK")
       })(e => {
-        msg = "CREATE VIEW " + v.objectName + ": " + e.getMessage
+        errMsgs += ("CREATE VIEW " + v.objectName + ": " + e.getMessage)
         log.trace("Error creating view.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
   def createAuxiliaryObjects(conn: Connection) =
-    for (o <- auxiliaryObjects) {
-      var msg = ""
+    for (o <- auxiliaryObjects)
       autoClose(conn.prepareStatement(o.sqlCreate))(st => {
         log.debug(o.sqlCreate)
         st.executeUpdate
-        msg = "CREATE OBJECT " + o.objectName + ": OK"
+        infoMsgs += ("CREATE OBJECT " + o.objectName + ": OK")
       })(e => {
-        msg = "CREATE OBJECT " + o.objectName + ": " + e.getMessage
+        errMsgs += ("CREATE OBJECT " + o.objectName + ": " + e.getMessage)
         log.trace("Error creating auxiliary object.", e)
       })
-      log.info(msg)
-      write(msg)
-    }
 
 }

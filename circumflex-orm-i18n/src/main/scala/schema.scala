@@ -67,7 +67,7 @@ abstract class LocalizableView[R] extends View[R] with LongIdPK[R] {
   protected val ruleUpdate = new LocalizableViewUpdateRule(this)
   protected val ruleDelete = new LocalizableViewDeleteRule(this)
 
-  addAuxiliaryObjects(ruleInsert, ruleUpdate, ruleDelete);
+  addAuxiliaryObjects(rawTable, localeTable, ruleInsert, ruleUpdate, ruleDelete);
 
 }
 
