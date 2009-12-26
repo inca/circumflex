@@ -33,7 +33,7 @@ import javax.naming.InitialContext
 import javax.sql.DataSource
 import org.slf4j.LoggerFactory
 import ORM._
-import javax.servlet.{ServletRequestEvent, ServletRequestEvent, ServletRequestListener, FilterChain}
+import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
 
 /**
  * Defines a contract to return JDBC connections.
