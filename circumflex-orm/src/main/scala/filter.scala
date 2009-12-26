@@ -105,26 +105,6 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
 class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
-  protected val driver = Circumflex.cfg("orm.connection.driver") match {
-    case Some(s: String) => s
-    case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver")
-  }
-
-  protected val url = Circumflex.cfg("orm.connection.url") match {
-    case Some(s: String) => s
-    case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
-  }
-
-  protected val username = Circumflex.cfg("orm.connection.username") match {
-    case Some(s: String) => s
-    case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.username'.")
-  }
-
-  protected val password = Circumflex.cfg("orm.connection.password") match {
-    case Some(s: String) => s
-    case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.password'.")
-  }
-
   protected val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
     case Some("none") => Connection.TRANSACTION_NONE
     case Some("read_uncommited") => Connection.TRANSACTION_READ_UNCOMMITTED
@@ -146,6 +126,22 @@ class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
     }
     case _ => {
       log.info("Using c3p0 connection pooling.")
+      val driver = Circumflex.cfg("orm.connection.driver") match {
+        case Some(s: String) => s
+        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver")
+      }
+      val url = Circumflex.cfg("orm.connection.url") match {
+        case Some(s: String) => s
+        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
+      }
+      val username = Circumflex.cfg("orm.connection.username") match {
+        case Some(s: String) => s
+        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.username'.")
+      }
+      val password = Circumflex.cfg("orm.connection.password") match {
+        case Some(s: String) => s
+        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.password'.")
+      }
       val ds = new ComboPooledDataSource()
       ds.setDriverClass(driver)
       ds.setJdbcUrl(url)
