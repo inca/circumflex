@@ -201,6 +201,7 @@ class ConnectionManagementFilter extends AbstractCircumflexFilter {
 }
 
 class ConnectionManagementListener extends ServletRequestListener {
+  protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   def requestInitialized(sre: ServletRequestEvent) = {}
 
