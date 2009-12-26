@@ -27,28 +27,10 @@ package ru.circumflex.orm.i18n
 
 import ru.circumflex.orm._
 import ru.circumflex.core._
-import javax.servlet.FilterChain
 import java.sql.Connection
 import java.lang.String
 import org.slf4j.LoggerFactory
-
-/**
- * Opens "localized transaction" for each request.
- */
-class ORMI18NFilter extends ORMFilter {
-
-  import ORMI18N._
-
-  /**
-   * Starts a "localized transaction" and delegates to ORMFilter.
-   */
-  override def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
-    // set cx.lang setting
-    setLanguage(ctx.request.getLocale.getLanguage)
-    // delegate to ORMFilter
-    super.doFilter(ctx, chain)
-  }
-}
+import java.util.Locale
 
 /**
  * ORM Internationalization features configuration.
@@ -66,6 +48,8 @@ object ORMI18N extends JDBCHelper {
     "set " + langSetting + " = '" + lang.replaceAll("'","''") + "'"
 
   def getLangExpression = "current_setting('" + langSetting + "')"
+
+  def setLanguage(locale: Locale): Unit = setLanguage(locale.getLanguage)
 
   def setLanguage(lang: String): Unit = setLanguage(ORM.connectionProvider.getConnection, lang)
 

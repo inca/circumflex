@@ -29,11 +29,11 @@ import com.mchange.v2.c3p0.ComboPooledDataSource
 import ru.circumflex.core.{CircumflexContext, AbstractCircumflexFilter, Circumflex}
 import java.sql.{Timestamp, PreparedStatement, ResultSet, Connection}
 import java.util.Date
-import javax.servlet.FilterChain
 import javax.naming.InitialContext
 import javax.sql.DataSource
 import org.slf4j.LoggerFactory
 import ORM._
+import javax.servlet.{ServletRequestEvent, ServletRequestEvent, ServletRequestListener, FilterChain}
 
 /**
  * Defines a contract to return JDBC connections.
@@ -176,7 +176,7 @@ object DefaultConnectionProvider extends DefaultConnectionProvider
  * at the end of request processing cycle.
  * This filter should be the first in chain.
  */
-class ORMFilter extends AbstractCircumflexFilter {
+class ConnectionManagementFilter extends AbstractCircumflexFilter {
   override protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   /**
@@ -198,6 +198,26 @@ class ORMFilter extends AbstractCircumflexFilter {
       log.debug("Closed current connection.")
     }
   }
+}
+
+class ConnectionManagementListener extends ServletRequestListener {
+
+  def requestInitialized(sre: ServletRequestEvent) = {}
+
+  def requestDestroyed(sre: ServletRequestEvent) =
+    if (connectionProvider.hasLiveConnection) try {
+      connectionProvider.getConnection.commit
+      log.debug("Committed current transaction.")
+    } catch {
+      case e => {
+        log.error("An error has occured while trying to commit current transaction.", e)
+        connectionProvider.getConnection.rollback
+        log.debug("Rolled back current transaction.")
+      }
+    } finally {
+      connectionProvider.getConnection.close
+      log.debug("Closed current connection.")
+    }
 }
 
 /**
