@@ -52,29 +52,22 @@ public class ConfigureMojo extends AbstractMojo {
      */
     private File targetFile;
 
-    public Properties getProperties() {
-        return properties;
-    }
-
-    public void setProperties(Properties properties) {
-        this.properties = properties;
-    }
-
-    public File getTargetFile() {
-        return targetFile;
-    }
-
-    public void setTargetFile(File targetFile) {
-        this.targetFile = targetFile;
-    }
+    /**
+     * @parameter default-value="true"
+     */
+    private boolean skipUnresolved;
 
     public void execute() throws MojoExecutionException {
         try {
             PrintWriter fw = new PrintWriter(targetFile);
             getLog().info("Writing Circumflex configuration to " + targetFile);
             try {
-                for (Object k : properties.keySet())
-                    fw.println(k + "=" + properties.get(k));
+                for (Object key : properties.keySet()) {
+                    String value = properties.get(key).toString();
+                    if (!(skipUnresolved && value.startsWith("${") && value.endsWith("}")))
+                        fw.println(key + "=" + value);
+                    else getLog().warn("Property with key " + key + " is unresolved. To include it, set 'skipUnresolved' to false.");
+                }
             } finally {
                 fw.close();
             }
