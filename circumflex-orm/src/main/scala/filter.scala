@@ -128,7 +128,7 @@ class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
       log.info("Using c3p0 connection pooling.")
       val driver = Circumflex.cfg("orm.connection.driver") match {
         case Some(s: String) => s
-        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver")
+        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
       }
       val url = Circumflex.cfg("orm.connection.url") match {
         case Some(s: String) => s
