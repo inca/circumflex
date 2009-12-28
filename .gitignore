@@ -7,10 +7,5 @@ target
 *~
 .DS_Store
 nohup.out
-*/src/main/webapp/images
-*/src/main/webapp/styles
-*/src/main/webapp/templates
-ldav-server/jackrabbit
-ldav-server/leterepo
 
 
