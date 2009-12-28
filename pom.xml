@@ -15,6 +15,7 @@
 
   <modules>
     <module>circumflex-core</module>
+    <module>circumflex-maven-plugin</module>
     <module>circumflex-orm</module>
     <module>circumflex-orm-i18n</module>
     <module>circumflex-hibernate</module>
@@ -176,7 +177,7 @@
           <configuration>
             <encoding>UTF-8</encoding>
             <source>1.6</source>
-            <target>1.5</target>
+            <target>1.6</target>
           </configuration>
         </plugin>
         <plugin>
