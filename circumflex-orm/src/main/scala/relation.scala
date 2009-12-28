@@ -43,6 +43,14 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
 
   private var _cachedRecordClass: Class[R] = null;
 
+  private var uniqueCounter = -1;
+
+  protected[orm] def uniqueSuffix: String = {
+    uniqueCounter += 1
+    if (uniqueCounter == 0) return ""
+    else return "_" + uniqueCounter
+  }
+
   /**
    * Determines, whether DML operations are allowed on this relation.
    */
@@ -211,6 +219,9 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
     return fk
   }
 
+  /**
+   * Adds a check constraint with specified name.
+   */
   protected[orm] def check(constraintName: String,
                            expression: String): CheckConstraint[R] = {
     val chk = new CheckConstraint(this, constraintName, expression)
@@ -219,14 +230,29 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   }
 
   /**
-   * Adds a check constraint.
+   * Adds a check constraint with default name.
    */
-  protected[orm] def check(expression: String): CheckConstraint[R] = {
-    val constrName = relationName + "_" +
-            expression.toList.takeWhile(_ != ' ').mkString + "_check"
-    return check(constrName, expression)
+  protected[orm] def check(expression: String): CheckConstraint[R] =
+    check(relationName + "_check" + uniqueSuffix, expression)
+
+  /**
+   * Adds an index with specified name.
+   */
+  protected[orm] def index(indexName: String): Index[R] = {
+    val idx = new Index(this, indexName)
+    _auxiliaryObjects += idx
+    return idx
   }
 
+  /**
+   * Adds an index with default name.
+   */
+  protected[orm] def index(): Index[R] =
+    index(relationName + "_idx" + uniqueSuffix)
+
+  /**
+   * Adds one or more columns to relation's definition.
+   */
   protected[orm] def addColumns(cols: Column[_, R]*): this.type = {
     _columns ++= cols.toList
     return this

@@ -89,6 +89,9 @@ object Book extends Table[Book] with LongIdPK[Book] {
           .references(Category)     // Creates an association with Category
           .onDeleteSetNull
           .onUpdateCascade
+
+  index.unique.add("lower(title)").where("title" like "A%")
+  
 }
 
 class CategoryStatistics extends Record[CategoryStatistics] {

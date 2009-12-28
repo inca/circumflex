@@ -55,7 +55,7 @@ class Column[T, R](val relation: Relation[R],
   /**
    * Is this column nullable?
    */
-  def nullable: Boolean = _nullable
+  def nullable_?(): Boolean = _nullable
 
   /**
    * Get a sequence for autoincrement columns.

@@ -134,7 +134,7 @@ trait Dialect {
    * (e.g. "mycolumn varchar not null unique").
    */
   def columnDefinition(col: Column[_, _]) =
-    col.columnName + " " + col.sqlType + (if (!col.nullable) " not null" else "")
+    col.columnName + " " + col.sqlType + (if (!col.nullable_?) " not null" else "")
 
   /**
    * Produces PK definition (e.g. "primary key (id)").
@@ -201,6 +201,17 @@ trait Dialect {
             view.query.toInlineSql
 
   /**
+   * Produces CREATE INDEX statement.
+   */
+  def createIndex(index: Index[_]): String =
+    "create " + (if (index.unique_?) "unique" else "") + " index " +
+            index.indexName + "\n\ton " + index.relation.qualifiedName + " using " +
+            index.using + " (" + index.expressions.mkString(", ") + ")" +
+            (if (index.where != EmptyPredicate)
+              "\n\twhere\n\t" + index.where.toInlineSql
+            else "")
+
+  /**
    * Produces ALTER TABLE statement with abstract action.
    */
   def alterTable(rel: Relation[_], action: String) =
@@ -253,6 +264,12 @@ trait Dialect {
    */
   def dropSchema(schema: Schema) =
     "drop schema " + schema.schemaName + " cascade"
+
+  /**
+   * Produces DROP INDEX statement.
+   */
+  def dropIndex(index: Index[_]) =
+    "drop index " + index.relation.schemaName + "." + index.indexName
 
   /* SEQUENCES STUFF */
 
@@ -350,8 +367,8 @@ trait Dialect {
     if (q.relations.size > 0)
       result += "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
     if (q.where != EmptyPredicate) result += "\nwhere\n\t" + q.where.toSql
-    if (q.projections.exists(_.grouping)) {  // GROUP BY clause may be required
-      val gb = q.projections.filter(!_.grouping)
+    if (q.projections.exists(_.grouping_?)) {  // GROUP BY clause may be required
+      val gb = q.projections.filter(!_.grouping_?)
       if (gb.size > 0) result += "\ngroup by\n\t" + gb.flatMap(_.sqlAliases).mkString(",\n\t")
     }
     if (q.orders.size > 0)

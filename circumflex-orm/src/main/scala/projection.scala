@@ -42,7 +42,7 @@ trait Projection[T] extends SQLable {
    * If at least one grouping projection presents in query, then all non-grouping projections
    * should appear to GROUP BY clause.
    */
-  def grouping: Boolean = false
+  def grouping_?(): Boolean = false
 
   /**
    * Returns the list of aliases, from which this projection is composed.
@@ -87,8 +87,10 @@ trait CompositeProjection[R] extends Projection[R] {
 }
 
 class ScalarProjection[T](val expression: String,
-                          override val grouping: Boolean)
+                          val grouping: Boolean)
     extends AtomicProjection[T] {
+
+  override def grouping_?() = grouping
 
   def toSql = dialect.scalarAlias(expression, alias)
 }

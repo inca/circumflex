@@ -50,6 +50,8 @@ trait SchemaObject {
    * SQL object name.
    */
   def objectName: String
+
+  override def toString = objectName
 }
 
 /**

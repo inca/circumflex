@@ -38,6 +38,12 @@ trait Predicate extends SQLable {
    */
   def parameters: Seq[Any]
 
+  /**
+   * Inlines predicate parameters and returns resulting SQL.
+   */
+  def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
+    sql.replaceFirst("\\?", typeConverter.toString(p)))
+
 }
 
 /**
