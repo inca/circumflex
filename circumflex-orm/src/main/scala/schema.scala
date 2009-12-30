@@ -57,9 +57,7 @@ trait SchemaObject {
 /**
  * Base functionality for SQL schema.
  */
-class Schema extends SchemaObject {
-
-  var schemaName = defaultSchemaName
+class Schema(var schemaName: String) extends SchemaObject {
 
   def sqlCreate = dialect.createSchema(this)
   def sqlDrop = dialect.dropSchema(this)
@@ -77,7 +75,7 @@ class Schema extends SchemaObject {
 /**
  * Default public schema singleton.
  */
-object DefaultSchema extends Schema
+object DefaultSchema extends Schema(defaultSchemaName)
 
 /**
  * Executes DDL statements.
