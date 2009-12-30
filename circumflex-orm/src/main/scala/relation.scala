@@ -116,12 +116,12 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * Returns sequences associated with this table.
    */
-  def sequences = columns.flatMap(_.sequence)
+  def sequences: Seq[Sequence[R]] = columns.flatMap(_.sequence)
 
   /**
    * Returns auxiliary objects associated with this table.
    */
-  def auxiliaryObjects = _auxiliaryObjects
+  def auxiliaryObjects: Seq[SchemaObject] = _auxiliaryObjects
 
   /**
    * If possible, return an association from this relation as parent to
@@ -194,7 +194,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    * Adds associated auxiliary object.
    */
   protected[orm] def addAuxiliaryObjects(objects: SchemaObject*) = {
-    this.auxiliaryObjects ++= objects.toList
+    _auxiliaryObjects ++= objects.toList
   }
 
   /**
