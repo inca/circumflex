@@ -61,7 +61,8 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   def recordClass: Class[R] = {
     if (_cachedRecordClass == null)
-      _cachedRecordClass = Class.forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"))
+      _cachedRecordClass = Class
+              .forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"))
               .asInstanceOf[Class[R]]
     return _cachedRecordClass
   }

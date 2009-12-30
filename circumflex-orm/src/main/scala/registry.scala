@@ -23,40 +23,22 @@
  * SUCH DAMAGE.
  */
 
-package ru.circumflex.orm.i18n
+package ru.circumflex.orm
 
-import ru.circumflex.orm._
+object ORMRegistry {
 
-class Foo extends Record[Foo] {
-  val key = field(Foo.key)
-  val name = field(Foo.name)
-  val notes = field(Foo.notes)
-}
+  var recordClassToRelationMap:Map[Class[_], Relation[_]] = Map()
 
-object Foo extends LocalizableView[Foo]
-        with LongIdPK[Foo] {
-  val key = stringColumn("key")
-          .notNull
-          .unique
-  val name = stringColumn("name")
-          .notNull
-  val notes = stringColumn("notes")
-          .notNull
-  localize(name, notes)
-}
+  def getRelation[R](record: Record[R]): Relation[R] =
+    recordClassToRelationMap.get(record.getClass) match {
+      case Some(rel: Relation[R]) => rel
+      case None => {
+        val relation = Class.forName(record.getClass.getName + "$")
+                .newInstance
+                .asInstanceOf[Relation[R]]
+        recordClassToRelationMap += (record.getClass -> relation)
+        relation
+      }
+    }
 
-class Bar extends Record[Bar] {
-  val name = field(Bar.name)
-  val foo = manyToOne(Bar.foo)
-}
-
-object Bar extends LocalizableView[Bar]
-        with LongIdPK[Bar] {
-  val name = stringColumn("name")
-          .notNull
-  val foo = longColumn("foo_id")
-          .notNull
-          .references(Foo)
-          .onDeleteCascade
-  localize(name)
 }

@@ -52,7 +52,7 @@ abstract class Record[R] {
   val manyToOneMap = new HashMap[Association[R, _], Any]()
   val oneToManyMap = new HashMap[Association[_, R], Seq[Any]]()
 
-  def relation: Relation[R]
+  val relation: Relation[R] = ORMRegistry.getRelation(this)
 
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
 
