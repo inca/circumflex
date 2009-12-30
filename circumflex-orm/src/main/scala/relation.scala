@@ -208,14 +208,27 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   }
 
   /**
+   * Adds an associative foreign key constraint.
+   */
+  protected[orm] def foreignKey[T, P](parentRelation: Relation[P],
+                                      column: Column[T, R]): AssociativeForeignKey[T, R, P] = {
+    val constrName = relationName + "_" + column.columnName + "_fkey"
+    val fk = new AssociativeForeignKey(this, parentRelation, constrName, column)
+    _constraints += fk
+    _associations += fk
+    return fk
+  }
+
+  /**
    * Adds a foreign key constraint.
    */
   protected[orm] def foreignKey[T, P](parentRelation: Relation[P],
-                                      column: Column[T, R]): ForeignKey[T, R, P] = {
-    val constrName = relationName + "_" + column.columnName + "_fkey"
-    val fk = new ForeignKey(this, parentRelation, constrName, column)
+                                      localColumns: Seq[Column[_, R]],
+                                      referenceColumns: Seq[Column[_, P]]
+          ): ForeignKey[R, P] = {
+    val constrName = relationName + "_" + localColumns.map(_.columnName).mkString("_") + "_fkey"
+    val fk = new MultiForeignKey(this, parentRelation, constrName, localColumns, referenceColumns)
     _constraints += fk
-    _associations += fk
     return fk
   }
 

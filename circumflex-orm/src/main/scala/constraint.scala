@@ -61,7 +61,7 @@ abstract class Constraint[R](val relation: Relation[R],
 class PrimaryKey[T, R](relation: Relation[R],
                        constraintName: String,
                        val column: Column[T, R])
-    extends Constraint[R](relation, constraintName) {
+        extends Constraint[R](relation, constraintName) {
 
   def sqlDefinition = dialect.primaryKeyDefinition(this)
 
@@ -73,7 +73,7 @@ class PrimaryKey[T, R](relation: Relation[R],
 class UniqueKey[R](relation: Relation[R],
                    constraintName: String,
                    val columns: Seq[Column[_, R]])
-    extends Constraint[R](relation, constraintName) {
+        extends Constraint[R](relation, constraintName) {
 
   def sqlDefinition = dialect.uniqueKeyDefinition(this)
 }
@@ -89,77 +89,103 @@ object RestrictAction extends ForeignKeyAction
 object SetNullAction extends ForeignKeyAction
 object SetDefaultAction extends ForeignKeyAction
 
-/**
- * Foreign key constraint.
- */
-class ForeignKey[T, C, P](val childRelation: Relation[C],
-                          val parentRelation: Relation[P],
-                          constraintName: String,
-                          val childColumn: Column[T, C])
-    extends Constraint[C](childRelation, constraintName)
-            with Association[C, P] {
+abstract class ForeignKey[C, P](val childRelation: Relation[C],
+                                val parentRelation: Relation[P],
+                                constraintName: String)
+        extends Constraint[C](childRelation, constraintName) {
 
-  var onDelete: ForeignKeyAction = NoAction
-  var onUpdate: ForeignKeyAction = NoAction
+  protected var _onDelete: ForeignKeyAction = NoAction
+  protected var _onUpdate: ForeignKeyAction = NoAction
 
   def sqlDefinition = dialect.foreignKeyDefinition(this)
 
+  def onDelete = _onDelete
+  def onUpdate = _onUpdate
+
+  def childColumns: Seq[Column[_, C]]
+  def parentColumns: Seq[Column[_, P]]
+
   def onDeleteNoAction: this.type = {
-    onDelete = NoAction
+    _onDelete = NoAction
     return this
   }
 
   def onDeleteCascade: this.type = {
-    onDelete = CascadeAction
+    _onDelete = CascadeAction
     return this
   }
 
   def onDeleteRestrict: this.type = {
-    onDelete = RestrictAction
+    _onDelete = RestrictAction
     return this
   }
 
   def onDeleteSetNull: this.type = {
-    onDelete = SetNullAction
+    _onDelete = SetNullAction
     return this
   }
 
   def onDeleteSetDefault: this.type = {
-    onDelete = SetDefaultAction
+    _onDelete = SetDefaultAction
     return this
   }
 
   def onUpdateNoAction: this.type = {
-    onUpdate = NoAction
+    _onUpdate = NoAction
     return this
   }
 
   def onUpdateCascade: this.type = {
-    onUpdate = CascadeAction
+    _onUpdate = CascadeAction
     return this
   }
 
   def onUpdateRestrict: this.type = {
-    onUpdate = RestrictAction
+    _onUpdate = RestrictAction
     return this
   }
 
   def onUpdateSetNull: this.type = {
-    onUpdate = SetNullAction
+    _onUpdate = SetNullAction
     return this
   }
 
   def onUpdateSetDefault: this.type = {
-    onUpdate = SetDefaultAction
+    _onUpdate = SetDefaultAction
     return this
   }
+
+}
+
+/**
+ * Represents multi-columned foreign key constraint.
+ */
+class MultiForeignKey[C, P](childRelation: Relation[C],
+                            parentRelation: Relation[P],
+                            constraintName: String,
+                            val childColumns: Seq[Column[_, C]],
+                            val parentColumns: Seq[Column[_, P]])
+        extends ForeignKey[C, P](childRelation, parentRelation, constraintName)
+
+/**
+ * Represents single-columned foreign key constraint, which also acts like association.
+ */
+class AssociativeForeignKey[T, C, P](childRelation: Relation[C],
+                                     parentRelation: Relation[P],
+                                     constraintName: String,
+                                     val childColumn: Column[T, C])
+        extends ForeignKey[C, P](childRelation, parentRelation, constraintName)
+                with Association[C, P] {
+
+  val parentColumns = List(parentColumn)
+  val childColumns = List(childColumn)
 
 }
 
 class CheckConstraint[R](relation: Relation[R],
                          constraintName: String,
                          val expression: String)
-    extends Constraint[R](relation, constraintName) {
+        extends Constraint[R](relation, constraintName) {
 
   def sqlDefinition = dialect.checkConstraintDefinition(this)
 }

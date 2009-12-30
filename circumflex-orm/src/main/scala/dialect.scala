@@ -152,9 +152,10 @@ trait Dialect {
    * Produces foreign key constraint definition
    * (e.g. "foreign key (ref_id) references public.ref(id) on delete cascade on update no action").
    */
-  def foreignKeyDefinition(fk: ForeignKey[_, _, _]) =
-    "foreign key (" + fk.childColumn.columnName + ") references " +
-            qualifyRelation(fk.parentRelation) + " (" + fk.parentColumn.columnName + ")\n\t\t" +
+  def foreignKeyDefinition(fk: ForeignKey[_, _]) =
+    "foreign key (" + fk.childColumns.map(_.columnName).mkString(", ") +
+            ") references " + qualifyRelation(fk.parentRelation) + " (" +
+            fk.parentColumns.map(_.columnName).mkString(", ") + ")\n\t\t" +
             "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +
             "on update " + foreignKeyAction(fk.onUpdate)
 

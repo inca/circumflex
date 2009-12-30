@@ -73,7 +73,7 @@ class Column[T, R](val relation: Relation[R],
   /**
    * DSL-like way to transform a column to foreign key association.
    */
-  def references[P](parentRelation: Relation[P]): ForeignKey[T, R, P] =
+  def references[P](parentRelation: Relation[P]): AssociativeForeignKey[T, R, P] =
     relation.foreignKey(parentRelation, this)
 
   /* DDL */
