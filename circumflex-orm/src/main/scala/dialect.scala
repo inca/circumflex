@@ -37,7 +37,7 @@ object DefaultDialect extends Dialect
 /**
  * This little thingy does all dirty SQL stuff.
  */
-trait Dialect {
+class Dialect {
 
   /* SQL TYPES */
 
@@ -127,6 +127,11 @@ trait Dialect {
   def sequenceName(seq: Sequence[_]) =
     qualifyRelation(seq.relation) + "_" + seq.column.columnName + "_seq"
 
+  /**
+   * Override this definition to provide logical "unwrapping" for relation-based operations.
+   */
+  protected def unwrap(relation: Relation[_]) = relation
+
   /* DEFINITIONS */
 
   /**
@@ -154,7 +159,7 @@ trait Dialect {
    */
   def foreignKeyDefinition(fk: ForeignKey[_, _]) =
     "foreign key (" + fk.childColumns.map(_.columnName).mkString(", ") +
-            ") references " + qualifyRelation(fk.parentRelation) + " (" +
+            ") references " + unwrap(fk.parentRelation).qualifiedName + " (" +
             fk.parentColumns.map(_.columnName).mkString(", ") + ")\n\t\t" +
             "on delete " + foreignKeyAction(fk.onDelete) + "\n\t\t" + "" +
             "on update " + foreignKeyAction(fk.onUpdate)
@@ -206,7 +211,7 @@ trait Dialect {
    */
   def createIndex(index: Index[_]): String =
     "create " + (if (index.unique_?) "unique" else "") + " index " +
-            index.indexName + "\n\ton " + index.relation.qualifiedName + " using " +
+            index.indexName + "\n\ton " + unwrap(index.relation).qualifiedName + " using " +
             index.using + " (" + index.expressions.mkString(", ") + ")" +
             (if (index.where != EmptyPredicate)
               "\n\twhere\n\t" + index.where.toInlineSql
@@ -216,7 +221,7 @@ trait Dialect {
    * Produces ALTER TABLE statement with abstract action.
    */
   def alterTable(rel: Relation[_], action: String) =
-    "alter table " + qualifyRelation(rel) + "\n\t" + action
+    "alter table " + unwrap(rel).qualifiedName + "\n\t" + action
 
   /**
    * Produces ALTER TABLE statement with ADD CONSTRAINT action.

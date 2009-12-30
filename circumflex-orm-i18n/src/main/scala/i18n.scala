@@ -44,22 +44,22 @@ object ORMI18N extends JDBCHelper {
     case _ => "cx.lang"
   }
 
-  def setLangQuery(lang: String) =
-    "set " + langSetting + " = '" + lang.replaceAll("'","''") + "'"
-
-  def getLangExpression = "current_setting('" + langSetting + "')"
-
   def setLanguage(locale: Locale): Unit = setLanguage(locale.getLanguage)
 
   def setLanguage(lang: String): Unit = setLanguage(ORM.connectionProvider.getConnection, lang)
 
   def setLanguage(conn: Connection, lang: String): Unit = {
-    val q = setLangQuery(lang.trim.toLowerCase);
+    val q = i18nDialect.setLangQuery(lang.trim.toLowerCase);
     auto(conn.prepareStatement(q))(st => {
       sqlLog.debug(q)
       st.executeUpdate
       log.debug("Set transaction language to " + lang)
     })
+  }
+
+  def i18nDialect: I18NDialect = ORM.dialect match {
+    case d: I18NDialect => d
+    case _ => throw new ORMException("'orm.dialect' must point to valid I18NDialect.")
   }
 
 }

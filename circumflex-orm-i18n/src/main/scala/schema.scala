@@ -27,6 +27,7 @@ package ru.circumflex.orm.i18n
 
 import ru.circumflex.orm._
 import Query._
+import ORMI18N._
 import collection.mutable.ListBuffer
 
 /**
@@ -54,7 +55,7 @@ abstract class LocalizableView[R] extends View[R] with LongIdPK[R] {
   private val rNode = rawTable as "r"
   private val lNode = localeTable as "l"
   private val joinNode = rNode.join(lNode)
-          .on("l.cx_lang = " + ORMI18N.getLangExpression)
+          .on("l.cx_lang = " + i18nDialect.getLangExpression)
 
   def projections = columns.map(col =>
     if (lNode.columns.contains(col))
@@ -73,107 +74,47 @@ abstract class LocalizableView[R] extends View[R] with LongIdPK[R] {
 
 class LocaleDataTable[R](val localizableView: LocalizableView[R])
         extends Table[R] with LongIdPK[R] {
-
   override def schema = localizableView.schema
   override def relationName = localizableView.relationName + "_l"
 
   val lang = stringColumn("cx_lang")
           .notNull
-
   val item = longColumn("cx_item_id")
           .notNull
           .references(localizableView.rawTable)
           .onDeleteCascade
           .onUpdateCascade
-
   unique(lang, item.localColumn)
-
 }
 
 class RawDataTable[R](val localizableView: LocalizableView[R])
         extends Table[R] {
-
   override def recordClass = localizableView.recordClass
   override def schema = localizableView.schema
   override def relationName = localizableView.relationName + "_r"
   override def columns = localizableView.columns
   override def associations = localizableView.associations
-
   def primaryKey = localizableView.primaryKey
-
 }
 
 class LocalizableViewInsertRule[R](val localizableView: LocalizableView[R])
         extends SchemaObject {
-
   def objectName = localizableView.relationName + "_rule_ins"
-
-  def sqlCreate = "create or replace rule " + objectName + " as\n\t" +
-          "on insert to " + localizableView.qualifiedName + " do instead (\n\t\t" +
-          "insert into " + localizableView.rawTable.qualifiedName + " (" +
-          localizableView.columns
-                  .map(_.columnName)
-                  .mkString(", ") +
-          ")\n\t\t\tvalues (" +
-          localizableView.columns.map(c => "new." + c.columnName).mkString(", ") +
-          ");\n\t\t" + "insert into " + localizableView.localeTable.qualifiedName +
-          " (id, cx_lang, cx_item_id, " +
-          localizableView.localizableColumns
-                  .map(_.columnName)
-                  .mkString(", ") +
-          ")\n\t\t\tvalues (" + localizableView.localeTable.idSeq.nextValSql + ", " +
-          ORMI18N.getLangExpression + ", new.id, " +
-          localizableView.localizableColumns
-                  .map(c => "new." + c.columnName)
-                  .mkString(", ") + ");\n\t)"
-
-  def sqlDrop = "drop rule " + objectName + "\n" +
-          "on " + localizableView.qualifiedName
+  def sqlCreate = i18nDialect.createInsertRule(this)
+  def sqlDrop = i18nDialect.dropInsertRule(this)
 }
 
 class LocalizableViewUpdateRule[R](val localizableView: LocalizableView[R])
         extends SchemaObject {
-
   def objectName = localizableView.relationName + "_rule_upd"
-
-  def sqlCreate = "create or replace rule " + objectName + " as\n\t" +
-          "on update to " + localizableView.qualifiedName +
-          " do instead (\n\t\t" +
-          "update " + localizableView.rawTable.qualifiedName + " set\n\t\t\t" +
-          localizableView.columns
-                  .map(c => c.columnName + " = new." + c.columnName)
-                  .mkString(",\n\t\t\t") + "\n\t\t\twhere id = old.id;\n\t\t" +
-          "delete from " + localizableView.localeTable.qualifiedName + "\n\t\t\t" +
-          "where cx_lang = " + ORMI18N.getLangExpression +
-          " and cx_item_id = old.id;\n\t\t" +
-          "insert into " + localizableView.localeTable.qualifiedName +
-          " (id, cx_lang, cx_item_id, " +
-          localizableView.localizableColumns
-                  .map(_.columnName)
-                  .mkString(", ") +
-          ")\n\t\t\tvalues (" + localizableView.localeTable.idSeq.nextValSql + ", " +
-          ORMI18N.getLangExpression + ", new.id, " +
-          localizableView.localizableColumns
-                  .map(c => "new." + c.columnName)
-                  .mkString(", ") +
-          ");\n\t)"
-
-  def sqlDrop = "drop rule " + objectName + "\n" +
-          "on " + localizableView.qualifiedName
+  def sqlCreate = i18nDialect.createUpdateRule(this)
+  def sqlDrop = i18nDialect.dropUpdateRule(this)
 }
 
 class LocalizableViewDeleteRule[R](val localizableView: LocalizableView[R])
         extends SchemaObject {
-
   def objectName = localizableView.relationName + "_rule_del"
-
-  def sqlCreate = "create or replace rule " + objectName + " as\n\t" +
-          "on delete to " + localizableView.qualifiedName +
-          " do instead\n\t\t" +
-          "delete from " + localizableView.rawTable.qualifiedName + "\n\t\t\t" +
-          "where id = old.id"
-
-  def sqlDrop = "drop rule " + objectName + "\n" +
-          "on " + localizableView.qualifiedName
+  def sqlCreate = i18nDialect.createDeleteRule(this)
+  def sqlDrop = i18nDialect.dropDeleteRule(this)
 }
 
