@@ -58,14 +58,14 @@ trait SchemaObject {
  * Base functionality for SQL schema.
  */
 class Schema extends SchemaObject {
-  def sqlCreate = dialect.createSchema(this)
-
-  def sqlDrop = dialect.dropSchema(this)
 
   var schemaName = defaultSchemaName
 
-  def objectName = schemaName
+  def sqlCreate = dialect.createSchema(this)
+  def sqlDrop = dialect.dropSchema(this)
 
+  def objectName = schemaName
+  
   override def equals(obj: Any) = obj match {
     case sc: Schema => sc.schemaName.equalsIgnoreCase(this.schemaName)
     case _ => false
@@ -75,7 +75,7 @@ class Schema extends SchemaObject {
 }
 
 /**
- * Default public schema singleton; used to avoid another abstract method on Table.
+ * Default public schema singleton.
  */
 object DefaultSchema extends Schema
 

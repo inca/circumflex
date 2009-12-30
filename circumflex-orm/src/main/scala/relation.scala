@@ -72,7 +72,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def primaryKey: PrimaryKey[_, R];
 
   /**
-   * Returns Schema object, that will containt specified table.
+   * Returns Schema object, that will contain specified table.
    * Defaults to DefaultSchema singleton.
    */
   def schema: Schema = DefaultSchema
