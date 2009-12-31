@@ -42,6 +42,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   protected val _auxiliaryObjects = new ListBuffer[SchemaObject];
 
   private var _cachedRecordClass: Class[R] = null;
+  private var _cachedRelationName: String = null;
 
   private var uniqueCounter = -1;
 
@@ -87,11 +88,16 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    * Unqualified relation name. Defaults to unqualified record class name
    * (camel-case-to-underscored).
    */
-  def relationName: String = recordClass
-          .getSimpleName
-          .replaceAll("([A-Z])","_$1")
-          .replaceAll("^_(.*)","$1")
-          .toLowerCase
+  def relationName: String = {
+    if (_cachedRelationName == null)
+      _cachedRelationName = recordClass
+              .getSimpleName
+              .replaceAll("([A-Z])","_$1")
+              .replaceAll("^_(.*)","$1")
+              .toLowerCase
+    return _cachedRelationName
+  }
+
 
   /**
    * Returns relation's qualified name.
