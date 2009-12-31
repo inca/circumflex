@@ -84,9 +84,14 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def schemaName: String = schema.schemaName
 
   /**
-   * Unqualified relation name. Defaults to unqualified record class name.
+   * Unqualified relation name. Defaults to unqualified record class name
+   * (camel-case-to-underscored).
    */
-  def relationName: String = recordClass.getSimpleName.toLowerCase
+  def relationName: String = recordClass
+          .getSimpleName
+          .replaceAll("([A-Z])","_$1")
+          .replaceAll("^_(.*)","$1")
+          .toLowerCase
 
   /**
    * Returns relation's qualified name.
