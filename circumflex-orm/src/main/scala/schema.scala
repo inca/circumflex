@@ -63,7 +63,7 @@ class Schema(var schemaName: String) extends SchemaObject {
   def sqlDrop = dialect.dropSchema(this)
 
   def objectName = schemaName
-  
+
   override def equals(obj: Any) = obj match {
     case sc: Schema => sc.schemaName.equalsIgnoreCase(this.schemaName)
     case _ => false
@@ -290,16 +290,20 @@ class DDLExport extends JDBCHelper {
         log.trace("Error creating table.", e)
       })
 
-  def createConstraints(conn: Connection) =
-    for (c <- constraints)
-      autoClose(conn.prepareStatement(c.sqlCreate))(st => {
-        log.debug(c.sqlCreate)
-        st.executeUpdate
-        infoMsgs += ("CREATE CONSTRAINT " + c.objectName + ": OK")
-      })(e => {
-        errMsgs += ("CREATE CONSTRAINT " + c.objectName + ": " + e.getMessage)
-        log.trace("Error creating constraint.", e)
-      })
+  def createConstraints(conn: Connection) = {
+    def create(constrs: Iterable[Constraint[_]]) =
+      for (c <- constrs)
+        autoClose(conn.prepareStatement(c.sqlCreate))(st => {
+          log.debug(c.sqlCreate)
+          st.executeUpdate
+          infoMsgs += ("CREATE CONSTRAINT " + c.objectName + ": OK")
+        })(e => {
+          errMsgs += ("CREATE CONSTRAINT " + c.objectName + ": " + e.getMessage)
+          log.trace("Error creating constraint.", e)
+        })
+    create(constraints.filter(!_.isInstanceOf[ForeignKey[_, _]]))
+    create(constraints.filter(_.isInstanceOf[ForeignKey[_, _]]))
+  }
 
   def createSequences(conn: Connection) =
     for (s <- sequences)
