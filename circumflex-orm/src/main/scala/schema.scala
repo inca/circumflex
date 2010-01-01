@@ -100,8 +100,8 @@ class DDLExport extends JDBCHelper {
     objList.toList.foreach(addObject(_))
   }
 
-  def addWriter(writers: Writer *): this.type = {
-    this.writers ++= writers.toList
+  def addWriter(writer: Writer): this.type = {
+    this.writers += writer
     return this
   }
 

@@ -28,7 +28,6 @@ package ru.circumflex.maven;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
@@ -60,7 +59,7 @@ public class SchemaExportMojo extends AbstractMojo {
     private List<String> packages;
 
     /**
-     * @parameter default-value="false"
+     * @parameter expression="${drop}" default-value="false"
      */
     private boolean drop;
 
@@ -131,10 +130,8 @@ public class SchemaExportMojo extends AbstractMojo {
 
     public class LogWriter extends Writer {
 
-        private Log log = getLog();
-
         public void write(char[] chars, int offset, int length) throws IOException {
-            log.info(new String(chars, offset, length));
+            getLog().info(new String(chars, offset, length));
         }
 
         public void flush() throws IOException {
