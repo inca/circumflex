@@ -28,9 +28,12 @@ package ru.circumflex.maven;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -71,6 +74,7 @@ public class SchemaExportMojo extends AbstractMojo {
             for (String pkg : packages)
                 processPackage(pkg);
             if (ddl.schemata().size() > 0) {
+                ddl.addWriter(new LogWriter());
                 if (drop) ddl.drop();
                 ddl.create();
             } else {
@@ -81,7 +85,6 @@ public class SchemaExportMojo extends AbstractMojo {
         } finally {
             Thread.currentThread().setContextClassLoader(oldCld);
         }
-
     }
 
     private URLClassLoader prepareClassLoader()
@@ -123,6 +126,21 @@ public class SchemaExportMojo extends AbstractMojo {
             } else getLog().warn("Omitting non-existent package " + pkgPath);
         } catch (Exception e) {
             getLog().error("Package processing failed: " + pkgPath, e);
+        }
+    }
+
+    public class LogWriter extends Writer {
+
+        private Log log = getLog();
+
+        public void write(char[] chars, int offset, int length) throws IOException {
+            log.info(new String(chars, offset, length));
+        }
+
+        public void flush() throws IOException {
+        }
+
+        public void close() throws IOException {
         }
     }
 
