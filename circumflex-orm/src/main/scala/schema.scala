@@ -126,7 +126,7 @@ class DDLExport extends JDBCHelper {
       case s: Sequence[_] => sequences += s
       case c: Constraint[_] => constraints += c
       case s: Schema => schemata += s
-      case o => auxiliaryObjects += o
+      case o => if (!auxiliaryObjects.contains(o)) auxiliaryObjects += o
     }
     return this
   }
