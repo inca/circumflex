@@ -129,7 +129,9 @@ abstract class AbstractCircumflexFilter extends Filter {
 class CircumflexFilter extends AbstractCircumflexFilter {
 
   val routerClass: Class[RequestRouter] = Circumflex.cfg("cx.router") match {
-    case Some(s: String) => Class.forName(s).asInstanceOf[Class[RequestRouter]]
+    case Some(s: String) => Class
+            .forName(s, true, Circumflex.classLoader)
+            .asInstanceOf[Class[RequestRouter]]
     case Some(c: Class[RequestRouter]) => c
     case _ => throw new CircumflexException("Could not initialize Request Router; configure 'cx.router' properly.")
   }

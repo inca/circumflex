@@ -40,7 +40,10 @@ object ORM {
   val connectionProvider: ConnectionProvider = Circumflex.cfg("orm.connectionProvider") match {
     case Some(p: ConnectionProvider) => p
     case Some(c: Class[ConnectionProvider]) => c.newInstance
-    case Some(s: String) => Class.forName(s).asInstanceOf[Class[ConnectionProvider]].newInstance
+    case Some(s: String) => Class
+            .forName(s, true, Circumflex.classLoader)
+            .newInstance
+            .asInstanceOf[ConnectionProvider]
     case _ => DefaultConnectionProvider
   }
 
@@ -51,7 +54,10 @@ object ORM {
   val dialect: Dialect = Circumflex.cfg("orm.dialect") match {
     case Some(d: Dialect) => d
     case Some(c: Class[Dialect]) => c.newInstance
-    case Some(s: String) => Class.forName(s).asInstanceOf[Class[Dialect]].newInstance
+    case Some(s: String) => Class
+            .forName(s, true, Circumflex.classLoader)
+            .newInstance
+            .asInstanceOf[Dialect]
     case _ => DefaultDialect
   }
 
@@ -62,7 +68,10 @@ object ORM {
   val typeConverter: TypeConverter = Circumflex.cfg("orm.typeConverter") match {
     case Some(tc: TypeConverter) => tc
     case Some(c: Class[TypeConverter]) => c.newInstance
-    case Some(s: String) => Class.forName(s).asInstanceOf[Class[TypeConverter]].newInstance
+    case Some(s: String) => Class
+            .forName(s, true, Circumflex.classLoader)
+            .newInstance
+            .asInstanceOf[TypeConverter]
     case _ => DefaultTypeConverter
   }
 

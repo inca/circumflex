@@ -28,6 +28,7 @@ package ru.circumflex.orm
 import collection.mutable.ListBuffer
 import ORM._
 import java.sql.PreparedStatement
+import ru.circumflex.core.Circumflex
 
 /**
  * Designates a relation that can be used to retrieve certain type of records.
@@ -63,7 +64,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def recordClass: Class[R] = {
     if (_cachedRecordClass == null)
       _cachedRecordClass = Class
-              .forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"))
+              .forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"), true, Circumflex.classLoader)
               .asInstanceOf[Class[R]]
     return _cachedRecordClass
   }

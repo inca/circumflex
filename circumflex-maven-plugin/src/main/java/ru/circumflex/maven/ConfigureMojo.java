@@ -36,9 +36,6 @@ import java.io.PrintWriter;
 import java.util.Properties;
 
 /**
- * Author: incarnate
- * Date: Dec 28, 2009
- *
  * @goal cfg
  */
 public class ConfigureMojo extends AbstractMojo {

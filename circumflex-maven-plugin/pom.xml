@@ -22,6 +22,16 @@
       <artifactId>circumflex-core</artifactId>
       <version>0.2</version>
     </dependency>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-orm</artifactId>
+      <version>0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-orm-i18n</artifactId>
+      <version>0.2</version>
+    </dependency>
     <!-- Maven plugin -->
     <dependency>
       <groupId>org.apache.maven</groupId>

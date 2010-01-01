@@ -33,7 +33,7 @@ import org.mortbay.jetty.{Handler, Server}
  * A helper that allows standalone Circumflex execution based on
  * Jetty server.
  */
-trait StandaloneServer {
+class StandaloneServer {
 
   def filters: Seq[Class[_ <: Filter]] = List(classOf[CircumflexFilter])
 
@@ -47,8 +47,8 @@ trait StandaloneServer {
     }
     jetty = new Server(Circumflex.cfg("cx.port") match {
       case Some(p: Int) => p
-      case Some(s: String) => try { s.toInt } catch { case _ => 8181 }
-      case _ => 8181
+      case Some(s: String) => try { s.toInt } catch { case _ => 8180 }
+      case _ => 8180
     })
     context = new Context(jetty, "/", Context.SESSIONS)
     context.setResourceBase(webappRoot.replaceAll("/", File.separator))

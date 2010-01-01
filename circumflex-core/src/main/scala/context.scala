@@ -102,16 +102,9 @@ object Circumflex {
   // resource bundle for messages
   _cfg += "cx.messages" -> "Messages"
 
-
-  try {     // read configuration from "cx.properties" by default
-    val bundle = ResourceBundle.getBundle("cx")
-    val keys = bundle.getKeys
-    while (keys.hasMoreElements) {
-      val k = keys.nextElement
-      cfg(k) = bundle.getString(k)
-    }
-  } catch {
-    case _ => log.warn("Could not read configuration parameters from cx.properties.")
+  val classLoader: ClassLoader = cfg("cx.classLoader") match {
+    case Some(cld: ClassLoader) => cld
+    case _ => Thread.currentThread.getContextClassLoader
   }
 
   val webappRoot: File = cfg("cx.root") match {
@@ -124,18 +117,25 @@ object Circumflex {
     case _ => throw new CircumflexException("'cx.public' not configured.")
   }
 
+  try {     // read configuration from "cx.properties" by default
+    val bundle = ResourceBundle.getBundle("cx", Locale.getDefault, classLoader)
+    val keys = bundle.getKeys
+    while (keys.hasMoreElements) {
+      val k = keys.nextElement
+      cfg(k) = bundle.getString(k)
+    }
+  } catch {
+    case _ => log.warn("Could not read configuration parameters from cx.properties.")
+  }
+
   /**
    * For DSL-like configuration
    */
   class ConfigurationHelper {
-
     def apply(key: String): Option[Any] = _cfg.get(key)
-
     def apply(key: String, default: Any): Any = _cfg.getOrElse(key, default)
-
     def update(key: String, value: Any): Unit =
       _cfg += key -> value
-
   }
 
   /* MESSAGES */
