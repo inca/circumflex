@@ -79,6 +79,22 @@ object Book extends Table[Book] with LongIdPK[Book] {
   index.unique.add("lower(title)").where("title" like "A%")
 }
 
+class Page extends Record[Page] {
+  val id = field(Page.id)
+  val body = field(Page.body)
+  val book = manyToOne(Page.book)
+}
+
+object Page extends Table[Page] with LongIdPK[Page] {
+  val book = longColumn("book_id")
+          .notNull
+          .references(Book)
+          .onDeleteCascade
+  val body = stringColumn("body")
+          .notNull
+          .validateNotEmpty
+}
+
 class CategoryStatistics extends Record[CategoryStatistics] {
   val category = manyToOne(CategoryStatistics.category)
   val booksCount = field(CategoryStatistics.booksCount)

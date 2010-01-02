@@ -35,16 +35,29 @@ import Query._
  */
 class Criteria[R](val relation: Relation[R]) {
 
-  protected val query: Select = new Select().addFrom(relation)
+  protected val rootNode = relation.as("this")
   protected val restrictions = new ListBuffer[Predicate]()
 
-  def rootNode: RelationNode[R] = query.relations(0).asInstanceOf[RelationNode[R]]
+  protected var _orders: Seq[Order] = Nil
+  protected var _limit = -1;
+  protected var _offset = 0;
+
+  protected def prepareQuery = new Select(rootNode)
+          .limit(_limit)
+          .offset(_offset)
+          .where(preparePredicate)
+          .addOrder(_orders: _*)
+
+  protected def preparePredicate: Predicate =
+    if (restrictions.size > 0)
+      and(restrictions: _*)
+    else EmptyPredicate
 
   /**
    * Sets the maximum results for this query.
    */
   def limit(value: Int): this.type = {
-    query.limit(value)
+    _limit = value
     return this
   }
 
@@ -52,7 +65,7 @@ class Criteria[R](val relation: Relation[R]) {
    * Sets the result offset for this query.
    */
   def offset(value: Int): this.type = {
-    query.offset(value)
+    _offset = value
     return this
   }
 
@@ -77,16 +90,10 @@ class Criteria[R](val relation: Relation[R]) {
   /**
    * Adds an order to ORDER BY clause.
    */
-  def addOrder(order: Order): this.type = {
-    query.addOrder(order)
+  def addOrder(orders: Order*): this.type = {
+    _orders ++= orders.toList
     return this
   }
-
-  protected def makePredicate: Predicate =
-    if (restrictions.size > 0) and(restrictions: _*) else EmptyPredicate
-
-  protected def prepareQuery: Select =
-    query.where(makePredicate)
 
   /**
    * Executes the query and retrieves records list.
@@ -101,15 +108,12 @@ class Criteria[R](val relation: Relation[R]) {
 
   /**
    * Executes a query and retrieves the first record.
-   * WARNING! This call implicitly sets the query limit to 1. If you plan to reuse
-   * the criteria object after <code>first</code> is called, set query limit manually
-   * or it will always yield a single row.
    */
   def first: Option[R] = prepareQuery.first.map(_.apply(0).asInstanceOf[R])
 
   /**
    * Executes the DELETE statement for this relation using specified criteria.
    */
-  def delete: Int = new Delete(relation).where(makePredicate).executeUpdate
+  def delete: Int = new Delete(relation).where(preparePredicate).executeUpdate
 
 }
