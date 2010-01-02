@@ -102,10 +102,12 @@ class DDLExport extends JDBCHelper {
   val auxiliaryObjects = new ListBuffer[SchemaObject]()
 
   val writers = new HashSet[Writer]()
-  val loggers = new HashSet[Any]()
+  val loggers = HashSet[Any](log)
 
   val infoMsgs = new ListBuffer[String]()
   val errMsgs = new ListBuffer[String]()
+
+  private var _debugToWriters = false;
 
   def this(objList: SchemaObject*) = {
     this()
@@ -122,12 +124,35 @@ class DDLExport extends JDBCHelper {
     return this
   }
 
-  def write(msg: String) = {
+  def debugToWriters(value: Boolean): this.type = {
+    _debugToWriters = value
+    return this
+  }
+
+  def info(msg: String) = {
     writers.foreach(_.write(msg + "\n"))
     loggers.foreach(l => try {
       MethodUtils.invokeMethod(l, "info", msg)
     } catch {
-      case _ => log.trace("Could not invoke info(message: String) method on supplied log.")
+      case _ => log.trace("Could not invoke info(String) method on supplied log.")
+    })
+  }
+
+  def debug(msg: String) = {
+    if (_debugToWriters) writers.foreach(_.write(msg + "\n"))
+    loggers.foreach(l => try {
+      MethodUtils.invokeMethod(l, "debug", msg)
+    } catch {
+      case _ => log.trace("Could not invoke debug(String) method on supplied log.")
+    })
+  }
+
+  def error(msg: String, e: Throwable) = {
+    writers.foreach(_.write(msg + ": " + e.getMessage))
+    loggers.foreach(l => try {
+      MethodUtils.invokeMethod(l, "error", Array(msg, e))
+    } catch {
+      case _ => log.trace("Could not invoke error(String, Throwable) method on supplied log.")
     })
   }
 
@@ -173,7 +198,7 @@ class DDLExport extends JDBCHelper {
       infoMsgs.clear
       errMsgs.clear
       // process database objects
-      log.info("Executing schema create script.")
+      info("Executing schema create script.")
       createSchemata(conn)
       createTables(conn)
       createConstraints(conn)
@@ -183,14 +208,12 @@ class DDLExport extends JDBCHelper {
       // restore previous auto-commit setting
       conn.setAutoCommit(autoCommit)
       // report log and statistics
-      infoMsgs.foreach(log.info(_))
-      errMsgs.foreach(log.info(_))
-      log.info("Create schema script finished.")
-      log.info("{} statements executes successfully.", infoMsgs.size)
-      log.info("{} statements failed.", errMsgs.size)
-      infoMsgs.foreach(write(_))
-      errMsgs.foreach(write(_))
-    })(e => log.error("Connection failure occured while exporing DDL.", e))
+      infoMsgs.foreach(info(_))
+      errMsgs.foreach(info(_))
+      info("Create schema script finished.")
+      info(infoMsgs.size + " statements executes successfully.")
+      info(errMsgs.size + " statements failed.")
+    })(e => error("Connection failure occured while exporing DDL.", e))
 
   /**
    * Executes DROP script.
@@ -204,7 +227,7 @@ class DDLExport extends JDBCHelper {
       infoMsgs.clear
       errMsgs.clear
       // process database objects
-      log.info("Executing schema drop script.")
+      info("Executing schema drop script.")
       dropAuxiliaryObjects(conn)
       dropViews(conn)
       dropSequences(conn)
@@ -214,19 +237,17 @@ class DDLExport extends JDBCHelper {
       // restore previous auto-commit setting
       conn.setAutoCommit(autoCommit)
       // report log and statistics
-      infoMsgs.foreach(log.info(_))
-      errMsgs.foreach(log.info(_))
-      log.info("Drop schema script finished.")
-      log.info("{} statements executes successfully.", infoMsgs.size)
-      log.info("{} statements failed.", errMsgs.size)
-      infoMsgs.foreach(write(_))
-      errMsgs.foreach(write(_))
-    })(e => log.error("Connection failure occured while exporing DDL.", e))
+      infoMsgs.foreach(info(_))
+      errMsgs.foreach(info(_))
+      info("Drop schema script finished.")
+      info(infoMsgs.size + " statements executes successfully.")
+      info(errMsgs.size + " statements failed.")
+    })(e => error("Connection failure occured while exporing DDL.", e))
 
   def dropAuxiliaryObjects(conn: Connection) =
     for (o <- auxiliaryObjects.reverse)
       autoClose(conn.prepareStatement(o.sqlDrop))(st => {
-        log.debug(o.sqlDrop)
+        debug(o.sqlDrop)
         st.executeUpdate
         infoMsgs += ("DROP OBJECT " + o.objectName + ": OK")
       })(e => {
@@ -237,7 +258,7 @@ class DDLExport extends JDBCHelper {
   def dropViews(conn: Connection) =
     for (v <- views) {
       autoClose(conn.prepareStatement(v.sqlDrop))(st => {
-        log.debug(v.sqlDrop)
+        debug(v.sqlDrop)
         st.executeUpdate
         infoMsgs += ("DROP VIEW " + v.objectName + ": OK")
       })(e => {
@@ -249,7 +270,7 @@ class DDLExport extends JDBCHelper {
   def dropSequences(conn: Connection) =
     for (s <- sequences)
       autoClose(conn.prepareStatement(s.sqlDrop))(st => {
-        log.debug(s.sqlDrop)
+        debug(s.sqlDrop)
         st.executeUpdate
         infoMsgs += ("DROP SEQUENCE " + s.objectName + ": OK")
       })(e => {
@@ -260,7 +281,7 @@ class DDLExport extends JDBCHelper {
   def dropConstraints(conn: Connection) =
     for (c <- constraints)
       autoClose(conn.prepareStatement(c.sqlDrop))(st => {
-        log.debug(c.sqlDrop)
+        debug(c.sqlDrop)
         st.executeUpdate
         infoMsgs += ("DROP CONSTRAINT " + c.objectName + ": OK")
       })(e => {
@@ -271,7 +292,7 @@ class DDLExport extends JDBCHelper {
   def dropTables(conn: Connection) =
     for (t <- tables)
       autoClose(conn.prepareStatement(t.sqlDrop))(st => {
-        log.debug(t.sqlDrop)
+        debug(t.sqlDrop)
         st.executeUpdate
         infoMsgs += ("DROP TABLE " + t.objectName + ": OK")
       })(e => {
@@ -282,7 +303,7 @@ class DDLExport extends JDBCHelper {
   def dropSchemata(conn: Connection) =
     for (s <- schemata)
       autoClose(conn.prepareStatement(s.sqlDrop))(st => {
-        log.debug(s.sqlDrop)
+        debug(s.sqlDrop)
         st.executeUpdate
         infoMsgs += ("DROP SCHEMA " + s.objectName + ": OK")
       })(e => {
@@ -293,7 +314,7 @@ class DDLExport extends JDBCHelper {
   def createSchemata(conn: Connection) =
     for (s <- schemata)
       autoClose(conn.prepareStatement(s.sqlCreate))(st => {
-        log.debug(s.sqlCreate)
+        debug(s.sqlCreate)
         st.executeUpdate
         infoMsgs += ("CREATE SCHEMA " + s.objectName + ": OK")
       })(e => {
@@ -304,7 +325,7 @@ class DDLExport extends JDBCHelper {
   def createTables(conn: Connection) =
     for (t <- tables)
       autoClose(conn.prepareStatement(t.sqlCreate))(st => {
-        log.debug(t.sqlCreate)
+        debug(t.sqlCreate)
         st.executeUpdate
         infoMsgs += ("CREATE TABLE " + t.objectName + ": OK")
       })(e => {
@@ -316,7 +337,7 @@ class DDLExport extends JDBCHelper {
     def create(constrs: Iterable[Constraint[_]]) =
       for (c <- constrs)
         autoClose(conn.prepareStatement(c.sqlCreate))(st => {
-          log.debug(c.sqlCreate)
+          debug(c.sqlCreate)
           st.executeUpdate
           infoMsgs += ("CREATE CONSTRAINT " + c.objectName + ": OK")
         })(e => {
@@ -330,7 +351,7 @@ class DDLExport extends JDBCHelper {
   def createSequences(conn: Connection) =
     for (s <- sequences)
       autoClose(conn.prepareStatement(s.sqlCreate))(st => {
-        log.debug(s.sqlCreate)
+        debug(s.sqlCreate)
         st.executeUpdate
         infoMsgs += ("CREATE SEQUENCE " + s.objectName + ": OK")
       })(e => {
@@ -341,7 +362,7 @@ class DDLExport extends JDBCHelper {
   def createViews(conn: Connection) =
     for (v <- views)
       autoClose(conn.prepareStatement(v.sqlCreate))(st => {
-        log.debug(v.sqlCreate)
+        debug(v.sqlCreate)
         st.executeUpdate
         infoMsgs += ("CREATE VIEW " + v.objectName + ": OK")
       })(e => {
@@ -352,7 +373,7 @@ class DDLExport extends JDBCHelper {
   def createAuxiliaryObjects(conn: Connection) =
     for (o <- auxiliaryObjects)
       autoClose(conn.prepareStatement(o.sqlCreate))(st => {
-        log.debug(o.sqlCreate)
+        debug(o.sqlCreate)
         st.executeUpdate
         infoMsgs += ("CREATE OBJECT " + o.objectName + ": OK")
       })(e => {
