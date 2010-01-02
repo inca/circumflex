@@ -30,6 +30,7 @@ import java.io.Writer
 import java.sql.Connection
 import org.slf4j.LoggerFactory
 import collection.mutable.{HashSet, ListBuffer}
+import org.apache.commons.beanutils.MethodUtils
 
 /**
  * Defines a contract for database schema objects.
@@ -91,6 +92,7 @@ class DDLExport extends JDBCHelper {
   val auxiliaryObjects = new ListBuffer[SchemaObject]()
 
   val writers = new HashSet[Writer]()
+  val loggers = new HashSet[Any]()
 
   val infoMsgs = new ListBuffer[String]()
   val errMsgs = new ListBuffer[String]()
@@ -105,8 +107,18 @@ class DDLExport extends JDBCHelper {
     return this
   }
 
+  def addLogger(l: Any): this.type = {
+    this.loggers += l
+    return this
+  }
+
   def write(msg: String) = {
     writers.foreach(_.write(msg + "\n"))
+    loggers.foreach(l => try {
+      MethodUtils.invokeMethod(l, info, msg)
+    } catch {
+      case _ => log.trace("Could not invoke info(message: String) method on supplied log.")
+    })
   }
 
   def addObject(obj: SchemaObject): this.type = {
