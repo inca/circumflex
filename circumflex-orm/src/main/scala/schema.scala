@@ -48,9 +48,19 @@ trait SchemaObject {
   def sqlDrop: String
 
   /**
-   * SQL object name.
+   * SQL object name. It is used to uniquely identify this object
+   * during schema creation by <code>DDLExport</code> to avoid duplicates.
+   * Object names are case-insensitive (e.g. "MY_TABLE" and "my_table" are
+   * considered equal).
    */
   def objectName: String
+
+  override def hashCode = objectName.toLowerCase.hashCode
+
+  override def equals(obj: Any) = obj match {
+    case so: SchemaObject => so.objectName.equalsIgnoreCase(this.objectName)
+    case _ => false
+  }
 
   override def toString = objectName
 }
@@ -132,7 +142,7 @@ class DDLExport extends JDBCHelper {
       }
       case v: View[_] => {
         views += v
-        schemata += v.schema
+        addObject(v.schema)
         v.auxiliaryObjects.foreach(o => addObject(o))
       }
       case s: Sequence[_] => sequences += s
