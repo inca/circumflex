@@ -115,7 +115,7 @@ class DDLExport extends JDBCHelper {
   def write(msg: String) = {
     writers.foreach(_.write(msg + "\n"))
     loggers.foreach(l => try {
-      MethodUtils.invokeMethod(l, info, msg)
+      MethodUtils.invokeMethod(l, "info", msg)
     } catch {
       case _ => log.trace("Could not invoke info(message: String) method on supplied log.")
     })
