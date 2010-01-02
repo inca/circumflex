@@ -71,6 +71,7 @@ public class SchemaExportMojo extends AbstractMojo {
             for (String pkg : packages)
                 processPackage(pkg);
             if (ddl.schemata().size() > 0) {
+                ddl.addLogger(getLog());
                 if (drop) ddl.drop();
                 ddl.create();
             } else {
