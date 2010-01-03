@@ -88,7 +88,7 @@ trait CompositeProjection[R] extends Projection[R] {
 
 class ScalarProjection[T](val expression: String,
                           val grouping: Boolean)
-    extends AtomicProjection[T] {
+        extends AtomicProjection[T] {
 
   override def grouping_?() = grouping
 
@@ -100,7 +100,7 @@ class ScalarProjection[T](val expression: String,
  */
 class ColumnProjection[T, R](val node: RelationNode[R],
                              val column: Column[T, R])
-    extends AtomicProjection[T] {
+        extends AtomicProjection[T] {
 
   /**
    * Returns a column name qualified with node's alias.
@@ -128,18 +128,20 @@ class SequenceCurrValProjection[R](val seq: Sequence[R]) extends AtomicProjectio
  * Represents a record projection (it groups all field projections).
  */
 class RecordProjection[R](val node: RelationNode[R])
-    extends CompositeProjection[R] {
+        extends CompositeProjection[R] {
 
-  protected val _columnProjections: Seq[ColumnProjection[Any, R]] = node.relation.columns.map(
-    col => new ColumnProjection(node, col.asInstanceOf[Column[Any, R]]))
+  protected val _columnProjections: Seq[ColumnProjection[Any, R]] = node
+          .relation
+          .columns
+          .map(col => new ColumnProjection(node, col.asInstanceOf[Column[Any, R]]))
 
   def atomicProjections = _columnProjections
 
   def read(rs: ResultSet): Option[R] = {
     val record = node.relation.recordClass
-        .getConstructor()
-        .newInstance()
-        .asInstanceOf[Record[R]]
+            .getConstructor()
+            .newInstance()
+            .asInstanceOf[Record[R]]
     _columnProjections.foreach(p => record.setField(p.column, p.read(rs)))
     if (record.isIdentified) return Some(record.asInstanceOf[R])
     else return None
