@@ -122,6 +122,8 @@ abstract class RelationNode[R](val relation: Relation[R])
   def projection[T](col: Column[T, R]): ColumnProjection[T, R] =
     new ColumnProjection(this, col)
 
+  override def hashCode = relation.hashCode
+  override def equals(obj: Any) = relation.equals(obj)
 }
 
 class TableNode[R](val table: Table[R])
@@ -161,13 +163,15 @@ class ViewNode[R](val view: View[R])
 /**
  * Represents a join node between parent and child relation.
  */
-abstract class JoinNode[L, R](val leftNode: RelationNode[L],
-                              val rightNode: RelationNode[R])
-    extends RelationNode[L](leftNode) {
+abstract class JoinNode[L, R](protected var _left: RelationNode[L],
+                              protected var _right: RelationNode[R])
+    extends RelationNode[L](_left) {
 
   private var _auxiliaryConditions: Seq[String] = Nil
 
-  override def alias = leftNode.alias
+  def left = _left
+  def right = _right
+  override def alias = left.alias
 
   def auxiliaryConditions = _auxiliaryConditions
 
@@ -187,7 +191,17 @@ abstract class JoinNode[L, R](val leftNode: RelationNode[L],
   /**
    * Join nodes return parent node's projections joined with child node's ones.
    */
-  def projections = leftNode.projections ++ rightNode.projections
+  def projections = left.projections ++ right.projections
+
+  def replaceLeft(newLeft: RelationNode[L]): this.type = {
+    this._left = newLeft
+    return this
+  }
+
+  def replaceRight(newRight: RelationNode[R]): this.type = {
+    this._right = newRight
+    return this
+  }
 
   /**
    * Dialect should return properly joined parent and child nodes.

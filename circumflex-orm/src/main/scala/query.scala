@@ -148,8 +148,8 @@ class Select extends SQLQuery {
 
   def ensureNodeAlias[R](node: RelationNode[R]): RelationNode[R] = node match {
     case j: JoinNode[_, _] =>
-      ensureNodeAlias(j.leftNode)
-      ensureNodeAlias(j.rightNode)
+      ensureNodeAlias(j.left)
+      ensureNodeAlias(j.right)
       j
     case n: RelationNode[_] if (n.alias == "this") =>
       aliasCounter += 1

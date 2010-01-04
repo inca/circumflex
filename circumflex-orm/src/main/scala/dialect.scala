@@ -327,18 +327,18 @@ class Dialect {
     var result = ""
     node match {
       case j: ChildToParentJoin[_, _] =>
-        result += joinInternal(j.leftNode, on) + "\n\t\t" + j.sqlJoinType + " " +
-                joinInternal(j.rightNode, joinOn(
+        result += joinInternal(j.left, on) + "\n\t\t" + j.sqlJoinType + " " +
+                joinInternal(j.right, joinOn(
                   j.association,
-                  j.rightNode.alias,
-                  j.leftNode.alias,
+                  j.right.alias,
+                  j.left.alias,
                   j.auxiliaryConditions))
       case j: ParentToChildJoin[_, _] =>
-        result += joinInternal(j.leftNode, on) + "\n\t\t" + j.sqlJoinType + " " +
-                joinInternal(j.rightNode, joinOn(
+        result += joinInternal(j.left, on) + "\n\t\t" + j.sqlJoinType + " " +
+                joinInternal(j.right, joinOn(
                   j.association,
-                  j.leftNode.alias,
-                  j.rightNode.alias,
+                  j.left.alias,
+                  j.right.alias,
                   j.auxiliaryConditions))
       case _ =>
         result += node.toSql
