@@ -55,7 +55,7 @@ abstract class View[R] extends Relation[R]
     return ir
   }
 
-  def as(alias: String) = new ViewNode(this, alias)
+  def as(alias: String) = new ViewNode(this).as(alias)
 
   def sqlDrop = dialect.dropView(this)
 

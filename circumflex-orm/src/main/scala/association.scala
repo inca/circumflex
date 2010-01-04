@@ -64,10 +64,14 @@ trait Association[C, P] {
    */
   def referenceColumn = parentColumn
 
-  def fetchManyToOne(localValue: Any): Option[P] =
-    parentRelation.createCriteria.add(_.projection(parentColumn).eq(localValue)).unique
+  def fetchManyToOne(localValue: Any): Option[P] = parentRelation
+          .createCriteria
+          .add(_.projection(parentColumn).eq(localValue))
+          .unique
 
-  def fetchOneToMany(referenceValue: Any): Seq[C] =
-    childRelation.createCriteria.add(_.projection(childColumn).eq(referenceValue)).list
+  def fetchOneToMany(referenceValue: Any): Seq[C] = childRelation
+          .createCriteria
+          .add(_.projection(childColumn).eq(referenceValue))
+          .list
 
 }

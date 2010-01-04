@@ -41,7 +41,7 @@ abstract class Table[R] extends Relation[R]
         with JDBCHelper
         with SchemaObject {
 
-  def as(alias: String) = new TableNode(this, alias)
+  def as(alias: String) = new TableNode(this).as(alias)
 
   /* DDL */
 

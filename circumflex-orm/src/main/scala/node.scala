@@ -31,11 +31,19 @@ import ORM._
  * Wraps relational nodes (tables, views, virtual tables, subqueries and other stuff)
  * with an alias so that they may appear within SQL FROM clause.
  */
-abstract class RelationNode[R](val relation: Relation[R],
-                               var alias: String)
+abstract class RelationNode[R](val relation: Relation[R])
     extends Relation[R] with SQLable {
 
+  protected var _alias = "this"
+
   override def recordClass = relation.recordClass
+
+  /**
+   * Returns an alias of this node, which is used in SQL statements.
+   * "this" alias has special meaning: when used in query it is appended with
+   * query-unique alias counter value.
+   */
+  def alias = _alias
 
   /**
    * Just proxies relation's primary key.
@@ -104,7 +112,7 @@ abstract class RelationNode[R](val relation: Relation[R],
    * Reassigns an alias for this node.
    */
   def as(alias: String): this.type = {
-    this.alias = alias
+    this._alias = alias
     return this
   }
 
@@ -116,11 +124,8 @@ abstract class RelationNode[R](val relation: Relation[R],
 
 }
 
-class TableNode[R](val table: Table[R],
-                   a: String)
-    extends RelationNode[R](table, a) {
-
-  def this(table: Table[R]) = this(table, "this")
+class TableNode[R](val table: Table[R])
+    extends RelationNode[R](table) {
 
   /**
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
@@ -136,11 +141,8 @@ class TableNode[R](val table: Table[R],
 
 }
 
-class ViewNode[R](val view: View[R],
-                  a: String)
-    extends RelationNode[R](view, a) {
-
-  def this(view: View[R]) = this(view, "this")
+class ViewNode[R](val view: View[R])
+    extends RelationNode[R](view) {
 
   /**
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
@@ -161,9 +163,11 @@ class ViewNode[R](val view: View[R],
  */
 abstract class JoinNode[L, R](val leftNode: RelationNode[L],
                               val rightNode: RelationNode[R])
-    extends RelationNode[L](leftNode, leftNode.alias) {
+    extends RelationNode[L](leftNode) {
 
   private var _auxiliaryConditions: Seq[String] = Nil
+
+  override def alias = leftNode.alias
 
   def auxiliaryConditions = _auxiliaryConditions
 

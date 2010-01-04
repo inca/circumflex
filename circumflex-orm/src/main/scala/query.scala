@@ -140,13 +140,21 @@ class Select extends SQLQuery {
    * All projections are added too.
    */
   def addFrom[R](node: RelationNode[R]): this.type = {
-    val n = if (node.alias == "this") {
-      aliasCounter += 1
-      node.as("this_" + aliasCounter)
-    } else node
-    this._relations ++= List(n)
+    ensureNodeAlias(node)
+    this._relations ++= List(node)
     addProjection(node.projections: _*)
     return this
+  }
+
+  def ensureNodeAlias[R](node: RelationNode[R]): RelationNode[R] = node match {
+    case j: JoinNode[_, _] =>
+      ensureNodeAlias(j.leftNode)
+      ensureNodeAlias(j.rightNode)
+      j
+    case n: RelationNode[_] if (n.alias == "this") =>
+      aliasCounter += 1
+      node.as("this_" + aliasCounter)
+    case n => n
   }
 
   /**

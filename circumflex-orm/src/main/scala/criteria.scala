@@ -35,14 +35,18 @@ import Query._
  */
 class Criteria[R](val relation: Relation[R]) {
 
-  protected val rootNode = relation.as("this")
-  protected val restrictions = new ListBuffer[Predicate]()
+  protected val rootNode = relation.as("root")
 
+  protected val rootTree: RelationNode[R] = rootNode
+  protected val projections: Seq[Projection[_]] = rootNode.projections
+
+  protected val restrictions = new ListBuffer[Predicate]()
   protected var _orders: Seq[Order] = Nil
   protected var _limit = -1;
   protected var _offset = 0;
 
-  protected def prepareQuery = new Select(rootNode)
+  protected def prepareQuery = Query.select(projections: _*)
+          .from(rootTree)
           .limit(_limit)
           .offset(_offset)
           .where(preparePredicate)

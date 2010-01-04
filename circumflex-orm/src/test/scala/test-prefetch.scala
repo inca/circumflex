@@ -109,4 +109,8 @@ object Init {
     ORM.connectionProvider.getConnection.commit
   }
 
+  val aTree = A as "a" join (B as "b" join (C as "c") join (D as "d"))
+
+  val bTree = B as "b" join (A as "a") join (C as "c") join (D as "d")
+
 }
