@@ -105,21 +105,21 @@ class RawDataTable[R](val localizableView: LocalizableView[R])
 
 class LocalizableViewInsertRule[R](val localizableView: LocalizableView[R])
         extends SchemaObject {
-  def objectName = localizableView.qualifiedName + "_rule_ins"
+  def objectName = localizableView.relationName + "_rule_ins"
   def sqlCreate = i18nDialect.createInsertRule(this)
   def sqlDrop = i18nDialect.dropInsertRule(this)
 }
 
 class LocalizableViewUpdateRule[R](val localizableView: LocalizableView[R])
         extends SchemaObject {
-  def objectName = localizableView.qualifiedName + "_rule_upd"
+  def objectName = localizableView.relationName + "_rule_upd"
   def sqlCreate = i18nDialect.createUpdateRule(this)
   def sqlDrop = i18nDialect.dropUpdateRule(this)
 }
 
 class LocalizableViewDeleteRule[R](val localizableView: LocalizableView[R])
         extends SchemaObject {
-  def objectName = localizableView.qualifiedName + "_rule_del"
+  def objectName = localizableView.relationName + "_rule_del"
   def sqlCreate = i18nDialect.createDeleteRule(this)
   def sqlDrop = i18nDialect.dropDeleteRule(this)
 }
