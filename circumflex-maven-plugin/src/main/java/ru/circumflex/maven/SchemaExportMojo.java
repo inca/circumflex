@@ -31,6 +31,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -111,7 +112,9 @@ public class SchemaExportMojo extends AbstractMojo {
                         String className = pkg + "." +
                                 f.getName().substring(0, f.getName().length() - ".class".length());
                         Class c = Thread.currentThread().getContextClassLoader().loadClass(className);
-                        if (SchemaObject.class.isAssignableFrom(c)) {
+                        if (SchemaObject.class.isAssignableFrom(c)
+                                && !Modifier.isAbstract(c.getModifiers())
+                                && !Modifier.isInterface(c.getModifiers())) {
                             SchemaObject so = (SchemaObject)c.newInstance();
                             ddl.addObject(so);
                             getLog().debug("Found schema object: " + c.getName());
