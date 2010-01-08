@@ -165,31 +165,31 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * Creates a criteria object for this relation.
    */
-  def createCriteria: Criteria[R] = new Criteria(this)
+  def criteria: Criteria[R] = new Criteria(this)
 
   /**
    * Queries a record by it's primary key.
    */
   def get(pk: Any): Option[R] =
-    createCriteria.add(_.projection(primaryKey.column) eq pk).unique
+    criteria.add(_.projection(primaryKey.column) eq pk).unique
 
   /**
    * Queries all records.
    */
   def all(): Seq[R] =
-    createCriteria.list
+    criteria.list
 
   /**
    * Queries specified amount of records.
    */
   def all(limit: Int): Seq[R] =
-    createCriteria.limit(limit).list
+    criteria.limit(limit).list
 
   /**
    * Queries specified amount of records, starting from specified offset.
    */
   def all(limit: Int, offset: Int): Seq[R] =
-    createCriteria.limit(limit).offset(offset).list
+    criteria.limit(limit).offset(offset).list
 
   /* OBJECT DEFINITIONS */
 
@@ -415,7 +415,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   }
 
   def save_!(record: Record[R]): Int =
-    if (record.isIdentified) update_!(record)
+    if (record.identified_?) update_!(record)
     else {
       generateFields(record)
       insert_!(record)

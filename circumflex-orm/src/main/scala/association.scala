@@ -65,12 +65,12 @@ trait Association[C, P] {
   def referenceColumn = parentColumn
 
   def fetchManyToOne(localValue: Any): Option[P] = parentRelation
-          .createCriteria
+          .criteria
           .add(_.projection(parentColumn).eq(localValue))
           .unique
 
   def fetchOneToMany(referenceValue: Any): Seq[C] = childRelation
-          .createCriteria
+          .criteria
           .add(_.projection(childColumn).eq(referenceValue))
           .list
 

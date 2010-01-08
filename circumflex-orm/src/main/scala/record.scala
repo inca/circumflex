@@ -39,7 +39,7 @@ import ORM._
  * <li>Records carry the data around using <em>fields</em; internally they are
  * stored in <code>fieldsMap</code> in a "column-to-value" form.</li>
  * <li>Each record has a primary key field which identifies the record in database.
- * The <code>isIdentified</code> method determines, whether primary key field is set.</li>
+ * The <code>identified_?</code> method determines, whether primary key field is set.</li>
  * <li>Two records are considered equal if their relations and primary key
  * fields are equal. If they are not identified, the internally generated uuid is
  * used for equality testing (so unidentified records never match each other).</li>
@@ -56,7 +56,7 @@ abstract class Record[R] {
 
   def primaryKey: Option[_] = fieldsMap.get(relation.primaryKey.column)
 
-  def isIdentified = primaryKey != None
+  def identified_?() = primaryKey != None
 
   /* FIELDS-RELATED STUFF */
 

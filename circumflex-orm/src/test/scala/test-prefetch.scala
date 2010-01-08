@@ -25,9 +25,12 @@
 
 package ru.circumflex.orm
 
+import Query._
+
 class A extends Record[A] {
   val id = field(A.id)
   val b = oneToMany(B.a)
+  override def toString = "A" + id.getOrElse(0)
 }
 
 object A extends Table[A] with LongIdPK[A]
@@ -37,6 +40,7 @@ class B extends Record[B] {
   val a = manyToOne(B.a)
   val d = manyToOne(B.d)
   val c = oneToMany(C.b)
+  override def toString = "B" + id.getOrElse(0)
 }
 
 object B extends Table[B] with LongIdPK[B] {
@@ -49,7 +53,9 @@ object B extends Table[B] with LongIdPK[B] {
 }
 
 class C extends Record[C] {
+  val id = field(C.id)
   val b = manyToOne(C.b)
+  override def toString = "C" + id.getOrElse(0)
 }
 
 object C extends Table[C] with LongIdPK[C] {
@@ -61,6 +67,7 @@ object C extends Table[C] with LongIdPK[C] {
 class D extends Record[D] {
   val id = field(D.id)
   val b = oneToMany(B.d)
+  override def toString = "D" + id.getOrElse(0)
 }
 
 object D extends Table[D] with LongIdPK[D]
@@ -106,11 +113,11 @@ object Init {
     val c5 = new C
     c5.b := b4
     c5.save
-    ORM.connectionProvider.getConnection.commit
+    conn.commit
   }
 
-  val aTree = A as "a" join (B as "b" join (C as "c") join (D as "d"))
+  val aTree = A join (B join C join D)
 
-  val bTree = B as "b" join (A as "a") join (C as "c") join (D as "d")
+  val bTree = B join A join C join D
 
 }
