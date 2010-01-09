@@ -64,8 +64,8 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def recordClass: Class[R] = {
     if (_cachedRecordClass == null)
       _cachedRecordClass = Class
-              .forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"), true, Circumflex.classLoader)
-              .asInstanceOf[Class[R]]
+          .forName(this.getClass.getName.replaceAll("(.*)\\$$", "$1"), true, Circumflex.classLoader)
+          .asInstanceOf[Class[R]]
     return _cachedRecordClass
   }
 
@@ -92,10 +92,10 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def relationName: String = {
     if (_cachedRelationName == null)
       _cachedRelationName = recordClass
-              .getSimpleName
-              .replaceAll("([A-Z])","_$1")
-              .replaceAll("^_(.*)","$1")
-              .toLowerCase
+          .getSimpleName
+          .replaceAll("([A-Z])","_$1")
+          .replaceAll("^_(.*)","$1")
+          .toLowerCase
     return _cachedRelationName
   }
 
@@ -214,7 +214,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   protected[orm] def unique(columns: Column[_, R]*): UniqueKey[R] = {
     val constrName = relationName + "_" +
-            columns.map(_.columnName).mkString("_") + "_key"
+        columns.map(_.columnName).mkString("_") + "_key"
     val constr = new UniqueKey(this, constrName, columns.toList)
     _constraints += constr
     return constr
@@ -238,7 +238,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   protected[orm] def foreignKey[T, P](parentRelation: Relation[P],
                                       localColumns: Seq[Column[_, R]],
                                       referenceColumns: Seq[Column[_, P]]
-          ): ForeignKey[R, P] = {
+      ): ForeignKey[R, P] = {
     val constrName = relationName + "_" + localColumns.map(_.columnName).mkString("_") + "_fkey"
     val fk = new MultiForeignKey(this, parentRelation, constrName, localColumns, referenceColumns)
     _constraints += fk
@@ -379,12 +379,13 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def insert_!(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    val conn = transactionManager.getTransaction.connection
-    val sql = dialect.insertRecord(record)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(record, st, columns)
-      return st.executeUpdate
+    transactionManager.dml(conn => {
+      val sql = dialect.insertRecord(record)
+      sqlLog.debug(sql)
+      auto(conn.prepareStatement(sql))(st => {
+        setParams(record, st, columns)
+        return st.executeUpdate
+      })
     })
   }
 
@@ -396,16 +397,17 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def update_!(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    val conn = transactionManager.getTransaction.connection
-    val sql = dialect.updateRecord(record)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(record, st, nonPKColumns)
-      typeConverter.write(
-        st,
-        record.primaryKey.get,
-        nonPKColumns.size + 1)
-      return st.executeUpdate
+    transactionManager.dml(conn => {
+      val sql = dialect.updateRecord(record)
+      sqlLog.debug(sql)
+      auto(conn.prepareStatement(sql))(st => {
+        setParams(record, st, nonPKColumns)
+        typeConverter.write(
+          st,
+          record.primaryKey.get,
+          nonPKColumns.size + 1)
+        return st.executeUpdate
+      })
     })
   }
 
@@ -424,12 +426,13 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def delete(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    val conn = transactionManager.getTransaction.connection
-    val sql = dialect.deleteRecord(record)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      typeConverter.write(st, record.primaryKey.get, 1)
-      return st.executeUpdate
+    transactionManager.dml(conn => {
+      val sql = dialect.deleteRecord(record)
+      sqlLog.debug(sql)
+      auto(conn.prepareStatement(sql))(st => {
+        typeConverter.write(st, record.primaryKey.get, 1)
+        return st.executeUpdate
+      })
     })
   }
 

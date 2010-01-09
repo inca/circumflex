@@ -64,13 +64,11 @@ trait SQLQuery extends Query {
   /**
    * Executes a query, opens a JDBC result set and executes provided actions.
    */
-  def resultSet[A](actions: ResultSet => A): A =
-    auto(transactionManager.getTransaction.connection.prepareStatement(toSql))(st => {
-      sqlLog.debug(toSql)
-      setParams(st, 1)
-      auto(st.executeQuery)(actions)
-    })
-
+  def resultSet[A](actions: ResultSet => A): A = transactionManager.sql(toSql)(st => {
+    sqlLog.debug(toSql)
+    setParams(st, 1)
+    auto(st.executeQuery)(actions)
+  })
 
   /**
    * Executes a query and returns a list of tuples, designated by query projections.

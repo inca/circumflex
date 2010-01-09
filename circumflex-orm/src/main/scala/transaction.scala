@@ -25,7 +25,7 @@
 
 package ru.circumflex.orm
 
-import java.sql.Connection
+import java.sql.{PreparedStatement, Connection}
 
 /**
  * Defines a contract to open stateful transactions and return thread-locally current transaction.
@@ -44,6 +44,9 @@ trait TransactionManager {
 
   def openTransaction(): StatefulTransaction = new StatefulTransaction()
 
+  def sql[A](sql: String)(actions: PreparedStatement => A) = getTransaction.sql(sql)(actions)
+  def dml[A](actions: Connection => A) = getTransaction.dml(actions) 
+
 }
 
 object DefaultTransactionManager extends TransactionManager
@@ -52,7 +55,7 @@ object DefaultTransactionManager extends TransactionManager
 class StatefulTransaction {
 
   val connection: Connection = ORM.connectionProvider.openConnection
-  
+
   protected var autoClose = false
 
   def setAutoClose(value: Boolean): this.type = {
@@ -79,12 +82,41 @@ class StatefulTransaction {
   } finally if (autoClose) connection.close
 
   /**
+   * Cleans up the state associated with this transaction.
+   */
+  def cleanup(): this.type = {
+    // TODO
+    return this
+  }
+
+  /**
+   * Prepares SQL statement and executes an attached block within the transaction scope.
+   */
+  def sql[A](sql: String)(actions: PreparedStatement => A): A = {
+    val st = connection.prepareStatement(sql)
+    try {
+      return actions(st)
+    } finally {
+      st.close
+    }
+  }
+
+  /**
+   *  Executes a block with DML-like actions in state-safe manner (does cleanup afterwards).
+   */
+  def dml[A](actions: Connection => A): A = try {
+    actions(connection)
+  } finally {
+    cleanup()
+  }
+
+  /**
    * Closes up the transaction and any associated resources.
    */
   def close(): Unit =
     if (!live_?) return
     else {
-      // clean up
+      cleanup()
       connection.close
     }
 
