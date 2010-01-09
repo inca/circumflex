@@ -143,7 +143,7 @@ class RecordProjection[R](val node: RelationNode[R])
     _columnProjections.find(_.column == pkColumn) match {
       case Some(pkProj) => pkProj.read(rs) match {
         case Some(idValue) =>
-          transactionManager.getTransaction.getCachedRecord(node.relation, idValue) match {
+          tx.getCachedRecord(node.relation, idValue) match {
             case Some(r: R) => Some(r)    // return cached record
             case _ => {   // parse record from projections, update cache and return
               val record = node.relation.recordClass
@@ -152,7 +152,7 @@ class RecordProjection[R](val node: RelationNode[R])
                       .asInstanceOf[Record[R]]
               _columnProjections.foreach(p => record.setField(p.column, p.read(rs)))
               if (record.identified_?) {
-                transactionManager.getTransaction.updateRecordCache(record)
+                tx.updateRecordCache(record)
                 Some(record.asInstanceOf[R])
               } else None
             }

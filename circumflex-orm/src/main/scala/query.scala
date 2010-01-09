@@ -263,8 +263,6 @@ object Query extends QueryHelper
  */
 trait QueryHelper {
 
-  def tx = transactionManager.getTransaction
-
   /* NODE HELPERS */
 
   implicit def relationToNode[R](rel: Relation[R]): RelationNode[R] =

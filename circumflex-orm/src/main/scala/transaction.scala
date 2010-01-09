@@ -87,7 +87,7 @@ class StatefulTransaction {
    * Invalidates all caches and clears all state associated with this transaction.
    */
   def cleanup(): this.type = {
-    invalidateRecordCache
+    invalidateCaches
     return this
   }
 
@@ -124,16 +124,43 @@ class StatefulTransaction {
 
   /* CACHE RELATED STUFF */
 
+  protected var recordCache = initRecordCache
+  protected var mtoCache = initMTOCache
+  protected var otmCache = initOTMCache
+
   protected def initRecordCache = new HashMap[Relation[_], HashMap[Any, Any]]() {
-    override def get(key: Relation[_]): Option[HashMap[Any, Any]] = super.get(key) match {
-      case Some(v) => Some(v)
+    override def get(key: Relation[_]) = super.get(key) match {
       case None =>
         this.update(key, new HashMap[Any, Any]())
         super.get(key)
+      case v => v
     }
   }
 
-  var recordCache = initRecordCache
+  protected def initMTOCache = new HashMap[Association[_, _], HashMap[Any, Any]]() {
+    override def get(key: Association[_, _]) = super.get(key) match {
+      case None =>
+        this.update(key, new HashMap[Any, Any]())
+        super.get(key)
+      case v => v
+    }
+  }
+
+  protected def initOTMCache = new HashMap[Association[_, _], HashMap[Any, Seq[Any]]]() {
+    override def get(key: Association[_, _]) = super.get(key) match {
+      case None =>
+        this.update(key, new HashMap[Any, Seq[Any]]())
+        super.get(key)
+      case v => v
+    }
+  }
+
+  def invalidateCaches: this.type = {
+    recordCache = initRecordCache
+    mtoCache = initMTOCache
+    otmCache = initOTMCache
+    return this
+  }
 
   def getCachedRecord[R](relation: Relation[R], id: Any): Option[R] =
     recordCache(relation).get(id) match {
@@ -147,10 +174,38 @@ class StatefulTransaction {
     return this
   }
 
-  def invalidateRecordCache: this.type = {
-    recordCache = initRecordCache
+  def getCachedMTO[C, P](association: Association[C, P], child: C): Option[P] =
+    mtoCache(association).get(child) match {
+      case Some(mto: P) => Some(mto)
+      case _ => None
+    }
+
+  def updateMTOCache[C, P](association: Association[C, P], child: C, parent: P): this.type = {
+    mtoCache(association) += (child -> parent)
     return this
   }
+
+  def evictMTO[C](association: Association[C, _], child: C): this.type = {
+    mtoCache(association) -= child
+    return this
+  }
+
+  def getCachedOTM[C, P](association: Association[C, P], parent: P): Option[Seq[C]] =
+    otmCache(association).get(parent) match {
+      case Some(otm: Seq[C]) => Some(otm)
+      case _ => None
+    }
+
+  def updateOTMCache[C, P](association: Association[C, P], parent: P, children: Seq[C]): this.type = {
+    otmCache(association) += (parent -> children)
+    return this
+  }
+
+  def evictOTM[C, P](association: Association[C, P], parent: P): this.type = {
+    otmCache(association) -= parent
+    return this
+  }
+
 
 
 }

@@ -49,8 +49,6 @@ abstract class Record[R] {
   val internalUUID = UUID.randomUUID.toString
 
   val fieldsMap = new HashMap[Column[_, R], Any]()
-  val manyToOneMap = new HashMap[Association[R, _], Any]()
-  val oneToManyMap = new HashMap[Association[_, R], Seq[Any]]()
 
   val relation: Relation[R] = ORMRegistry.getRelation(this)
 
@@ -68,16 +66,11 @@ abstract class Record[R] {
   def setField[T](col: Column[T, R], value: T): Unit =
     setField(col, Some(value))
 
-  def setField[T](col: Column[T, R], value: Option[T]) = {
+  def setField[T](col: Column[T, R], value: Option[T]) =
     value match {
       case Some(value) => fieldsMap += (col -> value)
       case _ => fieldsMap -= col
     }
-    // invalidate associated many-to-one caches
-    manyToOneMap.keys.filter(_.childColumn == col).foreach(manyToOneMap -= _)
-    // invalidate one-to-many caches if identifier changed
-    if (col == relation.primaryKey.column) oneToManyMap.clear
-  }
 
   /* INLINE RECORD PROXY */
 
@@ -89,54 +82,8 @@ abstract class Record[R] {
   def manyToOne[P](association: Association[R, P]) =
     new ManyToOne[R, P](this, association)
 
-  def getManyToOne[P](a: Association[R, P]): Option[P] =
-    manyToOneMap.get(a) match {
-      case Some(value : P) => Some(value)   // parent is already in cache
-      case _ => {
-        getField(a.childColumn) match {     // lazy-fetch a parent
-          case Some(localVal) => a.fetchManyToOne(localVal) match {
-            case Some(mto : P) =>
-              manyToOneMap += (a -> mto)
-              Some(mto)
-            case _ => None
-          } case _ => None
-        }
-      }
-    }
-
-  def setManyToOne[P](a: Association[R, P], value: P): Unit =
-    setManyToOne(a, Some(value))
-
-  def setManyToOne[P](a: Association[R, P], value: Option[P]): Unit = value match {
-    case Some(value: P) => {
-      manyToOneMap += (a -> value)
-      setField(a.childColumn.asInstanceOf[Column[Any, R]], value.asInstanceOf[Record[P]].primaryKey)
-    }
-    case None => {
-      manyToOneMap -= a
-      setField(a.childColumn, None)
-    }
-  }
-
   def oneToMany[C](association: Association[C, R]) =
     new OneToMany[C, R](this, association)
-
-  def getOneToMany[C](a: Association[C, R]): Seq[C] =
-    oneToManyMap.get(a) match {
-      case None => primaryKey match {     // no cached children yet
-        case Some(refVal) => {            // lazy-fetch children if identified
-          val children = a.fetchOneToMany(refVal)
-          oneToManyMap += (a -> children)
-          children
-        }
-        case _ => Nil
-      }
-      case Some(seq: Seq[C]) => seq   // children are already in cache
-    }
-
-  def setOneToMany[C](a: Association[C, R], value: Seq[C]): Unit = {
-    oneToManyMap += (a -> value)
-  }
 
   /* PERSISTENCE-RELATED STUFF */
 
@@ -188,11 +135,8 @@ trait Field[T] {
   }
 
   def set(value: T): Unit
-
   def setNull: Unit
-
   def <=(value: T): Unit = set(value)
-
   def :=(value: T): Unit = set(value)
 
   override def toString = get match {
@@ -210,13 +154,8 @@ trait Collection[T] {
   }
 
   def get: Seq[T]
-
   def set(value: Seq[T]): Unit
-
-  def setNull: Unit
-
   def <=(value: Seq[T]): Unit = set(value)
-
   def :=(value: Seq[T]): Unit = set(value)
 
   override def toString = get.toString
@@ -236,9 +175,31 @@ class ManyToOne[C, P](val record: Record[C],
                       val association: Association[C, P])
         extends Field[P] {
 
-  def get: Option[P] = record.getManyToOne(association)
-  def set(value: P): Unit = record.setManyToOne(association, value)
-  def setNull: Unit = record.setManyToOne(association, None)
+  protected val r = record.asInstanceOf[C]
+
+  def get: Option[P] =
+    tx.getCachedMTO(association, r) match {
+      case None => record.getField(association.childColumn) match {     // lazy-fetch a parent
+        case Some(localVal) => association.fetchManyToOne(localVal) match {
+          case Some(mto : P) =>
+            tx.updateMTOCache(association, r, mto)
+            Some(mto)
+          case _ => None
+        } case _ => None
+      } case v => v
+    }
+
+  protected def setManyToOne[P](value: Option[P]): Unit = value match {
+    case Some(value: P) =>
+      tx.updateMTOCache(association.asInstanceOf[Association[C,Any]], r, value)
+      record.setField(association.childColumn.asInstanceOf[Column[Any, C]], value.asInstanceOf[Record[P]].primaryKey)
+    case None =>
+      tx.evictMTO(association, r)
+      record.setField(association.childColumn, None)
+  }
+
+  def set(value: P): Unit = setManyToOne(Some(value))
+  def setNull: Unit = setManyToOne(None)
 
 }
 
@@ -246,8 +207,23 @@ class OneToMany[C, P](val record: Record[P],
                       val association: Association[C, P])
         extends Collection[C] {
 
-  def get: Seq[C] = record.getOneToMany(association)
-  def set(value: Seq[C]): Unit = record.setOneToMany(association, value)
-  def setNull: Unit = record.setOneToMany(association, Nil)
+  val r = record.asInstanceOf[P]
+
+  def get: Seq[C] = tx.getCachedOTM(association, r) match {
+    case Some(seq: Seq[C]) => seq
+    case None => record.primaryKey match {
+      case Some(refVal) =>            // lazy-fetch children
+        val children = association.fetchOneToMany(refVal)
+        tx.updateOTMCache(association, r, children)
+        children
+      case _ => Nil
+    }
+  }
+
+  protected def setOneToMany[C](value: Seq[C]): Unit = {
+    tx.updateOTMCache(association.asInstanceOf[Association[Any,P]], r, value)
+  }
+
+  def set(value: Seq[C]): Unit = setOneToMany(value)
 
 }

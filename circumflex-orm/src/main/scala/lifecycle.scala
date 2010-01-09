@@ -44,16 +44,16 @@ class TransactionManagementFilter extends AbstractCircumflexFilter {
   def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
     chain.doFilter(ctx.request, ctx.response)
     if (transactionManager.hasLiveTransaction ) try {
-      transactionManager.getTransaction.commit
+      tx.commit
       log.debug("Committed current transaction.")
     } catch {
       case e => {
         log.error("An error has occured while trying to commit current transaction.", e)
-        transactionManager.getTransaction.rollback
+        tx.rollback
         log.debug("Rolled back current transaction.")
       }
     } finally {
-      transactionManager.getTransaction.close
+      tx.close
       log.debug("Closed current connection.")
     }
   }
@@ -70,16 +70,16 @@ class TransactionManagementListener extends ServletRequestListener {
 
   def requestDestroyed(sre: ServletRequestEvent) =
     if (transactionManager.hasLiveTransaction) try {
-      transactionManager.getTransaction.commit
+      tx.commit
       log.debug("Committed current transaction.")
     } catch {
       case e => {
         log.error("An error has occured while trying to commit current transaction.", e)
-        transactionManager.getTransaction.rollback
+        tx.rollback
         log.debug("Rolled back current transaction.")
       }
     } finally {
-      transactionManager.getTransaction.close
+      tx.close
       log.debug("Closed current connection.")
     }
 }

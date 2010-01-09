@@ -88,4 +88,6 @@ object ORM {
     case _ => DefaultTransactionManager
   }
 
+  def tx = transactionManager.getTransaction
+
 }
