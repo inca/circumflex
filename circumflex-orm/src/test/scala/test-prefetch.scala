@@ -103,7 +103,7 @@ object Init {
     c1.save
     val c2 = new C
     c2.b := b1
-    c1.save
+    c2.save
     val c3 = new C
     c3.b := b3
     c3.save
