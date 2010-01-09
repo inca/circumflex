@@ -46,7 +46,8 @@ object ORMI18N extends JDBCHelper {
 
   def setLanguage(locale: Locale): Unit = setLanguage(locale.getLanguage)
 
-  def setLanguage(lang: String): Unit = setLanguage(ORM.connectionProvider.getConnection, lang)
+  def setLanguage(lang: String): Unit =
+    setLanguage(ORM.transactionManager.getTransaction.connection, lang)
 
   def setLanguage(conn: Connection, lang: String): Unit = {
     val q = i18nDialect.setLangQuery(lang.trim.toLowerCase);
