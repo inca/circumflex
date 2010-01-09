@@ -138,13 +138,29 @@ class RecordProjection[R](val node: RelationNode[R])
   def atomicProjections = _columnProjections
 
   def read(rs: ResultSet): Option[R] = {
-    val record = node.relation.recordClass
-            .getConstructor()
-            .newInstance()
-            .asInstanceOf[Record[R]]
-    _columnProjections.foreach(p => record.setField(p.column, p.read(rs)))
-    if (record.identified_?) return Some(record.asInstanceOf[R])
-    else return None
+    // look for primary key projection
+    val pkColumn = node.primaryKey.column
+    _columnProjections.find(_.column == pkColumn) match {
+      case Some(pkProj) => pkProj.read(rs) match {
+        case Some(idValue) =>
+          transactionManager.getTransaction.getCachedRecord(node.relation, idValue) match {
+            case Some(r: R) => Some(r)    // return cached record
+            case _ => {   // parse record from projections, update cache and return
+              val record = node.relation.recordClass
+                      .getConstructor()
+                      .newInstance()
+                      .asInstanceOf[Record[R]]
+              _columnProjections.foreach(p => record.setField(p.column, p.read(rs)))
+              if (record.identified_?) {
+                transactionManager.getTransaction.updateRecordCache(record)
+                Some(record.asInstanceOf[R])
+              } else None
+            }
+          }
+        case _ => None
+      }
+      case _ => None
+    }
   }
 
   def toSql = dialect.selectClause(_columnProjections.map(_.toSql): _*)

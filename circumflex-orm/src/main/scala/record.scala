@@ -46,7 +46,7 @@ import ORM._
  * </ul>
  */
 abstract class Record[R] {
-  private val uuid = UUID.randomUUID.toString
+  val internalUUID = UUID.randomUUID.toString
 
   val fieldsMap = new HashMap[Column[_, R], Any]()
   val manyToOneMap = new HashMap[Association[R, _], Any]()
@@ -164,11 +164,11 @@ abstract class Record[R] {
 
   override def equals(obj: Any) = obj match {
     case r: Record[R] if (r.relation == this.relation) =>
-      this.primaryKey.getOrElse(this.uuid) == r.primaryKey.getOrElse(r.uuid)
+      this.primaryKey.getOrElse(this.internalUUID) == r.primaryKey.getOrElse(r.internalUUID)
     case _ => false
   }
 
-  override def hashCode = this.primaryKey.getOrElse(uuid).hashCode
+  override def hashCode = this.primaryKey.getOrElse(internalUUID).hashCode
 
   override def toString = relation.relationName + ": " + this.fieldsMap.toString
 }

@@ -26,6 +26,7 @@
 package ru.circumflex.orm
 
 import java.sql.{PreparedStatement, Connection}
+import collection.mutable.HashMap
 
 /**
  * Defines a contract to open stateful transactions and return thread-locally current transaction.
@@ -45,7 +46,7 @@ trait TransactionManager {
   def openTransaction(): StatefulTransaction = new StatefulTransaction()
 
   def sql[A](sql: String)(actions: PreparedStatement => A) = getTransaction.sql(sql)(actions)
-  def dml[A](actions: Connection => A) = getTransaction.dml(actions) 
+  def dml[A](actions: Connection => A) = getTransaction.dml(actions)
 
 }
 
@@ -55,7 +56,6 @@ object DefaultTransactionManager extends TransactionManager
 class StatefulTransaction {
 
   val connection: Connection = ORM.connectionProvider.openConnection
-
   protected var autoClose = false
 
   def setAutoClose(value: Boolean): this.type = {
@@ -64,6 +64,8 @@ class StatefulTransaction {
   }
 
   def live_?(): Boolean = connection != null && !connection.isClosed
+
+  def autoClose_?(): Boolean = this.autoClose
 
   /**
    * Commits the transaction.
@@ -82,10 +84,10 @@ class StatefulTransaction {
   } finally if (autoClose) connection.close
 
   /**
-   * Cleans up the state associated with this transaction.
+   * Invalidates all caches and clears all state associated with this transaction.
    */
   def cleanup(): this.type = {
-    // TODO
+    invalidateRecordCache
     return this
   }
 
@@ -119,5 +121,36 @@ class StatefulTransaction {
       cleanup()
       connection.close
     }
+
+  /* CACHE RELATED STUFF */
+
+  protected def initRecordCache = new HashMap[Relation[_], HashMap[Any, Any]]() {
+    override def get(key: Relation[_]): Option[HashMap[Any, Any]] = super.get(key) match {
+      case Some(v) => Some(v)
+      case None =>
+        this.update(key, new HashMap[Any, Any]())
+        super.get(key)
+    }
+  }
+
+  var recordCache = initRecordCache
+
+  def getCachedRecord[R](relation: Relation[R], id: Any): Option[R] =
+    recordCache(relation).get(id) match {
+      case Some(record: R) => Some(record)
+      case _ => None
+    }
+
+  def updateRecordCache[R](record: Record[R]): this.type = {
+    if (!record.identified_?) throw new ORMException("Could not cache unidentified record.")
+    recordCache(record.relation) += (record.primaryKey.get -> record)
+    return this
+  }
+
+  def invalidateRecordCache: this.type = {
+    recordCache = initRecordCache
+    return this
+  }
+
 
 }
