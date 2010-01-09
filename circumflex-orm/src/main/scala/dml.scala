@@ -36,7 +36,7 @@ trait DMLQuery extends Query {
    * Executes a query, returns number of affected rows.
    */
   def executeUpdate: Int = {
-    val conn = connectionProvider.getConnection
+    val conn = transactionManager.getTransaction.connection
     val sql = toSql
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {

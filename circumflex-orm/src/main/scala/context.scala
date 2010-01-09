@@ -26,38 +26,18 @@
 package ru.circumflex.orm
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import ru.circumflex.core.{CircumflexContext, AbstractCircumflexFilter, Circumflex}
+import ru.circumflex.core.Circumflex
 import java.sql.{Timestamp, PreparedStatement, ResultSet, Connection}
 import java.util.Date
 import javax.naming.InitialContext
 import javax.sql.DataSource
 import org.slf4j.LoggerFactory
 import ORM._
-import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
 
 /**
- * Defines a contract to return JDBC connections.
+ * Defines a contract to return stateful transactions.
  */
 trait ConnectionProvider {
-  /**
-   * Returns a JDBC connection.
-   * @return JDBC connection
-   */
-  def getConnection: Connection
-
-  /**
-   * Used to identify whether a connection returned by <code>getConnection</code> is live.
-   */
-  def hasLiveConnection: Boolean
-
-}
-
-/**
- * Implements CurrentConnectionProvider with connection-per-thread pattern.
- * Uses <code>java.sql.Connection.isClosed</code> to identify used connections.
- */
-trait ThreadLocalConnectionProvider extends ConnectionProvider {
-  private val threadLocalContext = new ThreadLocal[Connection]
 
   /**
    * Opens new JDBC connection.
@@ -65,22 +45,7 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
    */
   def openConnection: Connection
 
-  /**
-   * Returns true if connection is bound to thread local and not yet closed.
-   */
-  def hasLiveConnection: Boolean =
-    threadLocalContext.get != null && !threadLocalContext.get.isClosed
-
-  /**
-   * Returns live JDBC connection or opens a new one and binds it to thread local.
-   * @return JDBC connection
-   */
-  def getConnection: Connection = {
-    if (!hasLiveConnection) threadLocalContext.set(openConnection)
-    return threadLocalContext.get
-  }
 }
-
 
 /**
  * Default ConnectionProvider implementation, used to acquire connections throughout the application.
@@ -102,7 +67,7 @@ trait ThreadLocalConnectionProvider extends ConnectionProvider {
  * See <a href="http://www.mchange.com/projects/c3p0/index.html#configuration_properties">c3p0 configuration
  * properties reference</a> for information regarding connection pool configuration.
  */
-class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
+class DefaultConnectionProvider extends ConnectionProvider {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   protected val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
@@ -170,56 +135,6 @@ class DefaultConnectionProvider extends ThreadLocalConnectionProvider {
 }
 
 object DefaultConnectionProvider extends DefaultConnectionProvider
-
-/**
- * Ensures that current transaction is commited and that contextual connection is closed
- * at the end of request processing cycle.
- * This filter should be the first in chain.
- */
-class ConnectionManagementFilter extends AbstractCircumflexFilter {
-  override protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
-
-  /**
-   * Commits current transaction at the end of request processing cycle and closes current connection.
-   */
-  def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
-    chain.doFilter(ctx.request, ctx.response)
-    if (connectionProvider.hasLiveConnection) try {
-      connectionProvider.getConnection.commit
-      log.debug("Committed current transaction.")
-    } catch {
-      case e => {
-        log.error("An error has occured while trying to commit current transaction.", e)
-        connectionProvider.getConnection.rollback
-        log.debug("Rolled back current transaction.")
-      }
-    } finally {
-      connectionProvider.getConnection.close
-      log.debug("Closed current connection.")
-    }
-  }
-}
-
-class ConnectionManagementListener extends ServletRequestListener {
-  protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
-
-  def requestInitialized(sre: ServletRequestEvent) = {}
-
-  def requestDestroyed(sre: ServletRequestEvent) =
-    if (connectionProvider.hasLiveConnection) try {
-      connectionProvider.getConnection.commit
-      log.debug("Committed current transaction.")
-    } catch {
-      case e => {
-        log.error("An error has occured while trying to commit current transaction.", e)
-        connectionProvider.getConnection.rollback
-        log.debug("Rolled back current transaction.")
-      }
-    } finally {
-      connectionProvider.getConnection.close
-      log.debug("Closed current connection.")
-    }
-}
 
 /**
  * Type converters are used to read atomic values from JDBC

@@ -190,7 +190,7 @@ class DDLExport extends JDBCHelper {
    * Executes CREATE script.
    */
   def create: Unit =
-    autoClose(connectionProvider.getConnection)(conn => {
+    autoClose(transactionManager.getTransaction.connection)(conn => {
       // we will commit every successful statement
       val autoCommit = conn.getAutoCommit
       conn.setAutoCommit(true)
@@ -219,7 +219,7 @@ class DDLExport extends JDBCHelper {
    * Executes DROP script.
    */
   def drop: Unit =
-    autoClose(connectionProvider.getConnection)(conn => {
+    autoClose(transactionManager.getTransaction.connection)(conn => {
       // we will commit every successful statement
       val autoCommit = conn.getAutoCommit
       conn.setAutoCommit(true)

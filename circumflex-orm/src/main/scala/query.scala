@@ -65,7 +65,7 @@ trait SQLQuery extends Query {
    * Executes a query, opens a JDBC result set and executes provided actions.
    */
   def resultSet[A](actions: ResultSet => A): A =
-    auto(connectionProvider.getConnection.prepareStatement(toSql))(st => {
+    auto(transactionManager.getTransaction.connection.prepareStatement(toSql))(st => {
       sqlLog.debug(toSql)
       setParams(st, 1)
       auto(st.executeQuery)(actions)
@@ -265,7 +265,7 @@ object Query extends QueryHelper
  */
 trait QueryHelper {
 
-  def conn = connectionProvider.getConnection
+  def tx = transactionManager.getTransaction
 
   /* NODE HELPERS */
 

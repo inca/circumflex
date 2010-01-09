@@ -113,7 +113,7 @@ object Init {
     val c5 = new C
     c5.b := b4
     c5.save
-    conn.commit
+    tx.commit
   }
 
   val aTree = A join (B join C join D)

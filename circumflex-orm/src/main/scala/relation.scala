@@ -379,7 +379,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def insert_!(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    val conn = connectionProvider.getConnection
+    val conn = transactionManager.getTransaction.connection
     val sql = dialect.insertRecord(record)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
@@ -396,7 +396,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def update_!(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    val conn = connectionProvider.getConnection
+    val conn = transactionManager.getTransaction.connection
     val sql = dialect.updateRecord(record)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
@@ -424,7 +424,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def delete(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    val conn = connectionProvider.getConnection
+    val conn = transactionManager.getTransaction.connection
     val sql = dialect.deleteRecord(record)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {

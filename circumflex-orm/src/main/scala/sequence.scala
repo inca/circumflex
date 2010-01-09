@@ -50,7 +50,7 @@ class Sequence[R](val relation: Relation[R],
   def nextValue: Long = {
     val sql = dialect.selectSequenceNextVal(this)
     sqlLog.debug(sql)
-    auto(connectionProvider.getConnection.prepareStatement(sql)) {
+    auto(transactionManager.getTransaction.connection.prepareStatement(sql)) {
       st => auto(st.executeQuery)(rs => if (rs.next) {
         return rs.getLong(1)
       } else
