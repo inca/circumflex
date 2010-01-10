@@ -51,9 +51,14 @@ abstract class RelationNode[R](val relation: Relation[R])
   def primaryKey = relation.primaryKey
 
   /**
+   * Creates a record projection.
+   */
+  def * = new RecordProjection[R](this)
+
+  /**
    * One or more projections that correspond to this node.
    */
-  def projections: Seq[Projection[_]]
+  def projections: Seq[Projection[_]] = List(*)
 
   /**
    * Returns columns of underlying relation.
@@ -134,13 +139,6 @@ class TableNode[R](val table: Table[R])
    */
   def toSql = dialect.tableAlias(table, alias)
 
-  def projections = List(*)
-
-  /**
-   * Creates a record projection.
-   */
-  def * = new RecordProjection[R](this)
-
 }
 
 class ViewNode[R](val view: View[R])
@@ -150,13 +148,6 @@ class ViewNode[R](val view: View[R])
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
    */
   def toSql = dialect.viewAlias(view, alias)
-
-  def projections = List(*)
-
-  /**
-   * Creates a record projection.
-   */
-  def * = new RecordProjection[R](this)
 
 }
 
@@ -191,7 +182,7 @@ abstract class JoinNode[L, R](protected var _left: RelationNode[L],
   /**
    * Join nodes return parent node's projections joined with child node's ones.
    */
-  def projections = left.projections ++ right.projections
+  override def projections = left.projections ++ right.projections
 
   def replaceLeft(newLeft: RelationNode[L]): this.type = {
     this._left = newLeft

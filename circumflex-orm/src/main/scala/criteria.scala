@@ -27,6 +27,7 @@ package ru.circumflex.orm
 
 import collection.mutable.ListBuffer
 import Query._
+import ORM._
 
 /**
  * Criteria is high-level abstraction of <code>Select</code>. It is used to operate
@@ -41,7 +42,7 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
 
   protected var rootTree: RelationNode[R] = rootNode
   protected var prefetchSeq: Seq[Association[_, _]] = Nil
-  protected var projections: Seq[Projection[_]] = rootNode.projections
+  protected var projections: Seq[RecordProjection[_]] = List(rootNode.*)
 
   protected var restrictions: Seq[Predicate] = Nil
   protected var _orders: Seq[Order] = Nil
@@ -115,7 +116,7 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
   }
 
   protected def updateTree[R](association: Association[_, _],
-                              node: RelationNode[R]): RelationNode[R] =
+                    node: RelationNode[R]): RelationNode[R] =
     node match {
       case j: JoinNode[_, _] => j
               .replaceLeft(updateTree(association, j.left))
@@ -133,10 +134,10 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
     }
 
   protected def makePrefetch[R](association: Association[_, _],
-                                rel: Relation[R]): RelationNode[R] = {
+                      rel: Relation[R]): RelationNode[R] = {
     prefetchCounter += 1
     val node = rel.as("pf_" + prefetchCounter)
-    projections ++= node.projections
+    projections ++= List(node.*)
     prefetchSeq ++= List(association)
     return node
   }
@@ -144,7 +145,59 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
   /**
    * Executes the query and retrieves records list.
    */
-  def list: Seq[R] = prepareQuery.list.map(_.apply(0).asInstanceOf[R])
+  def list: Seq[R] = {
+    val tuples = prepareQuery.list
+    val result = new ListBuffer[R]()
+    tuples.foreach(t => {
+      processTupleTree(t, rootTree)
+      val root = t.apply(0).asInstanceOf[R]
+      if (!result.contains(root)) result += root
+    })
+    return result
+  }
+
+  protected def processTupleTree(tuple: Array[_], tree: RelationNode[_]): Unit = tree match {
+    case j: JoinNode[_, _] =>
+      val pNode = j match {
+        case j: ParentToChildJoin[_, _] => j.left
+        case j: ChildToParentJoin[_, _] => j.right
+        case _ => return
+      }
+      val cNode = j match {
+        case j: ParentToChildJoin[_, _] => j.right
+        case j: ChildToParentJoin[_, _] => j.left
+        case _ => return
+      }
+      val a = j match {
+        case j: ParentToChildJoin[_, _] => j.association
+        case j: ChildToParentJoin[_, _] => j.association
+        case _ => return
+      }
+      val pIndex = projections.findIndexOf(p => p.node.alias == pNode.alias)
+      val cIndex = projections.findIndexOf(p => p.node.alias == cNode.alias)
+      if (pIndex == -1 || cIndex == -1) return
+      val parent = tuple(pIndex)
+      val child = tuple(cIndex)
+      cacheAssociation(a.asInstanceOf[Association[Any, Any]], child, parent)
+      processTupleTree(tuple, j.left)
+      processTupleTree(tuple, j.right)
+    case _ =>
+  }
+
+  protected def cacheAssociation[C, P](a: Association[C, P], child: C, parent: P): Unit = {
+    if (child != null)
+      tx.updateMTOCache(a, child, parent)
+    if (parent != null)
+      tx.getCachedOTM(a, parent) match {
+        case None =>
+          if (child == null) tx.updateOTMCache(a, parent, Nil)
+          else tx.updateOTMCache(a, parent, List(child))
+        case Some(s: Seq[C]) =>
+          if (!s.contains(child))
+            tx.updateOTMCache(a, parent, s ++ List(child))
+        case _ =>
+      }
+  }
 
   /**
    * Executes the query and retrieves unqiue record.
