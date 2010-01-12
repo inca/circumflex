@@ -3,11 +3,11 @@
 #set( $symbol_escape = '\' )
 package ${package}
 
-import ru.circumflex.core.RequestRouter
-import ru.circumflex.freemarker.FreemarkerHelper
-import java.text.SimpleDateFormat
-import java.util.Date
-import org.slf4j.LoggerFactory
+import _root_.ru.circumflex.core.RequestRouter
+import _root_.ru.circumflex.freemarker.FreemarkerHelper
+import _root_.java.text.SimpleDateFormat
+import _root_.java.util.Date
+import _root_.org.slf4j.LoggerFactory
 
 class Main extends RequestRouter
     with FreemarkerHelper {
