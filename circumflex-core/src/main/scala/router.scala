@@ -124,7 +124,15 @@ class RequestRouter {
    */
   def sendFile(file: File) = FileResponse(file)
 
-  /* COMMON HEADERS */
+  /* COMMON HELPERS */
+
+  /**
+   * Sets content type header.
+   */
+  def contentType(ct: String): this.type = {
+    ctx.contentType = ct
+    return this
+  }
 
   /**
    * Adds an Content-Disposition header with "attachment" content and specified UTF-8 filename.
