@@ -25,6 +25,7 @@
 
 package ru.circumflex.core
 
+import java.io.File
 import Circumflex._
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
@@ -36,6 +37,8 @@ class RequestRouter {
 
   def ctx = Circumflex.ctx
 
+  /* ROUTES AND MATCHERS */
+
   val get = new Route("get")
   val getOrPost = new Route("get", "post")
   val getOrHead = new Route("get", "head")
@@ -46,41 +49,98 @@ class RequestRouter {
   val options = new Route("options")
   val any = new Route("get", "post", "put", "delete", "head", "options")
 
+  /**
+   * Constructs a headers-based matcher.
+   */
+  def headers(crit: (String, String)*) = new HeadersRegexMatcher(crit : _*)
+
+  /* HELPERS */
+
   val header = new HeadersHelper
 
+  /**
+   * Determines, if the request is XMLHttpRequest (for AJAX applications).
+   */
   def isXhr = header("X-Requested-With") match {
     case Some("XMLHttpRequest") => true
     case _ => false
   }
 
+  /**
+   * Rewrites request URI. Normally it causes the request to travel all the way through
+   * the filters and <code>RequestRouter</code> once again but with different URI.
+   * You must use this method with caution to prevent infinite loops.
+   * You must also add &lt;dispatcher&gt;FORWARD&lt;/dispatcher&gt; to filter mapping to
+   * allow request processing with certain filters.
+   */
   def rewrite(target: String): Nothing = {
     ctx.request.getRequestDispatcher(target).forward(ctx.request, ctx.response)
     throw RouteMatchedException(None)
   }
 
-  def headers(crit: (String, String)*) = new HeadersRegexMatcher(crit : _*)
-
+  /**
+   * Retrieves a String parameter from context.
+   */
   def param(key: String): Option[String] = ctx.stringParam(key)
 
+  /**
+   * Sends error with specified status code and message.
+   */
   def error(errorCode: Int, message: String) = ErrorResponse(errorCode, message)
+
+  /**
+   * Sends error with specified status code.
+   */
   def error(errorCode: Int) = ErrorResponse(errorCode, "no message available")
 
+  /**
+   * Sends a 302 MOVED TEMPORARILY redirect.
+   */
   def redirect(location: String) = RedirectResponse(location)
 
+  /**
+   * Sends empty response HTTP 200 OK.
+   */
   def done: HttpResponse = done(200)
 
+  /**
+   * Sends empty response with specified status code.
+   */
   def done(statusCode: Int): HttpResponse = {
     ctx.statusCode = statusCode
     EmptyResponse()
   }
 
+  /**
+   * Immediately stops processing with HTTP 400 Bad Request if one of specified parametes is not provided.
+   */
   def requireParams(names: String*) = names.toList.foreach(name => {
     if (param(name) == None)
       throw new RouteMatchedException(Some(error(400, "Missing " + name + " parameter.")))
   })
 
+  /**
+   * Sends a file.
+   */
+  def sendFile(file: File) = FileResponse(file)
+
+  /* COMMON HEADERS */
+
+  /**
+   * Adds an Content-Disposition header with "attachment" content and specified UTF-8 filename.
+   */
+  def attachment(filename: String): this.type = {
+    header("Content-Disposition") =
+        "attachment; filename=\"" + new String(filename.getBytes("UTF-8"), "ISO-8859-1") + "\""
+    return this
+  }
+
 }
 
+/**
+ * Dispatches current request if it passes all matchers.
+ * Common matchers are based on HTTP methods, URI and headers.
+ */
 class Route(val matchingMethods: String*) {
 
   protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
@@ -104,6 +164,9 @@ class Route(val matchingMethods: String*) {
     dispatch(response, new UriRegexMatcher(uriRegex), matcher1)
 }
 
+/**
+ * A helper for setting response headers in a DSL-like way.
+ */
 class HeadersHelper {
 
   def apply(name: String): Option[String] = {

@@ -31,6 +31,7 @@ import java.net.URLDecoder
 import java.util.{Locale, ResourceBundle}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
+import javax.activation.MimetypesFileTypeMap
 
 class CircumflexContext(val request: HttpServletRequest,
                         val response: HttpServletResponse,
@@ -39,10 +40,19 @@ class CircumflexContext(val request: HttpServletRequest,
 
   val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
   val params = new HashMap[String, Any]
+
   val stringHeaders = new HashMap[String, String]
   val dateHeaders = new HashMap[String, Long]
-  var statusCode = 200
-  var contentType = "text/html"
+  var statusCode: Int = 200
+  protected var _contentType: String = null
+
+  def contentType: Option[String] =
+    if (_contentType == null) None
+    else Some(_contentType)
+
+  def contentType_= (value: String): Unit = {
+    this._contentType = value;
+  }
 
   def method: String =
     get("_method").getOrElse(request.getMethod).toString
@@ -163,6 +173,10 @@ object Circumflex {
   }
 
   def destroyContext() = threadLocalContext.set(null)
+
+  /* MISCELLANEOUS */
+
+  def mimeTypesMap = new MimetypesFileTypeMap()
 
 }
 

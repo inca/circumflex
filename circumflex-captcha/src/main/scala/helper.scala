@@ -26,7 +26,7 @@
 package ru.circumflex.captcha
 
 import com.octo.captcha.service.image.DefaultManageableImageCaptchaService
-import core.{HttpResponse, DirectStreamResponse, Circumflex}
+import _root_.ru.circumflex.core.{HttpResponse, DirectStreamResponse, Circumflex}
 import Circumflex._
 import javax.imageio.ImageIO
 
