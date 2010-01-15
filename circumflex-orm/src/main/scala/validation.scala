@@ -25,7 +25,7 @@
 
 package ru.circumflex.orm
 
-import ru.circumflex.core.{Messages, GroupBy, CircumflexException}
+import ru.circumflex.core.{Messages, CircumflexUtil, CircumflexException}
 
 /**
  * Represents a validation error. It's <code>source</code> describes
@@ -57,7 +57,7 @@ case class ValidationError(val source: String,
 
 class ValidationException(val errors: ValidationError *)
     extends CircumflexException("Validation failed.") {
-  private val _errorsMap = GroupBy.apply[String, ValidationError](errors, e => e.source)
+  private val _errorsMap = CircumflexUtil.groupBy[String, ValidationError](errors, e => e.source)
   def errorsMap = _errorsMap
 }
 

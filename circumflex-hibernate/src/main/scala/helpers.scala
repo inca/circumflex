@@ -25,7 +25,7 @@
 
 package ru.circumflex.hibernate
 
-import core.{HttpResponse,GroupBy}
+import core.{HttpResponse,CircumflexUtil}
 import javax.validation.ConstraintViolation
 
 
@@ -50,6 +50,6 @@ object Valid extends ValidationResult
 case class NotValid[T](val violations: Seq[ConstraintViolation[T]]) extends ValidationResult {
 
   val byProperties =
-    GroupBy.apply[String, ConstraintViolation[T]](violations, cv => cv.getPropertyPath.toString)
+    CircumflexUtil.groupBy[String, ConstraintViolation[T]](violations, cv => cv.getPropertyPath.toString)
 
 }
