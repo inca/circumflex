@@ -78,20 +78,20 @@ class SimpleExpressionHelper(val expr: String) {
 
   /* Simple expressions */
 
-  def eq(value: Any) = new SimpleExpression(expr + dialect.eq, List(value))
-  def ne(value: Any) = new SimpleExpression(expr + dialect.ne, List(value))
-  def gt(value: Any) = new SimpleExpression(expr + dialect.gt, List(value))
-  def ge(value: Any) = new SimpleExpression(expr + dialect.ge, List(value))
-  def lt(value: Any) = new SimpleExpression(expr + dialect.lt, List(value))
-  def le(value: Any) = new SimpleExpression(expr + dialect.le, List(value))
-  def isNull = new SimpleExpression(expr + dialect.isNull, Nil)
-  def isNotNull = new SimpleExpression(expr + dialect.isNotNull, Nil)
-  def like(value: String) = new SimpleExpression(expr + dialect.like, List(value))
-  def ilike(value: String) = new SimpleExpression(expr + dialect.ilike, List(value))
+  def eq(value: Any) = new SimpleExpression(expr + " = ?", List(value))
+  def ne(value: Any) = new SimpleExpression(expr + " <> ?", List(value))
+  def gt(value: Any) = new SimpleExpression(expr + " > ?", List(value))
+  def ge(value: Any) = new SimpleExpression(expr + " >= ?", List(value))
+  def lt(value: Any) = new SimpleExpression(expr + " < ?", List(value))
+  def le(value: Any) = new SimpleExpression(expr + " <= ?", List(value))
+  def isNull = new SimpleExpression(expr + " is null", Nil)
+  def isNotNull = new SimpleExpression(expr + " is not null", Nil)
+  def like(value: String) = new SimpleExpression(expr + " like ?", List(value))
+  def ilike(value: String) = new SimpleExpression(expr + " ilike ?", List(value))
   def in(params: Any*) =
     new SimpleExpression(expr + dialect.parameterizedIn(params), params.toList) 
   def between(lowerValue: Any, upperValue: Any) =
-    new SimpleExpression(expr + dialect.between, List(lowerValue, upperValue))
+    new SimpleExpression(expr + " between ? and ?", List(lowerValue, upperValue))
 
   /* Simple subqueries */
 

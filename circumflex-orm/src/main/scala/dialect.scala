@@ -70,28 +70,6 @@ class Dialect {
 
   def dummy = "1 = 1"
 
-  def eq = " = ?"
-
-  def ne = " <> ?"
-
-  def gt = " > ?"
-
-  def ge = " >= ?"
-
-  def lt = " < ?"
-
-  def le = " <= ?"
-
-  def isNull = " is null"
-
-  def isNotNull = " is not null"
-
-  def like = " like ?"
-
-  def ilike = " ilike ?"
-
-  def between = " between ? and ?"
-
   def and = "\n\tand "
 
   def or = "\n\tor "
