@@ -25,6 +25,8 @@
 
 package ru.circumflex.orm
 
+import ORM._
+
 class Category extends Record[Category] {
   val id = field(Category.id)
   val name = field(Category.name)
@@ -101,7 +103,6 @@ class CategoryStatistics extends Record[CategoryStatistics] {
 }
 
 object CategoryStatistics extends View[CategoryStatistics] {
-  import Query._
   val category = column[Long]("category_id")
           .references(Category)
   val booksCount = column[Long]("books_count")
@@ -116,7 +117,6 @@ class BookWithCategory extends Record[BookWithCategory] {
 }
 
 object BookWithCategory extends View[BookWithCategory] {
-  import Query._
   val b = Book as "b"
   val c = Category as "c"
   val book = inlineRecord(b)

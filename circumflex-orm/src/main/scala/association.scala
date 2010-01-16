@@ -31,7 +31,7 @@ package ru.circumflex.orm
  */
 trait Association[C, P] {
 
-  import Query._
+  import ORM._
 
   /**
    * Returns child relation.

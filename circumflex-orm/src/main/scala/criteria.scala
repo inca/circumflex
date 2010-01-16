@@ -26,7 +26,6 @@
 package ru.circumflex.orm
 
 import collection.mutable.ListBuffer
-import Query._
 import ORM._
 
 /**
@@ -49,7 +48,7 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
   protected var _limit = -1;
   protected var _offset = 0;
 
-  protected def prepareQuery = Query.select(projections: _*)
+  protected def prepareQuery = ORM.select(projections: _*)
           .from(rootTree)
           .limit(_limit)
           .offset(_offset)

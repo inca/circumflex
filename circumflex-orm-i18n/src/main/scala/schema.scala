@@ -26,7 +26,7 @@
 package ru.circumflex.orm.i18n
 
 import ru.circumflex.orm._
-import Query._
+import ORM._
 import ORMI18N._
 import collection.mutable.ListBuffer
 

@@ -25,7 +25,6 @@
 
 package ru.circumflex.orm
 
-import Query._
 import ORM._
 
 class A extends Record[A] {

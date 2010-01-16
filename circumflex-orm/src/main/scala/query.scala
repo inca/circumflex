@@ -325,8 +325,6 @@ class Select extends Subselect {
 class Order(val expression: String,
             val parameters: Seq[Any])
 
-object Query extends QueryHelper
-
 /**
  * Some common helpers for making up query-related stuff.
  */

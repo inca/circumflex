@@ -32,7 +32,7 @@ import ru.circumflex.core.Circumflex
  * You may want to provide your own implementation of all these methods
  * if you are not satisfied with default ones.
  */
-object ORM {
+object ORM extends QueryHelper {
   /**
    * Returns connection provider.
    * Can be overriden with "orm.connectionProvider" configuration parameter.

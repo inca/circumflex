@@ -27,7 +27,6 @@ package ru.circumflex.orm
 
 import collection.mutable.ListBuffer
 import java.sql.PreparedStatement
-import Query._
 import ORM._
 
 trait DMLQuery extends Query {
