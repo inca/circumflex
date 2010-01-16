@@ -92,14 +92,17 @@ class Dialect {
 
   def between = " between ? and ?"
 
-  def and = " and\n\t"
+  def and = "\n\tand "
 
-  def or = " or\n\t"
+  def or = "\n\tor "
 
   def not = "not"
 
   def parameterizedIn(params: Seq[_]) =
     " in (" + params.map(p => "?").mkString(", ") + ")"
+
+  def subquery(expr: String, subselect: Subselect) =
+    expr + " (\n" + subselect.toSubselectSql + "\n)"
 
   /* ORDER SPECIFICATOR KEYWORDS */
 
@@ -369,6 +372,20 @@ class Dialect {
    * Produces SELECT statement with ? parameters.
    */
   def select(q: Select): String = {
+    var result = subselect(q)
+    if (q.orders.size > 0)
+      result += "\norder by\n\t" + q.orders.map(_.expression).mkString(",\n\t")
+    if (q.limit > -1)
+      result += "\nlimit " + q.limit
+    if (q.offset > 0)
+      result += "\noffset " + q.offset
+    return result
+  }
+
+  /**
+   * Produces SELECT statement (without LIMIT, OFFSET and ORDER BY clauses).
+   */
+  def subselect(q: Subselect): String = {
     var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t")
     if (q.relations.size > 0)
       result += "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
@@ -377,12 +394,6 @@ class Dialect {
       val gb = q.projections.filter(!_.grouping_?)
       if (gb.size > 0) result += "\ngroup by\n\t" + gb.flatMap(_.sqlAliases).mkString(",\n\t")
     }
-    if (q.orders.size > 0)
-      result += "\norder by\n\t" + q.orders.map(_.expression).mkString(",\n\t")
-    if (q.limit > -1)
-      result += "\nlimit " + q.limit
-    if (q.offset > 0)
-      result += "\noffset " + q.offset
     return result
   }
 

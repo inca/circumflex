@@ -63,35 +63,69 @@ class SimpleExpression(val expression: String,
 
 }
 
+class SubqueryExpression(expression: String,
+                         val subselect: Subselect)
+    extends SimpleExpression(expression, subselect.parameters) {
+
+  override def toSql = dialect.subquery(expression, subselect)
+
+}
+
 /**
  * Contains some common predicates.
  */
 class SimpleExpressionHelper(val expr: String) {
+
+  /* Simple expressions */
+
   def eq(value: Any) = new SimpleExpression(expr + dialect.eq, List(value))
-
   def ne(value: Any) = new SimpleExpression(expr + dialect.ne, List(value))
-
   def gt(value: Any) = new SimpleExpression(expr + dialect.gt, List(value))
-
   def ge(value: Any) = new SimpleExpression(expr + dialect.ge, List(value))
-
   def lt(value: Any) = new SimpleExpression(expr + dialect.lt, List(value))
-
   def le(value: Any) = new SimpleExpression(expr + dialect.le, List(value))
-
   def isNull = new SimpleExpression(expr + dialect.isNull, Nil)
-
   def isNotNull = new SimpleExpression(expr + dialect.isNotNull, Nil)
-
   def like(value: String) = new SimpleExpression(expr + dialect.like, List(value))
-
   def ilike(value: String) = new SimpleExpression(expr + dialect.ilike, List(value))
-
   def in(params: Any*) =
     new SimpleExpression(expr + dialect.parameterizedIn(params), params.toList) 
-
   def between(lowerValue: Any, upperValue: Any) =
     new SimpleExpression(expr + dialect.between, List(lowerValue, upperValue))
+
+  /* Simple subqueries */
+
+  def in(subselect: Subselect) =
+    new SubqueryExpression(expr + " in", subselect)
+  def notIn(subselect: Subselect) =
+    new SubqueryExpression(expr + " not in", subselect)
+
+  def allEq(subselect: Subselect) =
+    new SubqueryExpression(expr + " = all", subselect)
+  def allNe(subselect: Subselect) =
+    new SubqueryExpression(expr + " <> all", subselect)
+  def allGt(subselect: Subselect) =
+    new SubqueryExpression(expr + " > all", subselect)
+  def allGe(subselect: Subselect) =
+    new SubqueryExpression(expr + " >= all", subselect)
+  def allLt(subselect: Subselect) =
+    new SubqueryExpression(expr + " < all", subselect)
+  def allLe(subselect: Subselect) =
+    new SubqueryExpression(expr + " <= all", subselect)
+
+  def someEq(subselect: Subselect) =
+    new SubqueryExpression(expr + " = some", subselect)
+  def someNe(subselect: Subselect) =
+    new SubqueryExpression(expr + " <> some", subselect)
+  def someGt(subselect: Subselect) =
+    new SubqueryExpression(expr + " > some", subselect)
+  def someGe(subselect: Subselect) =
+    new SubqueryExpression(expr + " >= some", subselect)
+  def someLt(subselect: Subselect) =
+    new SubqueryExpression(expr + " < some", subselect)
+  def someLe(subselect: Subselect) =
+    new SubqueryExpression(expr + " <= some", subselect)
+
 }
 
 /**

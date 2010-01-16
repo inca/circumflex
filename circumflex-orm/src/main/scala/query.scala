@@ -95,32 +95,28 @@ trait SQLQuery extends Query {
 
 }
 
-class Select extends SQLQuery {
-  private var aliasCounter = 0;
+class Subselect extends SQLQuery {
 
-  private var _projections: Seq[Projection[_]] = Nil
-  private var _relations: Seq[RelationNode[_]] = Nil
-  private var _orders: Seq[Order] = Nil
-  private var _predicate: Predicate = EmptyPredicate
-  private var _limit: Int = -1
-  private var _offset: Int = 0
+  protected var aliasCounter = 0;
+
+  protected var _projections: Seq[Projection[_]] = Nil
+  protected var _relations: Seq[RelationNode[_]] = Nil
+  protected var _predicate: Predicate = EmptyPredicate
 
   def this(nodes: RelationNode[_]*) = {
     this()
     nodes.toList.foreach(addFrom(_))
   }
 
-  def parameters: Seq[Any] = _predicate.parameters ++ _orders.flatMap(_.parameters)
+  /**
+   * Returns query parameters sequence.
+   */
+  def parameters: Seq[Any] = _predicate.parameters
 
   /**
    * Returns the WHERE clause of this query.
    */
   def where: Predicate = this._predicate
-
-  /**
-   * Returns the ORDER BY clause of this query.
-   */
-  def orders = _orders
 
   /**
    * Returns the FROM clause of this query.
@@ -197,6 +193,30 @@ class Select extends SQLQuery {
       projection.as("this_" + aliasCounter)
     } else projection
 
+  def toSubselectSql = dialect.subselect(this)
+
+  def toSql = toSubselectSql
+
+}
+
+class Select extends Subselect {
+
+  private var _orders: Seq[Order] = Nil
+  private var _limit: Int = -1
+  private var _offset: Int = 0
+
+  def this(nodes: RelationNode[_]*) = {
+    this()
+    nodes.toList.foreach(addFrom(_))
+  }
+
+  override def parameters: Seq[Any] = _predicate.parameters ++ _orders.flatMap(_.parameters)
+
+  /**
+   * Returns the ORDER BY clause of this query.
+   */
+  def orders = _orders
+
   /**
    * Adds an order to ORDER BY clause.
    */
@@ -246,7 +266,7 @@ class Select extends SQLQuery {
     })
   }
 
-  def toSql = dialect.select(this)
+  override def toSql = dialect.select(this)
 
 }
 
@@ -303,6 +323,12 @@ trait QueryHelper {
 
   def not(predicate: Predicate) =
     new SimpleExpression(dialect.not + " (" + predicate.toSql + ")", predicate.parameters)
+
+  def exists(subselect: Subselect) =
+    new SubqueryExpression("exists ", subselect)
+
+  def notExists(subselect: Subselect) =
+    new SubqueryExpression("not exists ", subselect)
 
   /* PROJECTION HELPERS */
 
