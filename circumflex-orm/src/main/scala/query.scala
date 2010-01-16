@@ -29,6 +29,18 @@ import ORM._
 import collection.mutable.ListBuffer
 import java.sql.{PreparedStatement, ResultSet}
 
+/**
+ * Result set operation (UNION, EXCEPT, INTERSECT, etc.).
+ */
+abstract class SetOperation(val expression: String)
+
+object Union extends SetOperation("union")
+object UnionAll extends SetOperation("union all")
+object Except extends SetOperation("except")
+object ExceptAll extends SetOperation("except all")
+object Intersect extends SetOperation("intersect")
+object IntersectAll extends SetOperation("intersect all")
+
 trait Query extends SQLable with JDBCHelper {
 
   /**
@@ -85,7 +97,6 @@ trait SQLQuery extends Query {
   /**
    * Executes a query and returns a unique result.
    * An exception is thrown if result set yields more than one row.
-   * </ul>
    */
   def unique(): Option[Array[Any]] = resultSet(rs => {
     if (!rs.next) return None
@@ -102,6 +113,7 @@ class Subselect extends SQLQuery {
   protected var _projections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_]] = Nil
   protected var _predicate: Predicate = EmptyPredicate
+  protected var _setOps: Seq[Pair[SetOperation, Subselect]] = Nil
 
   def this(nodes: RelationNode[_]*) = {
     this()
@@ -111,7 +123,14 @@ class Subselect extends SQLQuery {
   /**
    * Returns query parameters sequence.
    */
-  def parameters: Seq[Any] = _predicate.parameters
+  def parameters: Seq[Any] = _predicate.parameters ++
+          _setOps.flatMap(p => p._2.parameters)
+
+  /**
+   * Returns queries combined with this subselect using specific set operation
+   * (in pair, <code>SetOperation -> Subselect</code>),
+   */
+  def setOps = _setOps
 
   /**
    * Returns the WHERE clause of this query.
@@ -193,6 +212,34 @@ class Subselect extends SQLQuery {
       projection.as("this_" + aliasCounter)
     } else projection
 
+
+  /* SET OPERATIONS */
+
+  def addSetOp(op: SetOperation, subselect: Subselect): this.type = {
+    _setOps ++= List(op -> subselect)
+    return this
+  }
+
+  def union(subselect: Subselect): this.type =
+    addSetOp(Union, subselect)
+
+  def unionAll(subselect: Subselect): this.type =
+    addSetOp(UnionAll, subselect)
+
+  def except(subselect: Subselect): this.type =
+    addSetOp(Except, subselect)
+
+  def exceptAll(subselect: Subselect): this.type =
+    addSetOp(ExceptAll, subselect)
+
+  def intersect(subselect: Subselect): this.type =
+    addSetOp(Intersect, subselect)
+
+  def intersectAll(subselect: Subselect): this.type =
+    addSetOp(IntersectAll, subselect)
+
+  /* SQL */
+
   def toSubselectSql = dialect.subselect(this)
 
   def toSql = toSubselectSql
@@ -201,16 +248,18 @@ class Subselect extends SQLQuery {
 
 class Select extends Subselect {
 
-  private var _orders: Seq[Order] = Nil
-  private var _limit: Int = -1
-  private var _offset: Int = 0
+  protected var _orders: Seq[Order] = Nil
+  protected var _limit: Int = -1
+  protected var _offset: Int = 0
 
   def this(nodes: RelationNode[_]*) = {
     this()
     nodes.toList.foreach(addFrom(_))
   }
 
-  override def parameters: Seq[Any] = _predicate.parameters ++ _orders.flatMap(_.parameters)
+  override def parameters: Seq[Any] = _predicate.parameters ++
+          _setOps.flatMap(p => p._2.parameters)
+  _orders.flatMap(_.parameters)
 
   /**
    * Returns the ORDER BY clause of this query.
@@ -220,7 +269,7 @@ class Select extends Subselect {
   /**
    * Adds an order to ORDER BY clause.
    */
-  def addOrder(order: Order*): this.type = {
+  def orderBy(order: Order*): this.type = {
     this._orders ++= order.toList
     return this
   }

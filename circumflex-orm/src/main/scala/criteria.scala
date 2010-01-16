@@ -54,7 +54,7 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
           .limit(_limit)
           .offset(_offset)
           .where(preparePredicate)
-          .addOrder(_orders: _*)
+          .orderBy(_orders: _*)
 
 
   def toSql = prepareQuery.toSql
@@ -99,7 +99,7 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
   /**
    * Adds an order to ORDER BY clause.
    */
-  def addOrder(orders: Order*): this.type = {
+  def orderBy(orders: Order*): this.type = {
     _orders ++= orders.toList
     return this
   }

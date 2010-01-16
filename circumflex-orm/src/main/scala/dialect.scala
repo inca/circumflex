@@ -394,6 +394,11 @@ class Dialect {
       val gb = q.projections.filter(!_.grouping_?)
       if (gb.size > 0) result += "\ngroup by\n\t" + gb.flatMap(_.sqlAliases).mkString(",\n\t")
     }
+    q.setOps.foreach {
+      case (op: SetOperation, subq: Subselect) =>
+        result += "\n" + op.expression + " " + subq.toSubselectSql
+      case _ =>
+    }
     return result
   }
 
