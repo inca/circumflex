@@ -29,8 +29,8 @@ import java.util.StringTokenizer
 
 object FormatUtil {
   def WHITESPACE = " \n\t\f\r"
-  def DELIMITERS = "()'\"[],;" + WHITESPACE
-  def KEYWORDS = Set[String]("abs", "absolute", "action", "add", "after", "aggregate",
+  def DELIMITERS = "()'\",;" + WHITESPACE
+  def KEYWORDS = Set("abs", "absolute", "action", "add", "after", "aggregate",
     "all", "allocate", "alter", "analyze", "and", "any", "are", "array", "array_agg",
     "as", "asc", "asensitive", "assertion", "asymmetric", "at", "atomic", "authorization",
     "avg", "before", "begin", "between", "bigint", "binary", "bit", "blob", "boolean",
@@ -70,7 +70,7 @@ object FormatUtil {
     "operation", "operator", "option", "options", "or", "order", "ordering", "ordinality",
     "others", "out", "outer", "output", "over", "overlaps", "overlay", "overriding", "owned",
     "owner", "pad", "parameter", "parameters", "parser", "partial", "partition", "passing", "password",
-    "path", "percentile_cont", "percentile_disc", "percent_rank", "placing", "plans", "position",
+    "path", "percentile_cont", "percentile_disc", "percent_rank", "perform", "placing", "plans", "position",
     "position_regex", "postfix", "power", "preceding", "precision", "prefix", "preorder", "prepare",
     "prepared", "preserve", "primary", "prior", "privileges", "procedural", "procedure", "public",
     "quote", "range", "rank", "read", "reads", "real", "reassign", "recheck", "recursive", "ref",
@@ -98,28 +98,19 @@ object FormatUtil {
     "xmlbinary", "xmlcast", "xmlcomment", "xmlconcat", "xmldocument", "xmlelement", "xmlexists",
     "xmlforest", "xmliterate", "xmlnamespaces", "xmlparse", "xmlpi", "xmlquery", "xmlroot", "xmlschema",
     "xmlserialize", "xmltable", "xmlvalidate", "year", "yes", "zone")
+
 }
 
 class SQLFormatter {
 
   protected var _indentString: String = "  "
-  protected var _terminatorString: String = ";"
   protected var _lower = true
 
-  def indentString = _indentString
   def indent(value: String): this.type = {
     _indentString = value
     return this
   }
 
-  def terminatorString = _terminatorString
-  def terminator(value: String): this.type = {
-    _terminatorString = value
-    return this
-  }
-
-  def lower_?() = _lower
-  def upper_?() = !_lower
   def lower: this.type = {
     _lower = true
     return this
@@ -129,28 +120,48 @@ class SQLFormatter {
     return this
   }
 
-  def format(sql: String): String = new Worker(sql).process
+  def format(sql: String): String = new Worker(sql, 1).process
 
-  def simpleSelect = format("""
-  SELECT a.id, b.id as b_id, COUNT(c.id)
-  FROM schema.a AS a LEFT OUTER JOIN schema.b AS b ON a.id = b.a_id
-  LEFT OUTER JOIN schema.c AS c ON a.id = c.a_id
-  WHERE (a.id <> 0 AND a.id IS NULL) OR (b.id <> 0 AND b.id IS NOT NULL)
-  AND c.id IN (
-      select st.id from schema.stuff where st.id is not null and st.id > 0
-  )
-  OR a.name LIKE
-'I am multiline text.
-I''ma tellin'' you.'
-  OR 'I''m tellin'' you what... This should be preserved even if I''ma sElEcT or upDAte or other SQL stuff.' 
-  GROUP BY a.id, b.id
-  HAVING COUNT(c.id) > 0
-  ORDER BY 1 ASC, b.id DESC
-  LIMIT 1
-  OFFSET 1
+  def sample = format("""
+      CREATE OR REPLACE FUNCTION ldms.node_upd() RETURNS TRIGGER AS $body$
+      DECLARE
+      oldPath text;
+      newPath text;
+      BEGIN
+      -- Prevent share update
+      IF OLD.share_id <> NEW.share_id THEN
+      RAISE EXCEPTION 'Cannot change the share of existing node.';
+      END IF;
+      -- Fetch old path
+      SELECT ns.path INTO oldPath
+      FROM ldms.nodestate ns
+      WHERE ns.id = NEW.id;
+      -- Determine new path
+      IF (NEW.parent_id IS NULL) THEN
+      SELECT '/' || NEW.name INTO newPath;
+      ELSE
+      SELECT ns.path || '/' || NEW.name INTO newPath
+      FROM ldms.nodestate ns
+      WHERE ns.id = NEW.parent_id;
+      END IF;
+      -- Update path of node and all it's descendants
+      UPDATE ldms.nodestate SET path = newPath WHERE id = NEW.id;
+      UPDATE ldms.nodestate
+      SET path = newPath || (regexp_matches(path, oldPath || '(/.*)')::text[])[1]
+      WHERE id IN (SELECT n.id FROM ldms.node n WHERE n.share_id = NEW.share_id);
+      -- Evaluate node state
+      PERFORM ldms.eval_node_state(NEW.id);
+      -- If parent has changed (node has been moved)
+      -- evaluate old parent state too.
+      IF (OLD.parent_id <> NEW.parent_id) THEN
+      PERFORM ldms.eval_node_state(OLD.parent_id);
+      END IF;
+      RETURN NEW;
+      END
+      $body$ language 'plpgsql';
   """)
 
-  protected class Worker(sql: String) {
+  protected class Worker(sql: String, indent: Int) {
 
     import FormatUtil._
 
@@ -161,41 +172,72 @@ I''ma tellin'' you.'
     var lcToken = ""
     var lastToken = ""
 
-    var indent = 1
-    var initial = "\n  "
+    var wasNewLine = false
+    var wasWhiteSpace = false
 
     def process(): String = {
-      result.append(initial)
+      newLine()
       while(tokenizer.hasMoreTokens) {
         token = tokenizer.nextToken
         lcToken = token.toLowerCase
-        // first let's make sure that quoted strings are preserved
-        processQuotes
-        out()
+        // let's make sure that quoted strings are preserved
+        processQuotes()
+        // let's leave comments alone
+        processComments()
+        // now goes matching
+        if (WHITESPACE.contains(token))           // condense whitespaces
+          whiteSpace()
+        else if (token.equals(";")) {             // terminate statements
+          out()
+          newLine()
+        } else {
+          out()
+        }
       }
       return result.toString
     }
 
-    def processQuotes: Unit = token match {
-      case "'" => while(tokenizer.hasMoreTokens) {
-        val t = tokenizer.nextToken
-        token += t
-        if (t == "'") return
-      }
-      case "\"" => while (tokenizer.hasMoreTokens) {
-        val t = tokenizer.nextToken
-        token += t
-        if (t == "\"") return
+    def processQuotes(): Unit = token match {
+      case "'" => fillTokenUntil("'")
+      case "\"" => fillTokenUntil("\"")
+      case _ =>
+    }
+
+    def processComments(): Unit = token match {
+      case s if (s.startsWith("--")) => fillTokenUntil("\n")
+      case s if (s.startsWith("/*")) => {
+        fillTokenUntil("*/")
+        newLine()
       }
       case _ =>
     }
 
-    def out(): Unit =
+    def fillTokenUntil(f: String): Unit = while (tokenizer.hasMoreTokens) {
+      val t = tokenizer.nextToken
+      token += t
+      if (t.endsWith(f)) return
+    }
+
+    def out(): Unit = {
       if (KEYWORDS.contains(lcToken)) {
-        if (lower_?)
+        if (_lower)
           result.append(lcToken)
         else result.append(lcToken.toUpperCase)
       } else result.append(token)
+      wasWhiteSpace = false
+      wasNewLine = false
+    }
+
+    def whiteSpace(): Unit = {
+      if (!wasWhiteSpace) result.append(" ")
+      wasWhiteSpace = true
+    }
+
+    def newLine(): Unit = {
+      result.append("\n").append(_indentString * indent)
+      wasNewLine = true
+      wasWhiteSpace = true
+    }
 
   }
 
