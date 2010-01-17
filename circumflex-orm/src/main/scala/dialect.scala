@@ -70,12 +70,6 @@ class Dialect {
 
   def dummy = "1 = 1"
 
-  def and = "\n\tand "
-
-  def or = "\n\tor "
-
-  def not = "not"
-
   def parameterizedIn(params: Seq[_]) =
     " in (" + params.map(p => "?").mkString(", ") + ")"
 
@@ -367,11 +361,12 @@ class Dialect {
     var result = "select\n\t" + q.projections.map(_.toSql).mkString(",\n\t")
     if (q.relations.size > 0)
       result += "\nfrom\n\t" + q.relations.map(_.toSql).mkString(",\n\t")
-    if (q.where != EmptyPredicate) result += "\nwhere\n\t" + q.where.toSql
-    if (q.projections.exists(_.grouping_?)) {  // GROUP BY clause may be required
-      val gb = q.projections.filter(!_.grouping_?)
-      if (gb.size > 0) result += "\ngroup by\n\t" + gb.flatMap(_.sqlAliases).mkString(",\n\t")
-    }
+    if (q.where != EmptyPredicate)
+      result += "\nwhere\n\t" + q.where.toSql
+    if (q.groupBy.size > 0)
+      result += "\ngroup by\n\t" + q.groupBy.flatMap(_.sqlAliases).mkString(",\n\t")
+    if (q.having != EmptyPredicate)
+      result += "\nhaving\n\t" + q.having.toSql
     q.setOps.foreach {
       case (op: SetOperation, subq: Subselect) =>
         result += "\n" + op.expression + " " + subq.toSubselectSql

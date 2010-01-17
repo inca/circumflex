@@ -112,7 +112,9 @@ class Subselect extends SQLQuery {
 
   protected var _projections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_]] = Nil
-  protected var _predicate: Predicate = EmptyPredicate
+  protected var _where: Predicate = EmptyPredicate
+  protected var _having: Predicate = EmptyPredicate
+  protected var _groupBy: Seq[Projection[_]] = Nil
   protected var _setOps: Seq[Pair[SetOperation, Subselect]] = Nil
 
   def this(nodes: RelationNode[_]*) = {
@@ -123,7 +125,8 @@ class Subselect extends SQLQuery {
   /**
    * Returns query parameters sequence.
    */
-  def parameters: Seq[Any] = _predicate.parameters ++
+  def parameters: Seq[Any] = _where.parameters ++
+          _having.parameters ++
           _setOps.flatMap(p => p._2.parameters)
 
   /**
@@ -135,7 +138,47 @@ class Subselect extends SQLQuery {
   /**
    * Returns the WHERE clause of this query.
    */
-  def where: Predicate = this._predicate
+  def where: Predicate = this._where
+
+  /**
+   * Sets WHERE clause of this query.
+   */
+  def where(predicate: Predicate): this.type = {
+    this._where = predicate
+    return this
+  }
+
+  /**
+   * Returns the HAVING clause of this query.
+   */
+  def having: Predicate = this._having
+
+  /**
+   * Sets HAVING clause of this query.
+   */
+  def having(predicate: Predicate): this.type = {
+    this._having = predicate
+    return this
+  }
+
+  /**
+   * Returns GROUP BY clause of this query.
+   */
+  def groupBy: Seq[Projection[_]] = {
+    var result = _groupBy
+    if (projections.exists(_.grouping_?))
+      projections.filter(!_.grouping_?)
+              .foreach(p => if (!result.contains(p)) result ++= List(p))
+    return result
+  }
+
+  /**
+   * Sets GROUP BY clause of this query.
+   */
+  def groupBy(proj: Projection[_] *): this.type = {
+    this._groupBy ++= proj.toList
+    return this
+  }
 
   /**
    * Returns the FROM clause of this query.
@@ -176,14 +219,6 @@ class Subselect extends SQLQuery {
    */
   def addFrom[R](rel: Relation[R]): this.type =
     addFrom(rel.as("this"))
-
-  /**
-   * Sets WHERE clause of this query.
-   */
-  def where(predicate: Predicate): this.type = {
-    this._predicate = predicate
-    return this
-  }
 
   def clearProjections: this.type = {
     this._projections = Nil
@@ -257,9 +292,8 @@ class Select extends Subselect {
     nodes.toList.foreach(addFrom(_))
   }
 
-  override def parameters: Seq[Any] = _predicate.parameters ++
-          _setOps.flatMap(p => p._2.parameters)
-  _orders.flatMap(_.parameters)
+  override def parameters: Seq[Any] =
+    super.parameters ++ _orders.flatMap(_.parameters)
 
   /**
    * Returns the ORDER BY clause of this query.
@@ -363,13 +397,13 @@ trait QueryHelper {
     new SimpleExpressionHelper(f.expr)
 
   def and(predicates: Predicate*) =
-    new AggregatePredicate(dialect.and, predicates.toList)
+    new AggregatePredicate("\n\tand ", predicates.toList)
 
   def or(predicates: Predicate*) =
-    new AggregatePredicate(dialect.or, predicates.toList)
+    new AggregatePredicate("\n\tor ", predicates.toList)
 
   def not(predicate: Predicate) =
-    new SimpleExpression(dialect.not + " (" + predicate.toSql + ")", predicate.parameters)
+    new SimpleExpression("not (" + predicate.toSql + ")", predicate.parameters)
 
   def exists(subselect: Subselect) =
     new SubqueryExpression("exists ", subselect)
