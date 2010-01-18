@@ -41,7 +41,7 @@ class I18NDialect extends Dialect {
 
   def createInsertRule(rule: LocalizableViewInsertRule[_]) =
     "create or replace rule " + rule.objectName + " as " +
-            "on insert to " + rule.localizableView.qualifiedName + " do instead ( " +
+            "on insert to " + rule.localizableView.qualifiedName + " do instead (\n" +
             "insert into " + rule.localizableView.rawTable.qualifiedName + " (" +
             rule.localizableView
                     .columns
@@ -52,7 +52,7 @@ class I18NDialect extends Dialect {
                     .columns
                     .map(c => "new." + c.columnName)
                     .mkString(", ") +
-            "); " + "insert into " + rule.localizableView.localeTable.qualifiedName +
+            ");\n" + "insert into " + rule.localizableView.localeTable.qualifiedName +
             " (id, cx_lang, cx_item_id, " +
             rule.localizableView
                     .localizableColumns
@@ -63,7 +63,7 @@ class I18NDialect extends Dialect {
             rule.localizableView
                     .localizableColumns
                     .map(c => "new." + c.columnName)
-                    .mkString(", ") + "); )"
+                    .mkString(", ") + ");\n)"
 
   def dropInsertRule(rule: LocalizableViewInsertRule[_]) =
     "drop rule " + rule.objectName + "on " + rule.localizableView.qualifiedName
@@ -71,15 +71,15 @@ class I18NDialect extends Dialect {
   def createUpdateRule(rule: LocalizableViewUpdateRule[_]) =
     "create or replace rule " + rule.objectName + " as " +
             "on update to " + rule.localizableView.qualifiedName +
-            " do instead ( " +
+            " do instead (\n" +
             "update " + rule.localizableView.rawTable.qualifiedName + " set " +
             rule.localizableView
                     .columns
                     .map(c => c.columnName + " = new." + c.columnName)
-                    .mkString(", ") + " where id = old.id; " +
+                    .mkString(", ") + " where id = old.id;\n" +
             "delete from " + rule.localizableView.localeTable.qualifiedName + " " +
             "where cx_lang = " + getLangExpression +
-            " and cx_item_id = old.id; " +
+            " and cx_item_id = old.id;\n" +
             "insert into " + rule.localizableView.localeTable.qualifiedName +
             " (id, cx_lang, cx_item_id, " +
             rule.localizableView
@@ -92,7 +92,7 @@ class I18NDialect extends Dialect {
                     .localizableColumns
                     .map(c => "new." + c.columnName)
                     .mkString(", ") +
-            "); )"
+            ");\n)"
 
   def dropUpdateRule(rule: LocalizableViewUpdateRule[_]) =
     "drop rule " + rule.objectName + " on " + rule.localizableView.qualifiedName

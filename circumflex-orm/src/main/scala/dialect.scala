@@ -169,15 +169,15 @@ class Dialect {
    * Produces CREATE TABLE statement without constraints.
    */
   def createTable(tab: Table[_]) =
-    "create table " + qualifyRelation(tab) + " ( " +
+    "create table " + qualifyRelation(tab) + " (" +
         tab.columns.map(_.sqlDefinition).mkString(", ") + ", " +
-        tab.primaryKey.sqlFullDefinition + " )"
+        tab.primaryKey.sqlFullDefinition + ")"
 
   /**
    * Produces CREATE VIEW statement.
    */
   def createView(view: View[_]) =
-    "create view " + qualifyRelation(view) + " ( " +
+    "create view " + qualifyRelation(view) + " (" +
         view.columns.map(_.columnName).mkString(", ") + ") as " +
         view.query.toInlineSql
 
@@ -392,7 +392,7 @@ class Dialect {
    */
   def insertRecord(record: Record[_]): String =
     "insert into " + record.relation.qualifiedName +
-        " ( " + record.relation.columns.map(_.columnName).mkString(", ") +
+        " (" + record.relation.columns.map(_.columnName).mkString(", ") +
         ") values (" + record.relation.columns.map(_ => "?").mkString(", ") + ")"
 
   /**
