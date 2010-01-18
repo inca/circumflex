@@ -26,10 +26,11 @@
 package ru.circumflex.orm
 
 import java.util.StringTokenizer
+import collection.mutable.ListBuffer
 
 object FormatUtil {
   def WHITESPACE = " \n\t\f\r"
-  def DELIMITERS = "()'\",;" + WHITESPACE
+  def DELIMITERS = "()'\",;." + WHITESPACE
   def KEYWORDS = Set("abs", "absolute", "action", "add", "after", "aggregate",
     "all", "allocate", "alter", "analyze", "and", "any", "are", "array", "array_agg",
     "as", "asc", "asensitive", "assertion", "asymmetric", "at", "atomic", "authorization",
@@ -103,6 +104,8 @@ object FormatUtil {
 
 class SQLFormatter {
 
+  import FormatUtil._
+
   protected var _indentString: String = "  "
   protected var _lower = true
 
@@ -115,14 +118,64 @@ class SQLFormatter {
     _lower = true
     return this
   }
+
   def upper: this.type = {
     _lower = false
     return this
   }
 
-  def format(sql: String): String = new Worker(sql, 1).process
 
-  def sample = format("""
+  def format(sql: String): String = {
+
+    val tokens = new ListBuffer[String]()
+
+    def tokenize() = {
+
+      val source = sql.trim.replaceAll("''","%%%sq%%%").replaceAll("\"\"","%%%dq%%%")
+      val tokenizer = new StringTokenizer(source, DELIMITERS, true)
+      var token = ""
+
+      def processQuotes(): Unit = token match {
+        case "'" => fillTokenUntil("'", true)
+        case "\"" => fillTokenUntil("\"", true)
+        case _ =>
+      }
+
+      def processComments(): Unit = token match {
+        case s if (s.startsWith("--")) => fillTokenUntil("\n", false)
+        case s if (s.startsWith("/*")) => fillTokenUntil("*/", true)
+        case _ =>
+      }
+
+      def fillTokenUntil(f: String, includeEnd: Boolean): Unit =
+        while (tokenizer.hasMoreTokens) {
+          val t = tokenizer.nextToken
+          if (t.endsWith(f)) {
+            if (includeEnd) token += t
+            return
+          } else token += t
+        }
+
+      while (tokenizer.hasMoreTokens) {
+        token = tokenizer.nextToken
+        // let's make sure that quoted strings are preserved
+        processQuotes()
+        // let's leave comments alone
+        processComments()
+        if (!WHITESPACE.contains(token))
+          tokens += token
+      }
+
+    }   // END-OF tokenize()
+
+    tokenize
+    println(tokens.mkString("\t\t"))
+
+    return ""
+
+  }   // END-OF format()
+
+  def test() = format("""
       CREATE OR REPLACE FUNCTION ldms.node_upd() RETURNS TRIGGER AS $body$
       DECLARE
       oldPath text;
@@ -130,10 +183,10 @@ class SQLFormatter {
       BEGIN
       -- Prevent share update
       IF OLD.share_id <> NEW.share_id THEN
-      RAISE EXCEPTION 'Cannot change the share of existing node.';
+      RAISE EXCEPTION 'Cannot change node''s share.';
       END IF;
       -- Fetch old path
-      SELECT ns.path INTO oldPath
+      SELECT ns."path" INTO oldPath
       FROM ldms.nodestate ns
       WHERE ns.id = NEW.id;
       -- Determine new path
@@ -146,7 +199,7 @@ class SQLFormatter {
       END IF;
       -- Update path of node and all it's descendants
       UPDATE ldms.nodestate SET path = newPath WHERE id = NEW.id;
-      UPDATE ldms.nodestate
+      UPDATE ldms.nodestate /* Use regular expressions to maintain correct paths */
       SET path = newPath || (regexp_matches(path, oldPath || '(/.*)')::text[])[1]
       WHERE id IN (SELECT n.id FROM ldms.node n WHERE n.share_id = NEW.share_id);
       -- Evaluate node state
@@ -160,85 +213,5 @@ class SQLFormatter {
       END
       $body$ language 'plpgsql';
   """)
-
-  protected class Worker(sql: String, indent: Int) {
-
-    import FormatUtil._
-
-    val result = new StringBuffer
-    val tokenizer = new StringTokenizer(sql.trim, DELIMITERS, true)
-
-    var token = ""
-    var lcToken = ""
-    var lastToken = ""
-
-    var wasNewLine = false
-    var wasWhiteSpace = false
-
-    def process(): String = {
-      newLine()
-      while(tokenizer.hasMoreTokens) {
-        token = tokenizer.nextToken
-        lcToken = token.toLowerCase
-        // let's make sure that quoted strings are preserved
-        processQuotes()
-        // let's leave comments alone
-        processComments()
-        // now goes matching
-        if (WHITESPACE.contains(token))           // condense whitespaces
-          whiteSpace()
-        else if (token.equals(";")) {             // terminate statements
-          out()
-          newLine()
-        } else {
-          out()
-        }
-      }
-      return result.toString
-    }
-
-    def processQuotes(): Unit = token match {
-      case "'" => fillTokenUntil("'")
-      case "\"" => fillTokenUntil("\"")
-      case _ =>
-    }
-
-    def processComments(): Unit = token match {
-      case s if (s.startsWith("--")) => fillTokenUntil("\n")
-      case s if (s.startsWith("/*")) => {
-        fillTokenUntil("*/")
-        newLine()
-      }
-      case _ =>
-    }
-
-    def fillTokenUntil(f: String): Unit = while (tokenizer.hasMoreTokens) {
-      val t = tokenizer.nextToken
-      token += t
-      if (t.endsWith(f)) return
-    }
-
-    def out(): Unit = {
-      if (KEYWORDS.contains(lcToken)) {
-        if (_lower)
-          result.append(lcToken)
-        else result.append(lcToken.toUpperCase)
-      } else result.append(token)
-      wasWhiteSpace = false
-      wasNewLine = false
-    }
-
-    def whiteSpace(): Unit = {
-      if (!wasWhiteSpace) result.append(" ")
-      wasWhiteSpace = true
-    }
-
-    def newLine(): Unit = {
-      result.append("\n").append(_indentString * indent)
-      wasNewLine = true
-      wasWhiteSpace = true
-    }
-
-  }
 
 }

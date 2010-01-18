@@ -40,71 +40,71 @@ class I18NDialect extends Dialect {
     }
 
   def createInsertRule(rule: LocalizableViewInsertRule[_]) =
-    "create or replace rule " + rule.objectName + " as\n\t" +
-            "on insert to " + rule.localizableView.qualifiedName + " do instead (\n\t\t" +
+    "create or replace rule " + rule.objectName + " as " +
+            "on insert to " + rule.localizableView.qualifiedName + " do instead ( " +
             "insert into " + rule.localizableView.rawTable.qualifiedName + " (" +
             rule.localizableView
                     .columns
                     .map(_.columnName)
                     .mkString(", ") +
-            ")\n\t\t\tvalues (" +
+            ") values (" +
             rule.localizableView
                     .columns
                     .map(c => "new." + c.columnName)
                     .mkString(", ") +
-            ");\n\t\t" + "insert into " + rule.localizableView.localeTable.qualifiedName +
+            "); " + "insert into " + rule.localizableView.localeTable.qualifiedName +
             " (id, cx_lang, cx_item_id, " +
             rule.localizableView
                     .localizableColumns
                     .map(_.columnName)
                     .mkString(", ") +
-            ")\n\t\t\tvalues (" + rule.localizableView.localeTable.idSeq.nextValSql + ", " +
+            ") values (" + rule.localizableView.localeTable.idSeq.nextValSql + ", " +
             getLangExpression + ", new.id, " +
             rule.localizableView
                     .localizableColumns
                     .map(c => "new." + c.columnName)
-                    .mkString(", ") + ");\n\t)"
+                    .mkString(", ") + "); )"
 
   def dropInsertRule(rule: LocalizableViewInsertRule[_]) =
-    "drop rule " + rule.objectName + "\non " + rule.localizableView.qualifiedName
+    "drop rule " + rule.objectName + "on " + rule.localizableView.qualifiedName
 
   def createUpdateRule(rule: LocalizableViewUpdateRule[_]) =
-    "create or replace rule " + rule.objectName + " as\n\t" +
+    "create or replace rule " + rule.objectName + " as " +
             "on update to " + rule.localizableView.qualifiedName +
-            " do instead (\n\t\t" +
-            "update " + rule.localizableView.rawTable.qualifiedName + " set\n\t\t\t" +
+            " do instead ( " +
+            "update " + rule.localizableView.rawTable.qualifiedName + " set " +
             rule.localizableView
                     .columns
                     .map(c => c.columnName + " = new." + c.columnName)
-                    .mkString(",\n\t\t\t") + "\n\t\t\twhere id = old.id;\n\t\t" +
-            "delete from " + rule.localizableView.localeTable.qualifiedName + "\n\t\t\t" +
+                    .mkString(", ") + " where id = old.id; " +
+            "delete from " + rule.localizableView.localeTable.qualifiedName + " " +
             "where cx_lang = " + getLangExpression +
-            " and cx_item_id = old.id;\n\t\t" +
+            " and cx_item_id = old.id; " +
             "insert into " + rule.localizableView.localeTable.qualifiedName +
             " (id, cx_lang, cx_item_id, " +
             rule.localizableView
                     .localizableColumns
                     .map(_.columnName)
                     .mkString(", ") +
-            ")\n\t\t\tvalues (" + rule.localizableView.localeTable.idSeq.nextValSql + ", " +
+            ") values (" + rule.localizableView.localeTable.idSeq.nextValSql + ", " +
             getLangExpression + ", new.id, " +
             rule.localizableView
                     .localizableColumns
                     .map(c => "new." + c.columnName)
                     .mkString(", ") +
-            ");\n\t)"
+            "); )"
 
   def dropUpdateRule(rule: LocalizableViewUpdateRule[_]) =
-    "drop rule " + rule.objectName + "\non " + rule.localizableView.qualifiedName
+    "drop rule " + rule.objectName + " on " + rule.localizableView.qualifiedName
 
   def createDeleteRule(rule: LocalizableViewDeleteRule[_]) =
-    "create or replace rule " + rule.objectName + " as\n\t" +
+    "create or replace rule " + rule.objectName + " as " +
             "on delete to " + rule.localizableView.qualifiedName +
-            " do instead\n\t\t" +
-            "delete from " + rule.localizableView.rawTable.qualifiedName + "\n\t\t\t" +
+            " do instead " +
+            "delete from " + rule.localizableView.rawTable.qualifiedName + " " +
             "where id = old.id"
 
   def dropDeleteRule(rule: LocalizableViewDeleteRule[_]) =
-    "drop rule " + rule.objectName + "\non " + rule.localizableView.qualifiedName
+    "drop rule " + rule.objectName + " on " + rule.localizableView.qualifiedName
 
 }

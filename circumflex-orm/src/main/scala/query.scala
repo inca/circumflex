@@ -419,10 +419,10 @@ trait QueryHelper {
     new SimpleExpressionHelper(f.expression)
 
   def and(predicates: Predicate*) =
-    new AggregatePredicate("\n\tand ", predicates.toList)
+    new AggregatePredicate(" and ", predicates.toList)
 
   def or(predicates: Predicate*) =
-    new AggregatePredicate("\n\tor ", predicates.toList)
+    new AggregatePredicate(" or ", predicates.toList)
 
   def not(predicate: Predicate) =
     new SimpleExpression("not (" + predicate.toSql + ")", predicate.parameters)

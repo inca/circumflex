@@ -58,8 +58,8 @@ object CategoryTriggerFunction extends SchemaObject {
 
 object CategoryTrigger extends SchemaObject {
   def objectName = "category_trig"
-  def sqlCreate = "CREATE TRIGGER category_trig\n" +
-          "AFTER INSERT OR UPDATE ON orm.category\n" +
+  def sqlCreate = "CREATE TRIGGER category_trig " +
+          "AFTER INSERT OR UPDATE ON orm.category " +
           "FOR EACH ROW EXECUTE PROCEDURE orm.category_trig_func()"
   def sqlDrop = "DROP TRIGGER category_trig ON orm.category"
 }
