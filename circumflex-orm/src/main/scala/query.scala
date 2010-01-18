@@ -126,8 +126,8 @@ class Subselect extends SQLQuery {
    * Returns query parameters sequence.
    */
   def parameters: Seq[Any] = _where.parameters ++
-          _having.parameters ++
-          _setOps.flatMap(p => p._2.parameters)
+      _having.parameters ++
+      _setOps.flatMap(p => p._2.parameters)
 
   /**
    * Returns queries combined with this subselect using specific set operation
@@ -168,7 +168,7 @@ class Subselect extends SQLQuery {
     var result = _groupBy
     if (projections.exists(_.grouping_?))
       projections.filter(!_.grouping_?)
-              .foreach(p => if (!result.contains(p)) result ++= List(p))
+          .foreach(p => if (!result.contains(p)) result ++= List(p))
     return result
   }
 
@@ -176,7 +176,7 @@ class Subselect extends SQLQuery {
    * Sets GROUP BY clause of this query.
    */
   def groupBy(proj: Projection[_] *): this.type = {
-    this._groupBy ++= proj.toList
+    proj.toList.foreach(p => addGroupByProjection(p))
     return this
   }
 
@@ -202,7 +202,7 @@ class Subselect extends SQLQuery {
     return this
   }
 
-  def ensureNodeAlias[R](node: RelationNode[R]): RelationNode[R] = node match {
+  protected def ensureNodeAlias[R](node: RelationNode[R]): RelationNode[R] = node match {
     case j: JoinNode[_, _] =>
       ensureNodeAlias(j.left)
       ensureNodeAlias(j.right)
@@ -230,23 +230,42 @@ class Subselect extends SQLQuery {
    * All projections with "this" alias are assigned query-unique alias.
    */
   def addProjection(projections: Projection[_]*): this.type = {
-    this._projections ++= projections.toList.map {
-      case p: AtomicProjection[_] => ensureProjectionAlias(p)
-      case p: CompositeProjection[_] => {
-        p.atomicProjections.foreach(ensureProjectionAlias(_))
-        p
-      }
-      case p => p
-    }
+    projections.toList.foreach(ensureProjectionAlias(_))
+    this._projections ++= projections
     return this
   }
 
-  def ensureProjectionAlias[T](projection: AtomicProjection[T]): AtomicProjection[T] =
-    if (projection.alias == "this") {
-      aliasCounter += 1
-      projection.as("this_" + aliasCounter)
-    } else projection
+  protected def addGroupByProjection(proj: Projection[_]): this.type = {
+    val pr = findProjection(proj, _projections) match {
+      case Some(p) => p
+      case _ => {
+        addProjection(proj)
+        proj
+      }
+    }
+    this._groupBy ++= List[Projection[_]](pr)
+    return this 
+  }
 
+  protected def ensureProjectionAlias[T](projection: Projection[T]): Unit =
+    projection match {
+      case p: AtomicProjection[_] if (p.alias == "this") =>
+        aliasCounter += 1
+        p.as("this_" + aliasCounter)
+      case p: CompositeProjection[_] =>
+        p.subProjections.foreach(ensureProjectionAlias(_))
+    }
+
+  protected def findProjection(proj: Projection[_], projList: Seq[Projection[_]]): Option[Projection[_]] = {
+    if (projList == Nil) return None
+    projList.find(p => p == proj) match {
+      case None => findProjection(proj, projList.flatMap {
+        case p: CompositeProjection[_] => p.subProjections
+        case _ => Nil
+      })
+      case value => value
+    }
+  }
 
   /* SET OPERATIONS */
 
@@ -395,6 +414,9 @@ trait QueryHelper {
 
   implicit def fieldProjectionToHelper(f: ColumnProjection[_, _]): SimpleExpressionHelper =
     new SimpleExpressionHelper(f.expr)
+
+  implicit def scalarProjectionToHelper(f: ScalarProjection[_]): SimpleExpressionHelper =
+    new SimpleExpressionHelper(f.expression)
 
   def and(predicates: Predicate*) =
     new AggregatePredicate("\n\tand ", predicates.toList)

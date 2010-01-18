@@ -80,10 +80,22 @@ trait AtomicProjection[T] extends Projection[T] {
  */
 trait CompositeProjection[R] extends Projection[R] {
 
-  def atomicProjections: Seq[AtomicProjection[_]]
+  def subProjections: Seq[Projection[_]]
 
-  def sqlAliases = atomicProjections.flatMap(_.sqlAliases)
+  def sqlAliases = subProjections.flatMap(_.sqlAliases)
 
+  override def equals(obj: Any) = obj match {
+    case p: CompositeProjection[R] => (this.subProjections.toList -- p.subProjections.toList) == Nil
+    case _ => false
+  }
+
+  override def hashCode: Int = {
+    var hash = 0
+    for (p <- subProjections) {
+      hash += p.hashCode
+    }
+    return hash
+  }
 }
 
 class ScalarProjection[T](val expression: String,
@@ -93,6 +105,13 @@ class ScalarProjection[T](val expression: String,
   override def grouping_?() = grouping
 
   def toSql = dialect.scalarAlias(expression, alias)
+
+  override def equals(obj: Any) = obj match {
+    case p: ScalarProjection[T] => p.expression == this.expression && p.grouping == this.grouping
+    case _ => false
+  }
+
+  override def hashCode = expression.hashCode * 31 + grouping.hashCode
 }
 
 /**
@@ -108,6 +127,13 @@ class ColumnProjection[T, R](val node: RelationNode[R],
   def expr = dialect.qualifyColumn(column, node.alias)
 
   def toSql = dialect.columnAlias(column, alias, node.alias)
+
+  override def equals(obj: Any) = obj match {
+    case p: ColumnProjection[T, R] => p.node == this.node && p.column == this.column
+    case _ => false
+  }
+
+  override def hashCode = node.hashCode * 31 + column.hashCode
 }
 
 /**
@@ -135,7 +161,7 @@ class RecordProjection[R](val node: RelationNode[R])
           .columns
           .map(col => new ColumnProjection(node, col.asInstanceOf[Column[Any, R]]))
 
-  def atomicProjections = _columnProjections
+  def subProjections = _columnProjections
 
   def read(rs: ResultSet): Option[R] = {
     // look for primary key projection

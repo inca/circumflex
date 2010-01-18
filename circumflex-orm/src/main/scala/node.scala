@@ -128,7 +128,11 @@ abstract class RelationNode[R](val relation: Relation[R])
     new ColumnProjection(this, col)
 
   override def hashCode = relation.hashCode
-  override def equals(obj: Any) = relation.equals(obj)
+  override def equals(obj: Any) = obj match {
+    case r: RelationNode[_] => equals(r.relation)
+    case r: Relation[_] => this.relation == r
+    case _ => false
+  }
 }
 
 class TableNode[R](val table: Table[R])
