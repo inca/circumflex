@@ -123,6 +123,16 @@ class Subselect extends SQLQuery {
   }
 
   /**
+   * Returns the FROM clause of this query.
+   */
+  def relations = _relations
+
+  /**
+   * Returns the SELECT clause of this query.
+   */
+  def projections = _projections
+
+  /**
    * Returns query parameters sequence.
    */
   def parameters: Seq[Any] = _where.parameters ++
@@ -179,16 +189,6 @@ class Subselect extends SQLQuery {
     proj.toList.foreach(p => addGroupByProjection(p))
     return this
   }
-
-  /**
-   * Returns the FROM clause of this query.
-   */
-  def relations = _relations
-
-  /**
-   * Returns the SELECT clause of this query.
-   */
-  def projections = _projections
 
   /**
    * Adds specified node to FROM clause.
@@ -412,7 +412,7 @@ trait QueryHelper {
   implicit def stringToHelper(str: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(str)
 
-  implicit def fieldProjectionToHelper(f: ColumnProjection[_, _]): SimpleExpressionHelper =
+  implicit def columnProjectionToHelper(f: ColumnProjection[_, _]): SimpleExpressionHelper =
     new SimpleExpressionHelper(f.expr)
 
   implicit def scalarProjectionToHelper(f: ScalarProjection[_]): SimpleExpressionHelper =
