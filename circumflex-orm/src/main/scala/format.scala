@@ -124,45 +124,7 @@ class SQLFormatter {
     return this
   }
 
+  // TODO: implement SQL formatting
   def format(sql: String): String = sql
-
-  def test() = format("""
-      CREATE OR REPLACE FUNCTION ldms.node_upd() RETURNS TRIGGER AS $body$
-      DECLARE
-      oldPath text;
-      newPath text;
-      BEGIN
-      -- Prevent share update
-      IF OLD.share_id <> NEW.share_id THEN
-      RAISE EXCEPTION 'Cannot change node''s share.';
-      END IF;
-      -- Fetch old path
-      SELECT ns."path" INTO oldPath
-      FROM ldms.nodestate ns
-      WHERE ns.id = NEW.id;
-      -- Determine new path
-      IF (NEW.parent_id IS NULL) THEN
-      SELECT '/' || NEW.name INTO newPath;
-      ELSE
-      SELECT ns.path || '/' || NEW.name INTO newPath
-      FROM ldms.nodestate ns
-      WHERE ns.id = NEW.parent_id;
-      END IF;
-      -- Update path of node and all it's descendants
-      UPDATE ldms.nodestate SET path = newPath WHERE id = NEW.id;
-      UPDATE ldms.nodestate /* Use regular expressions to maintain correct paths */
-      SET path = newPath || (regexp_matches(path, oldPath || '(/.*)')::text[])[1]
-      WHERE id IN (SELECT n.id FROM ldms.node n WHERE n.share_id = NEW.share_id);
-      -- Evaluate node state
-      PERFORM ldms.eval_node_state(NEW.id);
-      -- If parent has changed (node has been moved)
-      -- evaluate old parent state too.
-      IF (OLD.parent_id <> NEW.parent_id) THEN
-      PERFORM ldms.eval_node_state(OLD.parent_id);
-      END IF;
-      RETURN NEW;
-      END
-      $body$ language 'plpgsql';
-  """)
 
 }
