@@ -124,56 +124,7 @@ class SQLFormatter {
     return this
   }
 
-
-  def format(sql: String): String = {
-
-    val tokens = new ListBuffer[String]()
-
-    def tokenize() = {
-
-      val source = sql.trim.replaceAll("''","%%%sq%%%").replaceAll("\"\"","%%%dq%%%")
-      val tokenizer = new StringTokenizer(source, DELIMITERS, true)
-      var token = ""
-
-      def processQuotes(): Unit = token match {
-        case "'" => fillTokenUntil("'", true)
-        case "\"" => fillTokenUntil("\"", true)
-        case _ =>
-      }
-
-      def processComments(): Unit = token match {
-        case s if (s.startsWith("--")) => fillTokenUntil("\n", false)
-        case s if (s.startsWith("/*")) => fillTokenUntil("*/", true)
-        case _ =>
-      }
-
-      def fillTokenUntil(f: String, includeEnd: Boolean): Unit =
-        while (tokenizer.hasMoreTokens) {
-          val t = tokenizer.nextToken
-          if (t.endsWith(f)) {
-            if (includeEnd) token += t
-            return
-          } else token += t
-        }
-
-      while (tokenizer.hasMoreTokens) {
-        token = tokenizer.nextToken
-        // let's make sure that quoted strings are preserved
-        processQuotes()
-        // let's leave comments alone
-        processComments()
-        if (!WHITESPACE.contains(token))
-          tokens += token
-      }
-
-    }   // END-OF tokenize()
-
-    tokenize
-    println(tokens.mkString("\t\t"))
-
-    return ""
-
-  }   // END-OF format()
+  def format(sql: String): String = sql
 
   def test() = format("""
       CREATE OR REPLACE FUNCTION ldms.node_upd() RETURNS TRIGGER AS $body$
