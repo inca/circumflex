@@ -42,6 +42,15 @@ object Intersect extends SetOperation("intersect")
 object IntersectAll extends SetOperation("intersect all")
 
 trait Query extends SQLable with JDBCHelper {
+  protected var aliasCounter = 0;
+
+  /**
+   * Generate an alias to eliminate duplicates within query.
+   */
+  protected def nextAlias: String = {
+    aliasCounter += 1
+    return "this_" + aliasCounter
+  }
 
   /**
    * Query parameters.
@@ -71,7 +80,50 @@ trait Query extends SQLable with JDBCHelper {
 
 trait SQLQuery extends Query {
 
-  def projections: Seq[Projection[_]]
+  protected var _projections: Seq[Projection[_]] = Nil
+
+  /**
+   * Returns the SELECT clause of this query.
+   */
+  def projections: Seq[Projection[_]] = _projections
+
+  /**
+   * Removes all projections from this query.
+   */
+  def clearProjections: this.type = {
+    this._projections = Nil
+    return this
+  }
+
+  /**
+   * Adds specified projections to SELECT clause.
+   * All projections with "this" alias are assigned query-unique alias.
+   */
+  def addProjection(projections: Projection[_]*): this.type = {
+    projections.toList.foreach(ensureProjectionAlias(_))
+    this._projections ++= projections
+    return this
+  }
+
+  protected def ensureProjectionAlias[T](projection: Projection[T]): Unit =
+    projection match {
+      case p: AtomicProjection[_] if (p.alias == "this") => p.as(nextAlias)
+      case p: CompositeProjection[_] =>
+        p.subProjections.foreach(ensureProjectionAlias(_))
+    }
+
+  protected def findProjection(proj: Projection[_], projList: Seq[Projection[_]]): Option[Projection[_]] = {
+    if (projList == Nil) return None
+    projList.find(p => p == proj) match {
+      case None => findProjection(proj, projList.flatMap {
+        case p: CompositeProjection[_] => p.subProjections
+        case _ => Nil
+      })
+      case value => value
+    }
+  }
+
+  /* DATA RETRIEVAL STUFF */
 
   /**
    * Executes a query, opens a JDBC result set and executes provided actions.
@@ -104,13 +156,12 @@ trait SQLQuery extends Query {
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
 
+  def sqlProjections = projections.map(_.toSql).mkString(", ")
+
 }
 
 class Subselect extends SQLQuery {
 
-  protected var aliasCounter = 0;
-
-  protected var _projections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_]] = Nil
   protected var _where: Predicate = EmptyPredicate
   protected var _having: Predicate = EmptyPredicate
@@ -126,11 +177,6 @@ class Subselect extends SQLQuery {
    * Returns the FROM clause of this query.
    */
   def relations = _relations
-
-  /**
-   * Returns the SELECT clause of this query.
-   */
-  def projections = _projections
 
   /**
    * Returns query parameters sequence.
@@ -207,9 +253,7 @@ class Subselect extends SQLQuery {
       ensureNodeAlias(j.left)
       ensureNodeAlias(j.right)
       j
-    case n: RelationNode[_] if (n.alias == "this") =>
-      aliasCounter += 1
-      node.as("this_" + aliasCounter)
+    case n: RelationNode[_] if (n.alias == "this") => node.as(nextAlias)
     case n => n
   }
 
@@ -219,21 +263,6 @@ class Subselect extends SQLQuery {
    */
   def addFrom[R](rel: Relation[R]): this.type =
     addFrom(rel.as("this"))
-
-  def clearProjections: this.type = {
-    this._projections = Nil
-    return this
-  }
-
-  /**
-   * Adds specified projections to SELECT clause.
-   * All projections with "this" alias are assigned query-unique alias.
-   */
-  def addProjection(projections: Projection[_]*): this.type = {
-    projections.toList.foreach(ensureProjectionAlias(_))
-    this._projections ++= projections
-    return this
-  }
 
   protected def addGroupByProjection(proj: Projection[_]): this.type = {
     val pr = findProjection(proj, _projections) match {
@@ -245,26 +274,6 @@ class Subselect extends SQLQuery {
     }
     this._groupBy ++= List[Projection[_]](pr)
     return this 
-  }
-
-  protected def ensureProjectionAlias[T](projection: Projection[T]): Unit =
-    projection match {
-      case p: AtomicProjection[_] if (p.alias == "this") =>
-        aliasCounter += 1
-        p.as("this_" + aliasCounter)
-      case p: CompositeProjection[_] =>
-        p.subProjections.foreach(ensureProjectionAlias(_))
-    }
-
-  protected def findProjection(proj: Projection[_], projList: Seq[Projection[_]]): Option[Projection[_]] = {
-    if (projList == Nil) return None
-    projList.find(p => p == proj) match {
-      case None => findProjection(proj, projList.flatMap {
-        case p: CompositeProjection[_] => p.subProjections
-        case _ => Nil
-      })
-      case value => value
-    }
   }
 
   /* SET OPERATIONS */

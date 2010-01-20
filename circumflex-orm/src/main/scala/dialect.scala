@@ -336,11 +336,6 @@ class Dialect {
   }
 
   /**
-   * Formats provided projections for use in SELECT clause (just comma-delimited mkString).
-   */
-  def selectClause(projections: String*) = projections.mkString(", ")
-
-  /**
    * Produces SELECT statement with ? parameters.
    */
   def select(q: Select): String = {

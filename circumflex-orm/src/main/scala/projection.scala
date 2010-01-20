@@ -96,6 +96,9 @@ trait CompositeProjection[R] extends Projection[R] {
     }
     return hash
   }
+
+  def toSql = subProjections.map(_.toSql).mkString(", ")
+
 }
 
 class ScalarProjection[T](val expression: String,
@@ -189,5 +192,4 @@ class RecordProjection[R](val node: RelationNode[R])
     }
   }
 
-  def toSql = dialect.selectClause(_columnProjections.map(_.toSql): _*)
 }
