@@ -66,7 +66,7 @@ class I18NDialect extends Dialect {
                     .mkString(", ") + ");\n)"
 
   def dropInsertRule(rule: LocalizableViewInsertRule[_]) =
-    "drop rule " + rule.objectName + "on " + rule.localizableView.qualifiedName
+    "drop rule " + rule.objectName + " on " + rule.localizableView.qualifiedName
 
   def createUpdateRule(rule: LocalizableViewUpdateRule[_]) =
     "create or replace rule " + rule.objectName + " as " +
