@@ -32,7 +32,7 @@ import ORM._
  * with an alias so that they may appear within SQL FROM clause.
  */
 abstract class RelationNode[R](val relation: Relation[R])
-    extends Relation[R] with SQLable {
+        extends Relation[R] with SQLable {
 
   protected var _alias = "this"
 
@@ -136,7 +136,7 @@ abstract class RelationNode[R](val relation: Relation[R])
 }
 
 class TableNode[R](val table: Table[R])
-    extends RelationNode[R](table) {
+        extends RelationNode[R](table) {
 
   /**
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
@@ -146,7 +146,7 @@ class TableNode[R](val table: Table[R])
 }
 
 class ViewNode[R](val view: View[R])
-    extends RelationNode[R](view) {
+        extends RelationNode[R](view) {
 
   /**
    * Dialect should return qualified name with alias (e.g. "myschema.mytable as myalias")
@@ -155,17 +155,27 @@ class ViewNode[R](val view: View[R])
 
 }
 
+abstract class JoinType(val sql: String)
+object InnerJoin extends JoinType(dialect.innerJoin)
+object LeftJoin extends JoinType(dialect.leftJoin)
+object RightJoin extends JoinType(dialect.rightJoin)
+object FullJoin extends JoinType(dialect.fullJoin)
+
 /**
  * Represents a join node between parent and child relation.
  */
 abstract class JoinNode[L, R](protected var _left: RelationNode[L],
-                              protected var _right: RelationNode[R])
-    extends RelationNode[L](_left) {
+                              protected var _right: RelationNode[R],
+                              protected var _joinType: JoinType,
+                              protected var _on: String)
+        extends RelationNode[L](_left) {
 
   private var _auxiliaryConditions: Seq[String] = Nil
 
   def left = _left
   def right = _right
+  def joinType = _joinType
+
   override def alias = left.alias
 
   def auxiliaryConditions = _auxiliaryConditions
@@ -178,10 +188,11 @@ abstract class JoinNode[L, R](protected var _left: RelationNode[L],
     return this
   }
 
-  /**
-   * Override join type if necessary.
-   */
-  def sqlJoinType: String = dialect.leftJoin
+  def on = "on (" + _on + {
+    if (_auxiliaryConditions.size > 0)
+      " and " + _auxiliaryConditions.mkString(" and ")
+    else ""
+  } + ")"
 
   /**
    * Join nodes return parent node's projections joined with child node's ones.
@@ -202,15 +213,26 @@ abstract class JoinNode[L, R](protected var _left: RelationNode[L],
    * Dialect should return properly joined parent and child nodes.
    */
   def toSql = dialect.join(this)
-
 }
 
 class ChildToParentJoin[L, R](childNode: RelationNode[L],
                               parentNode: RelationNode[R],
                               val association: Association[L, R])
-    extends JoinNode[L, R](childNode, parentNode)
+        extends JoinNode[L, R](
+          childNode,
+          parentNode,
+          LeftJoin,
+          childNode.alias + "." + association.childColumn.columnName + "=" +
+                  parentNode.alias + "." + association.parentColumn.columnName
+          )
 
 class ParentToChildJoin[L, R](parentNode: RelationNode[L],
                               childNode: RelationNode[R],
                               val association: Association[R, L])
-    extends JoinNode[L, R](parentNode, childNode)
+        extends JoinNode[L, R](
+          parentNode,
+          childNode,
+          LeftJoin,
+          parentNode.alias + "." + association.parentColumn.columnName + "=" +
+                  childNode.alias + "." + association.childColumn.columnName
+          )
