@@ -87,31 +87,124 @@ abstract class RelationNode[R](val relation: Relation[R])
    */
   override def relationName = relation.relationName
 
+  /* JOINS */
+
   /**
    * Creates a join with specified parent node using specified association.
    */
-  def join[J](node: RelationNode[J], association: Association[R, J]): ChildToParentJoin[R, J] =
-    new ChildToParentJoin(this, node, association)
+  def join[J](node: RelationNode[J],
+              association: Association[R, J],
+              joinType: JoinType): ChildToParentJoin[R, J] =
+    new ChildToParentJoin(this, node, association, joinType)
 
   /**
    * Creates a join with specified child node using specified association.
    */
-  def join[J](node: RelationNode[J], association: Association[J, R]): ParentToChildJoin[R, J] =
-    new ParentToChildJoin(this, node, association)
+  def join[J](node: RelationNode[J],
+              association: Association[J, R],
+              joinType: JoinType): ParentToChildJoin[R, J] =
+    new ParentToChildJoin(this, node, association, joinType)
 
   /**
    * Tries to create either type of join depending on inferred association.
    */
-  def join[J](node: RelationNode[J]): JoinNode[R, J] = getParentAssociation(node) match {
-    case Some(a) =>              // this is child; node is parent
-      new ChildToParentJoin(this, node, a.asInstanceOf[Association[R, J]])
+  def join[J](node: RelationNode[J],
+              joinType: JoinType): JoinNode[R, J] = getParentAssociation(node) match {
+    case Some(a) => join(node, a.asInstanceOf[Association[R, J]], joinType)
     case None => getChildAssociation(node) match {
-      case Some(a) =>            // this is parent; node is child
-        new ParentToChildJoin(this, node, a.asInstanceOf[Association[J, R]])
+      case Some(a) => join(node, a.asInstanceOf[Association[J, R]], joinType)
       case None =>
         throw new ORMException("Failed to join " + this + " with " + node + ": no associations found.")
     }
   }
+
+  /**
+   * Creates a join with specified node using specified condition.
+   */
+  def join[J](node: RelationNode[J], on: String, joinType: JoinType): JoinNode[R, J] =
+    new JoinNode(this, node, joinType, on)
+
+  /* DEFAULT (LEFT) JOINS */
+
+  def join[J](node: RelationNode[J],
+              association: Association[R, J]): ChildToParentJoin[R, J] =
+    leftJoin(node, association)
+
+  def join[J](node: RelationNode[J],
+              association: Association[J, R]): ParentToChildJoin[R, J] =
+    leftJoin(node, association)
+
+  def join[J](node: RelationNode[J],
+              on: String) = leftJoin(node, on)
+
+  def join[J](node: RelationNode[J]): JoinNode[R, J] = leftJoin(node)
+
+  /* LEFT JOINS */
+
+  def leftJoin[J](node: RelationNode[J],
+                  association: Association[R, J]): ChildToParentJoin[R, J] =
+    join(node, association, LeftJoin)
+
+  def leftJoin[J](node: RelationNode[J],
+                  association: Association[J, R]): ParentToChildJoin[R, J] =
+    join(node, association, LeftJoin)
+
+  def leftJoin[J](node: RelationNode[J], on: String): JoinNode[R, J] =
+    join(node, on, LeftJoin)
+
+  def leftJoin[J](node: RelationNode[J]): JoinNode[R, J] =
+    join(node, LeftJoin)
+
+  /* RIGHT JOINS */
+
+  def rightJoin[J](node: RelationNode[J],
+                   association: Association[R, J]): ChildToParentJoin[R, J] =
+    join(node, association, RightJoin)
+
+  def rightJoin[J](node: RelationNode[J],
+                   association: Association[J, R]): ParentToChildJoin[R, J] =
+    join(node, association, RightJoin)
+
+  def rightJoin[J](node: RelationNode[J], on: String): JoinNode[R, J] =
+    join(node, on, RightJoin)
+
+  def rightJoin[J](node: RelationNode[J]): JoinNode[R, J] =
+    join(node, RightJoin)
+
+  /* FULL JOINS */
+
+  def fullJoin[J](node: RelationNode[J],
+                   association: Association[R, J]): ChildToParentJoin[R, J] =
+    join(node, association, FullJoin)
+
+  def fullJoin[J](node: RelationNode[J],
+                   association: Association[J, R]): ParentToChildJoin[R, J] =
+    join(node, association, FullJoin)
+
+  def fullJoin[J](node: RelationNode[J], on: String): JoinNode[R, J] =
+    join(node, on, FullJoin)
+
+  def fullJoin[J](node: RelationNode[J]): JoinNode[R, J] =
+    join(node, FullJoin)
+
+  /* INNER JOINS */
+
+  def innerJoin[J](node: RelationNode[J],
+                   association: Association[R, J]): ChildToParentJoin[R, J] =
+    join(node, association, InnerJoin)
+
+  def innerJoin[J](node: RelationNode[J],
+                   association: Association[J, R]): ParentToChildJoin[R, J] =
+    join(node, association, InnerJoin)
+
+  def innerJoin[J](node: RelationNode[J], on: String): JoinNode[R, J] =
+    join(node, on, InnerJoin)
+
+  def innerJoin[J](node: RelationNode[J]): JoinNode[R, J] =
+    join(node, InnerJoin)
+
+
+  /* ALIASES AND PROJECTIONS */
 
   /**
    * Reassigns an alias for this node.
@@ -164,10 +257,10 @@ object FullJoin extends JoinType(dialect.fullJoin)
 /**
  * Represents a join node between parent and child relation.
  */
-abstract class JoinNode[L, R](protected var _left: RelationNode[L],
-                              protected var _right: RelationNode[R],
-                              protected var _joinType: JoinType,
-                              protected var _on: String)
+class JoinNode[L, R](protected var _left: RelationNode[L],
+                     protected var _right: RelationNode[R],
+                     protected var _joinType: JoinType,
+                     protected var _on: String)
         extends RelationNode[L](_left) {
 
   private var _auxiliaryConditions: Seq[String] = Nil
@@ -217,22 +310,24 @@ abstract class JoinNode[L, R](protected var _left: RelationNode[L],
 
 class ChildToParentJoin[L, R](childNode: RelationNode[L],
                               parentNode: RelationNode[R],
-                              val association: Association[L, R])
+                              val association: Association[L, R],
+                              _joinType: JoinType)
         extends JoinNode[L, R](
           childNode,
           parentNode,
-          LeftJoin,
+          _joinType,
           childNode.alias + "." + association.childColumn.columnName + "=" +
                   parentNode.alias + "." + association.parentColumn.columnName
           )
 
 class ParentToChildJoin[L, R](parentNode: RelationNode[L],
                               childNode: RelationNode[R],
-                              val association: Association[R, L])
+                              val association: Association[R, L],
+                              _joinType: JoinType)
         extends JoinNode[L, R](
           parentNode,
           childNode,
-          LeftJoin,
+          _joinType,
           parentNode.alias + "." + association.parentColumn.columnName + "=" +
                   childNode.alias + "." + association.childColumn.columnName
           )

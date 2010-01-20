@@ -123,11 +123,11 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
       case rel: RelationNode[_] =>
         if (rel.equals(association.parentRelation)) {
           val a = association.asInstanceOf[Association[Any, R]]
-          new ParentToChildJoin(rel, makePrefetch(a, a.childRelation),a)
+          new ParentToChildJoin(rel, makePrefetch(a, a.childRelation), a, LeftJoin)
         }
         else if (rel.equals(association.childRelation)) {
           val a = association.asInstanceOf[Association[R, Any]]
-          new ChildToParentJoin(rel, makePrefetch(a, a.parentRelation), a)
+          new ChildToParentJoin(rel, makePrefetch(a, a.parentRelation), a, LeftJoin)
         }
         else rel
     }
