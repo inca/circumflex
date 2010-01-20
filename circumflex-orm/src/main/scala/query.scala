@@ -28,6 +28,7 @@ package ru.circumflex.orm
 import ORM._
 import collection.mutable.ListBuffer
 import java.sql.{PreparedStatement, ResultSet}
+import java.util.regex.Pattern
 
 /**
  * Result set operation (UNION, EXCEPT, INTERSECT, etc.).
@@ -110,6 +111,7 @@ trait SQLQuery extends Query {
       case p: AtomicProjection[_] if (p.alias == "this") => p.as(nextAlias)
       case p: CompositeProjection[_] =>
         p.subProjections.foreach(ensureProjectionAlias(_))
+      case _ =>
     }
 
   protected def findProjection(proj: Projection[_], projList: Seq[Projection[_]]): Option[Projection[_]] = {
@@ -122,6 +124,8 @@ trait SQLQuery extends Query {
       case value => value
     }
   }
+
+  def sqlProjections = projections.toList.map(_.toSql).mkString(", ")
 
   /* DATA RETRIEVAL STUFF */
 
@@ -156,8 +160,12 @@ trait SQLQuery extends Query {
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
 
-  def sqlProjections = projections.map(_.toSql).mkString(", ")
+}
 
+class NativeSQLQuery(sql: String,
+                     params: Seq[Any]) extends SQLQuery {
+  def parameters = params
+  def toSql = sql.replaceAll("\\{\\*\\}", sqlProjections)
 }
 
 class Subselect extends SQLQuery {
@@ -182,8 +190,8 @@ class Subselect extends SQLQuery {
    * Returns query parameters sequence.
    */
   def parameters: Seq[Any] = _where.parameters ++
-      _having.parameters ++
-      _setOps.flatMap(p => p._2.parameters)
+          _having.parameters ++
+          _setOps.flatMap(p => p._2.parameters)
 
   /**
    * Returns queries combined with this subselect using specific set operation
@@ -224,7 +232,7 @@ class Subselect extends SQLQuery {
     var result = _groupBy
     if (projections.exists(_.grouping_?))
       projections.filter(!_.grouping_?)
-          .foreach(p => if (!result.contains(p)) result ++= List(p))
+              .foreach(p => if (!result.contains(p)) result ++= List(p))
     return result
   }
 
@@ -273,7 +281,7 @@ class Subselect extends SQLQuery {
       }
     }
     this._groupBy ++= List[Projection[_]](pr)
-    return this 
+    return this
   }
 
   /* SET OPERATIONS */
@@ -469,6 +477,11 @@ trait QueryHelper {
 
   def delete[R](rel: Relation[R]): Delete[R] = new Delete(rel);
 
+  def sql(sql: String, projections: Projection[_]*) =
+    new NativeSQLQueryHelper(sql, projections: _*)
+
+  def dml(dml: String) = new NativeDMLQueryHelper(dml)
+
 }
 
 class SelectHelper(val projections: Seq[Projection[_]]) {
@@ -480,6 +493,48 @@ class SelectHelper(val projections: Seq[Projection[_]]) {
       q.addProjection(projections: _*)
     }
     return q
+  }
+
+}
+
+abstract class NativeQueryHelper(sql: String) {
+
+  protected var parameters: Seq[Any] = Nil
+  protected var sqlText = sql
+
+  protected def prepareParameters(params: Pair[String, Any]*): Unit = {
+    val paramsMap = Map[String, Any](params: _*)
+    val pattern = Pattern.compile(":([a-zA-Z_]+\\w)")
+    val matcher = pattern.matcher(sql)
+    while(matcher.find) paramsMap.get(matcher.group(1)) match {
+      case Some(param) => parameters ++= List(param)
+      case _ => parameters ++= List(null)
+    }
+    sqlText = matcher.replaceAll("?")
+  }
+
+  override def toString = sqlText.toString
+
+}
+
+class NativeSQLQueryHelper(sql: String,
+                           val projections: Projection[_]*)
+        extends NativeQueryHelper(sql) {
+
+  def prepare(params: Pair[String, Any]*): SQLQuery = {
+    prepareParameters(params: _*)
+    return new NativeSQLQuery(sqlText, parameters)
+            .addProjection(projections: _*)
+  }
+
+}
+
+class NativeDMLQueryHelper(dml: String)
+        extends NativeQueryHelper(dml) {
+
+  def prepare(params: Pair[String, Any]*): DMLQuery = {
+    prepareParameters(params: _*)
+    return new NativeDMLQuery(sqlText, parameters)
   }
 
 }
