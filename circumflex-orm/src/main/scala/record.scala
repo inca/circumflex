@@ -72,11 +72,6 @@ abstract class Record[R] {
       case _ => fieldsMap -= col
     }
 
-  /* INLINE RECORD PROXY */
-
-  def proxy[I](inlineRecord: ViewInlineRecord[I, R]) =
-    new InlineRecordProxy(this, inlineRecord)
-
   /* ASSOCIATIONS-RELATED STUFF */
 
   def manyToOne[P](association: Association[R, P]) =
