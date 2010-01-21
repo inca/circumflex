@@ -103,24 +103,10 @@ class CategoryStatistics extends Record[CategoryStatistics] {
 }
 
 object CategoryStatistics extends View[CategoryStatistics] {
-  val category = column[Long]("category_id")
+  val category = virtualColumn[Long]("category_id")
           .references(Category)
-  val booksCount = column[Long]("books_count")
+  val booksCount = virtualColumn[Long]("books_count")
   def query = select("c.id", count("b.id"))
           .from(Category as "c" join (Book as "b"))
   def primaryKey = pk(category.localColumn)
-}
-
-class BookWithCategory extends Record[BookWithCategory] {
-  val book = proxy(BookWithCategory.book)
-  val category = proxy(BookWithCategory.category)
-}
-
-object BookWithCategory extends View[BookWithCategory] {
-  val b = Book as "b"
-  val c = Category as "c"
-  val book = inlineRecord(b)
-  val category = inlineRecord(c)
-  def query = select(b.*, c.*).from(b join c)
-  def primaryKey = pk(book.pkColumn)
 }
