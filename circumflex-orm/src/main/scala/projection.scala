@@ -182,6 +182,7 @@ class RecordProjection[R](val node: RelationNode[R])
   def subProjections = _columnProjections
 
   def read(rs: ResultSet): Option[R] = {
+    // TODO check virtuals
     // look for primary key projection
     val pkColumn = node.primaryKey.column
     _columnProjections.find(_.column == pkColumn) match {

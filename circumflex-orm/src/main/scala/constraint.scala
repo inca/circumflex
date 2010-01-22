@@ -32,7 +32,7 @@ import ORM._
  */
 abstract class Constraint[R](val relation: Relation[R],
                              val constraintName: String)
-        extends SchemaObject {
+    extends SchemaObject {
 
   def sqlCreate: String = dialect.alterTableAddConstraint(this)
 
@@ -58,14 +58,33 @@ abstract class Constraint[R](val relation: Relation[R],
 /**
  * Primary key constraint.
  */
-class PrimaryKey[T, R](relation: Relation[R],
-                       constraintName: String,
-                       val column: Column[T, R])
-        extends Constraint[R](relation, constraintName) {
-
-  def sqlDefinition = dialect.primaryKeyDefinition(this)
-
+abstract class PrimaryKey[T, R](relation: Relation[R],
+                       constraintName: String)
+    extends Constraint[R](relation, constraintName) {
+  def column: Column[T, R]
 }
+
+/**
+ * Primary key constraint with physical column.
+ */
+class PhysicalPrimaryKey[T, R](relation: Relation[R],
+                               constraintName: String,
+                               val column: Column[T, R])
+    extends PrimaryKey[T, R](relation, constraintName) {
+  def sqlDefinition = dialect.primaryKeyDefinition(this)
+}
+
+/**
+ * Primary key for virtual relations (e.g. views), used to identify
+ * virtual records.
+ */
+class VirtualPrimaryKey[R](relation: Relation[R],
+                           constraintName: String)
+    extends PrimaryKey[Nothing, R](relation, constraintName) {
+  def column = throw new IllegalAccessException("Virtual keys do not have physical columns.")
+  def sqlDefinition = throw new IllegalAccessException("Virtual keys do not have SQL definition.")
+}
+
 
 /**
  * Unique constraint.
@@ -73,7 +92,7 @@ class PrimaryKey[T, R](relation: Relation[R],
 class UniqueKey[R](relation: Relation[R],
                    constraintName: String,
                    val columns: Seq[Column[_, R]])
-        extends Constraint[R](relation, constraintName) {
+    extends Constraint[R](relation, constraintName) {
 
   def sqlDefinition = dialect.uniqueKeyDefinition(this)
 }
@@ -92,7 +111,7 @@ object SetDefaultAction extends ForeignKeyAction
 abstract class ForeignKey[C, P](val childRelation: Relation[C],
                                 val parentRelation: Relation[P],
                                 constraintName: String)
-        extends Constraint[C](childRelation, constraintName) {
+    extends Constraint[C](childRelation, constraintName) {
 
   protected var _onDelete: ForeignKeyAction = NoAction
   protected var _onUpdate: ForeignKeyAction = NoAction
@@ -165,7 +184,7 @@ class MultiForeignKey[C, P](childRelation: Relation[C],
                             constraintName: String,
                             val childColumns: Seq[Column[_, C]],
                             val parentColumns: Seq[Column[_, P]])
-        extends ForeignKey[C, P](childRelation, parentRelation, constraintName)
+    extends ForeignKey[C, P](childRelation, parentRelation, constraintName)
 
 /**
  * Represents single-columned foreign key constraint, which also acts like association.
@@ -174,8 +193,8 @@ class AssociativeForeignKey[T, C, P](childRelation: Relation[C],
                                      parentRelation: Relation[P],
                                      constraintName: String,
                                      val childColumn: Column[T, C])
-        extends ForeignKey[C, P](childRelation, parentRelation, constraintName)
-                with Association[C, P] {
+    extends ForeignKey[C, P](childRelation, parentRelation, constraintName)
+        with Association[C, P] {
 
   val parentColumns = List(parentColumn)
   val childColumns = List(childColumn)
@@ -185,7 +204,7 @@ class AssociativeForeignKey[T, C, P](childRelation: Relation[C],
 class CheckConstraint[R](relation: Relation[R],
                          constraintName: String,
                          val expression: String)
-        extends Constraint[R](relation, constraintName) {
+    extends Constraint[R](relation, constraintName) {
 
   def sqlDefinition = dialect.checkConstraintDefinition(this)
 }
