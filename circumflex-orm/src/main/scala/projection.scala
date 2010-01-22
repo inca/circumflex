@@ -181,31 +181,34 @@ class RecordProjection[R](val node: RelationNode[R])
 
   def subProjections = _columnProjections
 
-  def read(rs: ResultSet): Option[R] = {
-    // TODO check virtuals
-    // look for primary key projection
-    val pkColumn = node.primaryKey.column
-    _columnProjections.find(_.column == pkColumn) match {
-      case Some(pkProj) => pkProj.read(rs) match {
-        case Some(idValue) =>
-          tx.getCachedRecord(node.relation, idValue) match {
-            case Some(r: R) => Some(r)    // return cached record
-            case _ => {   // parse record from projections, update cache and return
-              val record = node.relation.recordClass
-                  .getConstructor()
-                  .newInstance()
-                  .asInstanceOf[Record[R]]
-              _columnProjections.foreach(p => record.setField(p.column, p.read(rs)))
-              if (record.identified_?) {
-                tx.updateRecordCache(record)
-                Some(record.asInstanceOf[R])
-              } else None
+  def read(rs: ResultSet): Option[R] = node.primaryKey match {
+    case pk: PhysicalPrimaryKey[_, R] =>
+      val pkColumn = node.primaryKey.column
+      _columnProjections.find(_.column == pkColumn) match {
+        case Some(pkProj) => pkProj.read(rs) match {
+          case Some(idValue) =>
+            tx.getCachedRecord(node.relation, idValue) match {
+              case Some(r: R) => Some(r)    // return cached record
+              case _ => readRecord(rs)
             }
-          }
+          case _ => None
+        }
         case _ => None
       }
-      case _ => None
-    }
+    case v: VirtualPrimaryKey[R] => readRecord(rs)
+    case _ => None
+  }
+
+  protected def readRecord(rs: ResultSet): Option[R] = {
+    val record = node.relation.recordClass
+        .getConstructor()
+        .newInstance()
+        .asInstanceOf[Record[R]]
+    _columnProjections.foreach(p => record.setField(p.column, p.read(rs)))
+    if (record.identified_?) {
+      tx.updateRecordCache(record)
+      Some(record.asInstanceOf[R])
+    } else None
   }
 
   override def equals(obj: Any) = obj match {

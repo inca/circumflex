@@ -100,7 +100,7 @@ class RawDataTable[R](val localizableView: LocalizableView[R])
   override def relationName = localizableView.relationName + "_r"
   override def columns = localizableView.columns
   override def associations = localizableView.associations
-  def primaryKey = localizableView.primaryKey
+  override def primaryKey = localizableView.primaryKey
 }
 
 class LocalizableViewInsertRule[R](val localizableView: LocalizableView[R])
