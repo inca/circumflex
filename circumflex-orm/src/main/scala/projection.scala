@@ -80,6 +80,8 @@ trait AtomicProjection[T] extends Projection[T] {
  */
 trait CompositeProjection[R] extends Projection[R] {
 
+  private var _hash = 0;
+
   def subProjections: Seq[Projection[_]]
 
   def sqlAliases = subProjections.flatMap(_.sqlAliases)
@@ -90,11 +92,10 @@ trait CompositeProjection[R] extends Projection[R] {
   }
 
   override def hashCode: Int = {
-    var hash = 0
-    for (p <- subProjections) {
-      hash += p.hashCode
-    }
-    return hash
+    if (_hash == 0)
+      for (p <- subProjections)
+        _hash = 31 * _hash + p.hashCode
+    return _hash
   }
 
   def toSql = subProjections.map(_.toSql).mkString(", ")
@@ -103,7 +104,7 @@ trait CompositeProjection[R] extends Projection[R] {
 
 class ScalarProjection[T](val expression: String,
                           val grouping: Boolean)
-        extends AtomicProjection[T] {
+    extends AtomicProjection[T] {
 
   override def grouping_?() = grouping
 
@@ -122,7 +123,7 @@ class ScalarProjection[T](val expression: String,
  */
 class ColumnProjection[T, R](val node: RelationNode[R],
                              val column: Column[T, R])
-        extends AtomicProjection[T] {
+    extends AtomicProjection[T] {
 
   /**
    * Returns a column name qualified with node's alias.
@@ -144,6 +145,13 @@ class ColumnProjection[T, R](val node: RelationNode[R],
  */
 class SequenceNextValProjection[R](val seq: Sequence[R]) extends AtomicProjection[Long] {
   def toSql = dialect.sequenceNextVal(seq, alias)
+
+  override def equals(obj: Any) = obj match {
+    case p: SequenceNextValProjection[R] => this.seq == p.seq
+    case _ => false
+  }
+
+  override def hashCode = seq.hashCode
 }
 
 /**
@@ -151,18 +159,25 @@ class SequenceNextValProjection[R](val seq: Sequence[R]) extends AtomicProjectio
  */
 class SequenceCurrValProjection[R](val seq: Sequence[R]) extends AtomicProjection[Long] {
   def toSql = dialect.sequenceCurrVal(seq, alias)
+
+  override def equals(obj: Any) = obj match {
+    case p: SequenceNextValProjection[R] => this.seq == p.seq
+    case _ => false
+  }
+
+  override def hashCode = seq.hashCode
 }
 
 /**
  * Represents a record projection (it groups all field projections).
  */
 class RecordProjection[R](val node: RelationNode[R])
-        extends CompositeProjection[R] {
+    extends CompositeProjection[R] {
 
   protected val _columnProjections: Seq[ColumnProjection[Any, R]] = node
-          .relation
-          .columns
-          .map(col => new ColumnProjection(node, col.asInstanceOf[Column[Any, R]]))
+      .relation
+      .columns
+      .map(col => new ColumnProjection(node, col.asInstanceOf[Column[Any, R]]))
 
   def subProjections = _columnProjections
 
@@ -176,9 +191,9 @@ class RecordProjection[R](val node: RelationNode[R])
             case Some(r: R) => Some(r)    // return cached record
             case _ => {   // parse record from projections, update cache and return
               val record = node.relation.recordClass
-                      .getConstructor()
-                      .newInstance()
-                      .asInstanceOf[Record[R]]
+                  .getConstructor()
+                  .newInstance()
+                  .asInstanceOf[Record[R]]
               _columnProjections.foreach(p => record.setField(p.column, p.read(rs)))
               if (record.identified_?) {
                 tx.updateRecordCache(record)
@@ -191,5 +206,12 @@ class RecordProjection[R](val node: RelationNode[R])
       case _ => None
     }
   }
+
+  override def equals(obj: Any) = obj match {
+    case p: RecordProjection[R] => this.node == p.node
+    case _ => false
+  }
+
+  override def hashCode = node.hashCode
 
 }
