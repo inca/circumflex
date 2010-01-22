@@ -1,4 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/6.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/maven-v4_0_0.xsd">
@@ -185,55 +185,6 @@
             <encoding>UTF-8</encoding>
             <source>1.6</source>
             <target>1.6</target>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>2.1</version>
-          <executions>
-            <execution>
-              <id>attach-sources</id>
-              <phase>verify</phase>
-              <goals>
-                <goal>jar-no-fork</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>com.agilejava.docbkx</groupId>
-          <artifactId>docbkx-maven-plugin</artifactId>
-          <version>2.0.9</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>generate-html</goal>
-              </goals>
-              <phase>generate-sources</phase>
-            </execution>
-          </executions>
-          <dependencies>
-            <dependency>
-              <groupId>org.docbook</groupId>
-              <artifactId>docbook-xml</artifactId>
-              <version>5.0</version>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <highlightSource>false</highlightSource>
-            <includes>*.xml</includes>
-            <chunkedOutput>true</chunkedOutput>
-            <chunkerOutputMethod>html</chunkerOutputMethod>
-            <chunkerOutputIndent>true</chunkerOutputIndent>
-            <xincludeSupported>true</xincludeSupported>
-            <paperType>A4</paperType>
-            <fop1Extensions>1</fop1Extensions>
-            <chunkerOutputEncoding>UTF-8</chunkerOutputEncoding>
-            <chunkerOutputDoctypePublic>-//W3C//DTD XHTML 1.0 Transitional//EN</chunkerOutputDoctypePublic>
-            <chunkerOutputDoctypeSystem>http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd</chunkerOutputDoctypeSystem>
-            <textdataDefaultEncoding>UTF-8</textdataDefaultEncoding>
-            <htmlhelpEncoding>UTF-8</htmlhelpEncoding>
           </configuration>
         </plugin>
       </plugins>

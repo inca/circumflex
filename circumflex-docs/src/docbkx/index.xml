@@ -12,7 +12,7 @@
     </author>
     <date>2010.01.22</date>
   </bookinfo>
-  <preface>
+  <preface id="preface">
     <title></title>
     <para>asdfhj lksdajf las</para>
   </preface>
