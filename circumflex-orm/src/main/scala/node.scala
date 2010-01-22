@@ -46,11 +46,6 @@ abstract class RelationNode[R](val relation: Relation[R])
   def alias = _alias
 
   /**
-   * Just proxies relation's primary key.
-   */
-  def primaryKey = relation.primaryKey
-
-  /**
    * Creates a record projection.
    */
   def * = new RecordProjection[R](this)
@@ -59,6 +54,11 @@ abstract class RelationNode[R](val relation: Relation[R])
    * One or more projections that correspond to this node.
    */
   def projections: Seq[Projection[_]] = List(*)
+
+  /**
+   * Returns the primary key of underlying relation.
+   */
+  override def primaryKey = relation.primaryKey
 
   /**
    * Returns columns of underlying relation.

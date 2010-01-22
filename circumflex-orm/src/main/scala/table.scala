@@ -60,16 +60,12 @@ abstract class Table[R] extends Relation[R]
 }
 
 /**
- * Just a helper that defines long primary key column "id" with sequence.
+ * Defines long primary key column "id" with sequence.
  */
 trait LongIdPK[R] extends Relation[R] {
-
   val id = longColumn("id")
           .autoIncrement
           .notNull
-
   val idSeq = id.sequence.get
-
-  def primaryKey = pk(id)
-
+  pk(id)
 }

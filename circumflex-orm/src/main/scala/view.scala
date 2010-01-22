@@ -60,5 +60,3 @@ abstract class View[R] extends Relation[R]
 
 class VirtualColumn[T, R](view: View[R], name: String)
         extends Column[T, R] (view, name, "")
-
-

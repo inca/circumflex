@@ -119,7 +119,7 @@ class Dialect {
   /**
    * Produces PK definition (e.g. "primary key (id)").
    */
-  def primaryKeyDefinition(pk: PrimaryKey[_, _]) =
+  def primaryKeyDefinition(pk: PhysicalPrimaryKey[_, _]) =
     "primary key (" + pk.column.columnName + ")"
 
   /**

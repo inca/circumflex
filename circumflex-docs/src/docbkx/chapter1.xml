@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+    "http://www.docbook.org/xml/4.4/docbookx.dtd">
+<chapter lang="ru" >
+  <title>Relational Database Features Overview</title>
+  <section id="relations">
+    <title>Relations</title>
+    <para>blah blah blah blah blah blah blah blah blah blah blah blah</para>
+    <para>blah blah blah<link linkend="preface">preved</link>blah blah</para>
+    <para>blah blah blah blah blah blah blah blah blah blah blah blah</para>
+  </section>
+</chapter>

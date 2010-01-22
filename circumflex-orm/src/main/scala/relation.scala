@@ -36,6 +36,8 @@ import ru.circumflex.core.Circumflex
  */
 abstract class Relation[R] extends JDBCHelper with QueryHelper {
 
+  protected var _primaryKey: PrimaryKey[_, R] = new VirtualPrimaryKey(this, relationName + "_vkey")
+
   protected val _validators = new ListBuffer[RecordValidator[R]]
   protected val _columns = new ListBuffer[Column[_, R]]
   protected val _constraints = new ListBuffer[Constraint[R]]
@@ -72,7 +74,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * The mandatory primary key constraint for this relation.
    */
-  def primaryKey: PrimaryKey[_, R];
+  def primaryKey: PrimaryKey[_, R] = _primaryKey
 
   /**
    * Returns Schema object, that will contain specified table.
@@ -196,10 +198,9 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * Creates primary key constraint based on specified column.
    */
-  protected[orm] def pk[T](column: Column[T, R]): PrimaryKey[T, R] = {
+  protected[orm] def pk[T](column: Column[T, R]) = {
     val constrName = relationName + "_" + column.columnName + "_pkey";
-    val pk = new PrimaryKey(this, constrName , column)
-    return pk;
+    this._primaryKey = new PhysicalPrimaryKey(this, constrName , column)
   }
 
   /**
