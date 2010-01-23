@@ -108,31 +108,6 @@
     </dependency>
   </dependencies>
 
-  <profiles>
-    <profile>
-      <id>production</id>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.scala-tools</groupId>
-              <artifactId>maven-scala-plugin</artifactId>
-              <executions>
-                <execution>
-                  <id>scala-doc</id>
-                  <phase>process-classes</phase>
-                  <goals>
-                    <goal>doc</goal>
-                  </goals>
-                </execution>
-              </executions>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-  </profiles>
-
   <build>
     <pluginManagement>
       <plugins>
@@ -163,13 +138,6 @@
               <phase>test-compile</phase>
               <goals>
                 <goal>testCompile</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>scala-docs</id>
-              <phase>compile</phase>
-              <goals>
-                <goal>doc</goal>
               </goals>
             </execution>
           </executions>

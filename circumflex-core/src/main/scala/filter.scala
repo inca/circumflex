@@ -25,7 +25,6 @@
 
 package ru.circumflex.core
 
-import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.util.regex.Pattern
 import util.matching.Regex
@@ -34,6 +33,7 @@ import javax.servlet._
 import http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
 import Circumflex._
+import java.io.{FileNotFoundException, File}
 
 /**
  * Provides a base class for Circumflex filter implementations.
@@ -79,7 +79,8 @@ abstract class AbstractCircumflexFilter extends Filter {
   /**
    * Instantiates a CircumflexContext object, binds it to current request,
    * consults <code>isProcessed</code>, whether the request should be processed
-   * and delegates to high-level equivalent <code>doFilter(CircumflexContext, FilterChain)</code>
+   * and delegates to high-level equivalent
+   * <code>doFilter(CircumflexContext, FilterChain)</code>
    * if necessary.
    */
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
@@ -87,7 +88,8 @@ abstract class AbstractCircumflexFilter extends Filter {
       case (req: HttpServletRequest, res: HttpServletResponse) =>
         // try to serve static first
         if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
-          val resource = new File(Circumflex.publicRoot, req.getRequestURI.replaceAll("/", File.separator))
+          val resource = new File(Circumflex.publicRoot,
+            req.getRequestURI.replaceAll("/", File.separator))
           if (resource.isFile) {
             val publicUri = Circumflex.cfg("cx.public") match {
               case Some(s: String) => "/" + s.replaceAll("^/?(.*?)/?$", "$1")
@@ -133,13 +135,15 @@ class CircumflexFilter extends AbstractCircumflexFilter {
             .forName(s, true, Circumflex.classLoader)
             .asInstanceOf[Class[RequestRouter]]
     case Some(c: Class[RequestRouter]) => c
-    case _ => throw new CircumflexException("Could not initialize Request Router; configure 'cx.router' properly.")
+    case _ => throw new CircumflexException("Could not initialize Request Router; " +
+            "configure 'cx.router' properly.")
   }
 
   /**
    * Executed when no routes match current request.
    * Default behavior is to send 404 NOT FOUND.
-   * You may override it, say, to call <code>chain.doFilter</code> to pass request along the chain.
+   * You may override it, say, to call <code>chain.doFilter</code> to pass request
+   * along the chain.
    * @param ctx    Route Context passed to this filter
    * @param chain  filter chain to delegate calls to if necessary
    */
@@ -154,8 +158,20 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * @param chain  filter chain to delegate calls to if necessary
    */
   def onRouterError(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
-    log.error("Controller threw an exception, see stack trace for details.", e)
+    log.error("Router threw an exception, see stack trace for details.", e)
     ErrorResponse(500, e.getMessage)(ctx.response)
+  }
+
+  /**
+   * Executed when <code>java.io.FileNotFoundException</code>
+   * is thrown from router.
+   * Default behavior is to send the 404 status code to client.
+   * @param e      the router's exception
+   * @param ctx    Route Context passed to this filter
+   * @param chain  filter chain to delegate calls to if necessary
+   */
+  def onNotFound(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
+    ErrorResponse(404, e.getMessage)(ctx.response)
   }
 
   /**
@@ -174,21 +190,22 @@ class CircumflexFilter extends AbstractCircumflexFilter {
       // Request not matched by router
       onNoMatch(ctx, chain)
     } catch {
-      case e: InvocationTargetException if e.getCause.isInstanceOf[RouteMatchedException] => {
+      case e: InvocationTargetException if e.getCause.isInstanceOf[RouteMatchedException] =>
         // Request matched
         e.getCause.asInstanceOf[RouteMatchedException].response match {
           case Some(response) => response(ctx.response)
           case _ =>
         }
-      } case e => {
+      case e: InvocationTargetException if e.getCause.isInstanceOf[FileNotFoundException] =>
+        onNotFound(e, ctx, chain)
+      case e =>
         onRouterError(e, ctx, chain)
-      }
     }
   }
 
   /**
-   * Called when a filter instance is instantiated by Servlet Container.
-   * @param cfg    filter configuration
+   * Called when a filter is instantiated by Servlet Container.
+   * @param cfg filter configuration
    */
   override def init(cfg: FilterConfig) = {
     log.info("Circumflex v. 0.2")

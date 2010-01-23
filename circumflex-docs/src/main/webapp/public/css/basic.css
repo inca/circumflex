@@ -1,0 +1,70 @@
+body, h1, h2, h3, h4, form, p, ul, ol, dl {
+  margin:0
+}
+
+a, a:hover, a:visited {
+  text-decoration:none;
+  color:#666;
+}
+
+a[target='_blank'] {
+  padding-right:12px;
+  margin-right:4px;
+  background:url(/img/external.png) center right no-repeat;
+}
+
+a:hover {
+  color:#000;
+}
+
+pre, .highlight {
+  background-color:#DFFFAC;
+  border:1px solid #00AA00;
+  border-radius:8px;
+  -moz-border-radius:8px;
+  -webkit-border-radius:8px;
+  padding:8px;
+  margin:4px 0;
+}
+
+.highlight {padding: 0 14px}
+
+tt, pre, code, samp, kbd {
+  font-family: Monaco,"lucida console","dejavu sans mono","bitstream vera sans mono","andale mono","courier new",monospace;
+}
+pre {font-size: 12px}
+.highlight * {
+  font-style:italic;
+  text-shadow: 2px 2px 4px #999;
+}
+
+img {
+  border:0;
+}
+
+body {
+  font: 14px/1.5 Corbel, "Lucida Grande", "Lucida Sans Unicode", "DejaVu Sans",
+  "Bitstream Vera Sans", "Liberation Sans", Verdana, "Verdana Ref", sans-serif;
+  background: url(/img/bkg.png) repeat;
+}
+
+.clearer {
+  clear:both;
+}
+
+h1, h2, h3, h4, h5, h6, h7 {
+  text-shadow:0 1px 1px #888;
+}
+
+p {
+  margin: 1em 0;
+}
+
+ul, ol {
+  padding: 0 0 0 24px;
+  margin: 1em 0;
+}
+
+ul li {
+  margin: 0 0 12px
+}

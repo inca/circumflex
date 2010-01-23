@@ -26,9 +26,21 @@
 package ru.circumflex.docs
 
 import ru.circumflex.core._
+import ru.circumflex.freemarker.FreemarkerHelper
+import org.slf4j.LoggerFactory
+import java.util.Date
+import java.text.SimpleDateFormat
+import java.io.FileNotFoundException
 
-class Main extends RequestRouter {
+class Main extends RequestRouter
+        with FreemarkerHelper {
 
-  get("/") = "preved"
+  val log = LoggerFactory.getLogger("ru.circumflex.docs")
+
+  ctx += "currentYear" -> new SimpleDateFormat("yyyy").format(new Date)
+  ctx += "host" -> header("Host").getOrElse("localhost")
+
+  get("/") = ftl("/pages/index.ftl")
+  get("/(.*)") = ftl("/pages/" + param("uri$1").getOrElse("") + ".ftl")
 
 }

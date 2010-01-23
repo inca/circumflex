@@ -30,7 +30,7 @@
   </dependencies>
 
   <properties>
-    <cx.router>ru.circumflex.core.Main</cx.router>
+    <cx.router>ru.circumflex.docs.Main</cx.router>
   </properties>
 
   <build>

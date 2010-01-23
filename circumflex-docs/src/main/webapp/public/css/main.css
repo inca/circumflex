@@ -1,0 +1,74 @@
+@import "basic.css";
+@import "bars.css";
+@import "sections.css";
+
+#header {
+  height:260px;
+  background:transparent url("/img/layout/header-bkg.png") repeat-x bottom center;
+}
+
+#headerContent, #header h1, #header h1 a {
+  width:680px;
+  height:260px;
+  margin:0 auto;
+  background: url(/img/layout/header.png) bottom center no-repeat;
+}
+
+#header h1 a {
+  text-indent: -9999px;
+  position: relative;
+  top: 100px; left: 12px;
+  width: 426px;
+  height: 82px;
+  overflow: hidden;
+  display: block;
+  background: transparent;
+}
+
+/* Layout base */
+
+#nav ul {
+  margin-top:5px;
+  padding:0;
+}
+
+#nav li {
+  float:left;
+  margin:0 12px;
+  list-style:none;
+}
+
+#outer {
+  margin:-36px auto 0;
+  width:680px;
+}
+
+#content {
+  color:#333;
+  text-align:justify;
+}
+
+/* Footers */
+
+#footer {
+  clear:both;
+  margin:16px auto;
+  background:transparent url("/img/layout/footer-bkg.png") no-repeat;
+  width:320px;
+  height:64px;
+  padding:14px;
+}
+
+#footer span, #footer a {
+  font-size:0.9em;
+  font-style:italic;
+  color:#fff;
+}
+
+#footer .years {
+  padding:16px;
+}
+
+#footer .home {
+  padding-left:48px;
+}

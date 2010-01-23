@@ -1,0 +1,27 @@
+.bar .c {
+  height:32px;
+  margin:0 24px;
+  padding:8px 0;
+  color:#fff;
+}
+
+.bar .c * {
+  color:#fff;
+  text-shadow:0 0 6px rgba(255,255,255,0.3);
+}
+
+.bar .c a:hover {
+  text-shadow:0 0 6px #fff;
+}
+
+.bar .green .w {
+  background:transparent url("/img/bar-w.png") no-repeat;
+}
+
+.bar .green .e {
+  background:transparent url("/img/bar-e.png") no-repeat top right;
+}
+
+.bar .green .c {
+  background:transparent url("/img/bar-c.png") repeat-x;
+}

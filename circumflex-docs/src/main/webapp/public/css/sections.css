@@ -1,0 +1,35 @@
+/* Sections */
+
+.section {
+  overflow:hidden;
+}
+
+.paper h1 {
+  background:transparent url("/img/paper-bkg.png") repeat-x;
+  padding:18px 16px 4px;
+  font-size:24px;
+}
+
+.section .body {
+  background: #fff;
+  border-bottom-left-radius:8px;
+  border-bottom-right-radius:8px;
+  -moz-border-radius-bottomleft:8px;
+  -moz-border-radius-bottomright:8px;
+  -webkit-border-bottom-left-radius:8px;
+  -webkit-border-bottom-right-radius:8px;
+  padding: 1px 24px 24px;
+}
+
+.hollow {
+  color: white;
+  text-shadow: 0 0 16px #cfa;
+}
+
+.hollow a {
+  color: #cfa !important;
+}
+
+.hollow p {
+  text-indent:2.5em;
+}
