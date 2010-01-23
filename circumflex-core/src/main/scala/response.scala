@@ -46,7 +46,7 @@ trait HttpResponse {
   /**
    * Applies character encoding, content type, status code and headers to
    * specified <code>HttpServletResponse</code> and flushes any associated output.
-   * If specified response is commited, returns silently.
+   * If specified response is committed, returns silently.
    */
   def apply(response: HttpServletResponse) = if (!response.isCommitted) {
     response.setCharacterEncoding("UTF-8")

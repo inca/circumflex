@@ -1,8 +1,8 @@
 [#ftl]
 
-[#macro bar theme="green" id="" style=""]
+[#macro bar theme="green" id="" style="" class=""]
 <div [#if id != ""]id="${id}"[/#if]
-     class="bar"
+     class="bar ${class}"
      style="${style}">
   <div class="${theme}">
     <div class="w">

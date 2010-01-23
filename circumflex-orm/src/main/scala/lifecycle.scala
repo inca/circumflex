@@ -31,7 +31,7 @@ import ORM._
 import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
 
 /**
- * Ensures that current transaction is commited and that contextual connection is closed
+ * Ensures that current transaction is committed and that contextual connection is closed
  * at the end of request processing cycle.
  * This filter should be the first in chain.
  */
@@ -60,7 +60,7 @@ class TransactionManagementFilter extends AbstractCircumflexFilter {
 }
 
 /**
- * Ensures that current transaction is commited and that contextual connection is closed
+ * Ensures that current transaction is committed and that contextual connection is closed
  * at the end of request processing cycle.
  */
 class TransactionManagementListener extends ServletRequestListener {

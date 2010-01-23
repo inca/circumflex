@@ -27,7 +27,9 @@ pre, .highlight {
   margin:4px 0;
 }
 
-.highlight {padding: 0 14px}
+.highlight {
+  padding: 0 14px
+}
 
 tt, pre, code, samp, kbd {
   font-family: Monaco,"lucida console","dejavu sans mono","bitstream vera sans mono","andale mono","courier new",monospace;
@@ -52,19 +54,36 @@ body {
   clear:both;
 }
 
-h1, h2, h3, h4, h5, h6, h7 {
+h1, h2, h3, h4, h5, h6 {
   text-shadow:0 1px 1px #888;
 }
 
+h2 {
+  font-size:1.3em;
+}
+
+h3 {
+  font-size:1.1em;
+}
+
 p {
-  margin: 1em 0;
+  margin: 0.5em 0;
 }
 
 ul, ol {
   padding: 0 0 0 24px;
-  margin: 1em 0;
+  margin: 0.5em 0;
 }
 
 ul li {
   margin: 0 0 12px
 }
+
+dl dt {
+  font-weight:bold;
+  margin:0.5em 0;
+}
+
+/*ul ul, ul dl, ul ol, dl dl, dl ul, dl ol, ol ol, ol ul, ol dl {*/
+  /*margin:0;*/
+/*}*/

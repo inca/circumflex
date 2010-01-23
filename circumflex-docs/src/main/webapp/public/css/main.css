@@ -27,12 +27,12 @@
 
 /* Layout base */
 
-#nav ul {
+.nav ul {
   margin-top:5px;
   padding:0;
 }
 
-#nav li {
+.nav li {
   float:left;
   margin:0 12px;
   list-style:none;
@@ -71,4 +71,25 @@
 
 #footer .home {
   padding-left:48px;
+}
+
+/* Content styles */
+
+div.media {
+  text-align:center;
+}
+
+ol.plain ul, ul.plain, ul.plain ul {
+  list-style:none;
+}
+
+.uc {
+  display:block;
+  padding:8px;
+  margin:8px;
+  background:#ffffcc;
+  border:1px solid #cca;
+  border-radius:8px;
+  -moz-border-radius:8px;
+  -webkit-border-radius:8px;
 }

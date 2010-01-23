@@ -38,7 +38,6 @@ class Main extends RequestRouter
   val log = LoggerFactory.getLogger("ru.circumflex.docs")
 
   ctx += "currentYear" -> new SimpleDateFormat("yyyy").format(new Date)
-  ctx += "host" -> header("Host").getOrElse("localhost")
 
   get("/") = ftl("/pages/index.ftl")
   get("/(.*)") = ftl("/pages/" + param("uri$1").getOrElse("") + ".ftl")

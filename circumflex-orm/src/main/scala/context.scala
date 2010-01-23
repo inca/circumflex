@@ -61,8 +61,8 @@ trait ConnectionProvider {
  * <dt>orm.connection.username</dt><dd>database username</dd>
  * <dt>orm.connection.password</dt><dd>database password</dd>
  * <dt>orm.connection.isolation</dt><dd>optional, isolation level for connections (
- *    one of <code>none</code>, <code>read_uncommited</code>, <code>read_commited</code>,
- *    <code>repeatable_read</code>, <code>serializable</code>; defaults to <code>read_commited</code>).</dd>
+ *    one of <code>none</code>, <code>read_uncommitted</code>, <code>read_committed</code>,
+ *    <code>repeatable_read</code>, <code>serializable</code>; defaults to <code>read_committed</code>).</dd>
  * </dl>
  * See <a href="http://www.mchange.com/projects/c3p0/index.html#configuration_properties">c3p0 configuration
  * properties reference</a> for information regarding connection pool configuration.
@@ -72,12 +72,12 @@ class DefaultConnectionProvider extends ConnectionProvider {
 
   protected val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
     case Some("none") => Connection.TRANSACTION_NONE
-    case Some("read_uncommited") => Connection.TRANSACTION_READ_UNCOMMITTED
-    case Some("read_commited") => Connection.TRANSACTION_READ_COMMITTED
+    case Some("read_uncommitted") => Connection.TRANSACTION_READ_UNCOMMITTED
+    case Some("read_committed") => Connection.TRANSACTION_READ_COMMITTED
     case Some("repeatable_read") => Connection.TRANSACTION_REPEATABLE_READ
     case Some("serializable") => Connection.TRANSACTION_SERIALIZABLE
     case _ => {
-      log.info("Using READ COMMITED isolation, override 'orm.connection.isolation' if necesssary.")
+      log.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
       Connection.TRANSACTION_READ_COMMITTED
     }
   }

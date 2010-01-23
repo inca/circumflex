@@ -29,7 +29,8 @@ import java.sql.{PreparedStatement, Connection}
 import collection.mutable.HashMap
 
 /**
- * Defines a contract to open stateful transactions and return thread-locally current transaction.
+ * Defines a contract to open stateful transactions and return
+ * thread-locally current transaction.
  */
 trait TransactionManager {
 
@@ -45,8 +46,11 @@ trait TransactionManager {
 
   def openTransaction(): StatefulTransaction = new StatefulTransaction()
 
-  def sql[A](sql: String)(actions: PreparedStatement => A) = getTransaction.sql(sql)(actions)
-  def dml[A](actions: Connection => A) = getTransaction.dml(actions)
+  def sql[A](sql: String)(actions: PreparedStatement => A) =
+    getTransaction.sql(sql)(actions)
+  
+  def dml[A](actions: Connection => A) =
+    getTransaction.dml(actions)
 
 }
 
