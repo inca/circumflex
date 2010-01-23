@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-docs</artifactId>
-  <packaging>jar</packaging>
+  <packaging>war</packaging>
   <version>0.2</version>
   <name>Circumflex Reference Documentation</name>
 
@@ -16,58 +16,64 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
+  <dependencies>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-core</artifactId>
+      <version>0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-ftl</artifactId>
+      <version>0.2</version>
+    </dependency>
+  </dependencies>
+
+  <properties>
+    <cx.router>ru.circumflex.core.Main</cx.router>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <version>2.1</version>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>ru.circumflex</groupId>
+        <artifactId>maven-cx-plugin</artifactId>
+        <version>0.2</version>
         <executions>
           <execution>
-            <id>attach-sources</id>
-            <phase>verify</phase>
+            <id>configure</id>
+            <phase>compile</phase>
             <goals>
-              <goal>jar-no-fork</goal>
+              <goal>cfg</goal>
             </goals>
           </execution>
         </executions>
       </plugin>
       <plugin>
-        <groupId>com.agilejava.docbkx</groupId>
-        <artifactId>docbkx-maven-plugin</artifactId>
-        <version>2.0.9</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate-html</goal>
-            </goals>
-            <phase>generate-sources</phase>
-          </execution>
-        </executions>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>maven-jetty-plugin</artifactId>
+        <version>6.1.19</version>
+        <configuration>
+          <scanIntervalSeconds>5</scanIntervalSeconds>
+          <contextPath>/</contextPath>
+          <connectors>
+            <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
+              <port>8888</port>
+              <maxIdleTime>60000</maxIdleTime>
+            </connector>
+          </connectors>
+        </configuration>
         <dependencies>
           <dependency>
-            <groupId>org.docbook</groupId>
-            <artifactId>docbook-xml</artifactId>
-            <version>4.4</version>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
           </dependency>
         </dependencies>
-        <configuration>
-          <highlightSource>false</highlightSource>
-          <includes>*.xml</includes>
-          <chunkedOutput>yes</chunkedOutput>
-          <chunkerOutputMethod>html</chunkerOutputMethod>
-          <chunkerOutputIndent>yes</chunkerOutputIndent>
-          <xincludeSupported>true</xincludeSupported>
-          <paperType>A4</paperType>
-          <fop1Extensions>1</fop1Extensions>
-          <chunkerOutputEncoding>UTF-8</chunkerOutputEncoding>
-          <chunkerOutputDoctypePublic>-//W3C//DTD XHTML 1.0 Transitional//EN</chunkerOutputDoctypePublic>
-          <chunkerOutputDoctypeSystem>http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd</chunkerOutputDoctypeSystem>
-          <textdataDefaultEncoding>UTF-8</textdataDefaultEncoding>
-          <htmlhelpEncoding>UTF-8</htmlhelpEncoding>
-          <htmlCustomization>src/meta/html.xsl</htmlCustomization>
-          <foCustomization>src/meta/pdf.xsl</foCustomization>
-        </configuration>
       </plugin>
     </plugins>
   </build>
