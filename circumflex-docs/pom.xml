@@ -27,10 +27,26 @@
       <artifactId>circumflex-ftl</artifactId>
       <version>0.2</version>
     </dependency>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-orm</artifactId>
+      <version>0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-orm-i18n</artifactId>
+      <version>0.2</version>
+    </dependency>
   </dependencies>
 
   <properties>
     <cx.router>ru.circumflex.docs.Main</cx.router>
+    <orm.connection.driver>org.postgresql.Driver</orm.connection.driver>
+    <orm.connection.url>jdbc:postgresql://localhost:5432/incadb</orm.connection.url>
+    <orm.connection.username>inca</orm.connection.username>
+    <orm.connection.password>incainca</orm.connection.password>
+    <orm.defaultSchema>sandbox</orm.defaultSchema>
+    <!--<orm.dialect>ru.circumflex.orm.i18n.I18NDialect</orm.dialect>-->
   </properties>
 
   <build>
