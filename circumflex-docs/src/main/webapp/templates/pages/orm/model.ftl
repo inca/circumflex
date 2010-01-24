@@ -12,7 +12,7 @@
   application are developed later, using database schema as their base.</p>
 <p>Circumflex ORM greatly simplifies this design approach: you design
   database model right in your Scala application using
-  <a href="#relations">relations</a>, <a href="#records">records</a>
+  <a href="#rels">relations</a>, <a href="#rels">records</a>
   and <a href="#aux">auxiliary database objects</a>. They allow
   fine-grained control over resulting DDL (data definition language)
   statements that are used to create real database schema for your
@@ -25,14 +25,46 @@
   database schema):</p>
 <pre>${'package ru.circumflex.sandbox.model'?html}</pre>
 <p>Let's take a close look at the essential components of Circumflex ORM.</p>
-<h2 id="relations">Relations</h2>
+<h2 id="rels">Relations and records</h2>
 <p>In relational theory, a <em>relation</em> is a data structure which
-  consists of a heading and an unordered set of tuples which share the same
-  type.</p>
-<p>In Circumflex ORM a relation is an object, whose type is derived from
-  the <code>Relation</code> class. Relations are used to store and retrieve
-  records and usually correspond to database <em>tables</em> and
-  <em>views</em>.</p>
+  consists of a heading and an unordered set of tuples (or <em>records</em>)
+  which share the same data type.</p>
+<p>In Circumflex ORM a <em>relation</em> is an object, whose type is derived
+  from the <code>Relation</code> class, while a <em>record</em> is an instance
+  of a specific <code>Record</code> subclass.</p>
+<p>The usage scenario of the two is trivial: relations are used to store and
+  retrieve records. Two subclasses of <code>Relation</code> are particularly
+  useful for data definition: <code>Table</code> and <code>View</code>; their
+  instances correspond to tables and views of database; they are sometimes
+  refered to as <em>physical</em>, because they correspond to actual data
+  structures in storage (there are also the so-called <em>virtual</em>
+  relations, the derivatives from physical ones, we will talk about them
+  later).</p>
+<p>Circumflex ORM employs some conventions to avoid some boilerplate code
+  and introduce some sort of type safety:</p>
+<ul>
+  <li>both relations and records have a single type parameter, which should
+    always point to actual <code>Record</code> implementation used in your
+    application;</li>
+  <li>relations should be the companion objects of their corresponding records
+    (the constructs share the same name, but <code>class</code> keyword is used
+    with records and <code>object</code> keyword is used with relations);</li>
+  <li>each record should be uniquely identified within entire system by it's
+    <em>primary key</em> value; the relation should provide a single-columned
+    primary key constraint (<code>LongIdPk</code> is a handy trait that adds
+    the <code>id BIGINT NOT NULL PRIMARY KEY</code> column and a sequence to
+    generate it's values).</li>
+</ul>
+<p>The following code fragment summarizes these conventions:</p>
+<pre>${'
+class User extends Record[User] {
+  . . .
+}
+
+object User extends Table[User]
+        with LongIdPK[User] {
+  . . .
+}'?html}</pre>
 <p></p>
 [/@section]
 [/@page]

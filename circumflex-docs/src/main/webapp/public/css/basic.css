@@ -34,7 +34,15 @@ pre, .highlight {
 tt, pre, code, samp, kbd {
   font-family: Monaco,"lucida console","dejavu sans mono","bitstream vera sans mono","andale mono","courier new",monospace;
 }
-pre {font-size: 12px}
+
+pre {
+  font-size: 12px
+}
+
+code {
+  background: #EFFFCD;
+}
+
 .highlight * {
   font-style:italic;
   text-shadow: 2px 2px 4px #999;

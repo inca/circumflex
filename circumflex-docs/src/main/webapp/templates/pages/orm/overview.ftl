@@ -150,5 +150,17 @@
   <dd>represents an abstract database object for schema generation purposes.</dd>
 </dl>
 <p>We will describe each concept in later chapters.</p>
+<h3 id="imports">Imports and ORM singleton</h3>
+<p>Circumflex ORM is packaged inside a single package. You should import all
+  it's contents if you plan to use it in your code:</p>
+<pre>${'import ru.circumflex.orm._'}</pre>
+<p>Another notable and handy construction is the <em>ORM singleton</em>.
+  It contains handy various methods and helpers for transaction management,
+  querying and some useful implicit converions. You should import it's contents
+  to enjoy neat syntactic features:</p>
+<pre>${'import ru.circumflex.orm._'}</pre>
+<p>In order to save us some typing time we omit import statements in source code
+  fragments throughout this book, assuming you have these imports in place
+  where necessary.</p>
 [/@section]
 [/@page]

@@ -19,6 +19,7 @@
       <li><a href="/orm/overview#jpa-dis">Disadvantages of Java Persistence API</a></li>
       <li><a href="/orm/overview#cx-orm-goals">Circumflex ORM Goals</a></li>
       <li><a href="/orm/overview#architecture">Architecture</a></li>
+      <li><a href="/orm/overview#imports">Imports and ORM singleton</a></li>
     </ul>
   </li>
   <li>
