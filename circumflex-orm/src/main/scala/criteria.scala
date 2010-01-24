@@ -38,6 +38,7 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
   private var _counter = 0;
 
   protected var _rootTree: RelationNode[R] = rootNode
+  protected var _joinTree: RelationNode[R] = rootNode
   protected var _prefetchSeq: Seq[Association[_, _]] = Nil
 
   protected var _projections: Seq[RecordProjection[_]] = List(rootNode.*)
@@ -46,20 +47,28 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
   protected var _limit = -1;
   protected var _offset = 0;
 
-  protected def prepareQuery = ORM.select(_projections: _*)
-          .from(_rootTree)
+  def toSql = prepareQuery.toSql
+
+  def prepareQuery = ORM.select(_projections: _*)
+          .from(prepareQueryPlan)
           .limit(_limit)
           .offset(_offset)
           .where(preparePredicate)
           .orderBy(_orders: _*)
 
 
-  def toSql = prepareQuery.toSql
-
-  protected def preparePredicate: Predicate =
+  def preparePredicate: Predicate =
     if (_restrictions.size > 0)
       and(_restrictions: _*)
     else EmptyPredicate
+
+  /**
+   * Merges join tree with prefetch tree to form the actual FROM clause.
+   */
+  // TODO implement a merge algorithm
+  def prepareQueryPlan: RelationNode[R] = _rootTree
+
+  /* COMMON STUFF */
 
   /**
    * Sets the maximum results for this query.
@@ -101,23 +110,51 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
     return this
   }
 
+  /* JOINS STUFF */
+
+  /**
+   * Adds, if possible, a left join with specified nodes.
+   * The projections of joined nodes are not fetched.
+   * This method is only useful when search criteria are applied to
+   * other relation, then <code>rootNode</code>.
+   */
+  def join(nodes: RelationNode[_]*): this.type = {
+    nodes.toList.foreach(n =>
+      _joinTree = updateJoinTree(n, _joinTree))
+    return this
+  }
+
+  protected def updateJoinTree[R](node: RelationNode[_],
+                                  tree: RelationNode[R]): RelationNode[R] =
+    tree match {
+      case j: JoinNode[R, _] => try {     // try to update left node
+        j.replaceLeft(updateJoinTree(node, j.left))
+      } catch {
+        case e: ORMException =>   // join with left side failed; try the right side
+          j.replaceRight(updateJoinTree(node, j.right))
+      }
+      case rel: RelationNode[R] => rel.join(node)
+    }
+
+  /* PREFETCH STUFF */
+
   /**
    * Adds a join to query tree for prefetching.
    */
   def prefetch(association: Association[_, _]*): this.type = {
     association.toList.foreach(a => if (!_prefetchSeq.contains(a)) {
       // do the depth-search and update query plan tree
-      _rootTree = updateTree(a, _rootTree)
+      _rootTree = updateRootTree(a, _rootTree)
     })
     return this
   }
 
-  protected def updateTree[R](association: Association[_, _],
-                              node: RelationNode[R]): RelationNode[R] =
+  protected def updateRootTree[R](association: Association[_, _],
+                                  node: RelationNode[R]): RelationNode[R] =
     node match {
       case j: JoinNode[_, _] => j
-              .replaceLeft(updateTree(association, j.left))
-              .replaceRight(updateTree(association, j.right))
+              .replaceLeft(updateRootTree(association, j.left))
+              .replaceRight(updateRootTree(association, j.right))
       case rel: RelationNode[_] =>
         if (rel.equals(association.parentRelation)) {
           val a = association.asInstanceOf[Association[Any, R]]
@@ -138,6 +175,8 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
     _prefetchSeq ++= List(association)
     return node
   }
+
+  /* QUERING EXECUTORS */
 
   /**
    * Executes the query and retrieves records list.
