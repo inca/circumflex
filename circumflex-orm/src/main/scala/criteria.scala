@@ -104,11 +104,11 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
   /**
    * Adds a join to query tree for prefetching.
    */
-  def prefetch(association: Association[_, _]): this.type = {
-    // do not allow duplicates
-    if (prefetchSeq.contains(association)) return this
-    // do the depth-search and update query plan tree
-    rootTree = updateTree(association, rootTree)
+  def prefetch(association: Association[_, _]*): this.type = {
+    association.toList.foreach(a => if (!prefetchSeq.contains(a)) {
+      // do the depth-search and update query plan tree
+      rootTree = updateTree(a, rootTree)
+    })
     return this
   }
 
