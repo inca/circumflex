@@ -33,11 +33,9 @@ import ORM._
  * specifically with records and simplifies record querying.
  * Note that if you want to use projections, you should still use lower-level <code>Select</code>
  */
-class Criteria[R](val relation: Relation[R]) extends SQLable {
+class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
 
   private var prefetchCounter = 0;
-
-  protected val rootNode = relation.as("root")
 
   protected var rootTree: RelationNode[R] = rootNode
   protected var prefetchSeq: Seq[Association[_, _]] = Nil
@@ -115,7 +113,7 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
   }
 
   protected def updateTree[R](association: Association[_, _],
-                    node: RelationNode[R]): RelationNode[R] =
+                              node: RelationNode[R]): RelationNode[R] =
     node match {
       case j: JoinNode[_, _] => j
               .replaceLeft(updateTree(association, j.left))
@@ -133,7 +131,7 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
     }
 
   protected def makePrefetch[R](association: Association[_, _],
-                      rel: Relation[R]): RelationNode[R] = {
+                                rel: Relation[R]): RelationNode[R] = {
     prefetchCounter += 1
     val node = rel.as("pf_" + prefetchCounter)
     projections ++= List(node.*)
@@ -212,6 +210,6 @@ class Criteria[R](val relation: Relation[R]) extends SQLable {
   /**
    * Executes the DELETE statement for this relation using specified criteria.
    */
-  def delete: Int = new Delete(relation).where(preparePredicate).executeUpdate
+  def delete: Int = new Delete(rootNode).where(preparePredicate).executeUpdate
 
 }

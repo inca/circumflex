@@ -87,6 +87,11 @@ abstract class RelationNode[R](val relation: Relation[R])
    */
   override def relationName = relation.relationName
 
+    /**
+   * Creates a criteria object for this relation, preserving node's alias.
+   */
+  override def criteria: Criteria[R] = new Criteria(this)
+
   /* JOINS */
 
   /**

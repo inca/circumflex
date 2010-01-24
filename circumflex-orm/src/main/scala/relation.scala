@@ -167,7 +167,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * Creates a criteria object for this relation.
    */
-  def criteria: Criteria[R] = new Criteria(this)
+  def criteria: Criteria[R] = new Criteria(this as "root")
 
   /**
    * Queries a record by it's primary key.
