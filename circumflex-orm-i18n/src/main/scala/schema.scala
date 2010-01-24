@@ -61,7 +61,7 @@ abstract class LocalizableView[R] extends View[R] with LongIdPK[R] {
   private val rNode = rawTable as "r"
   private val lNode = localeTable as "l"
   private val joinNode = rNode.join(lNode)
-          .on("l.cx_lang = " + i18nDialect.getLangExpression)
+          .on("r.id = l.cx_item_id and l.cx_lang = " + i18nDialect.getLangExpression)
 
   def projections = columns.map(col =>
     if (lNode.columns.contains(col))
