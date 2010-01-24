@@ -33,7 +33,9 @@ import ORM._
  * specifically with records and simplifies record querying.
  * Note that if you want to use projections, you should still use lower-level <code>Select</code>
  */
-class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
+class Criteria[R](val rootNode: RelationNode[R])
+        extends SQLable
+                with Cloneable{
 
   private var _counter = 0;
 
@@ -65,8 +67,22 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
   /**
    * Merges join tree with prefetch tree to form the actual FROM clause.
    */
-  // TODO implement a merge algorithm
-  def prepareQueryPlan: RelationNode[R] = _rootTree
+  def prepareQueryPlan: RelationNode[R] = _joinTree match {
+    case j: JoinNode[R, _] =>
+      replaceLeft(j.clone, _rootTree)
+    case r: RelationNode[R] =>    // no changes to the root tree required
+      return _rootTree
+  }
+
+  /**
+   * Replaces the left-most node of specified join node with specified node.
+   */
+  protected def replaceLeft[R](join: JoinNode[R, _],
+                               node: RelationNode[R]): RelationNode[R] =
+    join.left match {
+      case j: JoinNode[R, _] => replaceLeft(j, node)
+      case r: RelationNode[R] => join.replaceLeft(node)
+    }
 
   /* COMMON STUFF */
 

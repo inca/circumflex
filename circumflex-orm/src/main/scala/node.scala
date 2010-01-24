@@ -32,7 +32,9 @@ import ORM._
  * with an alias so that they may appear within SQL FROM clause.
  */
 abstract class RelationNode[R](val relation: Relation[R])
-        extends Relation[R] with SQLable {
+        extends Relation[R]
+                with SQLable
+                with Cloneable {
 
   protected var _alias = "this"
 
@@ -209,7 +211,7 @@ abstract class RelationNode[R](val relation: Relation[R])
     join(node, InnerJoin)
 
 
-  /* ALIASES AND PROJECTIONS */
+  /* ALIASES, PROJECTIONS AND OTHERS*/
 
   /**
    * Reassigns an alias for this node.
@@ -231,6 +233,12 @@ abstract class RelationNode[R](val relation: Relation[R])
     case r: Relation[_] => this.relation == r
     case _ => false
   }
+
+  /**
+   * Creates a shallow copy of this node.
+   * The underlying relation remains unchanged.
+   */
+  override def clone(): this.type = super.clone.asInstanceOf[this.type]
 }
 
 class TableNode[R](val table: Table[R])
@@ -308,6 +316,13 @@ abstract class JoinNode[L, R](protected var _left: RelationNode[L],
    * Dialect should return properly joined parent and child nodes.
    */
   def toSql = dialect.join(this)
+
+  /**
+   * Creates a deep copy of this node, cloning left and right nodes.
+   * The underlying relations of nodes remain unchanged.
+   */
+  override def clone(): this.type =
+    super.clone().replaceLeft(this.left.clone).replaceRight(this.right.clone)
 }
 
 
