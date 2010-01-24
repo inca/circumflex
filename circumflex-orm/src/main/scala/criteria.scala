@@ -35,19 +35,19 @@ import ORM._
  */
 class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
 
-  private var prefetchCounter = 0;
+  private var _counter = 0;
 
-  protected var rootTree: RelationNode[R] = rootNode
-  protected var prefetchSeq: Seq[Association[_, _]] = Nil
-  protected var projections: Seq[RecordProjection[_]] = List(rootNode.*)
+  protected var _rootTree: RelationNode[R] = rootNode
+  protected var _prefetchSeq: Seq[Association[_, _]] = Nil
 
-  protected var restrictions: Seq[Predicate] = Nil
+  protected var _projections: Seq[RecordProjection[_]] = List(rootNode.*)
+  protected var _restrictions: Seq[Predicate] = Nil
   protected var _orders: Seq[Order] = Nil
   protected var _limit = -1;
   protected var _offset = 0;
 
-  protected def prepareQuery = ORM.select(projections: _*)
-          .from(rootTree)
+  protected def prepareQuery = ORM.select(_projections: _*)
+          .from(_rootTree)
           .limit(_limit)
           .offset(_offset)
           .where(preparePredicate)
@@ -57,8 +57,8 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
   def toSql = prepareQuery.toSql
 
   protected def preparePredicate: Predicate =
-    if (restrictions.size > 0)
-      and(restrictions: _*)
+    if (_restrictions.size > 0)
+      and(_restrictions: _*)
     else EmptyPredicate
 
   /**
@@ -82,7 +82,7 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
    * Restrictions are assembled into conjunction prior to query execution.
    */
   def add(predicate: Predicate): this.type = {
-    restrictions ++= List(predicate)
+    _restrictions ++= List(predicate)
     return this
   }
 
@@ -105,9 +105,9 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
    * Adds a join to query tree for prefetching.
    */
   def prefetch(association: Association[_, _]*): this.type = {
-    association.toList.foreach(a => if (!prefetchSeq.contains(a)) {
+    association.toList.foreach(a => if (!_prefetchSeq.contains(a)) {
       // do the depth-search and update query plan tree
-      rootTree = updateTree(a, rootTree)
+      _rootTree = updateTree(a, _rootTree)
     })
     return this
   }
@@ -132,10 +132,10 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
 
   protected def makePrefetch[R](association: Association[_, _],
                                 rel: Relation[R]): RelationNode[R] = {
-    prefetchCounter += 1
-    val node = rel.as("pf_" + prefetchCounter)
-    projections ++= List(node.*)
-    prefetchSeq ++= List(association)
+    _counter += 1
+    val node = rel.as("pf_" + _counter)
+    _projections ++= List(node.*)
+    _prefetchSeq ++= List(association)
     return node
   }
 
@@ -146,7 +146,7 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
     val tuples = prepareQuery.list
     val result = new ListBuffer[R]()
     tuples.foreach(t => {
-      processTupleTree(t, rootTree)
+      processTupleTree(t, _rootTree)
       val root = t.apply(0).asInstanceOf[R]
       if (!result.contains(root)) result += root
     })
@@ -170,8 +170,8 @@ class Criteria[R](val rootNode: RelationNode[R]) extends SQLable {
         case j: ChildToParentJoin[_, _] => j.association
         case _ => return
       }
-      val pIndex = projections.findIndexOf(p => p.node.alias == pNode.alias)
-      val cIndex = projections.findIndexOf(p => p.node.alias == cNode.alias)
+      val pIndex = _projections.findIndexOf(p => p.node.alias == pNode.alias)
+      val cIndex = _projections.findIndexOf(p => p.node.alias == cNode.alias)
       if (pIndex == -1 || cIndex == -1) return
       val parent = tuple(pIndex)
       val child = tuple(cIndex)
