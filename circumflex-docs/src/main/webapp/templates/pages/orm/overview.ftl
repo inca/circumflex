@@ -42,16 +42,10 @@
         <a href="http://hibernate.org">Hibernate</a>, it could become a real
         nightmare);
       </li>
-      <li>
-        despite the fact that entities are supposed to know nothing about
+      <li>despite the fact that entities are supposed to know nothing about
         persistence layer, this is not quite true: entities and their state
         are implicitly tracked by JPA environment; such entities typically
         don't work outside of JPA session;
-      </li>
-      <li>
-        it is a common practice to generate proxies instead of real objects
-        to achieve several goals, such as lazy loading; there are many pitfalls
-        regarding proxy objects;
       </li>
     </ul>
   </li>
@@ -69,13 +63,17 @@
       </li>
       <li>
         JPA environment tries to keep entities and database records in synchronized
-        state; sometimes it can interfere with backend logic.
+        state; sometimes it can interfere with backend logic;
       </li>
     </ul>
   </li>
+  <li>it is a common practice to generate proxies instead of real objects
+    to achieve several goals, such as lazy loading; there are many pitfalls
+    regarding proxy objects;
+  </li>
   <li>persistence layer overhead: you lose at least 5% of overall performance on
     reflection, proxies and other stuff; also such frameworks tend to have
-    significant memory footprints.
+    significant memory footprints;
   </li>
   <li>
     <p>limited Scala support:</p>
