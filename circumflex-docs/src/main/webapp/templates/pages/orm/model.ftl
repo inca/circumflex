@@ -37,10 +37,8 @@
   useful for data definition: <code>Table</code> and <code>View</code>; their
   instances correspond to tables and views of database; they are sometimes
   refered to as <em>physical</em>, because they correspond to actual data
-  structures in storage (there are also the so-called <em>virtual</em>
-  relations, the derivatives from physical ones, we will talk about them
-  later).</p>
-<p>Circumflex ORM employs some conventions to avoid some boilerplate code
+  structures in storage.</p>
+<p>Circumflex ORM employs some conventions to avoid boilerplate code
   and introduce some sort of type safety:</p>
 <ul>
   <li>both relations and records have a single type parameter, which should
