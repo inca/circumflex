@@ -42,12 +42,12 @@
   and introduce some sort of type safety:</p>
 <ul>
   <li>both relations and records have a single type parameter, which should
-    always point to actual <code>Record</code> implementation used in your
+    always point to the actual <code>Record</code> implementation used in your
     application;</li>
   <li>relations should be the companion objects of their corresponding records
     (the constructs share the same name, but <code>class</code> keyword is used
     with records and <code>object</code> keyword is used with relations);</li>
-  <li>each record should be uniquely identified within entire system by it's
+  <li>each record should be uniquely identified within the entire system by it's
     <em>primary key</em> value; the relation should provide a single-columned
     primary key constraint (<code>LongIdPk</code> is a handy trait that adds
     the <code>id BIGINT NOT NULL PRIMARY KEY</code> column and a sequence to
