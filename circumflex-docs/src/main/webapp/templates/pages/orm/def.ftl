@@ -1,7 +1,7 @@
 [#ftl]
 [#include "/layout.ftl"]
 [@page]
-[@section id="data-model" title="Chapter 3. Creating Data Model"]
+[@section id="data-model" title="Chapter 3. Data Definition"]
 <p>The data model of an application is usually developed at early phases of
   the software development cycle and can be thought of as a conceptual model
   of a system, which describes various entities involved in that system
@@ -20,6 +20,8 @@
   could be read even by those unfamiliar with Scala. These objects
   are subsequently used in your applocation to deal with all data-related
   operations.</p>
+<p>The process of creating such constructs is refered to as
+  <em>data definition</em>.</p>
 <p>It is a common practice to group such objects in a single Scala package
   (it is not required, but usually is conveniant, for example, for generating
   database schema):</p>
@@ -48,21 +50,25 @@
     (the constructs share the same name, but <code>class</code> keyword is used
     with records and <code>object</code> keyword is used with relations);</li>
   <li>each record should be uniquely identified within the entire system by it's
-    <em>primary key</em> value; the relation should provide a single-columned
+    <em>primary key</em> value; the relation should provide a single-column
     primary key constraint (<code>LongIdPk</code> is a handy trait that adds
-    the <code>id BIGINT NOT NULL PRIMARY KEY</code> column and a sequence to
+    <code>id BIGINT NOT NULL PRIMARY KEY</code> column and a sequence to
     generate it's values).</li>
 </ul>
 <p>The following code fragment summarizes these conventions:</p>
 <pre>${'
-class User extends Record[User] {
+class User extends Record[User] {   // {1}
   . . .
 }
 
-object User extends Table[User]
-        with LongIdPK[User] {
+object User extends Table[User]     // {2}
+        with LongIdPK[User] {       // {3}
   . . .
 }'?html}</pre>
-<p></p>
+<p>In the example above line #1 shows the declaration of the <code>User</code> class,
+  it's instances will be retrieved from and stored to the table <code>User</code>
+  shown on line #2. Trait <code>LongIdPK</code> effectively mixes </p>
+<h3 id="tabs">Creating tables</h3>
+<p>Let's look at </p>
 [/@section]
 [/@page]

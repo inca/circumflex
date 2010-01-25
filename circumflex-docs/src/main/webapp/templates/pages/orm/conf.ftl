@@ -3,7 +3,7 @@
 [@page]
 [@section id="config" title="Chapter 2. Configuration"]
 <p>Circumflex ORM takes advantage of
-  <a href="/core/configuration">configuration parameters for Circumflex Components</a>.
+  <a href="/core/conf">configuration parameters for Circumflex Components</a>.
   Let's take a closer look at Circumflex configuration objects.</p>
 <h2 id="conn-prv">Connection provider</h2>
 <p><em>Connection provider</em> is used to acquire JDBC connections throughout

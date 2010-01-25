@@ -8,7 +8,7 @@
     <a href="/core/overview">Chapter 1. Overview</a>
   </li>
   <li>
-    <a href="/core/configuration">Chapter 2. Configuring Circumflex</a>
+    <a href="/core/conf">Chapter 2. Configuring Circumflex</a>
   </li>
 </ul>
 <h2>Circumflex ORM</h2>
@@ -23,17 +23,17 @@
     </ul>
   </li>
   <li>
-    <a href="/orm/configuration">Chapter 2. Configuration</a>
+    <a href="/orm/conf">Chapter 2. Configuration</a>
     <ul>
-      <li><a href="/orm/configuration#conn-prv">Connection provider</a></li>
-      <li><a href="/orm/configuration#tx-mgr">Transaction manager</a></li>
-      <li><a href="/orm/configuration#dialect">Dialect</a></li>
-      <li><a href="/orm/configuration#type-conv">Type converter</a></li>
-      <li><a href="/orm/configuration#conf-params">Configuration parameters index</a></li>
+      <li><a href="/orm/conf#conn-prv">Connection provider</a></li>
+      <li><a href="/orm/conf#tx-mgr">Transaction manager</a></li>
+      <li><a href="/orm/conf#dialect">Dialect</a></li>
+      <li><a href="/orm/conf#type-conv">Type converter</a></li>
+      <li><a href="/orm/conf#conf-params">Configuration parameters index</a></li>
     </ul>
   </li>
   <li>
-    <a href="/orm/model">Chapter 3. Creating Data Model</a>
+    <a href="/orm/def">Chapter 3. Data Definition</a>
   </li>
 </ul>
 [/@section]

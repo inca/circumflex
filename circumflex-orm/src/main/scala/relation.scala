@@ -198,7 +198,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * Creates primary key constraint based on specified column.
    */
-  protected[orm] def pk[T](column: Column[T, R]) = {
+  protected[orm] def primaryKey[T](column: Column[T, R]) = {
     val constrName = relationName + "_" + column.columnName + "_pkey";
     this._primaryKey = new PhysicalPrimaryKey(this, constrName , column)
   }

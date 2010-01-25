@@ -106,7 +106,7 @@ object CategoryStatistics extends View[CategoryStatistics] {
   val category = virtualColumn[Long]("category_id")
           .references(Category)
   val booksCount = virtualColumn[Long]("books_count")
-  pk(category.localColumn)
+  primaryKey(category.localColumn)
   def query = select("c.id", count("b.id"))
           .from(Category as "c" join (Book as "b"))
 }
