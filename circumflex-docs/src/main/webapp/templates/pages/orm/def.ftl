@@ -57,19 +57,36 @@
 </ul>
 <p>The following code fragment summarizes these conventions:</p>
 <pre>${'
-class User extends Record[User] {   // {1}
-  . . .
-}
+class User extends Record[User]     // {1}
 
 object User extends Table[User]     // {2}
-        with LongIdPK[User] {       // {3}
-  . . .
-}'?html}</pre>
+        with LongIdPK[User]         // {3}'?html}</pre>
 <p>In the example above line #1 shows the declaration of the <code>User</code> class,
   it's instances will be retrieved from and stored to the table <code>User</code>
   shown on line #2. Trait <code>LongIdPK</code> (line #3) effectively defines relation's
   primary key.</p>
 <h3 id="tabs">Creating tables</h3>
-<p>Let's look at the </p>
+<p>Let's look at the sample table definition:</p>
+<pre>${'
+class User extends Record[User]           // {1}
+
+object User extends Table[User]           // {2}
+        with LongIdPK[User] {
+
+  val login = stringColumn("login", 32)   // {3}
+      .notNull                            // {4}
+      .unique                             // {5}
+
+  val name = stringColumn("name", 100)    // {6}
+      .notNull                            // {7}
+}'?html}</pre>
+<p>Once again we see record class <code>User</code> (#1) and table singleton
+  <code>User</code> (#2).</p>
+<p>Two <em>string columns</em> are added to the table,
+  <code>login</code> and <code>name</code>; the columns will have
+  <code>VARCHAR(32)</code> (#3) and <code>VARCHAR(100)</code> (#6) SQL data types
+  respectively.</p>
+<p>A <code>NOT NULL</code> constraint is applied to these columns (#4, #7).</p>
+<p>A <code>UNIQUE</code> constraint is applied to <code>login</code> column (#5).</p>
 [/@section]
 [/@page]

@@ -32,6 +32,11 @@ class User extends Record[User]
 object User extends Table[User]
         with LongIdPK[User] {
 
-  val email = stringColumn("email")
+  val login = stringColumn("login", 32)
+      .notNull
+      .unique
+
+  val name = stringColumn("name", 100)
+      .notNull
 
 }
