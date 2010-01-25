@@ -295,6 +295,15 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   }
 
   /**
+   * Adds an integer column.
+   */
+  protected[orm] def intColumn(name: String): IntegerColumn[R] = {
+    val col = new IntegerColumn(this, name)
+    addColumns(col)
+    return col
+  }
+
+  /**
    * Adds a bigint column.
    */
   protected[orm] def longColumn(name: String): LongColumn[R] = {
@@ -313,6 +322,24 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   }
 
   /**
+   * Adds a varchar column with limited maximum capacity.
+   */
+  protected[orm] def stringColumn(name: String, size: Int): StringColumn[R] = {
+    val col = new StringColumn(this, name, size)
+    addColumns(col)
+    return col
+  }
+
+  /**
+   * Adds a varchar column with specified SQL type.
+   */
+  protected[orm] def stringColumn(name: String, sqlType: String): StringColumn[R] = {
+    val col = new StringColumn(this, name, sqlType)
+    addColumns(col)
+    return col
+  }
+
+  /**
    * Adds a boolean column.
    */
   protected[orm] def booleanColumn(name: String): BooleanColumn[R] = {
@@ -326,6 +353,24 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   protected[orm] def timestampColumn(name: String): TimestampColumn[R] = {
     val col = new TimestampColumn(this, name)
+    addColumns(col)
+    return col
+  }
+
+  /**
+   * Adds a date column.
+   */
+  protected[orm] def dateColumn(name: String): DateColumn[R] = {
+    val col = new DateColumn(this, name)
+    addColumns(col)
+    return col
+  }
+
+  /**
+   * Adds a time column.
+   */
+  protected[orm] def timeColumn(name: String): TimeColumn[R] = {
+    val col = new TimeColumn(this, name)
     addColumns(col)
     return col
   }

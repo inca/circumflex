@@ -18,8 +18,8 @@ a:hover {
 }
 
 pre, .highlight {
-  background-color:#DFFFAC;
-  border:1px solid #00AA00;
+  background-color:#DFFFBB;
+  border:1px solid #66AA66;
   border-radius:8px;
   -moz-border-radius:8px;
   -webkit-border-radius:8px;
@@ -40,7 +40,7 @@ pre {
 }
 
 code {
-  background: #EFFFCD;
+  background: #DFFFBB;
 }
 
 .highlight * {

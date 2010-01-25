@@ -103,10 +103,18 @@ class Column[T, R](val relation: Relation[R],
 }
 
 /**
- * String (varchar) column.
+ * String (text) column.
  */
-class StringColumn[R](relation: Relation[R], name: String)
-    extends Column[String, R](relation, name, dialect.stringType) {
+class StringColumn[R](relation: Relation[R],
+                      name: String,
+                      sqlType: String)
+    extends Column[String, R](relation, name, sqlType) {
+
+  def this(relation: Relation[R], name: String) =
+    this(relation, name, dialect.stringType)
+
+  def this(relation: Relation[R], name: String, size: Int) =
+    this(relation, name, dialect.varcharType + "(" + size + ")")
 
   /**
    * DSL-like way to add NotEmptyValidator.
@@ -127,7 +135,13 @@ class StringColumn[R](relation: Relation[R], name: String)
 }
 
 /**
- * Long (int8) column.
+ * Integer column.
+ */
+class IntegerColumn[R](relation: Relation[R], name: String)
+    extends Column[Int, R](relation, name, dialect.integerType)
+
+/**
+ * Long (int8 or bigint) column.
  */
 class LongColumn[R](relation: Relation[R], name: String)
     extends Column[Long, R](relation, name, dialect.longType) {
@@ -151,5 +165,17 @@ class BooleanColumn[R](relation: Relation[R], name: String)
  */
 class TimestampColumn[R](relation: Relation[R], name: String)
     extends Column[Date, R](relation, name, dialect.timestampType)
+
+/**
+ * Date column.
+ */
+class DateColumn[R](relation: Relation[R], name: String)
+    extends Column[Date, R](relation, name, dialect.dateType)
+
+/**
+ * Time column.
+ */
+class TimeColumn[R](relation: Relation[R], name: String)
+    extends Column[Date, R](relation, name, dialect.timeType)
 
 

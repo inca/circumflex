@@ -67,8 +67,9 @@ object User extends Table[User]     // {2}
 }'?html}</pre>
 <p>In the example above line #1 shows the declaration of the <code>User</code> class,
   it's instances will be retrieved from and stored to the table <code>User</code>
-  shown on line #2. Trait <code>LongIdPK</code> effectively mixes </p>
+  shown on line #2. Trait <code>LongIdPK</code> (line #3) effectively defines relation's
+  primary key.</p>
 <h3 id="tabs">Creating tables</h3>
-<p>Let's look at </p>
+<p>Let's look at the </p>
 [/@section]
 [/@page]

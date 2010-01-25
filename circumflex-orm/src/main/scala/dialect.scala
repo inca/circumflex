@@ -41,9 +41,13 @@ class Dialect {
 
   /* SQL TYPES */
 
-  def longType = "int8"
+  def longType = "bigint"
+  def integerType = "integer"
   def stringType = "text"
+  def varcharType = "varchar"
   def booleanType = "boolean"
+  def dateType = "date"
+  def timeType = "time"
   def timestampType = "timestamptz"
 
   /* FOREIGN KEY ACTIONS */

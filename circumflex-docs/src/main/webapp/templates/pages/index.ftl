@@ -20,6 +20,7 @@
       <li><a href="/orm/overview#cx-orm-goals">Circumflex ORM Goals</a></li>
       <li><a href="/orm/overview#architecture">Architecture</a></li>
       <li><a href="/orm/overview#imports">Imports and ORM singleton</a></li>
+      <li><a href="/orm/overview#src">Working with Circumflex ORM sources</a></li>
     </ul>
   </li>
   <li>

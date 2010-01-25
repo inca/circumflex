@@ -156,9 +156,17 @@
   It contains handy various methods and helpers for transaction management,
   querying and some useful implicit converions. You should import it's contents
   to enjoy neat syntactic features:</p>
-<pre>${'import ru.circumflex.orm._'}</pre>
+<pre>${'import ORM._'}</pre>
 <p>In order to save us some typing time we omit import statements in source code
   fragments throughout this book, assuming you have these imports in place
   where necessary.</p>
+<h3 id="src">Working with Circumflex ORM sources</h3>
+<p>It is recommended that you have an up-to-date version of Circumflex sources
+  (they could be obtained at <a href="http://github.com/inca/circumflex">GitHub</a>).
+  Working with Circumflex sources will help you clarify different details, which are
+  not fully covered in this documentation.</p>
+<p>Please feel free to fork The Circumflex Project on GitHub and share with us any
+  bug fixes or improvements you have in mind (or any thoughts on making Circumflex
+  better). We highly appreciate your interest.</p>
 [/@section]
 [/@page]

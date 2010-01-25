@@ -27,11 +27,11 @@ package ru.circumflex.sandbox
 
 import ru.circumflex.orm._
 
-class User extends Record[User] {
-
-}
+class User extends Record[User]
 
 object User extends Table[User]
         with LongIdPK[User] {
+
+  val email = stringColumn("email")
 
 }
