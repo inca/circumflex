@@ -66,27 +66,30 @@ object User extends Table[User]     // {2}
   shown on line #2. Trait <code>LongIdPK</code> (line #3) effectively defines relation's
   primary key.</p>
 <h3 id="tabs">Creating tables</h3>
+<p>The process of creating tables involves defining <em>columns</em>, <em>constraints</em>,
+  <em>record validators</em> and other <em>auxiliary objects</em>.</p>
 <p>Let's look at the sample table definition:</p>
 <pre>${'
-class User extends Record[User]           // {1}
-
-object User extends Table[User]           // {2}
+object User extends Table[User]           // {1}
         with LongIdPK[User] {
 
-  val login = stringColumn("login", 32)   // {3}
-      .notNull                            // {4}
-      .unique                             // {5}
+  val login = stringColumn("login", 32)   // {2}
+      .notNull                            // {3}
+      .unique                             // {4}
+      .validateNotEmpty                         // {5}
+      .validatePattern("^[a-zA-Z0-9_]{1,32}$")  // {6}
 
-  val name = stringColumn("name", 100)    // {6}
-      .notNull                            // {7}
+  val name = stringColumn("name", 100)    // {7}
+      .notNull                            // {8}
+      .validateNotEmpty                   // {9}
 }'?html}</pre>
-<p>Once again we see record class <code>User</code> (#1) and table singleton
-  <code>User</code> (#2).</p>
+<p>Here we see the declaration of the table singleton called <code>User</code> (#1).</p>
 <p>Two <em>string columns</em> are added to the table,
   <code>login</code> and <code>name</code>; the columns will have
-  <code>VARCHAR(32)</code> (#3) and <code>VARCHAR(100)</code> (#6) SQL data types
+  <code>VARCHAR(32)</code> (#2) and <code>VARCHAR(100)</code> (#7) SQL data types
   respectively.</p>
-<p>A <code>NOT NULL</code> constraint is applied to these columns (#4, #7).</p>
-<p>A <code>UNIQUE</code> constraint is applied to <code>login</code> column (#5).</p>
+<p>A <code>NOT NULL</code> constraint is applied to these columns (#3, #8).</p>
+<p>A <code>UNIQUE</code> constraint is applied to <code>login</code> column (#4).</p>
+<p>There are also 3 validators defined for columns (#5, #6, #9).</p>
 [/@section]
 [/@page]
