@@ -112,9 +112,84 @@ object User extends Table[User]           // {1}
   for mathematical computations. By contrast, a column declared to be of a character string type
   will accept almost any kind of data but it does not lend itself to mathematical calculations,
   although other operations such as string concatenation are available.</p>
-<p>Circumflex ORM provides helpers to create columns with following ANSI SQL datatypes:</p>
-<ul>
-  <li></li>
-</ul>
+<p>In Circumflex ORM columns also provide a way to convert values from Scala types to the types
+  of relational databases.</p>
+<p>The columns are defined inside the relation's body by declaring an immutable variable
+  (with <code>val</code> keyword), which should be initialized with one of the
+  <em>column definition methods</em> listed below:</p>
+<table id="cols-methods"
+       class="common">
+  <thead>
+  <tr>
+    <th>Method</th>
+    <th>SQL type</th>
+    <th>Scala type</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td><code>intColumn(name)</code></td>
+    <td><code>INTEGER</code> or <code>INT4</code></td>
+    <td><code>Int</code></td>
+  </tr>
+  <tr>
+    <td><code>longColumn(name)</code></td>
+    <td><code>BIGINT</code> or <code>INT8</code></td>
+    <td><code>Long</code></td>
+  </tr>
+  <tr>
+    <td><code>numericColumn(name, precision, scale)</code></td>
+    <td><code>NUMERIC(precision, scale)</code></td>
+    <td><code>Double</code></td>
+  </tr>
+  <tr>
+    <td><code>stringColumn(name)</code></td>
+    <td><code>TEXT</code> (for PostgreSQL only)</td>
+    <td><code>String</code></td>
+  </tr>
+  <tr>
+    <td><code>stringColumn(name, length)</code></td>
+    <td><code>VARCHAR(length)</code></td>
+    <td><code>String</code></td>
+  </tr>
+  <tr>
+    <td><code>stringColumn(name, sqlType)</code></td>
+    <td>specified by <code>sqlType</code> for vendor-specific string data type</td>
+    <td><code>String</code></td>
+  </tr>
+  <tr>
+    <td><code>booleanColumn(name)</code></td>
+    <td><code>BOOLEAN</code></td>
+    <td><code>Boolean</code></td>
+  </tr>
+  <tr>
+    <td><code>timestampColumn(name)</code></td>
+    <td><code>TIMESTAMP</code></td>
+    <td><code>java.lang.Date</code></td>
+  </tr>
+  <tr>
+    <td><code>dateColumn(name)</code></td>
+    <td><code>DATE</code></td>
+    <td><code>java.lang.Date</code></td>
+  </tr>
+  <tr>
+    <td><code>timeColumn(name)</code></td>
+    <td><code>TIME</code></td>
+    <td><code>java.lang.Date</code></td>
+  </tr>
+  <tr>
+    <td><code>column[T](name, sqlType)</code></td>
+    <td>specified by <code>sqlType</code> for vendor-specific data type</td>
+    <td>specified by type parameter <code>T</code></td>
+  </tr>
+  <tr>
+    <td><code>virtualColumn[T](name)</code></td>
+    <td>not applicable</td>
+    <td>specified by type parameter <code>T</code></td>
+  </tr>
+  </tbody>
+</table>
+<p>Note that <code>virtualColumn</code> is applicable only to views, we will talk
+  about them later.</p>
 [/@section]
 [/@page]

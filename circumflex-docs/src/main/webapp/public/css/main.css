@@ -93,3 +93,30 @@ ol.plain ul, ul.plain, ul.plain ul {
   -moz-border-radius:8px;
   -webkit-border-radius:8px;
 }
+
+table.common {
+  width:100%;
+  border:1px solid #ccc;
+  border-radius:8px;
+  -moz-border-radius:8px;
+  -webkit-border-radius:8px;
+  border-spacing:1px;
+}
+
+table.common th {
+  border:1px solid #99CC99;
+  border-radius:8px;
+  -moz-border-radius:8px;
+  -webkit-border-radius:8px;
+  background:transparent url(/img/bar-c.png) repeat-x 0 -8px;
+  color:#fff;
+  text-shadow:0 1px 1px #090;
+  text-align:center;
+}
+
+table.common td {
+  border:1px solid #ccc;
+  border-radius:8px;
+  -moz-border-radius:8px;
+  -webkit-border-radius:8px;
+}
