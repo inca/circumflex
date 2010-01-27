@@ -65,7 +65,7 @@ object User extends Table[User]     // {2}
   it's instances will be retrieved from and stored to the table <code>User</code>
   shown on line #2. Trait <code>LongIdPK</code> (line #3) effectively defines relation's
   primary key.</p>
-<h3 id="tabs">Creating tables</h3>
+<h2 id="tabs">Creating tables</h2>
 <p>The process of creating tables involves defining <em>columns</em>, <em>constraints</em>,
   <em>record validators</em> and other <em>auxiliary objects</em>.</p>
 <p>Let's look at the sample table definition:</p>
