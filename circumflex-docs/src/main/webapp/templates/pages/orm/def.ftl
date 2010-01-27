@@ -83,13 +83,18 @@ object User extends Table[User]           // {1}
       .notNull                            // {8}
       .validateNotEmpty                   // {9}
 }'?html}</pre>
-<p>Here we see the declaration of the table singleton called <code>User</code> (#1).</p>
+<p>Here we see the declaration of the <code>User</code> table (#1).</p>
 <p>Two <em>string columns</em> are added to the table,
   <code>login</code> and <code>name</code>; the columns will have
   <code>VARCHAR(32)</code> (#2) and <code>VARCHAR(100)</code> (#7) SQL data types
   respectively.</p>
 <p>A <code>NOT NULL</code> constraint is applied to these columns (#3, #8).</p>
 <p>A <code>UNIQUE</code> constraint is applied to <code>login</code> column (#4).</p>
-<p>There are also 3 validators defined for columns (#5, #6, #9).</p>
+<p>There are also 3 validators defined for columns: the
+  <code>NotEmptyValidator</code> validators (#5, #9) will reject empty string values if you try
+  to insert or update a record; the <code>PatternValidator</code> (#6) will reject strings
+  that do not match specified regular expression (in this case value should contain
+  a combination of at least one and at most 32 characters, which are latin letters, numbers or
+  underscores.</p>
 [/@section]
 [/@page]
