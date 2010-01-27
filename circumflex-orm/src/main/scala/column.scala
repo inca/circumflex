@@ -155,6 +155,13 @@ class LongColumn[R](relation: Relation[R], name: String)
 }
 
 /**
+ * Integer column.
+ */
+class NumericColumn[R](relation: Relation[R], name: String, precision: Int, scale: Int)
+    extends Column[Double, R](relation, name,
+      dialect.numericType + "(" + precision + "," + scale + ")")
+
+/**
  * Boolean column.
  */
 class BooleanColumn[R](relation: Relation[R], name: String)

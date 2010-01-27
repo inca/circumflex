@@ -26,7 +26,8 @@
   (it is not required, but usually is conveniant, for example, for generating
   database schema):</p>
 <pre>${'package ru.circumflex.sandbox.model'?html}</pre>
-<p>Let's take a close look at the essential components of Circumflex ORM.</p>
+<p>Let's take a close look at the essential components of Circumflex ORM
+  which take part in data definition.</p>
 <h2 id="rels">Relations and records</h2>
 <p>In relational theory, a <em>relation</em> is a data structure which
   consists of a heading and an unordered set of tuples (or <em>records</em>)
@@ -52,8 +53,8 @@
   <li>each record should be uniquely identified within the entire system by it's
     <em>primary key</em> value; the relation should provide a single-column
     primary key constraint (<code>LongIdPk</code> is a handy trait that adds
-    <code>id BIGINT NOT NULL PRIMARY KEY</code> column and a sequence to
-    generate it's values).</li>
+    <code>id BIGINT NOT NULL PRIMARY KEY</code> column and a <em>sequence</em>
+    to generate it's values).</li>
 </ul>
 <p>The following code fragment summarizes these conventions:</p>
 <pre>${'
@@ -65,7 +66,10 @@ object User extends Table[User]     // {2}
   it's instances will be retrieved from and stored to the table <code>User</code>
   shown on line #2. Trait <code>LongIdPK</code> (line #3) effectively defines relation's
   primary key.</p>
-<h2 id="tabs">Creating tables</h2>
+<h2 id="tabs">Table basics</h2>
+<p>In a relational database, the raw data is stored in tables, this subsection explains
+  how tables are created with Circumflex ORM and what features are available to control
+  what data is stored in the tables.</p>
 <p>The process of creating tables involves defining <em>columns</em>, <em>constraints</em>,
   <em>record validators</em> and other <em>auxiliary objects</em>.</p>
 <p>Let's look at the sample table definition:</p>
@@ -96,5 +100,21 @@ object User extends Table[User]           // {1}
   that do not match specified regular expression (in this case value should contain
   a combination of at least one and at most 32 characters, which are latin letters, numbers or
   underscores.</p>
+<h3 id="cols">Columns definition</h3>
+<p>A table in a relational database is much like a table on paper: it consists of rows and
+  columns. Each row corresponds to a <em>record instance</em>, while the columns designate,
+  what sort of data each record contain. The number of the columns is fixed, and each
+  column has a name.</p>
+<p>Each column has a data type. The data type constrains the set of possible values that can
+  be assigned to a column and assigns semantics to the data stored in the column so that it can
+  be used for computations. For instance, a column declared to be of a numerical type will not
+  accept arbitrary text strings, and the data stored in such a column can be used
+  for mathematical computations. By contrast, a column declared to be of a character string type
+  will accept almost any kind of data but it does not lend itself to mathematical calculations,
+  although other operations such as string concatenation are available.</p>
+<p>Circumflex ORM provides helpers to create columns with following ANSI SQL datatypes:</p>
+<ul>
+  <li></li>
+</ul>
 [/@section]
 [/@page]

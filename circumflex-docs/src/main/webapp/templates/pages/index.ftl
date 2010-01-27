@@ -36,6 +36,12 @@
   <li>
     <a href="/orm/def">Chapter 3. Data Definition</a>
   </li>
+  <li>
+    <a href="/orm/querying">Chapter 4. Querying basics</a>
+  </li>
+  <li>
+    <a href="/orm/criteria">Chapter 5. Criteria API</a>
+  </li>
 </ul>
 [/@section]
 [/@page]

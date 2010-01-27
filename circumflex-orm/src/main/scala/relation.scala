@@ -313,6 +313,15 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   }
 
   /**
+   * Adds a numeric column.
+   */
+  protected[orm] def numericColumn(name: String, precision: Int, scale: Int): LongColumn[R] = {
+    val col = new NumericColumn(this, name, precision, scale)
+    addColumns(col)
+    return col
+  }
+
+  /**
    * Adds a string column.
    */
   protected[orm] def stringColumn(name: String): StringColumn[R] = {
