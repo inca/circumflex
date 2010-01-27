@@ -53,7 +53,7 @@ img {
 }
 
 body {
-  font: 14px/1.5 Corbel, "Lucida Grande", "Lucida Sans Unicode", "DejaVu Sans",
+  font: 14px/1.5 "Lucida Grande", "Lucida Sans Unicode", "DejaVu Sans",
   "Bitstream Vera Sans", "Liberation Sans", Verdana, "Verdana Ref", sans-serif;
   background: url(/img/bkg.png) repeat;
 }
