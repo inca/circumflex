@@ -191,5 +191,20 @@ object User extends Table[User]           // {1}
 </table>
 <p>Note that <code>virtualColumn</code> is applicable only to views, we will talk
   about them later.</p>
+<p>As the table above shows, Circumflex ORM provides column definition methods for the most
+  popular data types. If you need to create a column with custom data type, all you have to do
+  is use the <code>column[T](name, sqlType)</code> method. Note that using custom SQL types
+  may affect the portability of your application.</p>
+<h3 id="constrs">Constraints definition</h3>
+<p>Columns and data types are a way to limit the kind of data that can be stored in a table.
+  For many applications, however, the constraint they provide is too coarse. For example,
+  a column containing a product price should probably only accept positive values. But there
+  is no standard data type that accepts only positive numbers. Another issue is that you might
+  want to constrain column data with respect to other columns or rows. For example, in a table
+  containing product information, there should be only one row for each product number.</p>
+<p>To that end, SQL allows you to define constraints on columns and tables. Constraints give
+  you as much control over the data in your tables as you wish. If a user attempts to store
+  data in a column that would violate a constraint, an error is raised by the database (which
+  causes an exception to be thrown).</p>
 [/@section]
 [/@page]
