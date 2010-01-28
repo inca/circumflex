@@ -96,7 +96,7 @@
   <li>it does not separate relational model from object model: entities "know"
     where they come from (or where they should go);</li>
   <li>it takes an advantage of Active Record design pattern
-    (as opposed to JPA's POJO);</li>
+    (as opposed to JPA's POJOs with mapping metadata);</li>
   <li>it <em>requires</em> knowledge of SQL and relational theory,
     but framework itself is quite simple: you define the schema of
     your data using object-oriented constructs and high-level abstractions
@@ -153,7 +153,7 @@
   it's contents if you plan to use it in your code:</p>
 <pre>${'import ru.circumflex.orm._'}</pre>
 <p>Another notable and handy construction is the <em>ORM singleton</em>.
-  It contains handy various methods and helpers for transaction management,
+  It contains handy methods and helpers for transaction management,
   querying and some useful implicit converions. You should import it's contents
   to enjoy neat syntactic features:</p>
 <pre>${'import ORM._'}</pre>

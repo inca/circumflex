@@ -2,8 +2,8 @@
 [#include "/layout.ftl"]
 [@page]
 [@section id="config" title="Chapter 2. Configuration"]
-<p>Circumflex ORM takes advantage of
-  <a href="/core/conf">configuration parameters for Circumflex Components</a>.
+<p>All Circumflex ORM components are configured with
+  <a href="/core/conf">Circumflex configuration parameters</a>.
   Let's take a closer look at Circumflex configuration objects.</p>
 <h2 id="conn-prv">Connection provider</h2>
 <p><em>Connection provider</em> is used to acquire JDBC connections throughout
@@ -51,7 +51,8 @@
   to a single request.</p>
 <p><em>Transaction manager</em> aims to help developers demarcate their transactions
   by providing "contextual" transaction. By default it uses <code>ThreadLocal</code>
-  to bind contextual transactions (each thread has it's own transactions). You can
+  to bind contextual transactions (a separate transaction is allocated for each thread,
+  and each thread works with one transaction at a given time). You can
   provide your own transaction manager by implementing the <code>TransactionManager</code>
   trait and setting the <code>orm.transactionManager</code> configuration parameter.</p>
 <h2 id="dialect">Dialect</h2>
