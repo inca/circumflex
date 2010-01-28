@@ -157,9 +157,16 @@ class LongColumn[R](relation: Relation[R], name: String)
 /**
  * Integer column.
  */
-class NumericColumn[R](relation: Relation[R], name: String, precision: Int, scale: Int)
-    extends Column[Double, R](relation, name,
-      dialect.numericType + "(" + precision + "," + scale + ")")
+class NumericColumn[R](relation: Relation[R], name: String, sqlType: String)
+    extends Column[Double, R](relation, name, sqlType) {
+
+  def this(relation: Relation[R], name: String, precision: Int, scale: Int) =
+    this(relation, name, dialect.numericType + "(" + precision + "," + scale + ")")
+
+  def this(relation: Relation[R], name: String) =
+    this(relation, name, dialect.numericType)
+
+}
 
 /**
  * Boolean column.

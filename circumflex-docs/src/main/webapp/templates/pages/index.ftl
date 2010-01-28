@@ -36,6 +36,26 @@
   </li>
   <li>
     <a href="/orm/def">Chapter 3. Data Definition</a>
+    <ul>
+      <li><a href="/orm/def#rels">Relations and records</a></li>
+      <li>
+        <a href="/orm/def#tabs">Table basics</a>
+        <ul>
+          <li><a href="/orm/def#cols">Columns definition</a></li>
+          <li>
+            <a href="/orm/def#constrs">Constrs definition</a>
+            <ul>
+              <li><a href="/orm/def#constrs-chk">Check constraints</a></li>
+              <li><a href="/orm/def#constrs-not-null">Not-null constraints</a></li>
+              <li><a href="/orm/def#constrs-uniq">Unique constraints</a></li>
+              <li><a href="/orm/def#constrs-pk">Primary keys</a></li>
+              <li><a href="/orm/def#constrs-fk">Foreign keys</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a href="/orm/def#names">About generated names</a></li>
+    </ul>
   </li>
   <li>
     <a href="/orm/querying">Chapter 4. Querying basics</a>

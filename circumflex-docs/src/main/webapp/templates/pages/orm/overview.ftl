@@ -91,7 +91,7 @@
 <h2 id="cx-orm-goals">Circumflex ORM Goals</h2>
 <p><a href="http://circumflex.ru/orm">Circumflex ORM</a> aims to eliminate
   <a href="#jpa-dis">JPA disadvantages</a> and to provide robust, concise,
-  fast and elegant persistence framework for data-centric applications:
+  fast and elegant persistence framework for data-centric applications:</p>
 <ul>
   <li>it does not separate relational model from object model: entities "know"
     where they come from (or where they should go);</li>
@@ -117,7 +117,16 @@
     retrieving data in specific language; subsequent updates of localizable
     columns do not interfere with different locales.</li>
 </ul>
-</p>
+<p>Circumflex ORM aims to be the optimal choice for data-centric applications
+  written in Scala: it supports sophisticated schema, complex queries and
+  queries in native SQL. If you develop such application, you should probably keep
+  an eye on the documentation of the database you've chosen.</p>
+<p>Circumflex ORM is also a nice choice for beginners and simple applications
+  (despite the common opinion that such tool are an overkill in both metioned cases)
+  &mdash; you will find it both easy-to-use and efficient even for small applications
+  that only operate with a couple of tables, while it's similarity to SQL in data
+  definition semantics and queries will help the beginners to better understand
+  relational concepts.</p>
 <h2 id="architecture">Architecture</h2>
 <p>The following diagram depicts high-level view of Circumflex ORM architecture.</p>
 <div class="media">

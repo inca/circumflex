@@ -52,7 +52,7 @@
     with records and <code>object</code> keyword is used with relations);</li>
   <li>each record should be uniquely identified within the entire system by it's
     <em>primary key</em> value; the relation should provide a single-column
-    primary key constraint (<code>LongIdPk</code> is a handy trait that adds
+    primary key constraint (<code>LongIdPK</code> is a handy trait that adds
     <code>id BIGINT NOT NULL PRIMARY KEY</code> column and a <em>sequence</em>
     to generate it's values).</li>
 </ul>
@@ -138,6 +138,11 @@ object User extends Table[User]           // {1}
     <td><code>Long</code></td>
   </tr>
   <tr>
+    <td><code>numericColumn(name)</code></td>
+    <td><code>NUMERIC</code> (the precision and scale are vendor-specific)</td>
+    <td><code>Double</code></td>
+  </tr>
+  <tr>
     <td><code>numericColumn(name, precision, scale)</code></td>
     <td><code>NUMERIC(precision, scale)</code></td>
     <td><code>Double</code></td>
@@ -189,7 +194,7 @@ object User extends Table[User]           // {1}
   </tr>
   </tbody>
 </table>
-<p>Note that <code>virtualColumn</code> is applicable only to views, we will talk
+<p><strong>Note:</strong> <code>virtualColumn</code> is applicable only to views, we will talk
   about them later.</p>
 <p>As the table above shows, Circumflex ORM provides column definition methods for the most
   popular data types. If you need to create a column with custom data type, all you have to do
@@ -204,7 +209,101 @@ object User extends Table[User]           // {1}
   containing product information, there should be only one row for each product number.</p>
 <p>To that end, SQL allows you to define constraints on columns and tables. Constraints give
   you as much control over the data in your tables as you wish. If a user attempts to store
-  data in a column that would violate a constraint, an error is raised by the database (which
-  causes an exception to be thrown).</p>
+  data in a column that would violate a constraint, an error is raised by the database.</p>
+<p><strong>Note:</strong> constraints and validators are quite separate concepts: the former
+  enforces data integrity on the database side and does not participate in Circumflex ORM
+  logic, the latter is optionally processed inside Circumflex ORM and has nothing to do with
+  the database layer.</p>
+<h4 id="constrs-chk">Check constraints</h4>
+<p>Circumflex ORM supports table-level <em>check constraints</em>. Check constraints are
+  the most generic ones: they allow you to specify a boolean expression
+  (also refered to as <em>predicate</em>) that will be evaluated by the database
+  each time a record is inerted or updated.</p>
+<p>For example, consider a <code>Product</code> table below; to enforce only positive values
+  in <code>price</code> column (#1) you may define a check constraint (#2):</p>
+<pre>${'
+object Product extends Table[Product]
+        with LongIdPK[Product] {
+  . . .
+  val price = numericColumn("price")  // {1}
+             .notNull
+  check("price > 0")                  // {2}
+}'?html}</pre>
+<p>You can use any predicate expression as long as it's features are supported by the
+  database of your choice.</p>
+<h4 id="constrs-not-null">Not-null constraints</h4>
+<p>A <em>not-null constraint</em> simply specifies that a column must not assume the null
+  value.</p>
+<p>It is created by invoking the <code>notNull</code> method on a column (#1):</p>
+<pre>${'
+val name = stringColumn("name", 200)
+           .notNull                   // {1}'?html}</pre>
+<p>The <code>notNull</code> method returns the column instance to allow method chaining.</p>
+<h4 id="constrs-uniq">Unique constraints</h4>
+<p><em>Unique constraints</em> ensure that the data contained in a column or a group of
+  columns is unique with respect to all the rows in the table.</p>
+<p>It can be specified for a single column by invoking the <code>unique</code> method
+  on it (#1):</p>
+<pre>${'
+val login = stringColumn("login", 32)
+            .notNull
+            .unique                   // {1}'?html}</pre>
+<p>To specify a unique constraint on a group of columns, define a table-level unqiue
+  constraint (#1):</p>
+<pre>${'
+object Person extends Table[Person]
+        with LongIdPK[Person] {
+  . . .
+  val passportSerial = stringColumn("pass_serial", 4)
+                       .notNull
+  val passportNumber = stringColumn("pass_nmbr", 6)
+                       .notNull
+  unique(passportSerial, passportNumber)    // {1}
+}'?html}</pre>
+<h4 id="constrs-pk">Primary keys</h4>
+<p><em>Primary key constraint</em> is used to uniquely identify a record in a table.</p>
+<p>Technically, a primary key constraint is simply a combination of a unique constraint
+  and a not-null constraint. However, primary keys have a special meaning in Circumflex ORM.
+  They are used to:</p>
+<ul>
+  <li>select, update or delete individual records;</li>
+  <li>create associations between relations;</li>
+  <li>maintain the transaction-scoped cache.</li>
+</ul>
+<p>The above implies that every relation must define a primary key (#1):</p>
+<pre>${'
+val id = longColumn("id")
+         .notNull
+
+ primaryKey("id")                     // {1}'?html}</pre>
+<p><strong>Note:</strong> multi-column primary key constaints (also known as
+  <em>composite primary keys</em> are <strong>not</strong> supported by Circumflex ORM
+  directly. If you need a composite key to maintain referential integrity, you can define
+  a multi-column unique constraint between not-null columns and subsequently use it as
+  a foreign key endpoint instead.</p>
+<p>Circumflex ORM supports auto-incremented long columns (#1):</p>
+<pre>${'
+val id = longColumn("id")
+         .notNull
+         .autoIncrement'?html}</pre>
+<p>The values for auto-increment columns are generated each time a record is inserted
+  or <code>generateFields</code> method is called on a record.</p>
+<p>It is a best practice to introduce an auto-incremented <code>id</code> column into
+  each relation and make it a primary key. The trait <code>LongIdPK</code> is
+  a handy shortcut for the following:</p>
+<pre>${'
+val id = longColumn("id")
+          .autoIncrement
+          .notNull
+  val idSeq = id.sequence.get
+  primaryKey(id)'?html}</pre>
+<p>By default, a database <em>sequence</em> is used for generating values. You can override
+  this behavior by providing your own <code>Column</code> implementation.</p>
+<h4 id="constrs-fk">Foreign keys</h4>
+<p>A <em>foreign key constraint</em> specifies that the values in a column (or a group
+  of columns) must match the values appearing in some row of another relation. We say this
+  maintains the referential integrity between two related relation.</p>
+
+<h2 id="names">About generated names</h2>
 [/@section]
 [/@page]
