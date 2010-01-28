@@ -237,7 +237,7 @@ object Product extends Table[Product]
 <p>It is created by invoking the <code>notNull</code> method on a column (#1):</p>
 <pre>${'
 val name = stringColumn("name", 200)
-           .notNull                   // {1}'?html}</pre>
+           .notNull      // {1}'?html}</pre>
 <p>The <code>notNull</code> method returns the column instance to allow method chaining.</p>
 <h4 id="constrs-uniq">Unique constraints</h4>
 <p><em>Unique constraints</em> ensure that the data contained in a column or a group of
@@ -247,7 +247,7 @@ val name = stringColumn("name", 200)
 <pre>${'
 val login = stringColumn("login", 32)
             .notNull
-            .unique                   // {1}'?html}</pre>
+            .unique      // {1}'?html}</pre>
 <p>To specify a unique constraint on a group of columns, define a table-level unqiue
   constraint (#1):</p>
 <pre>${'
@@ -275,7 +275,7 @@ object Person extends Table[Person]
 val id = longColumn("id")
          .notNull
 
- primaryKey("id")                     // {1}'?html}</pre>
+primaryKey("id")      // {1}'?html}</pre>
 <p><strong>Note:</strong> multi-column primary key constaints (also known as
   <em>composite primary keys</em> are <strong>not</strong> supported by Circumflex ORM
   directly. If you need a composite key to maintain referential integrity, you can define
@@ -293,10 +293,10 @@ val id = longColumn("id")
   a handy shortcut for the following:</p>
 <pre>${'
 val id = longColumn("id")
-          .autoIncrement
-          .notNull
-  val idSeq = id.sequence.get
-  primaryKey(id)'?html}</pre>
+         .autoIncrement
+         .notNull
+val idSeq = id.sequence.get
+primaryKey(id)'?html}</pre>
 <p>By default, a database <em>sequence</em> is used for generating values. You can override
   this behavior by providing your own <code>Column</code> implementation.</p>
 <h4 id="constrs-fk">Foreign keys</h4>
