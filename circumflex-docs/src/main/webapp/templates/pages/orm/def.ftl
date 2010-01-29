@@ -36,7 +36,7 @@
   The usage scenario of the two is trivial: relations are used to store and
   retrieve records.</p>
 <p>Two subclasses of <code>Relation</code> are particularly useful for data definition:
-  <code>Table</code> and <code>View</code> &mdash; their instances correspond
+  <code>Table</code> and <code>View</code>. Their instances correspond
   to actual tables and views of the database.</p>
 <p>Each relation operates with it's own <code>Record</code> subclass, which you
   should provide as it's type parameter (we call such construct a <em>record class</em>).
