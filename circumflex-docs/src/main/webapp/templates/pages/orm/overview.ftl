@@ -158,7 +158,7 @@
 </dl>
 <p>We will describe each concept in later chapters.</p>
 <h3 id="imports">Imports and ORM singleton</h3>
-<p>Circumflex ORM is packaged inside a single package. You should import all
+<p>Circumflex ORM resides in a single package. You should import all
   it's contents if you plan to use it in your code:</p>
 <pre>${'import ru.circumflex.orm._'}</pre>
 <p>Another notable and handy construction is the <em>ORM singleton</em>.

@@ -33,7 +33,7 @@
   <a href="http://www.mchange.com/projects/c3p0/index.html#configuration_properties">
     c3p0 documentation</a> for more details).</p>
 <p>Though <code>DefaultConnectionProvider</code> is an optimal choice for most
-  applications, you can, however, provide your own connection provider by implementing the
+  applications, you can create your own connection provider by implementing the
   <code>ConnectionProvider</code> trait and setting the <code>orm.connectionProvider</code>
   configuration parameter.
 </p>
