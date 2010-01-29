@@ -302,7 +302,7 @@ primaryKey(id)'?html}</pre>
 <h4 id="constrs-fk">Foreign keys</h4>
 <p>A <em>foreign key constraint</em> specifies that the values in a column (or a group
   of columns) must match the values appearing in some row of another relation. We say this
-  maintains the referential integrity between two related relation.</p>
+  maintains the <em>referential integrity</em> between two relations.</p>
 
 <h2 id="names">About generated names</h2>
 [/@section]
