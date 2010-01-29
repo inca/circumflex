@@ -221,7 +221,7 @@ object User extends Table[User]           // {1}
   each time a record is inerted or updated.</p>
 <p>For example, consider a <code>Product</code> table below; to enforce only positive values
   in <code>price</code> column (#1) you may define a check constraint (#2):</p>
-<pre>${'
+<pre id="ex-product">${'
 object Product extends Table[Product]
         with LongIdPK[Product] {
   . . .
@@ -303,6 +303,24 @@ primaryKey(id)'?html}</pre>
 <p>A <em>foreign key constraint</em> specifies that the values in a column (or a group
   of columns) must match the values appearing in some row of another relation. We say this
   maintains the <em>referential integrity</em> between two relations.</p>
+<p>Let's assume you have the <code>Product</code> table:</p>
+<pre>${'
+object Product extends Table[Product]
+        with LongIdPK[Product] {
+  . . .
+}'?html}</pre>
+<p>Let's also assume you have a table storing orders of those products. We want to ensure
+  that the <code>Order</code> table only contains orders of products that actually exist.
+  So we define a foreign key constraint in the <code>Order</code> table that references
+  the <code>Product</code> table (#1):</p>
+<pre>${'
+object Order extends Table[Order]
+        with LongIdPK[Order] {
+  . . .
+  val product = longColumn("product_id")
+                .notNull
+                .references(Product)          // {1}
+}'?html}</pre>
 
 <h2 id="names">About generated names</h2>
 [/@section]

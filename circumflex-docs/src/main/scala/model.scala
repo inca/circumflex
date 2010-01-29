@@ -27,10 +27,12 @@ package ru.circumflex.sandbox
 
 import ru.circumflex.orm._
 
-class User extends Record[User]
+class Product extends Record[Product] {
 
-object User extends Table[User]
-        with LongIdPK[User] {
+}
+
+object Product extends Table[Product]
+        with LongIdPK[Product] {
 
   val login = stringColumn("login", 32)
       .notNull
