@@ -43,7 +43,7 @@
         <ul>
           <li><a href="/orm/def#cols">Columns definition</a></li>
           <li>
-            <a href="/orm/def#constrs">Constrs definition</a>
+            <a href="/orm/def#constrs">Constraints definition</a>
             <ul>
               <li><a href="/orm/def#constrs-chk">Check constraints</a></li>
               <li><a href="/orm/def#constrs-not-null">Not-null constraints</a></li>

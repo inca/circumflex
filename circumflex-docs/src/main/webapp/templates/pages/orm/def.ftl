@@ -277,7 +277,7 @@ val id = longColumn("id")
 
 primaryKey("id")      // {1}'?html}</pre>
 <p><strong>Note:</strong> multi-column primary key constaints (also known as
-  <em>composite primary keys</em> are <strong>not</strong> supported by Circumflex ORM
+  <em>composite primary keys</em>) are <strong>not</strong> supported by Circumflex ORM
   directly. If you need a composite key to maintain referential integrity, you can define
   a multi-column unique constraint between not-null columns and subsequently use it as
   a foreign key endpoint instead.</p>
