@@ -18,7 +18,7 @@
   statements that are used to create real database schema for your
   application. The syntax for object definition closely resembles SQL, so it
   could be read even by those unfamiliar with Scala. These objects
-  are subsequently used in your applocation to deal with all data-related
+  are subsequently used in your application to deal with all data-related
   operations.</p>
 <p>The process of creating such constructs is refered to as
   <em>data definition</em>.</p>
@@ -32,24 +32,25 @@
 <p>In relational theory, a <em>relation</em> is a data structure which
   consists of a heading and an unordered set of tuples (or <em>records</em>)
   which share the same data type.</p>
-<p>In Circumflex ORM a <em>relation</em> is an object, whose type is derived
-  from the <code>Relation</code> class, while a <em>record</em> is an instance
-  of a specific <code>Record</code> subclass.</p>
-<p>The usage scenario of the two is trivial: relations are used to store and
-  retrieve records. Two subclasses of <code>Relation</code> are particularly
-  useful for data definition: <code>Table</code> and <code>View</code>; their
-  instances correspond to tables and views of database; they are sometimes
-  refered to as <em>physical</em>, because they correspond to actual data
-  structures in storage.</p>
+<p>Relations and records are the core concepts of Circumflex ORM.
+  The usage scenario of the two is trivial: relations are used to store and
+  retrieve records.</p>
+<p>Two subclasses of <code>Relation</code> are particularly useful for data definition:
+  <code>Table</code> and <code>View</code> &mdash; their instances correspond
+  to actual tables and views of the database.</p>
+<p>Each relation operates with it's own <code>Record</code> subclass, which you
+  should provide as it's type parameter (we call such construct a <em>record class</em>).
+  The instances of record classes correspond to actual rows in the database relation
+  (we refer to these instances as <code>records</code>).</p>
 <p>Circumflex ORM employs some conventions to avoid boilerplate code
-  and introduce some sort of type safety:</p>
+  and to introduce some sort of type safety:</p>
 <ul>
+  <li>relations should be the companion objects of their corresponding record
+    classes (the constructs share the same name, but <code>class</code> keyword
+    is used with records and <code>object</code> keyword is used with relations);</li>
   <li>both relations and records have a single type parameter, which should
     always point to the actual <code>Record</code> implementation used in your
     application;</li>
-  <li>relations should be the companion objects of their corresponding records
-    (the constructs share the same name, but <code>class</code> keyword is used
-    with records and <code>object</code> keyword is used with relations);</li>
   <li>each record should be uniquely identified within the entire system by it's
     <em>primary key</em> value; the relation should provide a single-column
     primary key constraint (<code>LongIdPK</code> is a handy trait that adds
@@ -62,7 +63,7 @@ class User extends Record[User]     // {1}
 
 object User extends Table[User]     // {2}
         with LongIdPK[User]         // {3}'?html}</pre>
-<p>In the example above line #1 shows the declaration of the <code>User</code> class,
+<p>In the example above line #1 shows the declaration of the record class <code>User</code>,
   it's instances will be retrieved from and stored to the table <code>User</code>
   shown on line #2. Trait <code>LongIdPK</code> (line #3) effectively defines relation's
   primary key.</p>
