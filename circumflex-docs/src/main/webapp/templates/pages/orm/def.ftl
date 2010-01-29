@@ -38,10 +38,10 @@
 <p>Two subclasses of <code>Relation</code> are particularly useful for data definition:
   <code>Table</code> and <code>View</code>. Their instances correspond
   to actual tables and views of the database.</p>
-<p>Each relation operates with it's own <code>Record</code> subclass, which you
-  should provide as it's type parameter (we call such construct a <em>record class</em>).
-  The instances of record classes correspond to actual rows in the database relation
-  (we refer to these instances as <code>records</code>).</p>
+<p>Each relation operates with it's own <code>Record</code> subclass
+  (we call such construct a <em>record class</em>), which you should provide as
+  it's type parameter. The instances of record classes correspond to actual
+  rows in the database relation (we refer to these instances as <em>records</em>).</p>
 <p>Circumflex ORM employs some conventions to avoid boilerplate code
   and to introduce some sort of type safety:</p>
 <ul>
