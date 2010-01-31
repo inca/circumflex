@@ -322,7 +322,34 @@ object Order extends Table[Order]
                 .notNull
                 .references(Product)          // {1}
 }'?html}</pre>
-<p>Database </p>
+<p>Now it is impossible to store an order for the product that does not appear
+  in the <code>Product</code> table. SQL standard also allow you to handle
+  such situations as deleting or updating a product while the orders for this
+  product still exist. They are handled by specifying the <code>ON DELETE</code>
+  and <code>ON UPDATE</code> actions respectively. To illustrate possible actions,
+  let's look at the deletion of a product. Intuitively, we have a few options:</p>
+<ul>
+  <li>disallow deleting a referenced product (the <code>RESTRICT</code> action);</li>
+  <li>delete orders as well (the <code>CASCADE</code> action);</li>
+  <li>set the <code>product_id</code> column to <code>NULL</code>
+    (the <code>SET NULL</code> action, it will fail in our case since the
+    not null constraint is specified);</li>
+  <li>set the <code>product_id</code> column to some default value
+    (the <code>SET DEFAULT</code> action, it will fail in our case since there
+    is no default value for this column at the database level);</li>
+  <li>disallow deleting a referenced product at the end of the transaction
+    (the <code>NO ACTION</code> action).</li>
+</ul>
+<p>You specify a foreign key action by invoking the corresponding method on
+  a foreign key:</p>
+<pre>${'
+  val product = longColumn("product_id")
+                .notNull
+                .references(Product)
+                .onDeleteRestrict
+                .onUpdateCascade'}</pre>
+<p>If an action was not explicitly specified, the <code>NO ACTION</code> is
+  assumed by default.</p>
 <p>In Circumflex ORM foreign keys are also a way to express relationships between
   entities. We discuss such relationships in the <a href="#assocs"><em>associations</em></a>
   section.</p>
@@ -348,14 +375,26 @@ object Person extends Table[Person]
   foreignKey(Passport,
     List(passportSerial, passportNumber),
     List(Passport.serial, Passport.number))   // {2}
+
 }'?html}</pre>
 <p>In the above example, the multi-column unique constraint is defined on table
   <code>Passport</code> (#1) and the corresponding foreign key constraint
-  is defined on table <code>Person</code> (#2).</p>
+  is defined on table <code>Person</code>(#2).</p>
 <p><strong>Note:</strong> multi-column foreign keys are only effective for
   maintaining referential integrity on the database level. You cannot use the
   benefits of the <a href="#assocs"><em>associations</em></a> with multi-column
   foreign keys.</p>
+<p>You can also provide column pairs as arguments to the <code>foreignKey</code>
+  method. So the following code:</p>
+<pre>${'
+  foreignKey(Passport,
+    List(passportSerial, passportNumber),
+    List(Passport.serial, Passport.number))'?html}</pre>
+<p>is effectively equivalent to the following snippet:</p>
+<pre>${'
+  foreignKey(Passport,
+    passportSerial -> Passport.serial,
+    passportNumber -> Passport.number)'?html}</pre>
 <h2 id="names">About generated names</h2>
 [/@section]
 [/@page]
