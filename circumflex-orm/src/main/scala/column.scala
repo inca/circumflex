@@ -86,7 +86,7 @@ class Column[T, R](val relation: Relation[R],
    * Sets the default expression for this column.
    */
   def default(expr: String): this.type = {
-    _defaultExpression = expr
+    _defaultExpression = Some(expr)
     return this
   }
 
@@ -151,7 +151,7 @@ class StringColumn[R](relation: Relation[R],
    * (quoting literals as necessary).
    */
   def defaultString(expr: String): this.type = {
-    _defaultExpression = dialect.quoteLiteral(expr)
+    _defaultExpression = Some(dialect.quoteLiteral(expr))
     return this
   }
 

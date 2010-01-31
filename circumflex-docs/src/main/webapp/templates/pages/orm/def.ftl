@@ -201,6 +201,12 @@ object User extends Table[User]           // {1}
   popular data types. If you need to create a column with custom data type, all you have to do
   is use the <code>column[T](name, sqlType)</code> method. Note that using custom SQL types
   may affect the portability of your application.</p>
+<p>A column can be assigned a default value by invoking the <code>default(expr: String)</code>
+  method on that column:</p>
+<pre>${'
+val shippingDate = dateColumn("shipping_date")
+                   .default("current_date")'?html}</pre>
+<p>If no default value is declared explicitly, the <code>NULL</code> is assumed.</p>
 <h3 id="constrs">Constraints definition</h3>
 <p>Columns and data types are a way to limit the kind of data that can be stored in a table.
   For many applications, however, the constraint they provide is too coarse. For example,
