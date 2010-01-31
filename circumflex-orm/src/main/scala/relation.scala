@@ -236,14 +236,27 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * Adds a foreign key constraint.
    */
-  protected[orm] def foreignKey[T, P](parentRelation: Relation[P],
-                                      localColumns: Seq[Column[_, R]],
-                                      referenceColumns: Seq[Column[_, P]]
-      ): ForeignKey[R, P] = {
-    val constrName = relationName + "_" + localColumns.map(_.columnName).mkString("_") + "_fkey"
-    val fk = new MultiForeignKey(this, parentRelation, constrName, localColumns, referenceColumns)
+  protected[orm] def foreignKey[T, P](
+          parentRelation: Relation[P],
+          localColumns: Seq[Column[_, R]],
+          referenceColumns: Seq[Column[_, P]]): ForeignKey[R, P] = {
+    val constrName = relationName + "_" +
+            localColumns.map(_.columnName).mkString("_") + "_fkey"
+    val fk = new MultiForeignKey(this, parentRelation, constrName,
+      localColumns, referenceColumns)
     _constraints += fk
     return fk
+  }
+
+  /**
+   * Adds a foreign key constraint.
+   */
+  protected[orm] def foreignKey[T, P](
+          parentRelation: Relation[P],
+          colPairs: Pair[Column[_, R], Column[_, P]]*): ForeignKey[R, P] = {
+    val localColumns = colPairs.toList.map(_._1)
+    val referenceColumns = colPairs.toList.map(_._2)
+    return foreignKey(parentRelation, localColumns, referenceColumns)
   }
 
   /**

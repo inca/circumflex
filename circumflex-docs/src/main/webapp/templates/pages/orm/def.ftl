@@ -322,7 +322,40 @@ object Order extends Table[Order]
                 .notNull
                 .references(Product)          // {1}
 }'?html}</pre>
+<p>Database </p>
+<p>In Circumflex ORM foreign keys are also a way to express relationships between
+  entities. We discuss such relationships in the <a href="#assocs"><em>associations</em></a>
+  section.</p>
+<p>You can also specify a multi-column foreign key constraint by using table-level
+  <code>foreignKey</code> method:</p>
+<pre>${'
+object Passport extends Table[Passport]
+        with LongIdPK[Passport] {
+  val serial = stringColumn("serial")
+               .notNull
+  val number = stringColumn("number")
+               .notNull
+  unique(serial, number)                      // {1}
+}
 
+object Person extends Table[Person]
+        with LongIdPK[Person] {
+  . . .
+  val passportSerial = stringColumn("p_serial", 12)
+                       .notNull
+  val passportNumber = stringColumn("p_number", 12)
+                       .notNull
+  foreignKey(Passport,
+    List(passportSerial, passportNumber),
+    List(Passport.serial, Passport.number))   // {2}
+}'?html}</pre>
+<p>In the above example, the multi-column unique constraint is defined on table
+  <code>Passport</code> (#1) and the corresponding foreign key constraint
+  is defined on table <code>Person</code> (#2).</p>
+<p><strong>Note:</strong> multi-column foreign keys are only effective for
+  maintaining referential integrity on the database level. You cannot use the
+  benefits of the <a href="#assocs"><em>associations</em></a> with multi-column
+  foreign keys.</p>
 <h2 id="names">About generated names</h2>
 [/@section]
 [/@page]
