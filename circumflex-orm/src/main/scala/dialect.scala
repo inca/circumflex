@@ -118,8 +118,16 @@ class Dialect {
    * Produces SQL definition for a column
    * (e.g. "mycolumn varchar not null unique").
    */
-  def columnDefinition(col: Column[_, _]) =
-    col.columnName + " " + col.sqlType + (if (!col.nullable_?) " not null" else "")
+  def columnDefinition(col: Column[_, _]): String = {
+    var result = col.columnName + " " + col.sqlType
+    if (!col.nullable_?) result += " not null"
+    col.default match {
+      case Some(expr) => result += " default " + expr
+      case _ =>
+    }
+    return result
+  }
+
 
   /**
    * Produces PK definition (e.g. "primary key (id)").

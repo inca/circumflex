@@ -36,8 +36,9 @@ class Column[T, R](val relation: Relation[R],
                    val columnName: String,
                    val sqlType: String)
     extends SchemaObject {
-  protected var _nullable = true;
-  protected var _sequence: Option[Sequence[R]] = None;
+  protected var _nullable = true
+  protected var _sequence: Option[Sequence[R]] = None
+  protected var _defaultExpression: Option[String] = None
 
   def cloneForView[V](view: View[V]): Column[T, V] =
     new Column[T, V](view, relation.relationName + "_" + columnName, sqlType)
@@ -75,6 +76,19 @@ class Column[T, R](val relation: Relation[R],
    */
   def references[P](parentRelation: Relation[P]): AssociativeForeignKey[T, R, P] =
     relation.foreignKey(parentRelation, this)
+
+  /**
+   * Returns the default expression for this column.
+   */
+  def default: Option[String] = _defaultExpression
+
+  /**
+   * Sets the default expression for this column.
+   */
+  def default(expr: String): this.type = {
+    _defaultExpression = expr
+    return this
+  }
 
   /* DDL */
 
@@ -129,6 +143,15 @@ class StringColumn[R](relation: Relation[R],
    */
   def validatePattern(regex: String): this.type = {
     relation.addFieldValidator(this, new PatternValidator(qualifiedName, regex))
+    return this
+  }
+
+  /**
+   * Sets the default string expression for this column
+   * (quoting literals as necessary).
+   */
+  def defaultString(expr: String): this.type = {
+    _defaultExpression = dialect.quoteLiteral(expr)
     return this
   }
 
