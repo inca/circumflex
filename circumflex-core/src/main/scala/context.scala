@@ -50,7 +50,7 @@ class CircumflexContext(val request: HttpServletRequest,
     if (_contentType == null) None
     else Some(_contentType)
 
-  def contentType_= (value: String): Unit = {
+  def contentType_=(value: String): Unit = {
     this._contentType = value;
   }
 

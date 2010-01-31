@@ -57,6 +57,7 @@ class RequestRouter {
   /* HELPERS */
 
   val header = new HeadersHelper
+  val session = new SessionHelper
 
   /**
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
@@ -65,6 +66,11 @@ class RequestRouter {
     case Some("XMLHttpRequest") => true
     case _ => false
   }
+
+  /**
+   * A shortcut for ctx.request.getRequestURI
+   */
+  def uri = ctx.uri
 
   /**
    * Rewrites request URI. Normally it causes the request to travel all the way through
@@ -173,7 +179,7 @@ class Route(val matchingMethods: String*) {
 }
 
 /**
- * A helper for setting response headers in a DSL-like way.
+ * A helper for getting and setting response headers in a DSL-like way.
  */
 class HeadersHelper {
 
@@ -188,5 +194,20 @@ class HeadersHelper {
   def update(name: String, value: Long) = ctx.dateHeaders += name -> value
 
   def update(name: String, value: java.util.Date) = ctx.dateHeaders += name -> value.getTime
+
+}
+
+/**
+ * A helper for getting and setting session-scope attributes.
+ */
+class SessionHelper {
+
+  def apply(name: String): Option[Any] = {
+    val value = ctx.request.getSession.getAttribute(name)
+    if (value == null) None
+    else Some(value)
+  }
+
+  def update(name: String, value: Any) = ctx.request.getSession.setAttribute(name, value)
 
 }

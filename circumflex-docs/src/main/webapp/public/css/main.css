@@ -97,12 +97,9 @@ ol.plain ul, ul.plain, ul.plain ul {
 table.common {
   width:100%;
   border:1px solid #ccc;
-  border-top-left-radius:8px;
-  border-top-right-radius:8px;
-  -moz-border-radius-topleft:8px;
-  -moz-border-radius-topright:8px;
-  -webkit-border-top-left-radius:8px;
-  -webkit-border-top-right-radius:8px;
+  border-radius:8px;
+  -moz-border-radius:8px;
+  -webkit-border-radius:8px;
   border-spacing:1px;
 }
 
@@ -124,6 +121,18 @@ table.common th:last-child {
   border-top-right-radius:8px;
   -moz-border-radius-topright:8px;
   -webkit-border-top-right-radius:8px;
+}
+
+table.common tr:last-child td:first-child {
+  border-bottom-left-radius:8px;
+  -moz-border-radius-bottomleft:8px;
+  -webkit-border-bottom-left-radius:8px;
+}
+
+table.common tr:last-child td:last-child {
+  border-bottom-right-radius:8px;
+  -moz-border-radius-bottomright:8px;
+  -webkit-border-bottom-right-radius:8px;
 }
 
 table.common td {
