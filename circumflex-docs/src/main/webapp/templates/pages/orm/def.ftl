@@ -249,7 +249,7 @@ val name = stringColumn("name", 200)
 val login = stringColumn("login", 32)
             .notNull
             .unique      // {1}'?html}</pre>
-<p>To specify a unique constraint on a group of columns, define a table-level unqiue
+<p>To specify a unique constraint on a group of columns, define a table-level unique
   constraint (#1):</p>
 <pre>${'
 object Person extends Table[Person]
@@ -395,6 +395,41 @@ object Person extends Table[Person]
   foreignKey(Passport,
     passportSerial -> Passport.serial,
     passportNumber -> Passport.number)'?html}</pre>
+<h3 id="idx">Indexes</h3>
+<p><em>Indexes</em> are a common way to enhance database performance. An index
+  allows the database server to find and retrieve specific rows much faster than
+  it could do without an index. But indexes also add overhead to the database
+  system as a whole, so they should be used sensibly.</p>
+<p>The index is defined at the table-level by invoking the <code>index</code>
+  method:</p>
+<pre>${'
+object Product extends Table[Product]
+        with LongIdPK[Product] {
+  val partNumber = stringColumn("part_no")
+                   .notNull
+  index("part_no_idx")            // {1}
+      .add(partNumber)            // {2}
+      .using("btree")             // {3}
+}'?html}</pre>
+<p>In the above example an index named <code>part_no_idx</code> is created (#1)
+  for the column <code>partNumber</code> (#2). The index type is specified
+  with <code>using</code> method (#3). We use a <code>btree</code> index here,
+  which handles equality and range queries best.</p>
+<p>Some database vendors also provide support for different index types,
+  unique indexes, filter conditions for indexes and arbitrary index expressions.
+  Circumflex ORM supports all these features (though you may have to consult
+  the documentation of the database of your choice to discover, which index types
+  and features are supported by the database). For example, the following index
+  definition:</p>
+<pre>${'
+  index("part_no_idx")
+      .add("lower(partNumber)")
+      .using("btree")
+      .unique
+      .where(partNumber isNotNull)
+'?html}</pre>
+will result in following DDL statement:
+
 <h2 id="names">About generated names</h2>
 [/@section]
 [/@page]

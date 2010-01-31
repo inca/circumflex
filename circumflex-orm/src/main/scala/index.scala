@@ -52,6 +52,14 @@ class Index[R](val relation: Relation[R],
   }
 
   /**
+   * Adds one or more columns to index definition.
+   */
+  def add(col: Column[_, R]): this.type = {
+    _expressions ++= List(col.columnName)
+    return this
+  }
+
+  /**
    * Determines, whether the index is unique or not.
    */
   def unique_?(): Boolean = _unique
