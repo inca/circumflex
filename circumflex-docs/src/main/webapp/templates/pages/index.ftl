@@ -52,6 +52,7 @@
               <li><a href="/orm/def#constrs-fk">Foreign keys</a></li>
             </ul>
           </li>
+          <li><a href="/orm/def#idx">Indexes definition</a></li>
         </ul>
       </li>
       <li><a href="/orm/def#names">About generated names</a></li>

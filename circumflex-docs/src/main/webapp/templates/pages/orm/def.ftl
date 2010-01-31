@@ -395,7 +395,7 @@ object Person extends Table[Person]
   foreignKey(Passport,
     passportSerial -> Passport.serial,
     passportNumber -> Passport.number)'?html}</pre>
-<h3 id="idx">Indexes</h3>
+<h3 id="idx">Indexes definition</h3>
 <p><em>Indexes</em> are a common way to enhance database performance. An index
   allows the database server to find and retrieve specific rows much faster than
   it could do without an index. But indexes also add overhead to the database
@@ -423,13 +423,17 @@ object Product extends Table[Product]
   definition:</p>
 <pre>${'
   index("part_no_idx")
-      .add("lower(partNumber)")
+      .add("lower(part_no)")
       .using("btree")
       .unique
-      .where(partNumber isNotNull)
+      .where("part_no" isNotNull)
 '?html}</pre>
-will result in following DDL statement:
-
+<p>will result in following DDL statement
+  (<a href="http://postgresql.org">PostgreSQL</a> dialect is used):</p>
+<pre>${'
+  CREATE UNIQUE INDEX part_no_idx ON product
+  USING btree (lower(part_no))
+  WHERE part_no is not null'}</pre>
 <h2 id="names">About generated names</h2>
 [/@section]
 [/@page]
