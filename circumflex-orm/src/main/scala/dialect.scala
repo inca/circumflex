@@ -123,7 +123,7 @@ class Dialect {
     if (!col.nullable_?) result += " not null"
     col.default match {
       case Some(expr) => result += " default " + expr
-      case _ => _
+      case _ => 
     }
     return result
   }
