@@ -98,7 +98,6 @@ class DDLExport extends JDBCHelper {
   val tables = new HashSet[Table[_]]()
   val views = new HashSet[View[_]]()
   val constraints = new HashSet[Constraint[_]]()
-  val sequences = new HashSet[Sequence[_]]()
   val auxiliaryObjects = new ListBuffer[SchemaObject]()
 
   val writers = new HashSet[Writer]()
@@ -162,7 +161,6 @@ class DDLExport extends JDBCHelper {
         tables += t
         addObject(t.schema)
         t.constraints.foreach(o => addObject(o))
-        t.sequences.foreach(o => addObject(o))
         t.auxiliaryObjects.foreach(o => addObject(o))
       }
       case v: View[_] => {
@@ -170,7 +168,6 @@ class DDLExport extends JDBCHelper {
         addObject(v.schema)
         v.auxiliaryObjects.foreach(o => addObject(o))
       }
-      case s: Sequence[_] => sequences += s
       case c: Constraint[_] => constraints += c
       case s: Schema => schemata += s
       case o => if (!auxiliaryObjects.contains(o)) auxiliaryObjects += o
@@ -202,7 +199,6 @@ class DDLExport extends JDBCHelper {
       createSchemata(conn)
       createTables(conn)
       createConstraints(conn)
-      createSequences(conn)
       createViews(conn)
       createAuxiliaryObjects(conn)
       // restore previous auto-commit setting
@@ -230,7 +226,6 @@ class DDLExport extends JDBCHelper {
       info("Executing schema drop script.")
       dropAuxiliaryObjects(conn)
       dropViews(conn)
-      dropSequences(conn)
       dropConstraints(conn)
       dropTables(conn)
       dropSchemata(conn)
@@ -266,17 +261,6 @@ class DDLExport extends JDBCHelper {
         log.trace("Error dropping view.", e)
       })
     }
-
-  def dropSequences(conn: Connection) =
-    for (s <- sequences)
-      autoClose(conn.prepareStatement(s.sqlDrop))(st => {
-        debug(s.sqlDrop)
-        st.executeUpdate
-        infoMsgs += ("DROP SEQUENCE " + s.objectName + ": OK")
-      })(e => {
-        errMsgs += ("DROP SEQUENCE " + s.objectName + ": " + e.getMessage)
-        log.trace("Error dropping sequence.", e)
-      })
 
   def dropConstraints(conn: Connection) =
     for (c <- constraints)
@@ -347,17 +331,6 @@ class DDLExport extends JDBCHelper {
     create(constraints.filter(!_.isInstanceOf[ForeignKey[_, _]]))
     create(constraints.filter(_.isInstanceOf[ForeignKey[_, _]]))
   }
-
-  def createSequences(conn: Connection) =
-    for (s <- sequences)
-      autoClose(conn.prepareStatement(s.sqlCreate))(st => {
-        debug(s.sqlCreate)
-        st.executeUpdate
-        infoMsgs += ("CREATE SEQUENCE " + s.objectName + ": OK")
-      })(e => {
-        errMsgs += ("CREATE SEQUENCE " + s.objectName + ": " + e.getMessage)
-        log.trace("Error creating sequence.", e)
-      })
 
   def createViews(conn: Connection) =
     for (v <- views)

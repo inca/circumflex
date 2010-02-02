@@ -100,8 +100,6 @@ abstract class Record[R] {
 
   def delete(): Int = relation.delete(this)
 
-  def generateFields(): Unit = relation.generateFields(this)
-
   /* EQUALITY AND OTHER STUFF */
 
   override def equals(obj: Any) = obj match {

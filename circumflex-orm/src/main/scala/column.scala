@@ -37,7 +37,6 @@ class Column[T, R](val relation: Relation[R],
                    val sqlType: String)
     extends SchemaObject {
   protected var _nullable = true
-  protected var _sequence: Option[Sequence[R]] = None
   protected var _defaultExpression: Option[String] = None
 
   def cloneForView[V](view: View[V]): Column[T, V] =
@@ -57,11 +56,6 @@ class Column[T, R](val relation: Relation[R],
    * Is this column nullable?
    */
   def nullable_?(): Boolean = _nullable
-
-  /**
-   * Get a sequence for autoincrement columns.
-   */
-  def sequence: Option[Sequence[R]] = _sequence
 
   /**
    * DSL-like way to qualify a column with UNIQUE constraint.
@@ -172,7 +166,7 @@ class LongColumn[R](relation: Relation[R], name: String)
    * DSL-like way to create a sequence for this column.
    */
   def autoIncrement: this.type = {
-    _sequence = Some(new Sequence(relation, this))
+    // TODO: implement auto-increment stategies
     this
   }
 }

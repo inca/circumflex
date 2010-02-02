@@ -102,12 +102,6 @@ class Dialect {
     col.relation.relationName + "." + col.columnName
 
   /**
-   * Produces qualified sequence name (e.g. public.mytable_id_seq).
-   */
-  def sequenceName(seq: Sequence[_]) =
-    qualifyRelation(seq.relation) + "_" + seq.column.columnName + "_seq"
-
-  /**
    * Override this definition to provide logical "unwrapping" for relation-based operations.
    */
   protected def unwrap(relation: Relation[_]) = relation
@@ -171,12 +165,6 @@ class Dialect {
    */
   def createSchema(schema: Schema) =
     "create schema " + schema.schemaName
-
-  /**
-   * Produces CREATE SEQUENCE statement.
-   */
-  def createSequence(seq: Sequence[_]) =
-    "create sequence " + seq.sequenceName + " start with 1 increment by 1"
 
   /**
    * Produces CREATE TABLE statement without constraints.
@@ -248,12 +236,6 @@ class Dialect {
     "drop view " + qualifyRelation(view)
 
   /**
-   * Produces DROP SEQUENCE statement.
-   */
-  def dropSequence(seq: Sequence[_]) =
-    "drop sequence " + seq.sequenceName
-
-  /**
    * Produces DROP SCHEMA statement.
    */
   def dropSchema(schema: Schema) =
@@ -265,23 +247,7 @@ class Dialect {
   def dropIndex(index: Index[_]) =
     "drop index " + index.relation.schemaName + "." + index.indexName
 
-  /* SEQUENCES STUFF */
-
-  def sequenceCurrVal(seq: Sequence[_]): String = "currval('" + sequenceName(seq) + "')"
-  def sequenceCurrVal(seq: Sequence[_], alias: String): String =
-    sequenceCurrVal(seq) + " as " + alias
-
-  def sequenceNextVal(seq: Sequence[_]): String = "nextval('" + sequenceName(seq) + "')"
-  def sequenceNextVal(seq: Sequence[_], alias: String): String =
-    sequenceNextVal(seq) + " as " + alias
-
   /* SELECT STATEMENTS AND RELATED */
-
-  /**
-   * Produces a statement to select a single next sequence value.
-   */
-  def selectSequenceNextVal(seq: Sequence[_]) =
-    "select " + sequenceNextVal(seq)
 
   def columnAlias(col: Column[_, _], columnAlias: String, tableAlias: String) =
     qualifyColumn(col, tableAlias) + " as " + columnAlias

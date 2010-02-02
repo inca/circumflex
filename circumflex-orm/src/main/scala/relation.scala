@@ -128,11 +128,6 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def associations: Seq[Association[R, _]] = _associations
 
   /**
-   * Returns sequences associated with this table.
-   */
-  def sequences: Seq[Sequence[R]] = columns.flatMap(_.sequence)
-
-  /**
    * Returns auxiliary objects associated with this table.
    */
   def auxiliaryObjects: Seq[SchemaObject] = _auxiliaryObjects
@@ -487,7 +482,6 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def save_!(record: Record[R]): Int =
     if (record.identified_?) update_!(record)
     else {
-      generateFields(record)
       insert_!(record)
     }
 
@@ -503,12 +497,6 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
       })
     })
   }
-
-  def generateFields(record: Record[R]): Unit =
-    columns.flatMap(_.sequence).foreach(seq => {
-      val nextval = seq.nextValue
-      record.setField(seq.column, nextval)
-    })
 
   /* EQUALITY AND OTHER STUFF */
 
