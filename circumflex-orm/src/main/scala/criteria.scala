@@ -53,8 +53,8 @@ class Criteria[R](val rootNode: RelationNode[R])
 
   def prepareQuery = ORM.select(_projections: _*)
           .from(prepareQueryPlan)
-          .limit(_limit)
-          .offset(_offset)
+  //        .limit(_limit)
+  //        .offset(_offset)
           .where(preparePredicate)
           .orderBy(_orders: _*)
 
@@ -251,20 +251,11 @@ class Criteria[R](val rootNode: RelationNode[R])
       }
   }
 
-  /**
-   * Executes the query and retrieves unqiue record.
-   * An exception is thrown if result set yields more than one row.
-   */
-  def unique: Option[R] = prepareQuery.unique.map(_.apply(0).asInstanceOf[R])
-
-  /**
-   * Executes a query and retrieves the first record.
-   */
-  def first: Option[R] = prepareQuery.first.map(_.apply(0).asInstanceOf[R])
+  // TODO implement proper limit/offset and unique/first methods
 
   /**
    * Executes the DELETE statement for this relation using specified criteria.
    */
-  def delete: Int = new Delete(rootNode).where(preparePredicate).executeUpdate
+  def delete(): Int = new Delete(rootNode).where(preparePredicate).executeUpdate
 
 }
