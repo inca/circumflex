@@ -51,13 +51,10 @@ class Criteria[R](val rootNode: RelationNode[R])
 
   def toSql = prepareQuery.toSql
 
-  def prepareQuery = ORM.select(_projections: _*)
+  def prepareQuery: SQLQuery = select(_projections: _*)
           .from(prepareQueryPlan)
-  //        .limit(_limit)
-  //        .offset(_offset)
           .where(preparePredicate)
           .orderBy(_orders: _*)
-
 
   def preparePredicate: Predicate =
     if (_restrictions.size > 0)
@@ -198,14 +195,17 @@ class Criteria[R](val rootNode: RelationNode[R])
    * Executes the query and retrieves records list.
    */
   def list: Seq[R] = {
-    val tuples = prepareQuery.list
-    val result = new ListBuffer[R]()
-    tuples.foreach(t => {
-      processTupleTree(t, _rootTree)
-      val root = t.apply(0).asInstanceOf[R]
-      if (!result.contains(root)) result += root
+    val q = prepareQuery
+    q.resultSet(rs => {
+      val result = new ListBuffer[R]()
+      while (rs.next) {
+        val tuple = q.readTuple(rs)
+        processTupleTree(tuple, _rootTree)
+        val root = tuple.apply(0).asInstanceOf[R]
+        if (!result.contains(root)) result += root
+      }
+      return result
     })
-    return result
   }
 
   protected def processTupleTree(tuple: Array[_], tree: RelationNode[_]): Unit = tree match {
@@ -251,7 +251,30 @@ class Criteria[R](val rootNode: RelationNode[R])
       }
   }
 
-  // TODO implement proper limit/offset and unique/first methods
+  /**
+   * Executes the query and retrieves a unique root record. If result set yields multiple
+   * root records an exception is thrown.
+   */
+  def unique: Option[R] = {
+    val q = prepareQuery
+    q.resultSet(rs => {
+      if (!rs.next) return None     // none found
+      // found, extracting first root as a result
+      val firstTuple = q.readTuple(rs)
+      processTupleTree(firstTuple, _rootTree)
+      val result = firstTuple.apply(0).asInstanceOf[R]
+      // process any other tuples, but make sure there's no other roots among them
+      while (rs.next) {
+        val tuple = q.readTuple(rs)
+        processTupleTree(tuple, _rootTree)
+        val root = tuple.apply(0).asInstanceOf[R]
+        if (root != result)   // wow, this thingy should not be here, call the police
+          throw new ORMException("Unique result expected, but multiple records found.")
+      }
+      return Some(result)
+    })
+  }
+
 
   /**
    * Executes the DELETE statement for this relation using specified criteria.

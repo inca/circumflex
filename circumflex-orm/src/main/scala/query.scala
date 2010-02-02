@@ -139,14 +139,18 @@ trait SQLQuery extends Query {
   })
 
   /**
+   * Reads a tuple from specified result set using query projections.
+   */
+  def readTuple(rs: ResultSet): Array[Any] =
+    projections.map(_.read(rs).getOrElse(null)).toArray
+
+  /**
    * Executes a query and returns a list of tuples, designated by query projections.
    */
   def list(): Seq[Array[Any]] = resultSet(rs => {
     val result = new ListBuffer[Array[Any]]()
-    while (rs.next) {
-      val tuple = projections.map(_.read(rs).getOrElse(null))
-      result += tuple.toArray
-    }
+    while (rs.next)
+      result += readTuple(rs)
     return result
   })
 
