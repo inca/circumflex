@@ -54,10 +54,12 @@ class RequestRouter {
    */
   def headers(crit: (String, String)*) = new HeadersRegexMatcher(crit : _*)
 
-  /* HELPERS */
+  /* CONTEXT SHORTCUTS */
 
-  val header = new HeadersHelper
-  val session = new SessionHelper
+  def header = ctx.header
+  def session = ctx.session
+  def flash = ctx.flash
+  def uri = ctx.uri
 
   /**
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
@@ -66,11 +68,6 @@ class RequestRouter {
     case Some("XMLHttpRequest") => true
     case _ => false
   }
-
-  /**
-   * A shortcut for ctx.request.getRequestURI
-   */
-  def uri = ctx.uri
 
   /**
    * Rewrites request URI. Normally it causes the request to travel all the way through
@@ -181,7 +178,9 @@ class Route(val matchingMethods: String*) {
 /**
  * A helper for getting and setting response headers in a DSL-like way.
  */
-class HeadersHelper {
+class HeadersHelper extends HashModel {
+
+  def get(key: String) = apply(key)
 
   def apply(name: String): Option[String] = {
     val value = ctx.request.getHeader(name)
@@ -200,7 +199,9 @@ class HeadersHelper {
 /**
  * A helper for getting and setting session-scope attributes.
  */
-class SessionHelper {
+class SessionHelper extends HashModel {
+
+  def get(key: String) = apply(key)
 
   def apply(name: String): Option[Any] = {
     val value = ctx.request.getSession.getAttribute(name)
