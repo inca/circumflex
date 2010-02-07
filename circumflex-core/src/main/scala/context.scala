@@ -45,6 +45,15 @@ class CircumflexContext(val request: HttpServletRequest,
   val dateHeaders = new HashMap[String, Long]
   var statusCode: Int = 200
   protected var _contentType: String = null
+  
+  /* HELPERS */
+  val header = new HeadersHelper
+  val session = new SessionHelper
+  val flash = new FlashHelper
+
+  params += ("header" -> header)
+  params += ("session" -> session)
+  params += ("flash" -> flash)
 
   def contentType: Option[String] =
     if (_contentType == null) None

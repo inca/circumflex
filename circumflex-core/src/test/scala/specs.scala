@@ -56,6 +56,14 @@ object CircumflexCoreSpec extends Specification {
       }
       done(200)
     }
+    get("/flash-set") = {
+      flash("notice") = "preved"
+      done(200)
+    }
+    get("/flash-get") = flash("notice") match {
+      case Some(s: String) => s
+      case None => ""
+    }
   }
 
   doBeforeSpec{
