@@ -53,10 +53,10 @@ abstract class LocalizableView[R] extends View[R] with LongIdPK[R] {
   }
 
   /**
-   * Returns all constraints, sequences and auxiliary objects defined for this view.
+   * Returns all constraints and auxiliary objects defined for this view.
    */
-  override def auxiliaryObjects: Seq[SchemaObject] =
-    _auxiliaryObjects ++ constraints ++ sequences
+  override def postAuxiliaryObjects: Seq[SchemaObject] =
+    _postAuxiliaryObjects ++ constraints
 
   private val rNode = rawTable as "r"
   private val lNode = localeTable as "l"

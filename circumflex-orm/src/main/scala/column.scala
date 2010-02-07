@@ -36,6 +36,7 @@ class Column[T, R](val relation: Relation[R],
                    val columnName: String,
                    val sqlType: String)
     extends SchemaObject {
+  protected var _autoIncrement = false
   protected var _nullable = true
   protected var _defaultExpression: Option[String] = None
 
@@ -83,6 +84,17 @@ class Column[T, R](val relation: Relation[R],
     _defaultExpression = Some(expr)
     return this
   }
+
+  /**
+   * DSL-like way to create a sequence for this column.
+   */
+  def autoIncrement(): this.type = {
+    dialect.prepareAutoIncrementColumn(this)
+    _autoIncrement = true
+    this
+  }
+
+  def autoIncrement_? = _autoIncrement
 
   /* DDL */
 
@@ -161,15 +173,7 @@ class IntegerColumn[R](relation: Relation[R], name: String)
  * Long (int8 or bigint) column.
  */
 class LongColumn[R](relation: Relation[R], name: String)
-    extends Column[Long, R](relation, name, dialect.longType) {
-  /**
-   * DSL-like way to create a sequence for this column.
-   */
-  def autoIncrement: this.type = {
-    // TODO: implement auto-increment stategies
-    this
-  }
-}
+    extends Column[Long, R](relation, name, dialect.longType)
 
 /**
  * Integer column.

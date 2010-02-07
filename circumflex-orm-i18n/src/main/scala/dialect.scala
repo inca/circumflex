@@ -58,7 +58,7 @@ class I18NDialect extends Dialect {
                     .localizableColumns
                     .map(_.columnName)
                     .mkString(", ") +
-            ") values (" + rule.localizableView.localeTable.idSeq.nextValSql + ", " +
+            ") values (nextval('" + columnSequenceName(rule.localizableView.localeTable.id) + "'), " +
             getLangExpression + ", new.id, " +
             rule.localizableView
                     .localizableColumns
@@ -86,7 +86,7 @@ class I18NDialect extends Dialect {
                     .localizableColumns
                     .map(_.columnName)
                     .mkString(", ") +
-            ") values (" + rule.localizableView.localeTable.idSeq.nextValSql + ", " +
+            ") values (nextval('" + columnSequenceName(rule.localizableView.localeTable.id) + "'), " +
             getLangExpression + ", new.id, " +
             rule.localizableView
                     .localizableColumns

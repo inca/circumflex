@@ -91,6 +91,9 @@ class Dialect {
 
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
 
+  protected def columnSequenceName(col: Column[_, _]) =
+    col.relation.qualifiedName + "_" + col.columnName + "_seq"
+
   /**
    * Produces qualified name of a table
    * (e.g. "myschema.mytable").
@@ -115,9 +118,11 @@ class Dialect {
   def columnDefinition(col: Column[_, _]): String = {
     var result = col.columnName + " " + col.sqlType
     if (!col.nullable_?) result += " not null"
-    col.default match {
+    if (col.autoIncrement_?)
+      result += " default nextval('" + columnSequenceName(col) + "')"
+    else col.default match {
       case Some(expr) => result += " default " + expr
-      case _ => 
+      case _ =>
     }
     return result
   }
@@ -392,5 +397,20 @@ class Dialect {
     return result
   }
 
+  /* DIALECT-SPECIFIC BEHAVIOR */
+
+  /**
+   * Prepare a table for auto-increment column.
+   * This implementation adds auxiliary sequence (PostgreSQL, Oracle and DB2 support sequences).
+   */
+  def prepareAutoIncrementColumn(col: Column[_, _]): Unit = {
+    val seq = new SchemaObject() {
+      def objectName = columnSequenceName(col)
+      def sqlDrop = "drop sequence " + objectName
+      def sqlCreate = "create sequence " + objectName
+    }
+    if (!col.relation.preAuxiliaryObjects.contains(seq))
+      col.relation.addPreAuxiliaryObjects(seq)
+  }
 
 }

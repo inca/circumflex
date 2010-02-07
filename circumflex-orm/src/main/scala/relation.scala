@@ -42,12 +42,13 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   protected val _columns = new ListBuffer[Column[_, R]]
   protected val _constraints = new ListBuffer[Constraint[R]]
   protected val _associations = new ListBuffer[Association[R, _]]
-  protected val _auxiliaryObjects = new ListBuffer[SchemaObject];
+  protected val _preAuxiliaryObjects = new ListBuffer[SchemaObject]
+  protected val _postAuxiliaryObjects = new ListBuffer[SchemaObject]
 
-  private var _cachedRecordClass: Class[R] = null;
-  private var _cachedRelationName: String = null;
+  private var _cachedRecordClass: Class[R] = null
+  private var _cachedRelationName: String = null
 
-  private var uniqueCounter = -1;
+  private var uniqueCounter = -1
 
   protected[orm] def uniqueSuffix: String = {
     uniqueCounter += 1
@@ -128,9 +129,14 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def associations: Seq[Association[R, _]] = _associations
 
   /**
-   * Returns auxiliary objects associated with this table.
+   * Returns auxiliary objects associated with this table that will be created before all tables.
    */
-  def auxiliaryObjects: Seq[SchemaObject] = _auxiliaryObjects
+  def preAuxiliaryObjects: Seq[SchemaObject] = _preAuxiliaryObjects
+
+  /**
+   * Returns auxiliary objects associated with this table that will be created after all tables.
+   */
+  def postAuxiliaryObjects: Seq[SchemaObject] = _postAuxiliaryObjects
 
   /**
    * If possible, return an association from this relation as parent to
@@ -201,8 +207,21 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * Adds associated auxiliary object.
    */
-  protected[orm] def addAuxiliaryObjects(objects: SchemaObject*) = {
-    _auxiliaryObjects ++= objects.toList
+  protected[orm] def addAuxiliaryObjects(objects: SchemaObject*) =
+    addPostAuxiliaryObjects(objects.toList: _*)
+
+  /**
+   * Adds associated auxiliary object.
+   */
+  protected[orm] def addPreAuxiliaryObjects(objects: SchemaObject*) = {
+    _preAuxiliaryObjects ++= objects.toList
+  }
+
+  /**
+   * Adds associated auxiliary object.
+   */
+  protected[orm] def addPostAuxiliaryObjects(objects: SchemaObject*) = {
+    _postAuxiliaryObjects ++= objects.toList
   }
 
   /**
@@ -275,7 +294,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   protected[orm] def index(indexName: String): Index[R] = {
     val idx = new Index(this, indexName)
-    _auxiliaryObjects += idx
+    _postAuxiliaryObjects += idx
     return idx
   }
 
