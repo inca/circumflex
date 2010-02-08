@@ -31,6 +31,7 @@ import java.sql.Connection
 import java.lang.String
 import org.slf4j.LoggerFactory
 import java.util.Locale
+import ORM._
 
 /**
  * ORM Internationalization features configuration.
@@ -51,11 +52,13 @@ object ORMI18N extends JDBCHelper {
 
   def setLanguage(conn: Connection, lang: String): Unit = {
     val q = i18nDialect.setLangQuery(lang.trim.toLowerCase);
-    auto(conn.prepareStatement(q))(st => {
-      sqlLog.debug(q)
-      st.executeUpdate
-      log.debug("Set transaction language to " + lang)
-    })
+    transactionManager.dml {
+      conn => auto(conn.prepareStatement(q))(st => {
+        sqlLog.debug(q)
+        st.executeUpdate
+        log.debug("Set transaction language to " + lang)
+      })
+    }
   }
 
   def i18nDialect: I18NDialect = ORM.dialect match {
