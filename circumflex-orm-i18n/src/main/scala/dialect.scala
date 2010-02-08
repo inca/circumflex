@@ -25,7 +25,7 @@
 
 package ru.circumflex.orm.i18n
 
-import ru.circumflex.orm.{Relation, ForeignKey, Dialect}
+import ru.circumflex.orm.{Relation, Dialect}
 
 class I18NDialect extends Dialect {
 

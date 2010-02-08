@@ -149,10 +149,10 @@ class Dialect {
    */
   def foreignKeyDefinition(fk: ForeignKey[_, _]) =
     "foreign key (" + fk.childColumns.map(_.columnName).mkString(", ") +
-            ") references " + unwrap(fk.parentRelation).qualifiedName + " (" +
-            fk.parentColumns.map(_.columnName).mkString(", ") + ") " +
-            "on delete " + foreignKeyAction(fk.onDelete) + " " +
-            "on update " + foreignKeyAction(fk.onUpdate)
+        ") references " + unwrap(fk.parentRelation).qualifiedName + " (" +
+        fk.parentColumns.map(_.columnName).mkString(", ") + ") " +
+        "on delete " + foreignKeyAction(fk.onDelete) + " " +
+        "on update " + foreignKeyAction(fk.onUpdate)
 
   /**
    * Produces check constraint definition (e.g. "check (age between 18 and 40)").
@@ -179,27 +179,27 @@ class Dialect {
    */
   def createTable(tab: Table[_]) =
     "create table " + qualifyRelation(tab) + " (" +
-            tab.columns.map(_.sqlDefinition).mkString(", ") + ", " +
-            tab.primaryKey.sqlFullDefinition + ")"
+        tab.columns.map(_.sqlDefinition).mkString(", ") + ", " +
+        tab.primaryKey.sqlFullDefinition + ")"
 
   /**
    * Produces CREATE VIEW statement.
    */
   def createView(view: View[_]) =
     "create view " + qualifyRelation(view) + " (" +
-            view.columns.map(_.columnName).mkString(", ") + ") as " +
-            view.query.toInlineSql
+        view.columns.map(_.columnName).mkString(", ") + ") as " +
+        view.query.toInlineSql
 
   /**
    * Produces CREATE INDEX statement.
    */
   def createIndex(index: Index[_]): String =
     "create " + (if (index.unique_?) "unique" else "") + " index " +
-            index.indexName + " on " + unwrap(index.relation).qualifiedName + " using " +
-            index.using + " (" + index.expressions.mkString(", ") + ")" +
-            (if (index.where != EmptyPredicate)
-              " where " + index.where.toInlineSql
-            else "")
+        index.indexName + " on " + unwrap(index.relation).qualifiedName + " using " +
+        index.using + " (" + index.expressions.mkString(", ") + ")" +
+        (if (index.where != EmptyPredicate)
+          " where " + index.where.toInlineSql
+        else "")
 
   /**
    * Produces ALTER TABLE statement with abstract action.
@@ -290,8 +290,8 @@ class Dialect {
     node match {
       case j: JoinNode[_, _] =>
         result += joinInternal(j.left, on) +
-                " " + j.joinType.sql + " " +
-                joinInternal(j.right, j.on)
+            " " + j.joinType.sql + " " +
+            joinInternal(j.right, j.on)
       case _ =>
         result += node.toSql
         if (on != null) result += " " + on
@@ -351,16 +351,24 @@ class Dialect {
    */
   def insertRecord(record: Record[_]): String =
     "insert into " + record.relation.qualifiedName +
-            " (" + record.relation.columns.map(_.columnName).mkString(", ") +
-            ") values (" + record.relation.columns.map(_ => "?").mkString(", ") + ")"
+        " (" + record.relation.columns.map(_.columnName).mkString(", ") +
+        ") values (" + record.relation.columns.map(c =>
+      if (c.default == None) "?" else "default").mkString(", ") + ")"
+
+  /**
+   * Produces SQL expression that is used to fetch last inserted record.
+   */
+  def lastIdExpression(rel: Relation[_]): String = {
+    return "lastval()"
+  }
 
   /**
    * Produces INSERT INTO .. SELECT statement.
    */
   def insertSelect(dml: InsertSelect[_]): String =
     "insert into " + dml.relation.qualifiedName +
-            " ( " + dml.relation.columns.map(_.columnName).mkString(", ") +
-            ") " + select(dml.query)
+        " ( " + dml.relation.columns.map(_.columnName).mkString(", ") +
+        ") " + select(dml.query)
 
   /* UPDATE STATEMENTS */
 
@@ -369,15 +377,15 @@ class Dialect {
    */
   def updateRecord(record: Record[_]): String =
     "update " + record.relation.qualifiedName +
-            " set " + record.relation.nonPKColumns.map(_.columnName + " = ?").mkString(", ") +
-            " where " + record.relation.primaryKey.column.columnName + " = ?"
+        " set " + record.relation.nonPKColumns.map(_.columnName + " = ?").mkString(", ") +
+        " where " + record.relation.primaryKey.column.columnName + " = ?"
 
   /**
    * Produces UPDATE statement.
    */
   def update(dml: Update[_]): String = {
     var result = "update " + dml.relation.qualifiedName +
-            " set " + dml.setClause.map(_._1.columnName + " = ?").mkString(", ")
+        " set " + dml.setClause.map(_._1.columnName + " = ?").mkString(", ")
     if (dml.where != EmptyPredicate) result += " where " + dml.where.toSql
     return result
   }
@@ -389,7 +397,7 @@ class Dialect {
    */
   def deleteRecord(record: Record[_]): String =
     "delete from " + record.relation.qualifiedName +
-            " where " + record.relation.primaryKey.column.columnName + " = ?"
+        " where " + record.relation.primaryKey.column.columnName + " = ?"
 
   /**
    * Produces DELETE statement.

@@ -251,11 +251,11 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    * Adds a foreign key constraint.
    */
   protected[orm] def foreignKey[T, P](
-          parentRelation: Relation[P],
-          localColumns: Seq[Column[_, R]],
-          referenceColumns: Seq[Column[_, P]]): ForeignKey[R, P] = {
+      parentRelation: Relation[P],
+      localColumns: Seq[Column[_, R]],
+      referenceColumns: Seq[Column[_, P]]): ForeignKey[R, P] = {
     val constrName = relationName + "_" +
-            localColumns.map(_.columnName).mkString("_") + "_fkey"
+        localColumns.map(_.columnName).mkString("_") + "_fkey"
     val fk = new MultiForeignKey(this, parentRelation, constrName,
       localColumns, referenceColumns)
     _constraints += fk
@@ -266,8 +266,8 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    * Adds a foreign key constraint.
    */
   protected[orm] def foreignKey[T, P](
-          parentRelation: Relation[P],
-          colPairs: Pair[Column[_, R], Column[_, P]]*): ForeignKey[R, P] = {
+      parentRelation: Relation[P],
+      colPairs: Pair[Column[_, R], Column[_, P]]*): ForeignKey[R, P] = {
     val localColumns = colPairs.toList.map(_._1)
     val referenceColumns = colPairs.toList.map(_._2)
     return foreignKey(parentRelation, localColumns, referenceColumns)
@@ -461,14 +461,26 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def insert_!(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    transactionManager.dml(conn => {
+    val rows = transactionManager.dml(conn => {
       val sql = dialect.insertRecord(record)
       sqlLog.debug(sql)
       auto(conn.prepareStatement(sql))(st => {
-        setParams(record, st, columns)
-        return st.executeUpdate
+        setParams(record, st, columns.filter(c => c.default == None))
+        st.executeUpdate
       })
     })
+    refetchLast(record)
+    return rows
+  }
+
+  def refetchLast(record: Record[R]): Unit = {
+    val expr = new SimpleExpression(primaryKey.column.columnName +
+        " = " + dialect.lastIdExpression(this), Nil)
+    criteria.add(expr).unique match {
+      case Some(r: Record[R]) =>
+        r.fieldsMap.foreach(t => record.fieldsMap += t)
+      case _ => throw new ORMException("Could not locate the last inserted row.")
+    }
   }
 
   def update(record: Record[R]): Int = {
