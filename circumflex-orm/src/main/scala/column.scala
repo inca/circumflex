@@ -36,7 +36,7 @@ class Column[T, R](val relation: Relation[R],
                    val columnName: String,
                    val sqlType: String)
     extends SchemaObject {
-  protected var _autoIncrement = false
+  
   protected var _nullable = true
   protected var _defaultExpression: Option[String] = None
 
@@ -81,7 +81,7 @@ class Column[T, R](val relation: Relation[R],
    * Sets the default expression for this column.
    */
   def default(expr: String): this.type = {
-    _defaultExpression = Some(expr)
+    _defaultExpression = Some(dialect.defaultExpression(expr))
     return this
   }
 
@@ -90,11 +90,9 @@ class Column[T, R](val relation: Relation[R],
    */
   def autoIncrement(): this.type = {
     dialect.prepareAutoIncrementColumn(this)
-    _autoIncrement = true
+    _defaultExpression = Some(dialect.autoIncrementExpression(this))
     this
   }
-
-  def autoIncrement_? = _autoIncrement
 
   /* DDL */
 

@@ -50,7 +50,7 @@ class I18NDialect extends Dialect {
             ") values (" +
             rule.localizableView
                     .columns
-                    .map(c => "new." + c.columnName)
+                    .map(c => if (c.default == None) "new." + c.columnName else "default")
                     .mkString(", ") +
             ");\n" + "insert into " + rule.localizableView.localeTable.qualifiedName +
             " (id, cx_lang, cx_item_id, " +
@@ -59,7 +59,7 @@ class I18NDialect extends Dialect {
                     .map(_.columnName)
                     .mkString(", ") +
             ") values (nextval('" + columnSequenceName(rule.localizableView.localeTable.id) + "'), " +
-            getLangExpression + ", new.id, " +
+            getLangExpression + ", currval('" + columnSequenceName(rule.localizableView.id) + "'), " +
             rule.localizableView
                     .localizableColumns
                     .map(c => "new." + c.columnName)

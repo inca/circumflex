@@ -118,15 +118,18 @@ class Dialect {
   def columnDefinition(col: Column[_, _]): String = {
     var result = col.columnName + " " + col.sqlType
     if (!col.nullable_?) result += " not null"
-    if (col.autoIncrement_?)
-      result += " default nextval('" + columnSequenceName(col) + "')"
-    else col.default match {
-      case Some(expr) => result += " default " + expr
+    col.default match {
+      case Some(expr) => result += " " + expr
       case _ =>
     }
     return result
   }
 
+  def defaultExpression(expr: String): String =
+    "default " + expr
+
+  def autoIncrementExpression(col: Column[_, _]): String =
+    "default nextval('" + columnSequenceName(col) + "')"
 
   /**
    * Produces PK definition (e.g. "primary key (id)").

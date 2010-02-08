@@ -30,7 +30,6 @@ import ru.circumflex.orm._
 class Foo extends Record[Foo] {
   val key = field(Foo.key)
   val name = field(Foo.name)
-  val notes = field(Foo.notes)
 }
 
 object Foo extends LocalizableView[Foo]
@@ -40,9 +39,7 @@ object Foo extends LocalizableView[Foo]
           .unique
   val name = stringColumn("name")
           .notNull
-  val notes = stringColumn("notes")
-          .notNull
-  localize(name, notes)
+  localize(name)
 }
 
 class Bar extends Record[Bar] {
