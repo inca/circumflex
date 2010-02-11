@@ -426,5 +426,4 @@ class Dialect {
     return result
   }
 
-
 }
