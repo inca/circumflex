@@ -141,34 +141,6 @@ class ColumnProjection[T, R](val node: RelationNode[R],
 }
 
 /**
- * Represents a projection for sequence's NEXTVAL clause.
- */
-class SequenceNextValProjection[R](val seq: Sequence[R]) extends AtomicProjection[Long] {
-  def toSql = dialect.sequenceNextVal(seq, alias)
-
-  override def equals(obj: Any) = obj match {
-    case p: SequenceNextValProjection[R] => this.seq == p.seq
-    case _ => false
-  }
-
-  override def hashCode = seq.hashCode
-}
-
-/**
- * Represents a projection for sequence's CURRVAL clause.
- */
-class SequenceCurrValProjection[R](val seq: Sequence[R]) extends AtomicProjection[Long] {
-  def toSql = dialect.sequenceCurrVal(seq, alias)
-
-  override def equals(obj: Any) = obj match {
-    case p: SequenceNextValProjection[R] => this.seq == p.seq
-    case _ => false
-  }
-
-  override def hashCode = seq.hashCode
-}
-
-/**
  * Represents a record projection (it groups all field projections).
  */
 class RecordProjection[R](val node: RelationNode[R])

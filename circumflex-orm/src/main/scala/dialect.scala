@@ -91,6 +91,9 @@ class Dialect {
 
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
 
+  protected def columnSequenceName(col: Column[_, _]) =
+    col.relation.qualifiedName + "_" + col.columnName + "_seq"
+
   /**
    * Produces qualified name of a table
    * (e.g. "myschema.mytable").
@@ -100,12 +103,6 @@ class Dialect {
 
   def qualifyColumn(col: Column[_, _]) =
     col.relation.relationName + "." + col.columnName
-
-  /**
-   * Produces qualified sequence name (e.g. public.mytable_id_seq).
-   */
-  def sequenceName(seq: Sequence[_]) =
-    qualifyRelation(seq.relation) + "_" + seq.column.columnName + "_seq"
 
   /**
    * Override this definition to provide logical "unwrapping" for relation-based operations.
@@ -122,12 +119,17 @@ class Dialect {
     var result = col.columnName + " " + col.sqlType
     if (!col.nullable_?) result += " not null"
     col.default match {
-      case Some(expr) => result += " default " + expr
-      case _ => 
+      case Some(expr) => result += " " + expr
+      case _ =>
     }
     return result
   }
 
+  def defaultExpression(expr: String): String =
+    "default " + expr
+
+  def autoIncrementExpression(col: Column[_, _]): String =
+    "default nextval('" + columnSequenceName(col) + "')"
 
   /**
    * Produces PK definition (e.g. "primary key (id)").
@@ -147,10 +149,10 @@ class Dialect {
    */
   def foreignKeyDefinition(fk: ForeignKey[_, _]) =
     "foreign key (" + fk.childColumns.map(_.columnName).mkString(", ") +
-            ") references " + unwrap(fk.parentRelation).qualifiedName + " (" +
-            fk.parentColumns.map(_.columnName).mkString(", ") + ") " +
-            "on delete " + foreignKeyAction(fk.onDelete) + " " +
-            "on update " + foreignKeyAction(fk.onUpdate)
+        ") references " + unwrap(fk.parentRelation).qualifiedName + " (" +
+        fk.parentColumns.map(_.columnName).mkString(", ") + ") " +
+        "on delete " + foreignKeyAction(fk.onDelete) + " " +
+        "on update " + foreignKeyAction(fk.onUpdate)
 
   /**
    * Produces check constraint definition (e.g. "check (age between 18 and 40)").
@@ -173,37 +175,31 @@ class Dialect {
     "create schema " + schema.schemaName
 
   /**
-   * Produces CREATE SEQUENCE statement.
-   */
-  def createSequence(seq: Sequence[_]) =
-    "create sequence " + seq.sequenceName + " start with 1 increment by 1"
-
-  /**
    * Produces CREATE TABLE statement without constraints.
    */
   def createTable(tab: Table[_]) =
     "create table " + qualifyRelation(tab) + " (" +
-            tab.columns.map(_.sqlDefinition).mkString(", ") + ", " +
-            tab.primaryKey.sqlFullDefinition + ")"
+        tab.columns.map(_.sqlDefinition).mkString(", ") + ", " +
+        tab.primaryKey.sqlFullDefinition + ")"
 
   /**
    * Produces CREATE VIEW statement.
    */
   def createView(view: View[_]) =
     "create view " + qualifyRelation(view) + " (" +
-            view.columns.map(_.columnName).mkString(", ") + ") as " +
-            view.query.toInlineSql
+        view.columns.map(_.columnName).mkString(", ") + ") as " +
+        view.query.toInlineSql
 
   /**
    * Produces CREATE INDEX statement.
    */
   def createIndex(index: Index[_]): String =
     "create " + (if (index.unique_?) "unique" else "") + " index " +
-            index.indexName + " on " + unwrap(index.relation).qualifiedName + " using " +
-            index.using + " (" + index.expressions.mkString(", ") + ")" +
-            (if (index.where != EmptyPredicate)
-              " where " + index.where.toInlineSql
-            else "")
+        index.indexName + " on " + unwrap(index.relation).qualifiedName + " using " +
+        index.using + " (" + index.expressions.mkString(", ") + ")" +
+        (if (index.where != EmptyPredicate)
+          " where " + index.where.toInlineSql
+        else "")
 
   /**
    * Produces ALTER TABLE statement with abstract action.
@@ -248,12 +244,6 @@ class Dialect {
     "drop view " + qualifyRelation(view)
 
   /**
-   * Produces DROP SEQUENCE statement.
-   */
-  def dropSequence(seq: Sequence[_]) =
-    "drop sequence " + seq.sequenceName
-
-  /**
    * Produces DROP SCHEMA statement.
    */
   def dropSchema(schema: Schema) =
@@ -265,23 +255,7 @@ class Dialect {
   def dropIndex(index: Index[_]) =
     "drop index " + index.relation.schemaName + "." + index.indexName
 
-  /* SEQUENCES STUFF */
-
-  def sequenceCurrVal(seq: Sequence[_]): String = "currval('" + sequenceName(seq) + "')"
-  def sequenceCurrVal(seq: Sequence[_], alias: String): String =
-    sequenceCurrVal(seq) + " as " + alias
-
-  def sequenceNextVal(seq: Sequence[_]): String = "nextval('" + sequenceName(seq) + "')"
-  def sequenceNextVal(seq: Sequence[_], alias: String): String =
-    sequenceNextVal(seq) + " as " + alias
-
   /* SELECT STATEMENTS AND RELATED */
-
-  /**
-   * Produces a statement to select a single next sequence value.
-   */
-  def selectSequenceNextVal(seq: Sequence[_]) =
-    "select " + sequenceNextVal(seq)
 
   def columnAlias(col: Column[_, _], columnAlias: String, tableAlias: String) =
     qualifyColumn(col, tableAlias) + " as " + columnAlias
@@ -316,8 +290,8 @@ class Dialect {
     node match {
       case j: JoinNode[_, _] =>
         result += joinInternal(j.left, on) +
-                " " + j.joinType.sql + " " +
-                joinInternal(j.right, j.on)
+            " " + j.joinType.sql + " " +
+            joinInternal(j.right, j.on)
       case _ =>
         result += node.toSql
         if (on != null) result += " " + on
@@ -377,16 +351,24 @@ class Dialect {
    */
   def insertRecord(record: Record[_]): String =
     "insert into " + record.relation.qualifiedName +
-            " (" + record.relation.columns.map(_.columnName).mkString(", ") +
-            ") values (" + record.relation.columns.map(_ => "?").mkString(", ") + ")"
+        " (" + record.relation.columns.map(_.columnName).mkString(", ") +
+        ") values (" + record.relation.columns.map(c =>
+      if (c.default == None) "?" else "default").mkString(", ") + ")"
+
+  /**
+   * Produces SQL expression that is used to fetch last inserted record.
+   */
+  def lastIdExpression(rel: Relation[_]): String = {
+    return "lastval()"
+  }
 
   /**
    * Produces INSERT INTO .. SELECT statement.
    */
   def insertSelect(dml: InsertSelect[_]): String =
     "insert into " + dml.relation.qualifiedName +
-            " ( " + dml.relation.columns.map(_.columnName).mkString(", ") +
-            ") " + select(dml.query)
+        " ( " + dml.relation.columns.map(_.columnName).mkString(", ") +
+        ") " + select(dml.query)
 
   /* UPDATE STATEMENTS */
 
@@ -395,15 +377,15 @@ class Dialect {
    */
   def updateRecord(record: Record[_]): String =
     "update " + record.relation.qualifiedName +
-            " set " + record.relation.nonPKColumns.map(_.columnName + " = ?").mkString(", ") +
-            " where " + record.relation.primaryKey.column.columnName + " = ?"
+        " set " + record.relation.nonPKColumns.map(_.columnName + " = ?").mkString(", ") +
+        " where " + record.relation.primaryKey.column.columnName + " = ?"
 
   /**
    * Produces UPDATE statement.
    */
   def update(dml: Update[_]): String = {
     var result = "update " + dml.relation.qualifiedName +
-            " set " + dml.setClause.map(_._1.columnName + " = ?").mkString(", ")
+        " set " + dml.setClause.map(_._1.columnName + " = ?").mkString(", ")
     if (dml.where != EmptyPredicate) result += " where " + dml.where.toSql
     return result
   }
@@ -415,7 +397,7 @@ class Dialect {
    */
   def deleteRecord(record: Record[_]): String =
     "delete from " + record.relation.qualifiedName +
-            " where " + record.relation.primaryKey.column.columnName + " = ?"
+        " where " + record.relation.primaryKey.column.columnName + " = ?"
 
   /**
    * Produces DELETE statement.
@@ -424,6 +406,22 @@ class Dialect {
     var result = "delete from " + dml.relation.qualifiedName
     if (dml.where != EmptyPredicate) result += " where " + dml.where.toSql
     return result
+  }
+
+  /* DIALECT-SPECIFIC BEHAVIOR */
+
+  /**
+   * Prepare a table for auto-increment column.
+   * This implementation adds auxiliary sequence (PostgreSQL, Oracle and DB2 support sequences).
+   */
+  def prepareAutoIncrementColumn(col: Column[_, _]): Unit = {
+    val seq = new SchemaObject() {
+      def objectName = columnSequenceName(col)
+      def sqlDrop = "drop sequence " + objectName
+      def sqlCreate = "create sequence " + objectName
+    }
+    if (!col.relation.preAuxiliaryObjects.contains(seq))
+      col.relation.addPreAuxiliaryObjects(seq)
   }
 
 }

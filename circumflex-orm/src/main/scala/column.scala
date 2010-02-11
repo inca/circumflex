@@ -36,8 +36,8 @@ class Column[T, R](val relation: Relation[R],
                    val columnName: String,
                    val sqlType: String)
     extends SchemaObject {
+  
   protected var _nullable = true
-  protected var _sequence: Option[Sequence[R]] = None
   protected var _defaultExpression: Option[String] = None
 
   def cloneForView[V](view: View[V]): Column[T, V] =
@@ -57,11 +57,6 @@ class Column[T, R](val relation: Relation[R],
    * Is this column nullable?
    */
   def nullable_?(): Boolean = _nullable
-
-  /**
-   * Get a sequence for autoincrement columns.
-   */
-  def sequence: Option[Sequence[R]] = _sequence
 
   /**
    * DSL-like way to qualify a column with UNIQUE constraint.
@@ -86,8 +81,17 @@ class Column[T, R](val relation: Relation[R],
    * Sets the default expression for this column.
    */
   def default(expr: String): this.type = {
-    _defaultExpression = Some(expr)
+    _defaultExpression = Some(dialect.defaultExpression(expr))
     return this
+  }
+
+  /**
+   * DSL-like way to create a sequence for this column.
+   */
+  def autoIncrement(): this.type = {
+    dialect.prepareAutoIncrementColumn(this)
+    _defaultExpression = Some(dialect.autoIncrementExpression(this))
+    this
   }
 
   /* DDL */
@@ -167,15 +171,7 @@ class IntegerColumn[R](relation: Relation[R], name: String)
  * Long (int8 or bigint) column.
  */
 class LongColumn[R](relation: Relation[R], name: String)
-    extends Column[Long, R](relation, name, dialect.longType) {
-  /**
-   * DSL-like way to create a sequence for this column.
-   */
-  def autoIncrement: this.type = {
-    _sequence = Some(new Sequence(relation, this))
-    this
-  }
-}
+    extends Column[Long, R](relation, name, dialect.longType)
 
 /**
  * Integer column.

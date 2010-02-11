@@ -34,8 +34,7 @@ import ORM._
  * Note that if you want to use projections, you should still use lower-level <code>Select</code>
  */
 class Criteria[R](val rootNode: RelationNode[R])
-        extends SQLable
-                with Cloneable{
+        extends SQLable with Cloneable{
 
   private var _counter = 0;
 

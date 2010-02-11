@@ -66,6 +66,5 @@ trait LongIdPK[R] extends Relation[R] {
   val id = longColumn("id")
           .autoIncrement
           .notNull
-  val idSeq = id.sequence.get
   primaryKey(id)
 }

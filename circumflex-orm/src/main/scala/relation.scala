@@ -42,12 +42,13 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   protected val _columns = new ListBuffer[Column[_, R]]
   protected val _constraints = new ListBuffer[Constraint[R]]
   protected val _associations = new ListBuffer[Association[R, _]]
-  protected val _auxiliaryObjects = new ListBuffer[SchemaObject];
+  protected val _preAuxiliaryObjects = new ListBuffer[SchemaObject]
+  protected val _postAuxiliaryObjects = new ListBuffer[SchemaObject]
 
-  private var _cachedRecordClass: Class[R] = null;
-  private var _cachedRelationName: String = null;
+  private var _cachedRecordClass: Class[R] = null
+  private var _cachedRelationName: String = null
 
-  private var uniqueCounter = -1;
+  private var uniqueCounter = -1
 
   protected[orm] def uniqueSuffix: String = {
     uniqueCounter += 1
@@ -128,14 +129,14 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def associations: Seq[Association[R, _]] = _associations
 
   /**
-   * Returns sequences associated with this table.
+   * Returns auxiliary objects associated with this table that will be created before all tables.
    */
-  def sequences: Seq[Sequence[R]] = columns.flatMap(_.sequence)
+  def preAuxiliaryObjects: Seq[SchemaObject] = _preAuxiliaryObjects
 
   /**
-   * Returns auxiliary objects associated with this table.
+   * Returns auxiliary objects associated with this table that will be created after all tables.
    */
-  def auxiliaryObjects: Seq[SchemaObject] = _auxiliaryObjects
+  def postAuxiliaryObjects: Seq[SchemaObject] = _postAuxiliaryObjects
 
   /**
    * If possible, return an association from this relation as parent to
@@ -206,8 +207,21 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   /**
    * Adds associated auxiliary object.
    */
-  protected[orm] def addAuxiliaryObjects(objects: SchemaObject*) = {
-    _auxiliaryObjects ++= objects.toList
+  protected[orm] def addAuxiliaryObjects(objects: SchemaObject*) =
+    addPostAuxiliaryObjects(objects.toList: _*)
+
+  /**
+   * Adds associated auxiliary object.
+   */
+  protected[orm] def addPreAuxiliaryObjects(objects: SchemaObject*) = {
+    _preAuxiliaryObjects ++= objects.toList
+  }
+
+  /**
+   * Adds associated auxiliary object.
+   */
+  protected[orm] def addPostAuxiliaryObjects(objects: SchemaObject*) = {
+    _postAuxiliaryObjects ++= objects.toList
   }
 
   /**
@@ -237,11 +251,11 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    * Adds a foreign key constraint.
    */
   protected[orm] def foreignKey[T, P](
-          parentRelation: Relation[P],
-          localColumns: Seq[Column[_, R]],
-          referenceColumns: Seq[Column[_, P]]): ForeignKey[R, P] = {
+      parentRelation: Relation[P],
+      localColumns: Seq[Column[_, R]],
+      referenceColumns: Seq[Column[_, P]]): ForeignKey[R, P] = {
     val constrName = relationName + "_" +
-            localColumns.map(_.columnName).mkString("_") + "_fkey"
+        localColumns.map(_.columnName).mkString("_") + "_fkey"
     val fk = new MultiForeignKey(this, parentRelation, constrName,
       localColumns, referenceColumns)
     _constraints += fk
@@ -252,8 +266,8 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    * Adds a foreign key constraint.
    */
   protected[orm] def foreignKey[T, P](
-          parentRelation: Relation[P],
-          colPairs: Pair[Column[_, R], Column[_, P]]*): ForeignKey[R, P] = {
+      parentRelation: Relation[P],
+      colPairs: Pair[Column[_, R], Column[_, P]]*): ForeignKey[R, P] = {
     val localColumns = colPairs.toList.map(_._1)
     val referenceColumns = colPairs.toList.map(_._2)
     return foreignKey(parentRelation, localColumns, referenceColumns)
@@ -280,7 +294,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   protected[orm] def index(indexName: String): Index[R] = {
     val idx = new Index(this, indexName)
-    _auxiliaryObjects += idx
+    _postAuxiliaryObjects += idx
     return idx
   }
 
@@ -447,14 +461,26 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def insert_!(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    transactionManager.dml(conn => {
+    val rows = transactionManager.dml(conn => {
       val sql = dialect.insertRecord(record)
       sqlLog.debug(sql)
       auto(conn.prepareStatement(sql))(st => {
-        setParams(record, st, columns)
-        return st.executeUpdate
+        setParams(record, st, columns.filter(c => c.default == None))
+        st.executeUpdate
       })
     })
+    refetchLast(record)
+    return rows
+  }
+
+  def refetchLast(record: Record[R]): Unit = {
+    val expr = new SimpleExpression(primaryKey.column.columnName +
+        " = " + dialect.lastIdExpression(this), Nil)
+    criteria.add(expr).unique match {
+      case Some(r: Record[R]) =>
+        r.fieldsMap.foreach(t => record.fieldsMap += t)
+      case _ => throw new ORMException("Could not locate the last inserted row.")
+    }
   }
 
   def update(record: Record[R]): Int = {
@@ -487,7 +513,6 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def save_!(record: Record[R]): Int =
     if (record.identified_?) update_!(record)
     else {
-      generateFields(record)
       insert_!(record)
     }
 
@@ -503,12 +528,6 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
       })
     })
   }
-
-  def generateFields(record: Record[R]): Unit =
-    columns.flatMap(_.sequence).foreach(seq => {
-      val nextval = seq.nextValue
-      record.setField(seq.column, nextval)
-    })
 
   /* EQUALITY AND OTHER STUFF */
 

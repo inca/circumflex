@@ -25,7 +25,7 @@
 
 package ru.circumflex.orm.i18n
 
-import ru.circumflex.orm.{Relation, ForeignKey, Dialect}
+import ru.circumflex.orm.{Relation, Dialect}
 
 class I18NDialect extends Dialect {
 
@@ -50,7 +50,7 @@ class I18NDialect extends Dialect {
             ") values (" +
             rule.localizableView
                     .columns
-                    .map(c => "new." + c.columnName)
+                    .map(c => if (c.default == None) "new." + c.columnName else "default")
                     .mkString(", ") +
             ");\n" + "insert into " + rule.localizableView.localeTable.qualifiedName +
             " (id, cx_lang, cx_item_id, " +
@@ -58,8 +58,8 @@ class I18NDialect extends Dialect {
                     .localizableColumns
                     .map(_.columnName)
                     .mkString(", ") +
-            ") values (" + rule.localizableView.localeTable.idSeq.nextValSql + ", " +
-            getLangExpression + ", new.id, " +
+            ") values (nextval('" + columnSequenceName(rule.localizableView.localeTable.id) + "'), " +
+            getLangExpression + ", currval('" + columnSequenceName(rule.localizableView.id) + "'), " +
             rule.localizableView
                     .localizableColumns
                     .map(c => "new." + c.columnName)
@@ -86,7 +86,7 @@ class I18NDialect extends Dialect {
                     .localizableColumns
                     .map(_.columnName)
                     .mkString(", ") +
-            ") values (" + rule.localizableView.localeTable.idSeq.nextValSql + ", " +
+            ") values (nextval('" + columnSequenceName(rule.localizableView.localeTable.id) + "'), " +
             getLangExpression + ", new.id, " +
             rule.localizableView
                     .localizableColumns
