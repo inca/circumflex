@@ -38,6 +38,6 @@
 
 [#macro uc]
 <p class="uc">
-  This section is under construction. Thank you for your patience!
+  This reference is still under construction. Thank you for your patience!
 </p>
 [/#macro]

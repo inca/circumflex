@@ -2,6 +2,7 @@
 [#include "/layout.ftl"]
 [@page]
 [@section id="toc" title="Table of Contents"]
+[@uc/]
 <h2><a href="/legal">Legal notice</a></h2>
 <h2>Circumflex Web Framework</h2>
 <ul class="plain">
