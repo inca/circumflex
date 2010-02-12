@@ -30,8 +30,9 @@ import java.io.File
 import java.net.URLDecoder
 import java.util.{Locale, ResourceBundle}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import org.slf4j.LoggerFactory
 import javax.activation.MimetypesFileTypeMap
+import org.slf4j.LoggerFactory
+import org.apache.commons.io.FilenameUtils._
 
 class CircumflexContext(val request: HttpServletRequest,
                         val response: HttpServletResponse,
@@ -127,12 +128,12 @@ object Circumflex {
   }
 
   val webappRoot: File = cfg("cx.root") match {
-    case Some(s: String) => new File(s.replaceAll("/", File.separator))
+    case Some(s: String) => new File(separatorsToSystem(s))
     case _ => throw new CircumflexException("'cx.root' not configured.")
   }
 
   val publicRoot = cfg("cx.public") match {
-    case Some(s: String) => new File(webappRoot, s.replaceAll("/", File.separator))
+    case Some(s: String) => new File(webappRoot, separatorsToSystem(s))
     case _ => throw new CircumflexException("'cx.public' not configured.")
   }
 

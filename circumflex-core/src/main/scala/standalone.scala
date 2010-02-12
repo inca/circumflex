@@ -28,6 +28,7 @@ import java.io.File
 import javax.servlet.Filter
 import org.mortbay.jetty.servlet.{ServletHolder, DefaultServlet, Context}
 import org.mortbay.jetty.{Handler, Server}
+import org.apache.commons.io.FilenameUtils._
 
 /**
  * A helper that allows standalone Circumflex execution based on
@@ -51,7 +52,7 @@ class StandaloneServer {
       case _ => 8180
     })
     context = new Context(jetty, "/", Context.SESSIONS)
-    context.setResourceBase(webappRoot.replaceAll("/", File.separator))
+    context.setResourceBase(separatorsToSystem(webappRoot))
     context.addServlet(new ServletHolder(new DefaultServlet), "/*")
     filters.foreach(f => context.addFilter(f, "/*", Handler.ALL))
   }

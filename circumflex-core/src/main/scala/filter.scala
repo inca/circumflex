@@ -34,6 +34,7 @@ import http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
 import Circumflex._
 import java.io.{FileNotFoundException, File}
+import org.apache.commons.io.FilenameUtils._
 
 /**
  * Provides a base class for Circumflex filter implementations.
@@ -88,8 +89,7 @@ abstract class AbstractCircumflexFilter extends Filter {
       case (req: HttpServletRequest, res: HttpServletResponse) =>
         // try to serve static first
         if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
-          val resource = new File(Circumflex.publicRoot,
-            req.getRequestURI.replaceAll("/", File.separator))
+          val resource = new File(Circumflex.publicRoot, separatorsToSystem(req.getRequestURI))
           if (resource.isFile) {
             val publicUri = Circumflex.cfg("cx.public") match {
               case Some(s: String) => "/" + s.replaceAll("^/?(.*?)/?$", "$1")
