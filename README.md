@@ -31,5 +31,5 @@ and choose `circumflex-archetype` from list.
     cd circumflex/circumflex-docs
     mvn jetty:run
 
-and point your browser to http://localhost:8180.
+and point your browser to [http://localhost:8888](localhost:8888).
 
