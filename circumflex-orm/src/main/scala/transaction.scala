@@ -128,9 +128,9 @@ class StatefulTransaction {
 
   /* CACHE RELATED STUFF */
 
-  protected var recordCache = initRecordCache
-  protected var mtoCache = initMTOCache
-  protected var otmCache = initOTMCache
+  var recordCache = initRecordCache
+  var mtoCache = initMTOCache
+  var otmCache = initOTMCache
 
   protected def initRecordCache = new HashMap[Relation[_], HashMap[Any, Any]]() {
     override def get(key: Relation[_]) = super.get(key) match {

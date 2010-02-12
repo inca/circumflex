@@ -203,7 +203,8 @@ class DDLExport extends JDBCHelper {
       errMsgs.clear
       // process database objects
       info("Executing schema create script.")
-      createSchemata(conn)
+      if (dialect.supportsSchema_?)
+        createSchemata(conn)
       createPreAuxiliaryObjects(conn)
       createTables(conn)
       createConstraints(conn)
@@ -234,10 +235,12 @@ class DDLExport extends JDBCHelper {
       info("Executing schema drop script.")
       dropPostAuxiliaryObjects(conn)
       dropViews(conn)
-      dropConstraints(conn)
+      if (dialect.supportDropConstraints_?)
+        dropConstraints(conn)
       dropTables(conn)
       dropPreAuxiliaryObjects(conn)
-      dropSchemata(conn)
+      if (dialect.supportsSchema_?)
+        dropSchemata(conn)
       // restore previous auto-commit setting
       conn.setAutoCommit(autoCommit)
       // report log and statistics

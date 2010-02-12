@@ -61,6 +61,11 @@ class Dialect {
     case SetDefaultAction => "set default"
   }
 
+  /* FEATURES COMPLIANCE */
+
+  def supportsSchema_?(): Boolean = true
+  def supportDropConstraints_?(): Boolean = true
+
   /* JOIN KEYWORDS */
 
   def innerJoin = "inner join"
