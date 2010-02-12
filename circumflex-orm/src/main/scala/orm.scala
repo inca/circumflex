@@ -33,6 +33,9 @@ import ru.circumflex.core.Circumflex
  * if you are not satisfied with default ones.
  */
 object ORM extends QueryHelper {
+
+  private var _cachedDialect: Dialect = null
+
   /**
    * Returns connection provider.
    * Can be overriden with "orm.connectionProvider" configuration parameter.
@@ -54,10 +57,13 @@ object ORM extends QueryHelper {
   val dialect: Dialect = Circumflex.cfg("orm.dialect") match {
     case Some(d: Dialect) => d
     case Some(c: Class[Dialect]) => c.newInstance
-    case Some(s: String) => Class
-        .forName(s, true, Circumflex.classLoader)
-        .newInstance
-        .asInstanceOf[Dialect]
+    case Some(s: String) => {
+      if (_cachedDialect == null)
+        _cachedDialect = Class.forName(s, true, Circumflex.classLoader)
+            .newInstance
+            .asInstanceOf[Dialect]
+      _cachedDialect
+    }
     case _ => DefaultDialect
   }
 

@@ -25,7 +25,12 @@
 
 package ru.circumflex.orm
 
-trait PostgreSQLDialect extends Dialect
+class PostgreSQLDialect extends Dialect
 
-object PostgreSQLDialect extends Dialect
+class MySQLDialect extends Dialect {
+
+}
+
+
+
 
