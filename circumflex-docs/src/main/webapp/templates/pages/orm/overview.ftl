@@ -157,7 +157,7 @@
   <dd>represents an abstract database object for schema generation purposes.</dd>
 </dl>
 <p>We will describe each concept in later chapters.</p>
-<h3 id="imports">Imports and ORM singleton</h3>
+<h2 id="imports">Imports and ORM singleton</h2>
 <p>Circumflex ORM resides in a single package. You should import all
   it's contents if you plan to use it in your code:</p>
 <pre>${'import ru.circumflex.orm._'}</pre>
@@ -169,7 +169,7 @@
 <p>In order to save us some typing time we omit import statements in source code
   fragments throughout this book, assuming you have these imports in place
   where necessary.</p>
-<h3 id="src">Working with Circumflex ORM sources</h3>
+<h2 id="src">Working with Circumflex ORM sources</h2>
 <p>It is recommended that you have an up-to-date version of Circumflex sources
   (they could be obtained at <a href="http://github.com/inca/circumflex">GitHub</a>).
   Working with Circumflex sources will help you clarify different details, which are

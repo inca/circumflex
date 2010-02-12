@@ -6,7 +6,15 @@
 <h2>Circumflex Web Framework</h2>
 <ul class="plain">
   <li>
-    <a href="/core/overview">Chapter 1. Overview</a>
+    <a href="/core/start">Chapter 1. Getting started</a>
+    <ul>
+      <li><a href="/core/start#overview">Overview</a></li>
+      <li><a href="/core/start#why">Why Circumflex?</a></li>
+      <li><a href="/core/start#src">Build Circumflex from sources</a></li>
+      <li><a href="/core/start#setup">Set up Circumflex project</a></li>
+      <li><a href="/core/start#layout">Sample project layout</a></li>
+      <li><a href="/core/start#imports">Imports</a></li>
+    </ul>
   </li>
   <li>
     <a href="/core/conf">Chapter 2. Configuring Circumflex</a>
