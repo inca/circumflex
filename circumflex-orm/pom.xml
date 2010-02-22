@@ -34,7 +34,7 @@
       <id>postgresql</id>
       <properties>
         <orm.connection.driver>org.postgresql.Driver</orm.connection.driver>
-        <orm.connection.url>jdbc:postgresql://localhost:5432/incadb</orm.connection.url>
+        <orm.connection.url>jdbc:postgresql://localhost:5432/inca</orm.connection.url>
         <orm.connection.username>inca</orm.connection.username>
         <orm.connection.password>incainca</orm.connection.password>
         <orm.dialect>ru.circumflex.orm.PostgreSQLDialect</orm.dialect>
@@ -53,7 +53,7 @@
       <id>mysql</id>
       <properties>
         <orm.connection.driver>com.mysql.jdbc.Driver</orm.connection.driver>
-        <orm.connection.url>jdbc:mysql://localhost:3306/incadb</orm.connection.url>
+        <orm.connection.url>jdbc:mysql://localhost:3306/inca</orm.connection.url>
         <orm.connection.username>inca</orm.connection.username>
         <orm.connection.password>incainca</orm.connection.password>
         <orm.dialect>ru.circumflex.orm.MySQLDialect</orm.dialect>
