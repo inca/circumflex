@@ -494,9 +494,9 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   }
 
   def refetchLast(record: Record[R]): Unit = {
-    val expr = new SimpleExpression(primaryKey.column.columnName +
+    val expr = new SimpleExpression("root." + primaryKey.column.columnName +
         " = " + dialect.lastIdExpression(this), Nil)
-    criteria.add(expr).unique match {
+    as("root").criteria.add(expr).unique match {
       case Some(r: Record[R]) =>
         r.fieldsMap.foreach(t => record.fieldsMap += t)
       case _ => throw new ORMException("Could not locate the last inserted row.")
