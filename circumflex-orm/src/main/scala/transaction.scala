@@ -128,9 +128,9 @@ class StatefulTransaction {
 
   /* CACHE RELATED STUFF */
 
-  var recordCache = initRecordCache
-  var mtoCache = initMTOCache
-  var otmCache = initOTMCache
+  protected var recordCache = initRecordCache
+  protected var mtoCache = initMTOCache
+  protected var otmCache = initOTMCache
 
   protected def initRecordCache = new HashMap[Relation[_], HashMap[Any, Any]]() {
     override def get(key: Relation[_]) = super.get(key) match {
@@ -168,6 +168,7 @@ class StatefulTransaction {
 
   def getCachedRecord[R](relation: Relation[R], id: Any): Option[R] =
     recordCache(relation).get(id) match {
+      case Some(null) => None
       case Some(record: R) => Some(record)
       case _ => None
     }
@@ -180,6 +181,7 @@ class StatefulTransaction {
 
   def getCachedMTO[C, P](association: Association[C, P], child: C): Option[P] =
     mtoCache(association).get(child) match {
+      case Some(null) => None
       case Some(mto: P) => Some(mto)
       case _ => None
     }

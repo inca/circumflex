@@ -238,19 +238,20 @@ class Criteria[R](val rootNode: RelationNode[R])
     case _ =>
   }
 
-  protected def cacheAssociation[C, P](a: Association[C, P], child: C, parent: P): Unit = {
+  protected def cacheAssociation[C, P](a: Association[C, P],
+                                       child: C,
+                                       parent: P): Unit = {
     if (child != null)
       tx.updateMTOCache(a, child, parent)
-    if (parent != null)
-      tx.getCachedOTM(a, parent) match {
-        case None =>
-          if (child == null) tx.updateOTMCache(a, parent, Nil)
-          else tx.updateOTMCache(a, parent, List(child))
-        case Some(s: Seq[C]) =>
-          if (!s.contains(child))
-            tx.updateOTMCache(a, parent, s ++ List(child))
-        case _ =>
+    if (parent != null) {
+      var otm = tx.getCachedOTM(a, parent) match {
+        case Some(s: Seq[C]) => s
+        case _ => Nil
       }
+      if (child != null && !otm.contains(child))
+        otm ++= List(child)
+      tx.updateOTMCache(a, parent, otm)
+    }
   }
 
   /**
