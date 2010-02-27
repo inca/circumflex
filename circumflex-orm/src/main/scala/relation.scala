@@ -481,7 +481,7 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def insert_!(record: Record[R]): Int = {
     if (readOnly)
       throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    val rows = transactionManager.dml(conn => {
+    transactionManager.dml(conn => {
       val sql = dialect.insertRecord(record)
       sqlLog.debug(sql)
       auto(conn.prepareStatement(sql))(st => {
@@ -489,8 +489,6 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
         st.executeUpdate
       })
     })
-    refetchLast(record)
-    return rows
   }
 
   def refetchLast(record: Record[R]): Unit = {
@@ -533,7 +531,9 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   def save_!(record: Record[R]): Int =
     if (record.identified_?) update_!(record)
     else {
-      insert_!(record)
+      val rows = insert_!(record)
+      refetchLast(record)
+      return rows
     }
 
   def delete(record: Record[R]): Int = {
