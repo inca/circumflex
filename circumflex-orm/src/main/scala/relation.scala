@@ -48,6 +48,8 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
   private var _cachedRecordClass: Class[R] = null
   private var _cachedRelationName: String = null
 
+  protected var _prefetchSeq: Seq[Association[_, _]] = Nil
+
   private var uniqueCounter = -1
 
   protected[orm] def uniqueSuffix: String = {
@@ -163,12 +165,30 @@ abstract class Relation[R] extends JDBCHelper with QueryHelper {
    */
   def as(alias: String): RelationNode[R]
 
+  /**
+   * Adds specified associations to relation's prefetch list. These associations
+   * will be prefetched every time the records are queried using <code>criteria</code>
+   * method. Specified associations must relate to this relation either directly or
+   * through other prefetch associations, which should appear earlier in the prefetch
+   * list.
+   */
+  def prefetch(associations: Association[_, _]*): this.type = {
+    _prefetchSeq ++= associations.toList
+    return this
+  }
+
+  /**
+   * Returns the prefetch list of this relation.
+   */
+  def prefetchList: Seq[Association[_, _]] = _prefetchSeq
+
   /* SIMPLE QUERIES */
 
   /**
    * Creates a criteria object for this relation.
    */
   def criteria: Criteria[R] = new Criteria(this as "root")
+          .prefetch(prefetchList: _*)
 
   /**
    * Queries a record by it's primary key.

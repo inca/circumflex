@@ -50,6 +50,7 @@ object B extends Table[B] with LongIdPK[B] {
   val d = longColumn("d")
           .references(D)
           .onDeleteSetNull
+  prefetch(a, d, C.b)
 }
 
 class C extends Record[C] {

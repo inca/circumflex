@@ -157,6 +157,9 @@ class Criteria[R](val rootNode: RelationNode[R])
     association.toList.foreach(a => if (!_prefetchSeq.contains(a)) {
       // do the depth-search and update query plan tree
       _rootTree = updateRootTree(a, _rootTree)
+      // also add the prefetch list of each relation
+      prefetch(a.parentRelation.prefetchList: _*)
+      prefetch(a.childRelation.prefetchList: _*)
     })
     return this
   }
