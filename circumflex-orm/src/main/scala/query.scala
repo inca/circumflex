@@ -433,6 +433,9 @@ trait QueryHelper {
   implicit def stringToHelper(str: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(str)
 
+  implicit def stringToPredicate(str: String): SimpleExpression =
+    new SimpleExpression(str, Nil)
+
   implicit def columnProjectionToHelper(f: ColumnProjection[_, _]): SimpleExpressionHelper =
     new SimpleExpressionHelper(f.expr)
 
