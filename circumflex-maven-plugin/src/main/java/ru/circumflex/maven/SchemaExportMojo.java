@@ -111,6 +111,9 @@ public class SchemaExportMojo extends AbstractMojo {
                     if (f.getName().endsWith(".class")) {
                         String className = pkg + "." +
                                 f.getName().substring(0, f.getName().length() - ".class".length());
+                        // Let's ensure that anonymous objects are not processed separately
+                        if (className.contains("$") && className.indexOf("$") != (className.length() - 1))
+                            continue;
                         Class c = Thread.currentThread().getContextClassLoader().loadClass(className);
                         if (SchemaObject.class.isAssignableFrom(c)
                                 && !Modifier.isAbstract(c.getModifiers())
