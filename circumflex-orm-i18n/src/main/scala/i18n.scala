@@ -38,14 +38,16 @@ class LocalizedTransaction extends StatefulTransaction
   protected var _currentLanguage: String = null
 
   def setLanguage(lang: String): this.type = {
+    cleanup()
     _currentLanguage = lang
     val q = i18nDialect.setLangQuery(_currentLanguage)
-    dml (conn => auto(conn.prepareStatement(q))(st => {
+    auto(connection.prepareStatement(q))(st => {
       sqlLog.debug(q)
       st.executeUpdate
-    }))
+    })
     return this
   }
+
   def setLanguage(locale: Locale): this.type = setLanguage(locale.getLanguage)
 
   def currentLanguage: Option[String] =

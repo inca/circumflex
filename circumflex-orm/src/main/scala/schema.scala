@@ -31,15 +31,12 @@ import java.sql.Connection
 import org.slf4j.LoggerFactory
 import collection.mutable.{HashSet, ListBuffer}
 import org.apache.commons.beanutils.MethodUtils
-import java.util.UUID
 
 /**
  * Defines a contract for database schema objects.
  * They must provide SQL statement to create them and to drop them.
  */
 trait SchemaObject {
-
-  val internalUUID = UUID.randomUUID.toString
 
   /**
    * SQL statement to create this database object.
@@ -62,7 +59,7 @@ trait SchemaObject {
   override def hashCode = objectName.toLowerCase.hashCode
 
   override def equals(obj: Any) = obj match {
-    case so: SchemaObject => so.internalUUID.equals(this.internalUUID)
+    case so: SchemaObject => so.objectName.equalsIgnoreCase(this.objectName)
     case _ => false
   }
 
