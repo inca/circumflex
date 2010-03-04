@@ -35,8 +35,8 @@ import ORM._
 class Column[T, R](val relation: Relation[R],
                    val columnName: String,
                    val sqlType: String)
-    extends SchemaObject {
-  
+        extends SchemaObject {
+
   protected var _nullable = true
   protected var _defaultExpression: Option[String] = None
 
@@ -107,17 +107,19 @@ class Column[T, R](val relation: Relation[R],
 
   def objectName = columnName
 
+  /* MISCELLANEOUS */
+
   override def toString = columnName
 
   override def equals(obj: Any) = obj match {
     case col: Column[T, R] =>
       col.relation.equals(this.relation) &&
-          col.columnName.equalsIgnoreCase(this.columnName)
+              col.columnName.equalsIgnoreCase(this.columnName)
     case _ => false
   }
 
   override def hashCode = this.relation.hashCode * 31 +
-      this.columnName.toLowerCase.hashCode
+          this.columnName.toLowerCase.hashCode
 }
 
 /**
@@ -126,7 +128,8 @@ class Column[T, R](val relation: Relation[R],
 class StringColumn[R](relation: Relation[R],
                       name: String,
                       sqlType: String)
-    extends Column[String, R](relation, name, sqlType) {
+        extends Column[String, R](relation, name, sqlType)
+                with XmlSerializableField[String] {
 
   def this(relation: Relation[R], name: String) =
     this(relation, name, dialect.stringType)
@@ -159,25 +162,34 @@ class StringColumn[R](relation: Relation[R],
     return this
   }
 
+  def stringToValue(str: String) = str
+
 }
 
 /**
  * Integer column.
  */
 class IntegerColumn[R](relation: Relation[R], name: String)
-    extends Column[Int, R](relation, name, dialect.integerType)
+        extends Column[Int, R](relation, name, dialect.integerType)
+                with XmlSerializableField[Int] {
+  def stringToValue(str: String): Int = str.toInt
+}
 
 /**
  * Long (int8 or bigint) column.
  */
 class LongColumn[R](relation: Relation[R], name: String)
-    extends Column[Long, R](relation, name, dialect.longType)
+        extends Column[Long, R](relation, name, dialect.longType)
+                with XmlSerializableField[Long]{
+  def stringToValue(str: String): Long = str.toLong
+}
 
 /**
  * Integer column.
  */
 class NumericColumn[R](relation: Relation[R], name: String, sqlType: String)
-    extends Column[Double, R](relation, name, sqlType) {
+        extends Column[Double, R](relation, name, sqlType)
+                with XmlSerializableField[Double]{
 
   def this(relation: Relation[R], name: String, precision: Int, scale: Int) =
     this(relation, name, dialect.numericType + "(" + precision + "," + scale + ")")
@@ -185,30 +197,45 @@ class NumericColumn[R](relation: Relation[R], name: String, sqlType: String)
   def this(relation: Relation[R], name: String) =
     this(relation, name, dialect.numericType)
 
+  def stringToValue(str: String): Double = str.toDouble
+
 }
 
 /**
  * Boolean column.
  */
 class BooleanColumn[R](relation: Relation[R], name: String)
-    extends Column[Boolean, R](relation, name, dialect.booleanType)
+        extends Column[Boolean, R](relation, name, dialect.booleanType)
+                with XmlSerializableField[Boolean]{
+  def stringToValue(str: String): Boolean = str.toBoolean
+}
 
 /**
  * Timestamp column.
  */
 class TimestampColumn[R](relation: Relation[R], name: String)
-    extends Column[Date, R](relation, name, dialect.timestampType)
+        extends Column[Date, R](relation, name, dialect.timestampType)
+                with XmlSerializableField[Date]{
+  def stringToValue(str: String): Date = new Date(java.sql.Timestamp.valueOf(str).getTime)
+  override def valueToString(d: Date) = new java.sql.Timestamp(d.getTime).toString
+}
 
 /**
  * Date column.
  */
 class DateColumn[R](relation: Relation[R], name: String)
-    extends Column[Date, R](relation, name, dialect.dateType)
+        extends Column[Date, R](relation, name, dialect.dateType)
+                with XmlSerializableField[Date]{
+  def stringToValue(str: String): Date = new Date(str)
+}
 
 /**
  * Time column.
  */
 class TimeColumn[R](relation: Relation[R], name: String)
-    extends Column[Date, R](relation, name, dialect.timeType)
+        extends Column[Date, R](relation, name, dialect.timeType)
+                with XmlSerializableField[Date]{
+  def stringToValue(str: String): Date = new Date(str)
+}
 
 
