@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<deployments>
+  <deployment id="test"
+              package="ru.circumflex.orm"
+              onExist="keep|recreate">
+    <Country key="ru">
+      <name>Russia</name>
+      <cities>
+        <City key="46">
+          <name>Kursk</name>
+        </City>
+        <City key="77">
+          <name>Moscow</name>
+        </City>
+      </cities>
+    </Country>
+    <City key="36">
+      <name>Voronezh</name>
+      <country key="ru"/>
+    </City>
+  </deployment>
+</deployments>

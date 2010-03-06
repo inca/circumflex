@@ -27,7 +27,7 @@ package ru.circumflex.orm
 
 import ORM._
 
-trait XmlSerializableField[T] {
+trait XmlSerializableColumn[T] {
   def stringToValue(str: String): T
   def valueToString(value: T): String = value.toString
 }

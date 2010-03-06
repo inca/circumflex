@@ -27,86 +27,36 @@ package ru.circumflex.orm
 
 import ORM._
 
-class Category extends Record[Category] {
-  val id = field(Category.id)
-  val name = field(Category.name)
-  val books = oneToMany(Book.category)
+class Country extends Record[Country] {
+  val key = field(Country.key)
+  val name = field(Country.name)
+  val cities = oneToMany(City.country)
 }
 
-object Category extends Table[Category] with LongIdPK[Category] {
-  val namePattern = "^[a-zA-Z]+$"
-  val name = stringColumn("name")             // Creates a column
-          .notNull                            // Creates NOT NULL constraint
-          .unique                             // Creates UNIQUE constraint
-          .validateNotEmpty                   // Adds NotEmpty validation
-          .validatePattern(namePattern)       // Adds Pattern validation
-  check("name ~ '" + namePattern +"'")
-  addAuxiliaryObjects(CategoryTriggerFunction, CategoryTrigger)
-}
-
-object CategoryTriggerFunction extends SchemaObject {
-  def objectName = "orm.category_trig_func"
-  def sqlCreate = """
-  CREATE FUNCTION orm.category_trig_func() RETURNS TRIGGER AS $BODY$
-  BEGIN
-    RAISE NOTICE 'PREVED!!!11';
-    RETURN NEW;
-  END;
-  $BODY$ LANGUAGE 'plpgsql'"""
-  def sqlDrop = "DROP FUNCTION orm.category_trig_func()"
-}
-
-object CategoryTrigger extends SchemaObject {
-  def objectName = "category_trig"
-  def sqlCreate = "CREATE TRIGGER category_trig " +
-          "AFTER INSERT OR UPDATE ON orm.category " +
-          "FOR EACH ROW EXECUTE PROCEDURE orm.category_trig_func()"
-  def sqlDrop = "DROP TRIGGER category_trig ON orm.category"
-}
-
-class Book extends Record[Book] {
-  val id = field(Book.id)
-  val title = field(Book.title)
-  val category = manyToOne(Book.category)
-}
-
-object Book extends Table[Book] with LongIdPK[Book] {
-  val title = stringColumn("title")
+object Country extends Table[Country]
+        with LongIdPK[Country] {
+  val key = stringColumn("key")
           .notNull
-          .validateNotEmpty
-  val category = longColumn("category_id")
-          .references(Category)     // Creates an association with Category
-          .onDeleteSetNull
-          .onUpdateCascade
-  index.unique.add("lower(title)").where("title" like "A%")
-}
-
-class Page extends Record[Page] {
-  val id = field(Page.id)
-  val body = field(Page.body)
-  val book = manyToOne(Page.book)
-}
-
-object Page extends Table[Page] with LongIdPK[Page] {
-  val book = longColumn("book_id")
+          .unique
+  val name = stringColumn("name")
           .notNull
-          .references(Book)
+}
+
+class City extends Record[City] {
+  val key = field(City.key)
+  val name = field(City.name)
+  val country = manyToOne(City.country)
+}
+
+object City extends Table[City]
+        with LongIdPK[City] {
+  val key = stringColumn("key")
+          .notNull
+          .unique
+  val name = stringColumn("name")
+          .notNull
+  val country = longColumn("country_id")
+          .notNull
+          .references(Country)
           .onDeleteCascade
-  val body = stringColumn("body")
-          .notNull
-          .validateNotEmpty
-}
-
-class CategoryStatistics extends Record[CategoryStatistics] {
-  val category = manyToOne(CategoryStatistics.category)
-  val booksCount = field(CategoryStatistics.booksCount)
-}
-
-object CategoryStatistics extends View[CategoryStatistics] {
-  val category = virtualColumn[Long]("category_id")
-          .references(Category)
-  val booksCount = virtualColumn[Long]("books_count")
-  primaryKey(category.localColumn)
-  def query = select("c.id", count("b.id"))
-          .from(Category as "c" join (Book as "b"))
 }
