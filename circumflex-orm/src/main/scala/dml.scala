@@ -70,7 +70,7 @@ class InsertSelect[R](val relation: Relation[R], val query: Select)
 /**
  * Contains functionality for DELETE operations. 
  */
-class Delete[R](val relation: Relation[R])
+class Delete[R](val relation: RelationNode[R])
     extends DMLQuery {
 
   if (relation.readOnly)

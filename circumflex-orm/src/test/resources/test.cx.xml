@@ -2,7 +2,7 @@
 <deployments>
   <deployment id="test"
               prefix="ru.circumflex.orm"
-              onExist="keep|recreate">
+              onExist="recreate">
     <Country key="ru">
       <name>Russia</name>
       <cities>

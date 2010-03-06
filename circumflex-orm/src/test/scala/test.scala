@@ -29,6 +29,7 @@ import ORM._
 import xml.XML
 
 class Country extends Record[Country] {
+  val id = field(Country.id)
   val key = field(Country.key)
   val name = field(Country.name)
   val cities = oneToMany(City.country)
@@ -44,6 +45,7 @@ object Country extends Table[Country]
 }
 
 class City extends Record[City] {
+  val id = field(City.id)
   val key = field(City.key)
   val name = field(City.name)
   val country = manyToOne(City.country)

@@ -74,15 +74,35 @@ class Deployment(val id: String,
 
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
-  def process(): Unit = entries.foreach(e => processNode(e, Map()))
+  def process(): Unit = try {
+    entries.foreach(e => processNode(e, Map()))
+    tx.commit
+    log.info("Deployed " + id + " successfully.")
+  } catch {
+    case e =>
+      tx.rollback
+      log.error("Failed to deploy " + id + ".", e)
+  }
 
-  protected def processNode(node: Node, parentPath: Map[Association[_, _], Record[_]]): Unit = {
+  protected def processNode(node: Node, parentPath: Map[Association[_, _], Record[_]]): Record[_] = {
     val cl = pickClass(node)
     val r = cl.newInstance.asInstanceOf[Record[_]]
     // process fields that were specified via attributes
     node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString))
     // search for a record using provided attributes as criteria
-    println(r)
+    // nodes that have no children are forced not to be recreated
+    findSimilar(r) match {
+      case None if (node.child.size == 0) =>
+        throw new ORMException("Could not find a record: " + node)
+      case Some(rec) if (onExist == Deployment.Keep || node.child.size == 0) =>
+        return rec
+      case Some(rec) if (onExist == Deployment.Recreate) =>
+        deleteSimilar(r)
+      case _ =>
+    }
+    // if we are still here, let's process the record further
+    // TODO
+    return r
   }
 
   protected def pickClass(node: Node): Class[_] = {
@@ -108,6 +128,19 @@ class Deployment(val id: String,
   } catch {
     case _ => log.warn("Could not set the field " + k + " on record of " + r.getClass)
   }
+
+  protected def prepareCriteria[R](r: Record[R]): Criteria[R] = {
+    val crit = r.relation.criteria
+    r.fieldsMap.keys.foreach(k =>
+      crit.add(_.projection(k) eq r.fieldsMap.get(k).getOrElse(null)))
+    return crit
+  }
+
+  protected def findSimilar[R](r: Record[R]): Option[Record[R]] =
+    prepareCriteria(r).unique.asInstanceOf[Option[Record[R]]]
+
+  protected def deleteSimilar[R](r: Record[R]): Unit =
+    prepareCriteria(r).delete
 
   override def toString = id match {
     case "" => "deployment@" + hashCode

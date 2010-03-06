@@ -408,7 +408,7 @@ class Dialect {
    * Produces DELETE statement.
    */
   def delete(dml: Delete[_]): String = {
-    var result = "delete from " + dml.relation.qualifiedName
+    var result = "delete from " + dml.relation.toSql
     if (dml.where != EmptyPredicate) result += " where " + dml.where.toSql
     return result
   }
