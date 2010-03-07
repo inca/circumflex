@@ -27,8 +27,9 @@ package ru.circumflex.orm
 
 import ORM._
 import javax.xml.stream.XMLStreamReader
-import xml.{Node, Elem, NodeSeq}
 import org.slf4j.LoggerFactory
+import java.io.File
+import xml.{XML, Node, Elem, NodeSeq}
 
 /**
  * Specifies that certain column values can be serialized to and deserialized
@@ -60,6 +61,10 @@ object Deployment {
     (n \ "deployment").map(n => readOne(n))
   else throw new ORMException("<deployments> expected, but " + n.label + " found.")
 
+}
+
+class FileDeploymentHelper(f: File) {
+  def process(): Unit = Deployment.readAll(XML.loadFile(f)).foreach(_.process)
 }
 
 /**
@@ -143,7 +148,7 @@ class Deployment(val id: String,
   protected def pickClass(node: Node): Class[_] = {
     var p = ""
     if (prefix != "") p = prefix + "."
-    return Class.forName(p + node.label)
+    return Class.forName(p + node.label, true, Thread.currentThread().getContextClassLoader())
   }
 
   protected def setRecordField(r: Record[_], k: String, v: String): Unit = try {

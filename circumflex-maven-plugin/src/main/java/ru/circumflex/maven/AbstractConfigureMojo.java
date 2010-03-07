@@ -32,18 +32,12 @@ import org.apache.maven.project.MavenProject;
 import java.io.File;
 import java.io.PrintWriter;
 
-public abstract class AbstractConfigureMojo extends AbstractMojo {
+public abstract class AbstractConfigureMojo extends AbstractCircumflexMojo {
 
     /**
      * @parameter default-value="true"
      */
     protected boolean skipUnresolved;
-
-    /**
-     * @parameter expression="${project}"
-     * @readonly
-     */
-    protected MavenProject project;
 
     public abstract File targetFile();
 

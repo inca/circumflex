@@ -159,6 +159,6 @@ object Init {
   val bTree = B join A join C join D
 
   def deps = Deployment.readAll(XML.load(
-    Class.forName("ru.circumflex.orm.ORM$").getResourceAsStream("/test.cx.xml")))
+    Class.forName("ru.circumflex.orm.ORM$").getResourceAsStream("/test.cxd.xml")))
 
 }
