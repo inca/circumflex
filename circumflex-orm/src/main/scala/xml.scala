@@ -92,28 +92,29 @@ class Deployment(val id: String,
   protected def processNode(node: Node, parentPath: Seq[Pair[Association[_, _], Record[_]]]): Record[_] = {
     val cl = pickClass(node)
     var r = cl.newInstance.asInstanceOf[Record[Any]]
-    // process fields that were specified via attributes
-    node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString))
-    // search for a record using provided attributes as criteria
     // nodes that have no children are forced not to be recreated
-    if (r.fieldsMap.size > 0)
-      findSimilar(r) match {
+    if (node.attributes.next != null) {
+      val crit = prepareCriteria(r, node)
+      crit.unique match {
         case None if (node.child.size == 0) =>
           throw new ORMException("Could not find a record: " + node)
-        case Some(rec) if (onExist == Deployment.Skip || node.child.size == 0) =>
+        case Some(rec: Record[_]) if (onExist == Deployment.Skip || node.child.size == 0) =>
           return rec
-        case Some(rec) if (onExist == Deployment.Recreate) =>
-          deleteSimilar(r)
-        case Some(rec) if (onExist == Deployment.Update) =>
+        case Some(rec: Record[_]) if (onExist == Deployment.Recreate) =>
+          crit.delete()
+        case Some(rec: Record[_]) if (onExist == Deployment.Update) =>
           r = rec.asInstanceOf[Record[Any]]
         case _ =>
       }
+    }
     // if we are still here, let's process the record further:
     // set up parents
     parentPath.foreach(p =>
       r.setField(p._1.localColumn.asInstanceOf[Column[Any, Any]], p._2.asInstanceOf[Record[_]].primaryKey))
     // foreigns will be processed after this record is saved
     var foreigns: Seq[Pair[Association[_, _], Node]] = Nil
+    // set up fields from attrbutes
+    node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString))
     // traverse children nodes to set fields or initialize associative stuff
     node.child.foreach {
       case n: Elem => try {
@@ -159,12 +160,7 @@ class Deployment(val id: String,
     if (classOf[RecordScalar[_]].isAssignableFrom(m.getReturnType) &&
             classOf[Field[_]].isAssignableFrom(m.getReturnType)) {    // only scalar fields are accepted
       val field = m.invoke(r).asInstanceOf[Field[Any]]
-      // convert a value of XmlSerializableColumn
-      val value = field match {
-        case f: ColumnField[_, _] if (f.column.isInstanceOf[XmlSerializableColumn[_]]) =>
-          f.column.asInstanceOf[XmlSerializableColumn[_]].stringToValue(v)
-        case _ => v
-      }
+      val value = convertValue(r, k, v)
       // set the field
       field.set(value)
     }
@@ -172,18 +168,26 @@ class Deployment(val id: String,
     case e: NoSuchMethodException => log.warn("Could not process '" + k + "' of " + r.getClass)
   }
 
-  protected def prepareCriteria[R](r: Record[R]): Criteria[R] = {
+  protected def prepareCriteria[R](r: Record[R], n: Node): Criteria[R] = {
     val crit = r.relation.criteria
-    r.fieldsMap.keys.foreach(k =>
-      crit.add(_.projection(k) eq r.fieldsMap.get(k).getOrElse(null)))
+     n.attributes.foreach(a => {
+       val k = a.key
+       val v = convertValue(r, k, a.value.toString)
+       val col = r.getClass.getMethod(k).invoke(r)
+            .asInstanceOf[ColumnField[Any, R]].column
+       crit.add(_.projection(col) eq v)
+     })
     return crit
   }
 
-  protected def findSimilar[R](r: Record[R]): Option[Record[R]] =
-    prepareCriteria(r).unique.asInstanceOf[Option[Record[R]]]
-
-  protected def deleteSimilar[R](r: Record[R]): Unit =
-    prepareCriteria(r).delete
+  // convert a value of XmlSerializableColumn
+  protected def convertValue(r: Record[_], k: String, v: String): Any = try {
+    r.getClass.getMethod(k).invoke(r)
+            .asInstanceOf[ColumnField[Any, _]].column
+            .asInstanceOf[XmlSerializableColumn[_]].stringToValue(v)
+  } catch {
+    case _ => v
+  }
 
   override def toString = id match {
     case "" => "deployment@" + hashCode
