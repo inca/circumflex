@@ -50,7 +50,7 @@ object Deployment {
     val prefix = (n \ "@prefix").text
     val onExist = (n \ "@onExist").text match {
       case "keep" | "ignore" => Deployment.Keep
-      case "recreate" | "delete" | "delete-create" => Deployment.Recreate
+      case "recreate" | "delete" | "delete-create" | "overwrite" => Deployment.Recreate
       case _ => Deployment.Keep
     }
     return new Deployment(id, prefix, onExist, n.child.filter(n => n.isInstanceOf[Elem]))
@@ -75,18 +75,18 @@ class Deployment(val id: String,
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   def process(): Unit = try {
-    entries.foreach(e => processNode(e, Map()))
+    entries.foreach(e => processNode(e, Nil))
     tx.commit
-    log.info("Deployed " + id + " successfully.")
+    log.info("Deployed '" + id + "' successfully.")
   } catch {
     case e =>
       tx.rollback
-      log.error("Failed to deploy " + id + ".", e)
+      log.error("Failed to deploy '" + id + "'.", e)
   }
 
-  protected def processNode(node: Node, parentPath: Map[Association[_, _], Record[_]]): Record[_] = {
+  protected def processNode(node: Node, parentPath: Seq[Pair[Association[_, _], Record[_]]]): Record[_] = {
     val cl = pickClass(node)
-    val r = cl.newInstance.asInstanceOf[Record[_]]
+    val r = cl.newInstance.asInstanceOf[Record[Any]]
     // process fields that were specified via attributes
     node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString))
     // search for a record using provided attributes as criteria
@@ -100,10 +100,43 @@ class Deployment(val id: String,
         deleteSimilar(r)
       case _ =>
     }
-    // if we are still here, let's process the record further
-    node.child.foreach(n => {
-      
-    })
+    // if we are still here, let's process the record further:
+    // set up parents
+    parentPath.foreach(p =>
+      r.setField(p._1.localColumn.asInstanceOf[Column[Any, Any]], p._2.asInstanceOf[Record[_]].primaryKey))
+    // foreigns will be processed after this record is saved
+    var foreigns: Seq[Pair[Association[_, _], Node]] = Nil
+    // traverse children nodes to set fields or initialize associative stuff
+    node.child.foreach {
+      case n: Elem => try {
+        r.getClass.getMethod(n.label) match {
+          case m if (classOf[RecordScalar[_]].isAssignableFrom(m.getReturnType)) =>
+            setRecordField(r, n.label, n.text.trim)
+          case m if (classOf[RecordLocalAssociation[_, _]].isAssignableFrom(m.getReturnType)) =>
+            n.child.find(_.isInstanceOf[Elem]) match {
+              case Some(n) =>
+                val a = m.invoke(r).asInstanceOf[RecordLocalAssociation[Any, Any]].association
+                val parent = processNode(n, parentPath ++ List(a -> r))
+                r.setField(a.localColumn.asInstanceOf[Column[Any, Any]],
+                  parent.asInstanceOf[Record[_]].primaryKey)
+              case None =>
+                throw new ORMException("The element <" + n.label + "> is empty.")
+            }
+          case m if (classOf[RecordForeignAssociation[_, _]].isAssignableFrom(m.getReturnType)) =>
+            val a = m.invoke(r).asInstanceOf[RecordForeignAssociation[Any, Any]].association
+            foreigns ++= n.child.filter(_.isInstanceOf[Elem]).map(n => (a -> n))
+        }
+      } catch {
+        case e: NoSuchMethodException => log.warn("Could not process '" + n.label + "' of " + r.getClass)
+        case e => log.error("Processing of " + r.getClass + " failed.", e)
+      }
+      case _ =>
+    }
+    // now the record is ready to be saved
+    r.save()
+    // finally, process the foreigners
+    foreigns.foreach(p => processNode(p._2, parentPath ++ List(p._1.asInstanceOf[Association[_, _]] -> r)))
+    // and return our record
     return r
   }
 
@@ -116,7 +149,8 @@ class Deployment(val id: String,
   protected def setRecordField(r: Record[_], k: String, v: String): Unit = try {
     // try to find a specified column by intospecting record's methods
     val m = r.getClass.getMethod(k)
-    if (classOf[Field[_]].isAssignableFrom(m.getReturnType)) {
+    if (classOf[RecordScalar[_]].isAssignableFrom(m.getReturnType) &&
+            classOf[Field[_]].isAssignableFrom(m.getReturnType)) {    // only scalar fields are accepted
       val field = m.invoke(r).asInstanceOf[Field[Any]]
       // convert a value of XmlSerializableColumn
       val value = field match {
@@ -128,7 +162,8 @@ class Deployment(val id: String,
       field.set(value)
     }
   } catch {
-    case _ => log.warn("Could not set the field " + k + " on record of " + r.getClass)
+    case e: NoSuchMethodException => log.warn("Could not process '" + k + "' of " + r.getClass)
+    case e => log.error("Processing of " + r.getClass + " failed.", e)
   }
 
   protected def prepareCriteria[R](r: Record[R]): Criteria[R] = {

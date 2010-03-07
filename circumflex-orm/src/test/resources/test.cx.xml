@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <deployments>
-  <deployment id="test"
+  <deployment id="test1"
               prefix="ru.circumflex.orm"
-              onExist="keep">
+              onExist="recreate">
     <Country key="ru">
       <name>Russia</name>
       <cities>
@@ -16,6 +16,30 @@
     </Country>
     <City key="36">
       <name>Voronezh</name>
+      <country>
+        <Country key="ru"/>
+      </country>
+    </City>
+  </deployment>
+  <deployment id="test1"
+              prefix="ru.circumflex.orm"
+              onExist="keep">
+    <City key="46">
+      <name>Kursk</name>
+      <country>
+        <Country key="ru">
+          <name>Russia</name>
+        </Country>
+      </country>
+    </City>
+    <City key="77">
+      <name>Moscow</name>
+      <country>
+        <Country key="ru"/>
+      </country>
+    </City>
+    <City key="78">
+      <name>St. Petersburg</name>
       <country>
         <Country key="ru"/>
       </country>
