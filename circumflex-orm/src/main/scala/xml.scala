@@ -91,7 +91,7 @@ class Deployment(val id: String,
 
   protected def processNode(node: Node, parentPath: Seq[Pair[Association[_, _], Record[_]]]): Record[_] = {
     val cl = pickClass(node)
-    val r = cl.newInstance.asInstanceOf[Record[Any]]
+    var r = cl.newInstance.asInstanceOf[Record[Any]]
     // process fields that were specified via attributes
     node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString))
     // search for a record using provided attributes as criteria
