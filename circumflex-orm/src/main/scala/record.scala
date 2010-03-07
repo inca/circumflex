@@ -98,6 +98,20 @@ abstract class Record[R] {
   override def toString = relation.relationName + ": " + this.fieldsMap.toString
 }
 
+trait RecordScalar[R] {
+  def record: Record[R]
+}
+
+trait RecordLocalAssociation[R, P] {
+  def record: Record[R]
+  def association: Association[R, P]
+}
+
+trait RecordForeignAssociation[C, R] {
+  def record: Record[R]
+  def association: Association[C, R]
+}
+
 trait Field[T] {
   def default(value: T): this.type = {
     set(value)
@@ -133,7 +147,7 @@ trait Collection[T] {
 
 class ColumnField[T, R](val record: Record[R],
                         val column: Column[T, R])
-        extends Field[T] {
+        extends Field[T] with RecordScalar[R] {
   def get: Option[T] = record.getField(column)
   def set(value: T): Unit = record.setField(column, value)
   def setNull: Unit = record.setField(column, None)
@@ -141,7 +155,7 @@ class ColumnField[T, R](val record: Record[R],
 
 class ManyToOne[C, P](val record: Record[C],
                       val association: Association[C, P])
-        extends Field[P] {
+        extends Field[P] with RecordLocalAssociation[C, P] {
 
   protected val r = record.asInstanceOf[C]
 
@@ -172,7 +186,7 @@ class ManyToOne[C, P](val record: Record[C],
 
 class OneToOne[C, P](val record: Record[P],
                      val association: Association[C, P])
-        extends Field[C] {
+        extends Field[C] with RecordForeignAssociation[C, P] {
 
   protected val r = record.asInstanceOf[P]
 
@@ -202,7 +216,7 @@ class OneToOne[C, P](val record: Record[P],
 
 class OneToMany[C, P](val record: Record[P],
                       val association: Association[C, P])
-        extends Collection[C] {
+        extends Collection[C] with RecordForeignAssociation[C,P] {
 
   val r = record.asInstanceOf[P]
 

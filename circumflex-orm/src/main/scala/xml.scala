@@ -49,8 +49,8 @@ object Deployment {
     val id = (n \ "@id").text
     val prefix = (n \ "@prefix").text
     val onExist = (n \ "@onExist").text match {
-      case "keep" => Deployment.Keep
-      case "recreate" => Deployment.Recreate
+      case "keep" | "ignore" => Deployment.Keep
+      case "recreate" | "delete" | "delete-create" => Deployment.Recreate
       case _ => Deployment.Keep
     }
     return new Deployment(id, prefix, onExist, n.child.filter(n => n.isInstanceOf[Elem]))
@@ -101,7 +101,9 @@ class Deployment(val id: String,
       case _ =>
     }
     // if we are still here, let's process the record further
-    // TODO
+    node.child.foreach(n => {
+      
+    })
     return r
   }
 
