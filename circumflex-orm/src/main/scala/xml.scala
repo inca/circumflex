@@ -26,10 +26,9 @@
 package ru.circumflex.orm
 
 import ORM._
-import javax.xml.stream.XMLStreamReader
 import org.slf4j.LoggerFactory
 import java.io.File
-import xml.{XML, Node, Elem, NodeSeq}
+import xml.{XML, Node, Elem}
 
 /**
  * Specifies that certain column values can be serialized to and deserialized
@@ -82,11 +81,10 @@ class Deployment(val id: String,
   def process(): Unit = try {
     entries.foreach(e => processNode(e, Nil))
     tx.commit
-    log.info("Deployed '" + id + "' successfully.")
   } catch {
     case e =>
       tx.rollback
-      log.error("Failed to deploy '" + id + "'.", e)
+      throw e
   }
 
   protected def processNode(node: Node, parentPath: Seq[Pair[Association[_, _], Record[_]]]): Record[_] = {
@@ -133,7 +131,6 @@ class Deployment(val id: String,
         }
       } catch {
         case e: NoSuchMethodException => log.warn("Could not process '" + n.label + "' of " + r.getClass)
-        case e => log.error("Processing of " + r.getClass + " failed.", e)
       }
       case _ =>
     }
@@ -168,7 +165,6 @@ class Deployment(val id: String,
     }
   } catch {
     case e: NoSuchMethodException => log.warn("Could not process '" + k + "' of " + r.getClass)
-    case e => log.error("Processing of " + r.getClass + " failed.", e)
   }
 
   protected def prepareCriteria[R](r: Record[R]): Criteria[R] = {
