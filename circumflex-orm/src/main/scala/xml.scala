@@ -42,16 +42,18 @@ trait XmlSerializableColumn[T] {
 object Deployment {
 
   trait OnExistAction
-  object Keep extends OnExistAction
+  object Skip extends OnExistAction
+  object Update extends OnExistAction
   object Recreate extends OnExistAction
 
   def readOne(n: Node): Deployment = if (n.label == "deployment") {
     val id = (n \ "@id").text
     val prefix = (n \ "@prefix").text
     val onExist = (n \ "@onExist").text match {
-      case "keep" | "ignore" => Deployment.Keep
+      case "keep" | "ignore" | "skip" => Deployment.Skip
+      case "update" => Deployment.Update
       case "recreate" | "delete" | "delete-create" | "overwrite" => Deployment.Recreate
-      case _ => Deployment.Keep
+      case _ => Deployment.Skip
     }
     return new Deployment(id, prefix, onExist, n.child.filter(n => n.isInstanceOf[Elem]))
   } else throw new ORMException("<deployment> expected, but <" + n.label + "> found.")
@@ -97,10 +99,12 @@ class Deployment(val id: String,
     findSimilar(r) match {
       case None if (node.child.size == 0) =>
         throw new ORMException("Could not find a record: " + node)
-      case Some(rec) if (onExist == Deployment.Keep || node.child.size == 0) =>
+      case Some(rec) if (onExist == Deployment.Skip || node.child.size == 0) =>
         return rec
       case Some(rec) if (onExist == Deployment.Recreate) =>
         deleteSimilar(r)
+      case Some(rec) if (onExist == Deployment.Update) =>
+        r = rec.asInstanceOf[Record[Any]]
       case _ =>
     }
     // if we are still here, let's process the record further:
