@@ -158,7 +158,7 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
             new FileDeploymentHelper(f).process();
             getLog().info("Deployment " + deployment + " processed successfully.");
         } catch (Exception e) {
-            getLog().error("Could not process deployment " + deployment);
+            getLog().error("Could not process deployment " + deployment + ".", e);
         }
     }
 
