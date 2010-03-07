@@ -96,17 +96,18 @@ class Deployment(val id: String,
     node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString))
     // search for a record using provided attributes as criteria
     // nodes that have no children are forced not to be recreated
-    findSimilar(r) match {
-      case None if (node.child.size == 0) =>
-        throw new ORMException("Could not find a record: " + node)
-      case Some(rec) if (onExist == Deployment.Skip || node.child.size == 0) =>
-        return rec
-      case Some(rec) if (onExist == Deployment.Recreate) =>
-        deleteSimilar(r)
-      case Some(rec) if (onExist == Deployment.Update) =>
-        r = rec.asInstanceOf[Record[Any]]
-      case _ =>
-    }
+    if (r.fieldsMap.size > 0)
+      findSimilar(r) match {
+        case None if (node.child.size == 0) =>
+          throw new ORMException("Could not find a record: " + node)
+        case Some(rec) if (onExist == Deployment.Skip || node.child.size == 0) =>
+          return rec
+        case Some(rec) if (onExist == Deployment.Recreate) =>
+          deleteSimilar(r)
+        case Some(rec) if (onExist == Deployment.Update) =>
+          r = rec.asInstanceOf[Record[Any]]
+        case _ =>
+      }
     // if we are still here, let's process the record further:
     // set up parents
     parentPath.foreach(p =>
