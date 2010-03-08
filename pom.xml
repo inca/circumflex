@@ -22,7 +22,6 @@
     <module>circumflex-ftl</module>
     <module>circumflex-captcha</module>
     <module>circumflex-archetype</module>
-    <module>circumflex-docs</module>
   </modules>
 
   <properties>

@@ -26,10 +26,3 @@ Create a new project from Circumflex Archetype:
 
 and choose `circumflex-archetype` from list.
 
-## 4. Observe bundled documentation
-
-    cd circumflex/circumflex-docs
-    mvn jetty:run
-
-and point your browser to [localhost:8888](http://localhost:8888).
-
