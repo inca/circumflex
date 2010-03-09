@@ -12,6 +12,7 @@
     Circumflex is a set of mini-frameworks and tiny helpers for quick application
     development using Scala programming language.
   </description>
+  <url>http://circumflex.ru</url>
 
   <modules>
     <module>circumflex-core</module>
@@ -172,5 +173,20 @@
       <timezone>+3</timezone>
     </developer>
   </developers>
+
+  <scm>
+    <url>http://github.com/inca/circumflex</url>
+    <connection>scm:git:git://github.com/inca/circumflex.git</connection>
+    <developerConnection>scm:git:git@github.com:inca/circumflex.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>BSD-like</name>
+      <distribution>repo</distribution>
+      <url>http://circumflex.ru/license</url>
+    </license>
+  </licenses>
 
 </project>
