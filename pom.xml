@@ -171,6 +171,43 @@
       <email>incarnate@whiteants.net</email>
       <organization>wbt</organization>
       <timezone>+3</timezone>
+      <roles>
+        <role>founder</role>
+        <role>project manager</role>
+        <role>committer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>sl</id>
+      <name>Stanislav Lakhtin</name>
+      <email>sl@whiteants.net</email>
+      <organization>wbt</organization>
+      <timezone>+3</timezone>
+      <roles>
+        <role>project director</role>
+        <role>executive sponsor</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>vast</id>
+      <name>Vasily Polovnyov</name>
+      <email>vazilla@gmail.com</email>
+      <organization>wbt</organization>
+      <timezone>+3</timezone>
+      <roles>
+        <role>steering committee</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>heit</id>
+      <name>Kirill Kosinov</name>
+      <email>kirill.kosinov@gmail.com</email>
+      <organization>wbt</organization>
+      <timezone>+3</timezone>
+      <roles>
+        <role>technical writer</role>
+        <role>committer</role>
+      </roles>
     </developer>
   </developers>
 
