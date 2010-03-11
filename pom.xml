@@ -9,7 +9,7 @@
   <version>0.2</version>
   <name>Circumflex</name>
   <description>
-    Circumflex is a set of mini-frameworks and tiny helpers for quick application
+    Circumflex is a set of software components for quick and robust application 
     development using Scala programming language.
   </description>
   <url>http://circumflex.ru</url>
