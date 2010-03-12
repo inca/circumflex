@@ -112,7 +112,7 @@
       </build>
       <distributionManagement>
         <repository>
-          <id>nexus-release</id>
+          <id>nexus</id>
           <name>Sonatype Nexus Releases</name>
           <url>http://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
@@ -277,7 +277,7 @@
 
   <distributionManagement>
     <snapshotRepository>
-      <id>nexus-snapshots</id>
+      <id>nexus</id>
       <name>Sonatype Nexus Snapshots</name>
       <url>http://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
