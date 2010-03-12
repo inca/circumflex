@@ -6,7 +6,7 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.2</version>
+  <version>0.2-SNAPSHOT</version>
   <name>Circumflex</name>
   <description>
     Circumflex is a set of software components for quick and robust application
@@ -110,6 +110,13 @@
           </plugins>
         </pluginManagement>
       </build>
+      <distributionManagement>
+        <repository>
+          <id>nexus-release</id>
+          <name>Sonatype Nexus Releases</name>
+          <url>http://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+      </distributionManagement>
     </profile>
   </profiles>
 
@@ -120,17 +127,6 @@
           <groupId>org.scala-tools</groupId>
           <artifactId>maven-scala-plugin</artifactId>
           <executions>
-            <execution>
-              <id>scala-add-sources</id>
-              <phase>generate-sources</phase>
-              <goals>
-                <goal>add-source</goal>
-              </goals>
-              <configuration>
-                <sourceDir>src/main/scala</sourceDir>
-                <testSourceDir>src/test/scala</testSourceDir>
-              </configuration>
-            </execution>
             <execution>
               <id>scala-compile</id>
               <phase>compile</phase>
@@ -160,8 +156,61 @@
             <target>1.6</target>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>2.1.1</version>
+          <executions>
+            <execution>
+              <id>sources</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/main/scala</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-test-source</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/test/scala</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.0-beta-7</version>
+      </plugin>
+    </plugins>
   </build>
 
   <developers>
@@ -228,7 +277,7 @@
 
   <distributionManagement>
     <snapshotRepository>
-      <id>nexus</id>
+      <id>nexus-snapshots</id>
       <name>Sonatype Nexus Snapshots</name>
       <url>http://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>

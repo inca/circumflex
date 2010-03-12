@@ -12,23 +12,24 @@
 
   <properties>
     <port>8180</port>
+    <cx.version>0.2</cx.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-core</artifactId>
-      <version>0.2</version>
+      <version>${cx.version}</version>
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-ftl</artifactId>
-      <version>0.2</version>
+      <version>${cx.version}</version>
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-orm</artifactId>
-      <version>0.2</version>
+      <version>${cx.version}</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
