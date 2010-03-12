@@ -13,6 +13,7 @@
   <properties>
     <port>8180</port>
     <cx.version>0.2</cx.version>
+    <cx.router>${package}.Main</cx.router>
   </properties>
 
   <dependencies>
@@ -47,16 +48,6 @@
         <artifactId>maven-scala-plugin</artifactId>
         <executions>
           <execution>
-            <id>scala-add-sources</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sourceDir>src/main/scala</sourceDir>
-            </configuration>
-          </execution>
-          <execution>
             <id>scala-compile</id>
             <phase>compile</phase>
             <goals>
@@ -73,6 +64,25 @@
           <source>1.6</source>
           <target>1.6</target>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/main/scala</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.mortbay.jetty</groupId>
@@ -95,6 +105,20 @@
             <version>2.5</version>
           </dependency>
         </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>ru.circumflex</groupId>
+        <artifactId>maven-cx-plugin</artifactId>
+        <version>${cx.version}</version>
+        <executions>
+          <execution>
+            <id>configure</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>cfg</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
