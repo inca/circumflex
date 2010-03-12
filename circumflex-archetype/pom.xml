@@ -6,6 +6,13 @@
   <name>Circumflex Application Archetype</name>
   <version>0.2-SNAPSHOT</version>
 
+  <parent>
+    <groupId>ru.circumflex</groupId>
+    <artifactId>circumflex-parent</artifactId>
+    <version>0.2-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
   <build>
     <extensions>
       <extension>
