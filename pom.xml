@@ -9,7 +9,7 @@
   <version>0.2</version>
   <name>Circumflex</name>
   <description>
-    Circumflex is a set of software components for quick and robust application 
+    Circumflex is a set of software components for quick and robust application
     development using Scala programming language.
   </description>
   <url>http://circumflex.ru</url>
@@ -63,7 +63,7 @@
       <artifactId>commons-beanutils</artifactId>
       <version>1.8.0</version>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>1.4</version>
@@ -87,6 +87,31 @@
       <version>6.1.20</version>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-gpg-plugin</artifactId>
+              <executions>
+                <execution>
+                  <id>sign</id>
+                  <phase>verify</phase>
+                  <goals>
+                    <goal>sign</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+  </profiles>
 
   <build>
     <pluginManagement>
@@ -195,10 +220,19 @@
 
   <licenses>
     <license>
-      <name>BSD-like</name>
+      <name>BSD-like Circumflex License</name>
       <distribution>repo</distribution>
       <url>http://circumflex.ru/license</url>
     </license>
   </licenses>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>nexus</id>
+      <name>Sonatype Nexus Snapshots</name>
+      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
 
 </project>
