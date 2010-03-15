@@ -155,9 +155,9 @@ trait SQLQuery extends Query {
 
 }
 
-class NativeQuery(fragment: SQLFragment) extends SQLQuery with DMLQuery {
+class NativeSQLQuery(fragment: SQLFragment) extends SQLQuery {
   def parameters = fragment.parameters
-  def toSql = sql.replaceAll("\\{\\*\\}", fragment.toSql)
+  def toSql = fragment.toSql.replaceAll("\\{\\*\\}", sqlProjections)
 }
 
 class Subselect extends SQLQuery {
@@ -207,14 +207,8 @@ class Subselect extends SQLQuery {
   /**
    * Specifies the simple expression to use as the WHERE clause of this query.
    */
-  def where(expression: String, params: Any*): this.type = where(expr(expression, params))
-
-  /**
-   * Specifies the simple expression with named parametes to use as the WHERE
-   * clause of this query.
-   */
-  def where(expression: String, params: Pair[String, Any]*): this.type =
-    where(expr(expression, params))
+  def where(expression: String, params: Any*): this.type =
+    where(expr(expression, params.toList: _*))
 
   /**
    * Returns the HAVING clause of this query.
@@ -228,6 +222,12 @@ class Subselect extends SQLQuery {
     this._having = predicate
     return this
   }
+
+  /**
+   * Specifies the simple expression to use as the HAVING clause of this query.
+   */
+  def having(expression: String, params: Any*): this.type =
+    having(expr(expression, params.toList: _*))
 
   /**
    * Returns GROUP BY clause of this query.
@@ -460,12 +460,12 @@ trait QueryHelper {
   def expr(expression: String, params: Any*): SimpleExpression =
     new SimpleExpression(expression, params.toList)
 
-  def expr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
+  def prepareExpr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
     var sqlText = expression
     var parameters: Seq[Any] = Nil
     val paramsMap = Map[String, Any](params: _*)
     val pattern = Pattern.compile(":([a-zA-Z_]+)\\b")
-    val matcher = pattern.matcher(sql)
+    val matcher = pattern.matcher(expression)
     while(matcher.find) paramsMap.get(matcher.group(1)) match {
       case Some(param) => parameters ++= List(param)
       case _ => parameters ++= List(null)
@@ -524,11 +524,12 @@ class SelectHelper(val projections: Seq[Projection[_]]) {
 class NativeSQLQueryHelper(sql: String,
                            projections: Projection[_]*) {
   def prepare(params: Pair[String, Any]*): SQLQuery =
-    return new NativeQuery(expr(sql, params)).addProjection(projections: _*)
+    return new NativeSQLQuery(prepareExpr(sql, params: _*))
+            .addProjection(projections: _*)
 
 }
 
 class NativeDMLQueryHelper(dml: String) {
   def prepare(params: Pair[String, Any]*): DMLQuery =
-    return new NativeQuery(expr(sqlText, params))
+    return new NativeDMLQuery(prepareExpr(dml, params: _*))
 }

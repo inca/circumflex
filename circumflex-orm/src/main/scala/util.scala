@@ -26,6 +26,7 @@
 package ru.circumflex.orm
 
 import org.slf4j.LoggerFactory
+import ORM._
 
 /**
  * Contains helper constructions that automatically close such JDBC objects as

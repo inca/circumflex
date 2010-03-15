@@ -45,6 +45,11 @@ trait DMLQuery extends Query {
 
 }
 
+class NativeDMLQuery(fragment: SQLFragment) extends DMLQuery {
+  def parameters = fragment.parameters
+  def toSql = fragment.toSql
+}
+
 /**
  * Contains functionality for INSERT-SELECT operations.
  * The query must be prepared first with projections matching target relation's
