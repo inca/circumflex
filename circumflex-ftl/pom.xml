@@ -6,13 +6,13 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-ftl</artifactId>
   <packaging>jar</packaging>
-  <version>0.2</version>
+  <version>0.2.1</version>
   <name>Circumflex Freemarker Views</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>0.2</version>
+    <version>0.2.1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -20,12 +20,12 @@
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-core</artifactId>
-      <version>0.2</version>
+      <version>0.2.1</version>
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-orm</artifactId>
-      <version>0.2</version>
+      <version>0.2.1</version>
     </dependency>
     <!-- Freemarker -->
     <dependency>

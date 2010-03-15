@@ -6,7 +6,7 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-core</artifactId>
   <packaging>jar</packaging>
-  <version>0.2</version>
+  <version>0.2.1</version>
   <name>Circumflex Web Framework</name>
   <description>Circumflex Web Framework (a.k.a. circumflex-core) is a lightweight
     Front Controller pattern implementation for quick and robust Web application
@@ -15,7 +15,7 @@
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>0.2</version>
+    <version>0.2.1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
