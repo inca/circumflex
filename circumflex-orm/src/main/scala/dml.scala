@@ -45,12 +45,6 @@ trait DMLQuery extends Query {
 
 }
 
-class NativeDMLQuery(sql: String,
-                     params: Seq[Any]) extends DMLQuery {
-  def parameters = params
-  def toSql = sql
-}
-
 /**
  * Contains functionality for INSERT-SELECT operations.
  * The query must be prepared first with projections matching target relation's

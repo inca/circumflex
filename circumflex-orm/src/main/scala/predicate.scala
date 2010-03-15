@@ -30,21 +30,7 @@ import ORM._
 /**
  * Predicates form a criteria tree that is used to filter results.
  */
-trait Predicate extends SQLable {
-  /**
-   * The list of parameters that should be applied to this predicate.
-   * Essentially these are set on JDBC prepared statement object.
-   * The parameters count and order must match predicate's SQL representation.
-   */
-  def parameters: Seq[Any]
-
-  /**
-   * Inlines predicate parameters and returns resulting SQL.
-   */
-  def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
-    sql.replaceFirst("\\?", typeConverter.toString(p)))
-
-}
+trait Predicate extends SQLFragment
 
 /**
  * Used to represent an empty WHERE clause (equivalent to always-true condition).

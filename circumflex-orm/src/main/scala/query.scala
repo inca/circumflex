@@ -42,7 +42,7 @@ object ExceptAll extends SetOperation("except all")
 object Intersect extends SetOperation("intersect")
 object IntersectAll extends SetOperation("intersect all")
 
-trait Query extends SQLable with JDBCHelper {
+trait Query extends SQLable with JDBCHelper with SQLFragment {
   protected var aliasCounter = 0;
 
   /**
@@ -52,17 +52,6 @@ trait Query extends SQLable with JDBCHelper {
     aliasCounter += 1
     return "this_" + aliasCounter
   }
-
-  /**
-   * Query parameters.
-   */
-  def parameters: Seq[Any]
-
-  /**
-   * Inlines query parameters and returns resulting SQL.
-   */
-  def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
-    sql.replaceFirst("\\?", typeConverter.toString(p)))
 
   /**
    * Sets prepared statement parameters of this query starting from specified index.
@@ -166,10 +155,9 @@ trait SQLQuery extends Query {
 
 }
 
-class NativeSQLQuery(sql: String,
-                     params: Seq[Any]) extends SQLQuery {
-  def parameters = params
-  def toSql = sql.replaceAll("\\{\\*\\}", sqlProjections)
+class NativeQuery(fragment: SQLFragment) extends SQLQuery with DMLQuery {
+  def parameters = fragment.parameters
+  def toSql = sql.replaceAll("\\{\\*\\}", fragment.toSql)
 }
 
 class Subselect extends SQLQuery {
@@ -215,6 +203,18 @@ class Subselect extends SQLQuery {
     this._where = predicate
     return this
   }
+
+  /**
+   * Specifies the simple expression to use as the WHERE clause of this query.
+   */
+  def where(expression: String, params: Any*): this.type = where(expr(expression, params))
+
+  /**
+   * Specifies the simple expression with named parametes to use as the WHERE
+   * clause of this query.
+   */
+  def where(expression: String, params: Pair[String, Any]*): this.type =
+    where(expr(expression, params))
 
   /**
    * Returns the HAVING clause of this query.
@@ -457,6 +457,23 @@ trait QueryHelper {
   def notExists(subselect: Subselect) =
     new SubqueryExpression("not exists ", subselect)
 
+  def expr(expression: String, params: Any*): SimpleExpression =
+    new SimpleExpression(expression, params.toList)
+
+  def expr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
+    var sqlText = expression
+    var parameters: Seq[Any] = Nil
+    val paramsMap = Map[String, Any](params: _*)
+    val pattern = Pattern.compile(":([a-zA-Z_]+)\\b")
+    val matcher = pattern.matcher(sql)
+    while(matcher.find) paramsMap.get(matcher.group(1)) match {
+      case Some(param) => parameters ++= List(param)
+      case _ => parameters ++= List(null)
+    }
+    sqlText = matcher.replaceAll("?")
+    return new SimpleExpression(sqlText, parameters)
+  }
+
   /* PROJECTION HELPERS */
 
   def scalar(expr: String) = new ScalarProjection[Any](expr, false)
@@ -504,44 +521,14 @@ class SelectHelper(val projections: Seq[Projection[_]]) {
 
 }
 
-abstract class NativeQueryHelper(sql: String) {
-
-  protected var parameters: Seq[Any] = Nil
-  protected var sqlText = sql
-
-  protected def prepareParameters(params: Pair[String, Any]*): Unit = {
-    val paramsMap = Map[String, Any](params: _*)
-    val pattern = Pattern.compile(":([a-zA-Z_]+\\w)")
-    val matcher = pattern.matcher(sql)
-    while(matcher.find) paramsMap.get(matcher.group(1)) match {
-      case Some(param) => parameters ++= List(param)
-      case _ => parameters ++= List(null)
-    }
-    sqlText = matcher.replaceAll("?")
-  }
-
-  override def toString = sqlText.toString
-
-}
-
 class NativeSQLQueryHelper(sql: String,
-                           val projections: Projection[_]*)
-        extends NativeQueryHelper(sql) {
-
-  def prepare(params: Pair[String, Any]*): SQLQuery = {
-    prepareParameters(params: _*)
-    return new NativeSQLQuery(sqlText, parameters)
-            .addProjection(projections: _*)
-  }
+                           projections: Projection[_]*) {
+  def prepare(params: Pair[String, Any]*): SQLQuery =
+    return new NativeQuery(expr(sql, params)).addProjection(projections: _*)
 
 }
 
-class NativeDMLQueryHelper(dml: String)
-        extends NativeQueryHelper(dml) {
-
-  def prepare(params: Pair[String, Any]*): DMLQuery = {
-    prepareParameters(params: _*)
-    return new NativeDMLQuery(sqlText, parameters)
-  }
-
+class NativeDMLQueryHelper(dml: String) {
+  def prepare(params: Pair[String, Any]*): DMLQuery =
+    return new NativeQuery(expr(sqlText, params))
 }
