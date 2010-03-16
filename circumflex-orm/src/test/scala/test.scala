@@ -112,7 +112,7 @@ object D extends Table[D] with LongIdPK[D]
 
 object Init {
 
-  def schema = new DDLExport(A, B, C, D).dropCreate
+  def schema = new DDLExport(A, B, C, D, Country, City).dropCreate
 
   def data = {
     val a1 = new A
@@ -154,11 +154,7 @@ object Init {
     tx.commit
   }
 
-  val aTree = A join (B join C join D)
-
-  val bTree = B join A join C join D
-
   def deps = Deployment.readAll(XML.load(
-    Class.forName("ru.circumflex.orm.ORM$").getResourceAsStream("/test.cxd.xml")))
+    this.getClass.getResourceAsStream("/test.cxd.xml")))
 
 }
