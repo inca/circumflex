@@ -207,8 +207,8 @@ class Subselect extends SQLQuery {
   /**
    * Specifies the simple expression to use as the WHERE clause of this query.
    */
-  def where(expression: String, params: Any*): this.type =
-    where(expr(expression, params.toList: _*))
+  def where(expression: String, params: Pair[String,Any]*): this.type =
+    where(prepareExpr(expression, params: _*))
 
   /**
    * Returns the HAVING clause of this query.

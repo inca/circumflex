@@ -110,8 +110,8 @@ class Criteria[R](val rootNode: RelationNode[R])
   /**
    * Adds a predicate represented by provided expression and parametes.
    */
-  def add(expression: String, params: Any*): this.type =
-    add(expr(expression, params.toList: _*))
+  def add(expression: String, params: Pair[String,Any]*): this.type =
+    add(prepareExpr(expression, params: _*))
 
   /**
    * Adds a predicate related to criteria root node to this query's restrictions list.
