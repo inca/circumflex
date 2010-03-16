@@ -44,8 +44,9 @@ trait FreemarkerHelper {
     ftl(template)
   }
 
-
 }
+
+object FTL extends FreemarkerHelper
 
 case class FreemarkerResponse(val template:Template) extends HttpResponse {
   override def apply(response: HttpServletResponse) = {
