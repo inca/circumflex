@@ -126,12 +126,20 @@ class RequestRouter {
       throw new RouteMatchedException(Some(error(400, "Missing " + name + " parameter.")))
   })
 
+  /* COMMON HELPERS */
+
   /**
    * Sends a file.
    */
   def sendFile(file: File) = FileResponse(file)
 
-  /* COMMON HELPERS */
+  /**
+   * Sends a file with Content-Disposition: attachment and specified UTF-8 filename.
+   */
+  def sendFile(file: File, filename: String) = {
+    attachment(filename)
+    sendFile(file)
+  }
 
   /**
    * Sets content type header.
