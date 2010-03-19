@@ -97,9 +97,12 @@ class RequestRouter {
   def error(errorCode: Int) = ErrorResponse(errorCode, "no message available")
 
   /**
-   * Sends a 302 MOVED TEMPORARILY redirect.
+   * Sends a 302 MOVED TEMPORARILY redirect (with optional flashes).
    */
-  def redirect(location: String) = RedirectResponse(location)
+  def redirect(location: String, flashes: Pair[String, Any]*) = {
+    flashes.toList.foreach(p => flash(p._1) = p._2)
+    RedirectResponse(location)
+  }
 
   /**
    * Sends empty response HTTP 200 OK.
@@ -115,7 +118,8 @@ class RequestRouter {
   }
 
   /**
-   * Immediately stops processing with HTTP 400 Bad Request if one of specified parametes is not provided.
+   * Immediately stops processing with HTTP 400 Bad Request if one of specified
+   * parameters is not provided.
    */
   def requireParams(names: String*) = names.toList.foreach(name => {
     if (param(name) == None)

@@ -28,7 +28,6 @@ package ru.circumflex.core
 import java.lang.reflect.InvocationTargetException
 import java.util.regex.Pattern
 import util.matching.Regex
-import java.util.ResourceBundle
 import javax.servlet._
 import http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
