@@ -181,7 +181,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
   def doFilter(ctx: CircumflexContext, chain: FilterChain): Unit = {
     log.debug(ctx.request.toString)
     // Set X-Powered-By header
-    ctx.response.setHeader("X-Powered-By", "Circumflex v. 0.2.2")
+    ctx.response.setHeader("X-Powered-By", "Circumflex v. 0.3")
     // Set character encoding
     ctx.request.setCharacterEncoding("UTF-8")
     try {
@@ -207,7 +207,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * @param cfg filter configuration
    */
   override def init(cfg: FilterConfig) = {
-    log.info("Circumflex v. 0.2.2")
+    log.info("Circumflex v. 0.3")
   }
 
 }

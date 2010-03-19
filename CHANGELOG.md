@@ -10,7 +10,9 @@
 
 * Added FTL singleton.
 
-## Version 0.2.2
+## Version 0.3
+
+* Added Circumflex Docco module.
 
 ### Circumflex Web Framework:
 
