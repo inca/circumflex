@@ -18,3 +18,7 @@
 
 * Added sendFile with Content-Disposition: attachment.
 * Added redirect with optional flashes.
+
+### Circumflex Freemarker Views:
+
+* DefaultConfiguration now can be used outside webapps.

@@ -37,7 +37,6 @@ import net.java.textilej.parser.MarkupParser
 import org.apache.commons.beanutils.{MethodUtils, PropertyUtils}
 import java.lang.reflect.{Field, Method}
 import java.lang.String
-import scala.collection.jcl.Conversions._
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any) = obj match {

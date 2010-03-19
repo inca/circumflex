@@ -25,10 +25,14 @@
 
 package ru.circumflex.docco
 
-import java.io.{FileReader, BufferedReader, File}
+import ru.circumflex.freemarker.DefaultConfiguration
+import _root_.freemarker.template.Configuration
+import java.io.{StringWriter, FileReader, BufferedReader, File}
+
+case class Section(val doc: String, val code: String)
 
 class Docco(val file: File) {
-  var sections: Seq[Pair[String, String]] = Nil
+  var sections: Seq[Section] = Nil
 
   val commentBegin = "^\\s*/\\*\\*?\\s*(.*)".r
   val commentEnd = "^\\s*(.*?)\\*/\\s*".r
@@ -36,9 +40,9 @@ class Docco(val file: File) {
   val commentSingleBlock = "^\\s*/\\*\\s*(.*?)\\*/\\s*".r
   val commentBody = "^\\s*\\*?\\s*(.*)".r
 
-  def empty_?(str: String) = str == null || str.trim == ""
+  parse()
 
-  def parse = {
+  def parse() = {
     val reader = new BufferedReader(new FileReader(file))
     try {
       var insideComment = false
@@ -47,10 +51,12 @@ class Docco(val file: File) {
       var str = reader.readLine
 
       def flushSection() = {
-        sections ++= List(comment.trim -> code.trim)
+        sections ++= List(Section(comment.trim, code))
         code = ""
         comment = ""
       }
+
+      def empty_?(s: String) = s == null || s.trim == ""
 
       while (str != null) {
         str match {
@@ -81,4 +87,16 @@ class Docco(val file: File) {
     }
   }
 
+  def toHtml(template: String, ftlConfig: Configuration): String = {
+    val s = new StringWriter
+    ftlConfig.getTemplate(template)
+        .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), s)
+    return s.toString
+  }
+
+  def toHtml(template: String): String = toHtml(template, DefaultConfiguration)
+
+  def toHtml: String = toHtml("/default.html.ftl")
+
 }
+

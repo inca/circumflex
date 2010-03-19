@@ -17,6 +17,14 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
+  <dependencies>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-ftl</artifactId>
+      <version>0.3</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>

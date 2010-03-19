@@ -25,8 +25,8 @@
 
 package ru.circumflex.freemarker
 
-import _root_.freemarker.cache.{MultiTemplateLoader, WebappTemplateLoader, ClassTemplateLoader}
 import _root_.freemarker.template.{TemplateExceptionHandler, Template, Configuration}
+import _root_.freemarker.cache._
 import ru.circumflex.core._
 import Circumflex._
 import javax.servlet.http.HttpServletResponse
@@ -69,11 +69,15 @@ case class FreemarkerResponse(val template:Template) extends HttpResponse {
  * </ul>
  */
 object DefaultConfiguration extends Configuration {
-  val loaderServletContext = new WebappTemplateLoader(
-    Circumflex.ctx.request.getSession.getServletContext, "/templates")
-  val loaderClassPath = new ClassTemplateLoader(getClass, "/")
-
-  setTemplateLoader(new MultiTemplateLoader(List(loaderServletContext, loaderClassPath).toArray))
+  var loaders: Seq[TemplateLoader] = Nil
+  loaders ++= List(new ClassTemplateLoader(getClass, "/"))
+  try {
+    loaders ++= List(new WebappTemplateLoader(
+    Circumflex.ctx.request.getSession.getServletContext, "/templates"))
+  } catch {
+    case e => log.debug("Not running in Servlet context.", e)
+  }
+  setTemplateLoader(new MultiTemplateLoader(loaders.toArray))
   setObjectWrapper(new ScalaObjectWrapper())
   setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER)
   setDefaultEncoding("utf-8")
