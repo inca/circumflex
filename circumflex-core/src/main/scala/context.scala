@@ -137,6 +137,11 @@ object Circumflex {
     case _ => throw new CircumflexException("'cx.public' not configured.")
   }
 
+  val XSendFileHeader = cfg("cx.xSendFile.header") match {
+    case Some(s: String) => s
+    case _ => "X-SendFile"
+  }
+
   try {     // read configuration from "cx.properties" by default
     val bundle = ResourceBundle.getBundle("cx", Locale.getDefault, classLoader)
     val keys = bundle.getKeys
