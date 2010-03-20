@@ -28,6 +28,13 @@
     <scala.version>2.7.7.RC2</scala.version>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>scala</id>
+      <url>http://scala-tools.org/repo-releases</url>
+    </repository>
+  </repositories>
+
   <dependencies>
     <!-- Servlet API -->
     <dependency>

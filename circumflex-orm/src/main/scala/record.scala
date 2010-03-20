@@ -3,6 +3,7 @@ package ru.circumflex.orm
 import collection.mutable.HashMap
 import java.util.UUID
 import ORM._
+import ru.circumflex.core.WrapperModel
 
 /**
  * Contains base functionality for objects that can be retrieved from and
@@ -87,7 +88,7 @@ trait RecordForeignAssociation[C, R] {
   def association: Association[C, R]
 }
 
-trait Field[T] {
+trait Field[T] extends WrapperModel {
   def default(value: T): this.type = {
     set(value)
     return this
@@ -101,13 +102,14 @@ trait Field[T] {
   def setNull: Unit
   def <=(value: T): Unit = set(value)
   def :=(value: T): Unit = set(value)
+  def item = get
   override def toString = get match {
     case Some(value) => value.toString
     case None => ""
   }
 }
 
-trait Collection[T] {
+trait Collection[T] extends WrapperModel {
   def default(values: T*): this.type = {
     set(values.toList)
     return this
@@ -116,6 +118,7 @@ trait Collection[T] {
   def set(value: Seq[T]): Unit
   def <=(value: Seq[T]): Unit = set(value)
   def :=(value: Seq[T]): Unit = set(value)
+  def item = get
   override def toString = get.toString
 }
 

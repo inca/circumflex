@@ -1,8 +1,15 @@
 package ru.circumflex.core
 
 /**
- * Defines a very simple model for operating with structural data.
+ * A very simple model for operating with structural data.
  */
 trait HashModel {
   def get(key: String): Option[Any]
+}
+
+/**
+ * A very simple model for operating with wrappers.
+ */
+trait WrapperModel {
+  def item: Any
 }

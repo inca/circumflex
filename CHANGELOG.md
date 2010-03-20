@@ -1,15 +1,5 @@
 # Circumflex change log
 
-## Version 0.2.1
-
-### Circmflex ORM
-
-* Added helpers for simple expressions and named parameters.
-
-### Circumflex Freemarker Views:
-
-* Added FTL singleton.
-
 ## Version 0.3
 
 * Added Circumflex Docco module.
@@ -21,4 +11,15 @@
 
 ### Circumflex Freemarker Views:
 
+* Not depending on circumflex-orm.
 * DefaultConfiguration now can be used outside webapps.
+
+## Version 0.2.1
+
+### Circmflex ORM
+
+* Added helpers for simple expressions and named parameters.
+
+### Circumflex Freemarker Views:
+
+* Added FTL singleton.

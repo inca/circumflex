@@ -1,7 +1,5 @@
 package ru.circumflex.freemarker
 
-import ru.circumflex.core.HashModel
-import ru.circumflex.orm.{Field => ORMField, Collection => ORMCollection}
 import _root_.freemarker.core.Environment
 import java.io.StringWriter
 import _root_.freemarker.template._
@@ -12,6 +10,7 @@ import net.java.textilej.parser.MarkupParser
 import org.apache.commons.beanutils.{MethodUtils, PropertyUtils}
 import java.lang.reflect.{Field, Method}
 import java.lang.String
+import ru.circumflex.core.{WrapperModel, HashModel}
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any) = obj match {
@@ -22,7 +21,10 @@ class ScalaObjectWrapper extends ObjectWrapper {
       case _ => null
     }
     case model: TemplateModel => model
+    // Circumflex model types
     case hash: HashModel => new CircumflexHashWrapper(hash, this)
+    case wrapper: WrapperModel => wrap(wrapper.item)
+    // Scala base types
     case seq: Seq[Any] => new ScalaSeqWrapper(seq, this)
     case map: scala.collection.Map[Any, Any] => new ScalaMapWrapper(map, this)
     case it: Iterable[Any] => new ScalaIterableWrapper(it, this)
@@ -31,9 +33,6 @@ class ScalaObjectWrapper extends ObjectWrapper {
     case date: Date => new SimpleDate(date, TemplateDateModel.UNKNOWN)
     case num: Number => new SimpleNumber(num)
     case bool: Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
-    // ORM stuff
-    case field: ORMField[_] => wrap(field.get)
-    case coll: ORMCollection[_] => wrap(coll.get)
     // Everything else
     case obj => new ScalaBaseWrapper(obj, this)
   }

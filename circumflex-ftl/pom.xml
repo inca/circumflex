@@ -22,11 +22,6 @@
       <artifactId>circumflex-core</artifactId>
       <version>0.3</version>
     </dependency>
-    <dependency>
-      <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-orm</artifactId>
-      <version>0.3</version>
-    </dependency>
     <!-- Freemarker -->
     <dependency>
       <groupId>org.freemarker</groupId>
