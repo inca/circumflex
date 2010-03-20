@@ -27,7 +27,6 @@ case class FreemarkerResponse(val template:Template) extends HttpResponse {
   override def apply(response: HttpServletResponse) = {
     var ftlCtx = ctx;
     ftlCtx += "ctx" -> ctx;
-    ftlCtx += "textile" -> new TextileDirective
     super.apply(response)
     template.process(ftlCtx, response.getWriter)
   }

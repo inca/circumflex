@@ -4,9 +4,6 @@ import _root_.freemarker.core.Environment
 import java.io.StringWriter
 import _root_.freemarker.template._
 import java.util.Date
-import net.java.textilej.parser.builder.HtmlDocumentBuilder
-import net.java.textilej.parser.markup.textile.TextileDialect
-import net.java.textilej.parser.MarkupParser
 import org.apache.commons.beanutils.{MethodUtils, PropertyUtils}
 import java.lang.reflect.{Field, Method}
 import java.lang.String
@@ -119,16 +116,4 @@ class CircumflexHashWrapper(val hash: HashModel, wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(hash, wrapper) with TemplateHashModel {
   override def get(key: String) = wrapper.wrap(hash.get(key))
   override def isEmpty = false
-}
-
-class TextileDirective extends TemplateDirectiveModel {
-  def execute(env: Environment, params: java.util.Map[_, _], loopVars: Array[TemplateModel], body: TemplateDirectiveBody) = {
-    val nested = new StringWriter
-    body.render(nested)
-    val builder = new HtmlDocumentBuilder(env.getOut)
-    builder.setEmitAsDocument(false)
-    val parser = new MarkupParser(new TextileDialect)
-    parser.setBuilder(builder)
-    parser.parse(nested.toString)
-  }
 }
