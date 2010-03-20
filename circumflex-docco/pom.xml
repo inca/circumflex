@@ -23,11 +23,6 @@
       <artifactId>circumflex-ftl</artifactId>
       <version>0.3</version>
     </dependency>
-    <dependency>
-      <groupId>org.markdownj</groupId>
-      <artifactId>markdownj</artifactId>
-      <version>0.3.0-1.0.2b4</version>
-    </dependency>
   </dependencies>
 
   <build>

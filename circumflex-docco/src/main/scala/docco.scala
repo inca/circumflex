@@ -3,7 +3,6 @@ package ru.circumflex.docco
 import ru.circumflex.freemarker.DefaultConfiguration
 import _root_.freemarker.template.Configuration
 import java.io.{StringWriter, FileReader, BufferedReader, File}
-import com.petebevin.markdown.MarkdownProcessor;
 
 case class Section(val doc: String, val code: String)
 
@@ -27,7 +26,7 @@ class Docco(val file: File) {
       var str = reader.readLine
 
       def flushSection() = {
-        sections ++= List(Section(new MarkdownProcessor().markdown(comment.trim), code))
+        sections ++= List(Section(comment.trim, code))
         code = ""
         comment = ""
       }
