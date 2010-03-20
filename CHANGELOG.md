@@ -13,6 +13,7 @@
 
 * Not depending on circumflex-orm.
 * DefaultConfiguration now can be used outside webapps.
+* Removed textilej support to make the library more lightweight.
 
 ## Version 0.2.1
 
