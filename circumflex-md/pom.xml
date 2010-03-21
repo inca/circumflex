@@ -4,11 +4,11 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>ru.circumflex</groupId>
-  <artifactId>circumflex-docco</artifactId>
+  <artifactId>circumflex-md</artifactId>
   <packaging>jar</packaging>
   <version>0.3</version>
-  <name>Circumflex Docco</name>
-  <description>Scala port of http://jashkenas.github.com/docco.</description>
+  <name>Circumflex Markdown</name>
+  <description>Scala port of http://daringfireball.net/projects/markdown.</description>
 
   <parent>
     <groupId>ru.circumflex</groupId>
@@ -16,14 +16,6 @@
     <version>0.3</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-
-  <dependencies>
-    <dependency>
-      <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-ftl</artifactId>
-      <version>0.3</version>
-    </dependency>
-  </dependencies>
 
   <build>
     <plugins>
