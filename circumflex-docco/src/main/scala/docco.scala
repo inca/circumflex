@@ -4,74 +4,85 @@ import ru.circumflex.freemarker.DefaultConfiguration
 import _root_.freemarker.template.Configuration
 import java.io.{StringWriter, FileReader, BufferedReader, File}
 
-case class Section(val doc: String, val code: String)
+case class Section(private var _doc: String, private var _code: String) {
+  private var _committed = false
+  def this() = this("", "")
+  def trimNewLines(s: String) = s.replaceAll("^\\n+(.*)", "$1").replaceAll("(.*?)\\n+$", "$1")
+  def committed_?() = _committed
+  def code = trimNewLines(_code)
+  def doc = trimNewLines(_doc)
+  def addCode(s: String): this.type = {
+    _committed = true
+    _code += s + "\n"
+    return this
+  }
+  def addDoc(s: String): this.type = {
+    _doc += s + "\n"
+    return this
+  }
+  def empty_?() = _doc == "" && _code == ""
+}
 
+/* # Scala source documentation utility */
 class Docco(val file: File) {
   var sections: Seq[Section] = Nil
-
-  val commentBegin = "^\\s*/\\*\\*?\\s*(.*)".r
-  val commentEnd = "^\\s*(.*?)\\*/\\s*".r
-  val commentSingleLine = "^\\s*//\\s*(.*)".r
-  val commentSingleBlock = "^\\s*/\\*\\s*(.*?)\\*/\\s*".r
-  val commentBody = "^\\s*\\*?\\s*(.*)".r
-
+  /* Scala comment regex */
+  val commentBegin = "^\\s*/\\*\\*? ?(.*)".r
+  val commentEnd = "^(.*?)\\*/\\s*".r
+  val commentSingleLine = "^\\s*// ?(.*)".r
+  val commentSingleBlock = "^\\s*/\\* ?(.*?)\\*/\\s*".r
+  val commentBody = "^(?:\\s*\\*)? ?(.*)".r
+  /* Parse Scala comments */
   parse()
-
   def parse() = {
     val reader = new BufferedReader(new FileReader(file))
     try {
+      var section: Section = new Section()
       var insideComment = false
-      var code = ""
-      var comment = ""
       var str = reader.readLine
-
       def flushSection() = {
-        sections ++= List(Section(comment.trim, code))
-        code = ""
-        comment = ""
+        if (!section.empty_?)
+          sections ++= List(section)
+        section = new Section()
       }
-
-      def empty_?(s: String) = s == null || s.trim == ""
-
       while (str != null) {
         str match {
           case commentSingleLine(s) =>
-            if (!empty_?(code)) flushSection
-            if (!empty_?(s)) comment += s + "\n"
+            if (section.committed_?)
+              flushSection
+            section.addDoc(s)
           case commentSingleBlock(s) =>
-            if (!empty_?(code)) flushSection
-            if (!empty_?(s)) comment += s + "\n"
-          case commentBegin(s) =>
-            if (!empty_?(code) || !empty_?(comment)) flushSection
-            insideComment = true
-            comment += s + "\n"
-          case commentEnd(s) if insideComment =>
-            if (!empty_?(comment)) comment += s + "\n"
+            if (section.committed_?)
+              flushSection
+            section.addDoc(s)
             insideComment = false
+          case commentBegin(s) =>
+            if (section.committed_?)
+              flushSection
+            insideComment = true
+            section.addDoc(s)
+          case commentEnd(s) if insideComment =>
+            insideComment = false
+            section.addDoc(s)
           case commentBody(s) if insideComment =>
-            comment += s + "\n"
-          case _ =>
-            code += str + "\n"
+            section.addDoc(s)
+          case s => section.addCode(s)
         }
         str = reader.readLine
       }
-      if (!empty_?(code) || !empty_?(comment))
-        flushSection
+      flushSection
     } finally {
       reader.close()
     }
   }
-
+  /* HTML exporting stuff */
   def toHtml(template: String, ftlConfig: Configuration): String = {
     val s = new StringWriter
     ftlConfig.getTemplate(template)
         .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), s)
     return s.toString
   }
-
   def toHtml(template: String): String = toHtml(template, DefaultConfiguration)
-
   def toHtml: String = toHtml("/default.html.ftl")
-
 }
 

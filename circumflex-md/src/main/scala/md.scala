@@ -2,8 +2,13 @@ package ru.circumflex.md
 
 import java.util.regex._
 
+/* # The Markdown Processor */
+
 /**
- * The processor for Markdown. Use `apply(String)` method for conversion.
+ * This utility converts a plain text written in [Markdown][1] into HTML fragment.
+ * The `apply(String)` method does all the work.
+ *
+ *  [1]: http://daringfireball.net/projects/markdown/syntax "Markdown Syntax"
  */
 object Markdown {
 
@@ -12,30 +17,34 @@ object Markdown {
   // * to standardize line endings
   private val rLineEnds = Pattern.compile("\\r\\n|\\r")
   // * to strip out whitespaces in blank lines
-  private val rBlankLines = Pattern.compile("^[ \\t]+$", Pattern.MULTILINE)
+  private val rBlankLines = Pattern.compile("^[ ]+$", Pattern.MULTILINE)
   // * to replace tabs with spaces
   private val rTabs = Pattern.compile("(.*?)\\t")
 
-  /* # The Processor */
+  /* # The Processing Stuff */
+
+  // Normalization includes following stuff:
+  //
+  // * replace DOS- and Mac-specific line endings with `\n`;
+  // * replace tabs with spaces;
+  // * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
 
   /**
    * Converts the `source` from Markdown to HTML.
    */
   def apply(source: String): String = {
-    // standardize the input
     val text = new StringEx(source)
         .replaceAll(rLineEnds, "\n")
         .replaceAll(rTabs, "$1    ")
         .replaceAll(rBlankLines, "")
         .append("\n\n")
-    
 
     return text.toString
   }
 
 }
 
-/* Utility stuff */
+/* # Utility stuff */
 
 /**
  * Wraps the source into mutable StringBuilder with utility methods.
