@@ -14,12 +14,12 @@ object Markdown {
 
   /* # Regex patterns */
 
-  // * to standardize line endings
+  // standardize line endings
   private val rLineEnds = Pattern.compile("\\r\\n|\\r")
-  // * to strip out whitespaces in blank lines
-  private val rBlankLines = Pattern.compile("^[ ]+$", Pattern.MULTILINE)
-  // * to replace tabs with spaces
-  private val rTabs = Pattern.compile("(.*?)\\t")
+  // strip out whitespaces in blank lines
+  private val rBlankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
+  // replace tabs with spaces
+  private val rTabs = Pattern.compile("\\t")
 
   /* # The Processing Stuff */
 
@@ -35,9 +35,8 @@ object Markdown {
   def apply(source: String): String = {
     val text = new StringEx(source)
         .replaceAll(rLineEnds, "\n")
-        .replaceAll(rTabs, "$1    ")
+        .replaceAll(rTabs, "    ")
         .replaceAll(rBlankLines, "")
-        .append("\n\n")
 
     return text.toString
   }

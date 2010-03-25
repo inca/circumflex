@@ -2,7 +2,7 @@ package ru.circumflex.docco
 
 import ru.circumflex.freemarker.DefaultConfiguration
 import _root_.freemarker.template.Configuration
-import java.io.{StringWriter, FileReader, BufferedReader, File}
+import java.io._
 
 case class Section(private var _doc: String, private var _code: String) {
   private var _committed = false
@@ -76,13 +76,10 @@ class Docco(val file: File) {
     }
   }
   /* HTML exporting stuff */
-  def toHtml(template: String, ftlConfig: Configuration): String = {
-    val s = new StringWriter
+  def toHtml(writer: Writer, template: String, ftlConfig: Configuration): Unit =
     ftlConfig.getTemplate(template)
-        .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), s)
-    return s.toString
-  }
-  def toHtml(template: String): String = toHtml(template, DefaultConfiguration)
-  def toHtml: String = toHtml("/default.html.ftl")
+        .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
+  def toHtml(writer: Writer, template: String): Unit = toHtml(writer, template, DefaultConfiguration)
+  def toHtml(writer: Writer): Unit = toHtml(writer, "/default.html.ftl")
 }
 
