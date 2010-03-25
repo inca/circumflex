@@ -112,9 +112,16 @@ class MarkdownText(source: CharSequence) {
    * * replace tabs with spaces;
    * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
    */
-  def normalize(): this.type =replaceAll(rLineEnds, "\n")
+  def normalize(): this.type = replaceAll(rLineEnds, "\n")
         .replaceAll(rTabs, "    ")
         .replaceAll(rBlankLines, "")
+
+  /**
+   * All inline HTML blocks are hashified, so that no harm is done to their internal stuff.
+   */
+  def hashHtmlBlocks(): this.type = {
+
+  }
 
   def toHtml(): String = {
 
