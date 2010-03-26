@@ -52,6 +52,6 @@ object DefaultXSendFileHeader extends XSendFileHeader {
  * Nginx implementation needs to know URI instead of file path, so we leave the
  * implementation details up to you.
  */
-abstract class NginxSendFileHeader extends XSendFileHeader {
+abstract class NginxXSendFileHeader extends XSendFileHeader {
   def name = "X-Accel-Redirect"
 }
