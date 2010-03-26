@@ -112,9 +112,14 @@ object Circumflex {
     case _ => throw new CircumflexException("'cx.public' not configured.")
   }
 
-  val XSendFileHeader = cfg("cx.xSendFile.header") match {
-    case Some(s: String) => s
-    case _ => "X-SendFile"
+  val XSendFileHeader: XSendFileHeader = cfg("cx.XSendFileHeader") match {
+    case Some(h: XSendFileHeader) => h
+    case Some(c: Class[XSendFileHeader]) => c.newInstance
+    case Some(s: String) => Class
+        .forName(s, true, classLoader)
+        .newInstance
+        .asInstanceOf[XSendFileHeader]
+    case _ => DefaultXSendFileHeader
   }
 
   try {     // read configuration from "cx.properties" by default

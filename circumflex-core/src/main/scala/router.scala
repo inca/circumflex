@@ -109,11 +109,29 @@ class RequestRouter {
   def sendFile(file: File): FileResponse = FileResponse(file)
 
   /**
-   * Sends a file with Content-Disposition: attachment and specified UTF-8 filename.
+   * Sends a file with Content-Disposition: attachment with specified UTF-8 filename.
    */
   def sendFile(file: File, filename: String): FileResponse = {
     attachment(filename)
     sendFile(file)
+  }
+
+  /**
+   * Sends a file with the help of Web server using X-SendFile feature.
+   */
+  def xSendFile(file: File): HttpResponse = {
+    val xsf = Circumflex.XSendFileHeader
+    header(xsf.name) = xsf.value(file)
+    done
+  }
+
+  /**
+   * Sends a file with the help of Web server using X-SendFile feature, also setting
+   * Content-Disposition: attachment with specified UTF-8 filename.
+   */
+  def xSendFile(file: File, filename: String): HttpResponse = {
+    attachment(filename)
+    xSendFile(file)
   }
 
   /**

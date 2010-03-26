@@ -3,11 +3,13 @@
 ## Version 0.3
 
 * Added Circumflex Docco module.
+* Added Circumflex Markdown module.
 
 ### Circumflex Web Framework:
 
 * Added sendFile with Content-Disposition: attachment.
 * Added redirect with optional flashes.
+* Added xSendFile feature.
 
 ### Circumflex Freemarker Views:
 
