@@ -120,11 +120,11 @@ class MarkdownText(source: CharSequence) {
    * All inline HTML blocks are hashified, so that no harm is done to their internal stuff.
    */
   def hashHtmlBlocks(): this.type = {
-
+    this
   }
 
   def toHtml(): String = {
-
+    ""
   }
 
 }
