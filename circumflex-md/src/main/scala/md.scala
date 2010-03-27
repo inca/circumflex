@@ -46,6 +46,10 @@ object Markdown {
   // Character escaping
   val rEscAmp = Pattern.compile("&(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
   val rEscLt = Pattern.compile("<(?![a-z/?\\$!])")
+  // Headers
+  val rH1 = Pattern.compile("^(.*)\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rH2 = Pattern.compile("^(.*)\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rHeaders = Pattern.compile("^(#{1,6}) *(.*?) *#?$", Pattern.MULTILINE)
 
   /* ## The `apply` method */
 
@@ -253,6 +257,19 @@ class MarkdownText(source: CharSequence) {
   })
 
   /**
+   * Process headers.
+   */
+  protected def doHeaders() = {
+    replaceAll(rH1, "<h1>$1</h1>")
+    replaceAll(rH2, "<h2>$1</h2>")
+    replaceAll(rHeaders, m => {
+      val marker = m.group(1)
+      val body = m.group(2)
+      "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
+    })
+  }
+
+  /**
    * Transforms the Markdown source into HTML.
    */
   def toHtml(): String = {
@@ -261,6 +278,7 @@ class MarkdownText(source: CharSequence) {
     hashHtmlComments()
     encodeAmpsAndLts()
     stripLinkDefinitions()
+    doHeaders()
     println(text)
     println(htmlProtector)
     println(charProtector)
