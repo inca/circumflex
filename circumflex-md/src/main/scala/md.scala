@@ -47,9 +47,12 @@ object Markdown {
   val rEscAmp = Pattern.compile("&(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
   val rEscLt = Pattern.compile("<(?![a-z/?\\$!])")
   // Headers
-  val rH1 = Pattern.compile("^(.*)\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
-  val rH2 = Pattern.compile("^(.*)\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
-  val rHeaders = Pattern.compile("^(#{1,6}) *(.*?) *#?$", Pattern.MULTILINE)
+  val rH1 = Pattern.compile("^ {0,3}(\\S.*)\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rH2 = Pattern.compile("^ {0,3}(\\S.*)\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rHeaders = Pattern.compile("^(#{1,6}) *(\\S.*?) *#?$", Pattern.MULTILINE)
+  // Horizontal rulers
+  val rHr = Pattern.compile("^ {0,3}(?:(?:\\* *){3,})|(?:(?:- *){3,})|(?:(?:_ *){3,}) *$",
+    Pattern.MULTILINE)
 
   /* ## The `apply` method */
 
@@ -160,6 +163,7 @@ class MarkdownText(source: CharSequence) {
 
   protected def processBlocks() {
     doHeaders()
+    doHorizontalRulers()
   }
 
   protected def doHeaders() = {
@@ -170,6 +174,10 @@ class MarkdownText(source: CharSequence) {
       val body = m.group(2)
       "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
     })
+  }
+
+  protected def doHorizontalRulers() = {
+    text.replaceAll(rHr, "<hr/>")
   }
 
   /**
