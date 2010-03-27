@@ -36,6 +36,8 @@ object Markdown {
   // start of inline HTML block
   val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^/>]*?>",
     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
+  // HTML comments
+  val rHtmlComment = Pattern.compile("^ {0,3}<!--(.|\\n)*?-->\\s*(?=\\n{2,}|\\Z)", Pattern.MULTILINE)
 
   /* ## The `apply` method */
 
@@ -84,7 +86,7 @@ class MarkdownText(source: CharSequence) {
   /**
    * Inlined HTML fragments are hashed so that the processing inside is skipped.
    */
-  protected var htmlHash = Map[String, String]()
+  protected var hash = Map[String, CharSequence]()
 
   /**
    * Generates a random hash key.
@@ -162,18 +164,36 @@ class MarkdownText(source: CharSequence) {
       // Having inline HTML subsequence
       val endIdx = if (depth == 0) mTags.end else text.length
       val startIdx = m.start
-      val html = text.substring(startIdx, endIdx)
-      // Add to hash and apply replacement
-      val key = randomKey
-      htmlHash += key -> html
-      val sb = new StringBuffer(text.subSequence(0, startIdx))
-          .append(key)
-          .append("\n\n")
-          .append(text.subSequence(endIdx, text.length))
-      text = sb
+      addHash(startIdx, endIdx)
       // Continue recursively until all blocks are processes
       return hashHtmlBlocks
     } else return this
+  }
+
+  /**
+   * All HTML blocks are hashified too.
+   */
+  protected def hashHtmlComments(): this.type = {
+    val m = rHtmlComment.matcher(text)
+    if (m.find) {
+      addHash(m.start, m.end)
+      return hashHtmlComments
+    } else return this
+  }
+
+  /**
+   * Adds the subsequence between `startIdx` and `endIdx` to hash and
+   * applies a replacement to the `text`.
+   */
+  protected def addHash(startIdx: Int, endIdx: Int): this.type = {
+    val key = randomKey
+    val subseq = text.subSequence(startIdx, endIdx)
+    hash += key -> subseq
+    text = new StringBuffer(text.subSequence(0, startIdx))
+        .append(key)
+        .append("\n\n")
+        .append(text.subSequence(endIdx, text.length))
+    return this
   }
 
   /**
@@ -182,8 +202,9 @@ class MarkdownText(source: CharSequence) {
   def toHtml(): String = {
     normalize()
     hashHtmlBlocks()
+    hashHtmlComments()
     println(text)
-    println(htmlHash)
+    println(hash)
     ""
   }
 
