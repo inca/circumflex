@@ -63,35 +63,11 @@ object Markdown {
 /* # The Processing Stuff */
 
 /**
- * We collect all processing logic for the input characters within this class.
- * It is not supposed to play with the stuff inside, but just in case you decide to,
- * there's a couple of things you should know.
+ * We collect all processing logic within this class.
  */
 class MarkdownText(source: CharSequence) {
-  /**
-   * The first one: `source` gets wrapped into `StringBuffer`. See, while in general
-   * `StringBuilder` provides more speed, for some reason Java regular expressions
-   * provide support only for buffers (that are organized in a thread-safe manner, which
-   * tend to be much slower than builder). Since we use a single-thread model here, we
-   * find that fact offensive to all the `StringBuilder` thang, but sincerely can't do
-   * no damn thing about it.
-   */
-  protected var text = new StringBuffer(source)
-
-  /**
-   * The second one: we use the default `Markdown` singleton to lookup precompiled regexes.
-   * I know it sounds like saving on buying bread, but we are really concerned about
-   * the performance of that little thingy =)
-   */
+  protected var text = new StringEx(source)
   import Markdown._
-
-  /**
-   * And the last one: as I mentioned before, we use a single-thread model here. The `toHtml`
-   * method is supposed to be called only once per instance, and, since the `text` is mutable
-   * calling it twice may cause *very* unpredictible results.
-   *
-   * Have fun! 
-   */
 
   /* ## Link Definitions */
 
@@ -101,84 +77,10 @@ class MarkdownText(source: CharSequence) {
 
   protected var links: Map[String, LinkDefinition] = Map()
 
-  /* ## Protectors and hashing */
-
-  class Protector {
-    protected var protectHash: Map[String, CharSequence] = Map()
-    protected var unprotectHash: Map[CharSequence, String] = Map()
-
-    /**
-     * Generates a random hash key.
-     */
-    def randomKey = (0 to keySize).foldLeft("")((s, i) =>
-      s + chars.charAt(rnd.nextInt(keySize)))
-
-    /**
-     * Adds the subsequence between `startIdx` and `endIdx` to hash and
-     * applies a replacement to the `text`.
-     */
-    def addSubseq(startIdx: Int, endIdx: Int): String = {
-      val subseq = text.subSequence(startIdx, endIdx)
-      val key = addToken(subseq)
-      text = new StringBuffer(text.subSequence(0, startIdx))
-          .append(key)
-          .append("\n\n")
-          .append(text.subSequence(endIdx, text.length))
-      return key
-    }
-
-    /**
-     * Adds the specified token to hash and returns the protection key.
-     */
-    def addToken(t: CharSequence): String = {
-      val key = randomKey
-      protectHash += key -> t
-      unprotectHash += t -> key
-      return key
-    }
-
-    override def toString = protectHash.toString
-  }
+  /* ## Protectors */
 
   val htmlProtector = new Protector
   val charProtector = new Protector
-
-  /* ## Utility methods */
-
-  /**
-   * A convenient equivalent to `String.replaceAll` that accepts `Pattern`
-   * instead of `String`.
-   */
-  protected def replaceAll(pattern: Pattern, replacement: String): Unit =
-    replaceAll(pattern, m => replacement)
-
-  /**
-   * A convenient equivalent to `String.replaceAll` that accepts `Pattern`
-   * instead of `String` and a function `Matcher => String`.
-   */
-  protected def replaceAll(pattern: Pattern, replacementFunction: Matcher => String): Unit = {
-    val lastIndex = 0;
-    val m = pattern.matcher(text);
-    val sb = new StringBuffer();
-    while (m.find()) m.appendReplacement(sb, replacementFunction(m));
-    m.appendTail(sb);
-    text = sb;
-  }
-
-  /**
-   * Appends the specified character sequence.
-   */
-  protected def append(s: CharSequence) = {
-    text.append(s)
-  }
-
-  /**
-   * Prepends the specified character sequence.
-   */
-  protected def prepend(s: CharSequence) = {
-    val sb = new StringBuffer(s).append(text)
-    text = sb
-  }
 
   /* ## Processing methods */
 
@@ -190,32 +92,32 @@ class MarkdownText(source: CharSequence) {
    * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
    */
   protected def normalize() = {
-    replaceAll(rLineEnds, "\n")
-    replaceAll(rTabs, "    ")
-    replaceAll(rBlankLines, "")
+    text.replaceAll(rLineEnds, "\n")
+        .replaceAll(rTabs, "    ")
+        .replaceAll(rBlankLines, "")
   }
 
   /**
    * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
    */
   protected def encodeAmpsAndLts() = {
-    replaceAll(rEscAmp, "&amp;")
-    replaceAll(rEscLt, "&lt;")
+    text.replaceAll(rEscAmp, "&amp;")
+        .replaceAll(rEscLt, "&lt;")
   }
 
   /**
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
    */
   protected def hashHtmlBlocks(): Unit = {
-    val m = rInlineHtmlStart.matcher(text)
+    val m = text.matcher(rInlineHtmlStart)
     if (m.find) {
       val tagName = m.group(1)
       // This regex will match either opening or closing tag;
       // opening tags will be captured by $1 leaving $2 empty,
       // while closing tags will be captured by $2 leaving $1 empty
-      val mTags = Pattern.compile(
+      val mTags = text.matcher(Pattern.compile(
         "(<" + tagName + "\\b[^/>]*?>)|(</" + tagName + "\\s*>)",
-        Pattern.CASE_INSENSITIVE).matcher(text)
+        Pattern.CASE_INSENSITIVE))
       // Find end index of matching closing tag
       var depth = 1
       var idx = m.end
@@ -227,19 +129,19 @@ class MarkdownText(source: CharSequence) {
       // Having inline HTML subsequence
       val endIdx = idx
       val startIdx = m.start
-      htmlProtector.addSubseq(startIdx, endIdx)
+      text.protectSubseq(htmlProtector, startIdx, endIdx)
       // Continue recursively until all blocks are processes
       hashHtmlBlocks
     }
   }
 
   /**
-   * All HTML blocks are hashified too.
+   * All HTML comments are hashified too.
    */
   protected def hashHtmlComments(): Unit = {
-    val m = rHtmlComment.matcher(text)
+    val m = text.matcher(rHtmlComment)
     if (m.find) {
-      htmlProtector.addSubseq(m.start, m.end)
+      text.protectSubseq(htmlProtector, m.start, m.end)
       hashHtmlComments
     }
   }
@@ -248,7 +150,7 @@ class MarkdownText(source: CharSequence) {
    * Standalone link definitions are added to the dictionary and then
    * stripped from the document.
    */
-  protected def stripLinkDefinitions() = replaceAll(rLinkDefinition, m => {
+  protected def stripLinkDefinitions() = text.replaceAll(rLinkDefinition, m => {
     val id = m.group(1).toLowerCase
     val url = m.group(2)
     val title = if (m.group(3) == null) "" else m.group(3)
@@ -256,13 +158,14 @@ class MarkdownText(source: CharSequence) {
     ""
   })
 
-  /**
-   * Process headers.
-   */
+  protected def processBlocks() {
+    doHeaders()
+  }
+
   protected def doHeaders() = {
-    replaceAll(rH1, "<h1>$1</h1>")
-    replaceAll(rH2, "<h2>$1</h2>")
-    replaceAll(rHeaders, m => {
+    text.replaceAll(rH1, "<h1>$1</h1>")
+        .replaceAll(rH2, "<h2>$1</h2>")
+        .replaceAll(rHeaders, m => {
       val marker = m.group(1)
       val body = m.group(2)
       "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
@@ -278,7 +181,7 @@ class MarkdownText(source: CharSequence) {
     hashHtmlComments()
     encodeAmpsAndLts()
     stripLinkDefinitions()
-    doHeaders()
+    processBlocks()
     println(text)
     println(htmlProtector)
     println(charProtector)
