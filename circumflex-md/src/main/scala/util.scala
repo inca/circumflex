@@ -92,7 +92,7 @@ class StringEx(protected var text: StringBuffer) {
     val key = protector.addToken(subseq)
     text = new StringBuffer(text.subSequence(0, startIdx))
         .append(key)
-        .append("\n\n")
+        .append("\n")
         .append(text.subSequence(endIdx, text.length))
     return key
   }
