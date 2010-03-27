@@ -1,6 +1,7 @@
 package ru.circumflex.md
 
 import java.util.regex._
+import java.util.Random
 
 /* # The Markdown Processor */
 
@@ -15,6 +16,15 @@ import java.util.regex._
  */
 object Markdown {
 
+  /* ## Commons */
+
+  val keySize = 20
+  val chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  val rnd = new Random
+  val blockTags = "p" :: "div" :: "h1" :: "h2" :: "h3" :: "h4" :: "h5" :: "h6" ::
+      "blockquote" :: "pre" :: "table" :: "dl" :: "ol" :: "ul" :: "script" ::
+      "noscript" :: "form" :: "fieldset" :: "iframe" :: "math" :: "ins" :: "del" :: Nil
+
   /* ## Regex patterns */
 
   // standardize line endings
@@ -23,10 +33,9 @@ object Markdown {
   val rBlankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
   // replace tabs with spaces
   val rTabs = Pattern.compile("\\t")
-
-  /* ## Commons */
-
-
+  // start of inline HTML block
+  val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^/>]*?>",
+    Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
 
   /* ## The `apply` method */
 
@@ -70,13 +79,26 @@ class MarkdownText(source: CharSequence) {
    * Have fun! 
    */
 
+  /* ## Hashing */
+
+  /**
+   * Inlined HTML fragments are hashed so that the processing inside is skipped.
+   */
+  protected var htmlHash = Map[String, String]()
+
+  /**
+   * Generates a random hash key.
+   */
+  protected def randomKey = (0 to keySize).foldLeft("")((s, i) =>
+    s + chars.charAt(rnd.nextInt(keySize)))
+
   /* ## Utility methods */
 
   /**
    * A convenient equivalent to `String.replaceAll` that accepts `Pattern`,
    * which is often compiled with `Pattern.MULTILINE`.
    */
-  def replaceAll(pattern: Pattern, replacement: String): this.type = {
+  protected def replaceAll(pattern: Pattern, replacement: String): this.type = {
     val lastIndex = 0;
     val m = pattern.matcher(text);
     val sb = new StringBuffer();
@@ -89,7 +111,7 @@ class MarkdownText(source: CharSequence) {
   /**
    * Appends the specified character sequence.
    */
-  def append(s: CharSequence): this.type = {
+  protected def append(s: CharSequence): this.type = {
     text.append(s)
     return this
   }
@@ -97,7 +119,7 @@ class MarkdownText(source: CharSequence) {
   /**
    * Prepends the specified character sequence.
    */
-  def prepend(s: CharSequence): this.type = {
+  protected def prepend(s: CharSequence): this.type = {
     val sb = new StringBuffer(s).append(text)
     text = sb
     return this
@@ -112,18 +134,56 @@ class MarkdownText(source: CharSequence) {
    * * replace tabs with spaces;
    * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
    */
-  def normalize(): this.type = replaceAll(rLineEnds, "\n")
-        .replaceAll(rTabs, "    ")
-        .replaceAll(rBlankLines, "")
+  protected def normalize(): this.type = replaceAll(rLineEnds, "\n")
+      .replaceAll(rTabs, "    ")
+      .replaceAll(rBlankLines, "")
 
   /**
-   * All inline HTML blocks are hashified, so that no harm is done to their internal stuff.
+   * All inline HTML blocks are hashified, so that no harm is done to their internals.
    */
-  def hashHtmlBlocks(): this.type = {
-    this
+  protected def hashHtmlBlocks(): this.type = {
+    val m = rInlineHtmlStart.matcher(text)
+    if (m.find) {
+      val tagName = m.group(1)
+      // This regex will match either opening or closing tag;
+      // opening tags will be captured by $1 leaving $2 empty,
+      // while closing tags will be captured by $2 leaving $1 empty
+      val mTags = Pattern.compile(
+        "(<" + tagName + "\\b[^/>]*?>)|(</" + tagName + "\\s*>)",
+        Pattern.CASE_INSENSITIVE).matcher(text)
+      // Find end index of matching closing tag
+      var depth = 1
+      var idx = m.end
+      while (depth > 0 && idx < text.length && mTags.find(idx)) {
+        if (mTags.group(2) == null) depth += 1
+        else depth -= 1
+        idx = mTags.end
+      }
+      // Having inline HTML subsequence
+      val endIdx = if (depth == 0) mTags.end else text.length
+      val startIdx = m.start
+      val html = text.substring(startIdx, endIdx)
+      // Add to hash and apply replacement
+      val key = randomKey
+      htmlHash += key -> html
+      val sb = new StringBuffer(text.subSequence(0, startIdx))
+          .append(key)
+          .append("\n\n")
+          .append(text.subSequence(endIdx, text.length))
+      text = sb
+      // Continue recursively until all blocks are processes
+      return hashHtmlBlocks
+    } else return this
   }
 
+  /**
+   * Transforms the Markdown source into HTML.
+   */
   def toHtml(): String = {
+    normalize()
+    hashHtmlBlocks()
+    println(text)
+    println(htmlHash)
     ""
   }
 
