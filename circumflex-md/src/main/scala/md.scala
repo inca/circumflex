@@ -37,7 +37,15 @@ object Markdown {
   val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^/>]*?>",
     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
   // HTML comments
-  val rHtmlComment = Pattern.compile("^ {0,3}<!--(.|\\n)*?-->\\s*", Pattern.MULTILINE)
+  val rHtmlComment = Pattern.compile("^ {0,3}<!--(.|\\n)*?-->(?=\\n+|\\Z)", Pattern.MULTILINE)
+  // Link definitions
+  val rLinkDefinition = Pattern.compile("^ {0,3}\\[(.+)\\]:" +
+      " *\\n? *<?(\\S+)>? *\\n? *" +
+      "(?:[\"('](.+?)[\")'])?" +
+      "(?=\\n+|\\Z)", Pattern.MULTILINE)
+  // Character escaping
+  val rEscAmp = Pattern.compile("&(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
+  val rEscLt = Pattern.compile("<(?![a-z/?\\$!])")
 
   /* ## The `apply` method */
 
@@ -87,7 +95,7 @@ class MarkdownText(source: CharSequence) {
     override def toString = url + " (" + title + ")"
   }
 
-  protected var links: Seq[LinkDefinition] = Nil
+  protected var links: Map[String, LinkDefinition] = Map()
 
   /* ## Protectors and hashing */
 
@@ -134,14 +142,21 @@ class MarkdownText(source: CharSequence) {
   /* ## Utility methods */
 
   /**
-   * A convenient equivalent to `String.replaceAll` that accepts `Pattern`,
-   * which is often compiled with `Pattern.MULTILINE`.
+   * A convenient equivalent to `String.replaceAll` that accepts `Pattern`
+   * instead of `String`.
    */
-  protected def replaceAll(pattern: Pattern, replacement: String) = {
+  protected def replaceAll(pattern: Pattern, replacement: String): Unit =
+    replaceAll(pattern, m => replacement)
+
+  /**
+   * A convenient equivalent to `String.replaceAll` that accepts `Pattern`
+   * instead of `String` and a function `Matcher => String`.
+   */
+  protected def replaceAll(pattern: Pattern, replacementFunction: Matcher => String): Unit = {
     val lastIndex = 0;
     val m = pattern.matcher(text);
     val sb = new StringBuffer();
-    while (m.find()) m.appendReplacement(sb, replacement);
+    while (m.find()) m.appendReplacement(sb, replacementFunction(m));
     m.appendTail(sb);
     text = sb;
   }
@@ -176,6 +191,13 @@ class MarkdownText(source: CharSequence) {
     replaceAll(rBlankLines, "")
   }
 
+  /**
+   * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
+   */
+  protected def encodeAmpsAndLts() = {
+    replaceAll(rEscAmp, "&amp;")
+    replaceAll(rEscLt, "&lt;")
+  }
 
   /**
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
@@ -199,7 +221,7 @@ class MarkdownText(source: CharSequence) {
         idx = mTags.end
       }
       // Having inline HTML subsequence
-      val endIdx = if (depth == 0) mTags.end else text.length
+      val endIdx = idx
       val startIdx = m.start
       htmlProtector.addSubseq(startIdx, endIdx)
       // Continue recursively until all blocks are processes
@@ -218,9 +240,17 @@ class MarkdownText(source: CharSequence) {
     }
   }
 
-  protected def stripLinkDefinitions = {
-    
-  }
+  /**
+   * Standalone link definitions are added to the dictionary and then
+   * stripped from the document.
+   */
+  protected def stripLinkDefinitions() = replaceAll(rLinkDefinition, m => {
+    val id = m.group(1).toLowerCase
+    val url = m.group(2)
+    val title = if (m.group(3) == null) "" else m.group(3)
+    links += id -> LinkDefinition(url, title.replaceAll("\"", "&quot;"))
+    ""
+  })
 
   /**
    * Transforms the Markdown source into HTML.
@@ -229,9 +259,12 @@ class MarkdownText(source: CharSequence) {
     normalize()
     hashHtmlBlocks()
     hashHtmlComments()
+    encodeAmpsAndLts()
+    stripLinkDefinitions()
     println(text)
     println(htmlProtector)
     println(charProtector)
+    println(links)
     ""
   }
 
