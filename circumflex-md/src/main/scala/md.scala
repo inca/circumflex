@@ -37,7 +37,7 @@ object Markdown {
   val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^/>]*?>",
     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
   // HTML comments
-  val rHtmlComment = Pattern.compile("^ {0,3}<!--(.|\\n)*?-->\\s*(?=\\n{2,}|\\Z)", Pattern.MULTILINE)
+  val rHtmlComment = Pattern.compile("^ {0,3}<!--(.|\\n)*?-->\\s*", Pattern.MULTILINE)
 
   /* ## The `apply` method */
 
@@ -81,18 +81,55 @@ class MarkdownText(source: CharSequence) {
    * Have fun! 
    */
 
-  /* ## Hashing */
+  /* ## Link Definitions */
 
-  /**
-   * Inlined HTML fragments are hashed so that the processing inside is skipped.
-   */
-  protected var hash = Map[String, CharSequence]()
+  case class LinkDefinition(val url: String, val title: String) {
+    override def toString = url + " (" + title + ")"
+  }
 
-  /**
-   * Generates a random hash key.
-   */
-  protected def randomKey = (0 to keySize).foldLeft("")((s, i) =>
-    s + chars.charAt(rnd.nextInt(keySize)))
+  protected var links: Seq[LinkDefinition] = Nil
+
+  /* ## Protectors and hashing */
+
+  class Protector {
+    protected var protectHash: Map[String, CharSequence] = Map()
+    protected var unprotectHash: Map[CharSequence, String] = Map()
+
+    /**
+     * Generates a random hash key.
+     */
+    def randomKey = (0 to keySize).foldLeft("")((s, i) =>
+      s + chars.charAt(rnd.nextInt(keySize)))
+
+    /**
+     * Adds the subsequence between `startIdx` and `endIdx` to hash and
+     * applies a replacement to the `text`.
+     */
+    def addSubseq(startIdx: Int, endIdx: Int): String = {
+      val subseq = text.subSequence(startIdx, endIdx)
+      val key = addToken(subseq)
+      text = new StringBuffer(text.subSequence(0, startIdx))
+          .append(key)
+          .append("\n\n")
+          .append(text.subSequence(endIdx, text.length))
+      return key
+    }
+
+    /**
+     * Adds the specified token to hash and returns the protection key.
+     */
+    def addToken(t: CharSequence): String = {
+      val key = randomKey
+      protectHash += key -> t
+      unprotectHash += t -> key
+      return key
+    }
+
+    override def toString = protectHash.toString
+  }
+
+  val htmlProtector = new Protector
+  val charProtector = new Protector
 
   /* ## Utility methods */
 
@@ -100,31 +137,28 @@ class MarkdownText(source: CharSequence) {
    * A convenient equivalent to `String.replaceAll` that accepts `Pattern`,
    * which is often compiled with `Pattern.MULTILINE`.
    */
-  protected def replaceAll(pattern: Pattern, replacement: String): this.type = {
+  protected def replaceAll(pattern: Pattern, replacement: String) = {
     val lastIndex = 0;
     val m = pattern.matcher(text);
     val sb = new StringBuffer();
     while (m.find()) m.appendReplacement(sb, replacement);
     m.appendTail(sb);
     text = sb;
-    return this;
   }
 
   /**
    * Appends the specified character sequence.
    */
-  protected def append(s: CharSequence): this.type = {
+  protected def append(s: CharSequence) = {
     text.append(s)
-    return this
   }
 
   /**
    * Prepends the specified character sequence.
    */
-  protected def prepend(s: CharSequence): this.type = {
+  protected def prepend(s: CharSequence) = {
     val sb = new StringBuffer(s).append(text)
     text = sb
-    return this
   }
 
   /* ## Processing methods */
@@ -136,14 +170,17 @@ class MarkdownText(source: CharSequence) {
    * * replace tabs with spaces;
    * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
    */
-  protected def normalize(): this.type = replaceAll(rLineEnds, "\n")
-      .replaceAll(rTabs, "    ")
-      .replaceAll(rBlankLines, "")
+  protected def normalize() = {
+    replaceAll(rLineEnds, "\n")
+    replaceAll(rTabs, "    ")
+    replaceAll(rBlankLines, "")
+  }
+
 
   /**
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
    */
-  protected def hashHtmlBlocks(): this.type = {
+  protected def hashHtmlBlocks(): Unit = {
     val m = rInlineHtmlStart.matcher(text)
     if (m.find) {
       val tagName = m.group(1)
@@ -164,36 +201,25 @@ class MarkdownText(source: CharSequence) {
       // Having inline HTML subsequence
       val endIdx = if (depth == 0) mTags.end else text.length
       val startIdx = m.start
-      addHash(startIdx, endIdx)
+      htmlProtector.addSubseq(startIdx, endIdx)
       // Continue recursively until all blocks are processes
-      return hashHtmlBlocks
-    } else return this
+      hashHtmlBlocks
+    }
   }
 
   /**
    * All HTML blocks are hashified too.
    */
-  protected def hashHtmlComments(): this.type = {
+  protected def hashHtmlComments(): Unit = {
     val m = rHtmlComment.matcher(text)
     if (m.find) {
-      addHash(m.start, m.end)
-      return hashHtmlComments
-    } else return this
+      htmlProtector.addSubseq(m.start, m.end)
+      hashHtmlComments
+    }
   }
 
-  /**
-   * Adds the subsequence between `startIdx` and `endIdx` to hash and
-   * applies a replacement to the `text`.
-   */
-  protected def addHash(startIdx: Int, endIdx: Int): this.type = {
-    val key = randomKey
-    val subseq = text.subSequence(startIdx, endIdx)
-    hash += key -> subseq
-    text = new StringBuffer(text.subSequence(0, startIdx))
-        .append(key)
-        .append("\n\n")
-        .append(text.subSequence(endIdx, text.length))
-    return this
+  protected def stripLinkDefinitions = {
+    
   }
 
   /**
@@ -204,7 +230,8 @@ class MarkdownText(source: CharSequence) {
     hashHtmlBlocks()
     hashHtmlComments()
     println(text)
-    println(hash)
+    println(htmlProtector)
+    println(charProtector)
     ""
   }
 
