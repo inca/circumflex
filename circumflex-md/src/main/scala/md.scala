@@ -69,6 +69,9 @@ object Markdown {
   val rCodeBlock = Pattern.compile("(?<=\\n\\n|\\A\\n?)^ {4}" +
       "((?s:.+?))(?=\\Z|\\n+ {0,3}\\S)", Pattern.MULTILINE)
   val rCodeLangId = Pattern.compile("^\\s*lang:(.+?)(?=\\n|\\Z)")
+  // Block quotes
+  val rBlockQuote = Pattern.compile("((?:^ *>(?:.+(?:\\n|\\Z))+\\n*)+)", Pattern.MULTILINE)
+  val rBlockQuoteTrims = Pattern.compile("(?:^ *> ?)|(?:^ *$)|(?-m:\\n+$)", Pattern.MULTILINE)
 
   /* ## The `apply` method */
 
@@ -183,6 +186,7 @@ class MarkdownText(source: CharSequence) {
     doHorizontalRulers(text)
     doLists(text)
     doCodeBlocks(text)
+    doBlockQuotes(text)
     return text
   }
 
@@ -234,6 +238,11 @@ class MarkdownText(source: CharSequence) {
     })
     "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
   })
+
+  protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAllLiteral(rBlockQuote, m =>
+    "<blockquote>\n" +
+        runBlockGamut(new StringEx(m.group(1)).replaceAllLiteral(rBlockQuoteTrims, "")) +
+        "</blockquote>\n\n")
 
   protected def encodeCode(code: String): String = code
       .replaceAll("&", "&amp;")
