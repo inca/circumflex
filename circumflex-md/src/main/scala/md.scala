@@ -27,6 +27,8 @@ object Markdown {
 
   /* ## Regex patterns */
 
+  // outdent
+  val rOutdent = Pattern.compile("^ {1,4}", Pattern.MULTILINE)
   // standardize line endings
   val rLineEnds = Pattern.compile("\\r\\n|\\r")
   // strip out whitespaces in blank lines
@@ -57,11 +59,12 @@ object Markdown {
       "(?:(?:_ *){3,})" +
       ") *$", Pattern.MULTILINE)
   // Lists
-  val listExpr = "( {0,3}([-+*]|\\d+\\.) +" +
-      "(?s:.+?)" +
+  val listExpr = "( {0,3}([-+*]|\\d+\\.) +(?s:.+?)" +
       "(?:\\z|\\n{2,}(?![-+*]|\\s|\\d+\\.)))"
   val rSubList = Pattern.compile("^" + listExpr, Pattern.MULTILINE)
   val rList = Pattern.compile("(?:(?<=\\n\\n)|\\A\\n?)" + listExpr, Pattern.MULTILINE)
+  val rListItem = Pattern.compile("(\\n)?^( *)(?:[-+*]|\\d+\\.) +" +
+      "((?s:.+?)\\n{1,2})(?=\\n*(?:\\z|\\2(?:[-+*]|\\d+\\.) +))", Pattern.MULTILINE)
 
   /* ## The `apply` method */
 
@@ -74,7 +77,7 @@ object Markdown {
 
 /* # The Processing Stuff */
 
-/**
+/**                                                                                        
  * We collect all processing logic within this class.
  */
 class MarkdownText(source: CharSequence) {
@@ -205,8 +208,23 @@ class MarkdownText(source: CharSequence) {
     })
   }
 
-  protected def processListItems(text: String) = {
-    ""
+  protected def processListItems(text: String): StringEx = {
+    listLevel += 1
+    val sx = new StringEx(text).replaceAll(rListItem, m => {
+      val content = m.group(3)
+      val leadingLine = m.group(1)
+      var item = new StringEx(content).outdent()
+      if (leadingLine != null && content.indexOf("\n\n") != -1)
+        item = runBlockGamut(item)
+      else item = runSpanGamut(doLists(item))
+      "<li>" + item.toString.trim + "</li>\n";
+    })
+    listLevel -= 1
+    return sx
+  }
+
+  protected def runSpanGamut(text: StringEx): StringEx = {
+    text
   }
 
   /**

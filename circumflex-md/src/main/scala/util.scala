@@ -1,6 +1,7 @@
 package ru.circumflex.md
 
 import java.util.regex.{Pattern, Matcher}
+import Markdown._
 
 /* # Character protector */
 
@@ -9,7 +10,6 @@ import java.util.regex.{Pattern, Matcher}
  * such as inline HTML blocks, remain undamaged when processing.
  */
 class Protector {
-  import Markdown._
   protected var protectHash: Map[String, CharSequence] = Map()
   protected var unprotectHash: Map[CharSequence, String] = Map()
 
@@ -112,6 +112,8 @@ class StringEx(protected var text: StringBuffer) {
         .append(text.subSequence(endIdx, text.length))
     return key
   }
+
+  def outdent(): this.type = replaceAll(rOutdent, "")
 
   /**
    * Provides the length of the underlying buffer.
