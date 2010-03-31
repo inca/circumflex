@@ -72,6 +72,8 @@ object Markdown {
   // Block quotes
   val rBlockQuote = Pattern.compile("((?:^ *>(?:.+(?:\\n|\\Z))+\\n*)+)", Pattern.MULTILINE)
   val rBlockQuoteTrims = Pattern.compile("(?:^ *> ?)|(?:^ *$)|(?-m:\\n+$)", Pattern.MULTILINE)
+  // Paragraphs splitter
+  val rParaSplit = Pattern.compile("\\n{2,}")
 
   /* ## The `apply` method */
 
@@ -186,7 +188,7 @@ class MarkdownText(source: CharSequence) {
     doCodeBlocks(text)
     doBlockQuotes(text)
     hashHtmlBlocks(text)    // Again, now hashing our generated markup
-    return text
+    formParagraphs(text)
   }
 
   protected def doHeaders(text: StringEx): StringEx = text
@@ -231,28 +233,37 @@ class MarkdownText(source: CharSequence) {
 
   protected def doCodeBlocks(text: StringEx): StringEx = text.replaceAllLiteral(rCodeBlock, m => {
     var langExpr = ""
-    val code = new StringEx(encodeCode(m.group(1))).outdent.replaceAllLiteral(rCodeLangId, m => {
+    val code = new StringEx(encodeCodeInBlock(m.group(1))).outdent.replaceAllLiteral(rCodeLangId, m => {
       langExpr = " class=\"" + m.group(1) + "\""
       ""
     })
     "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
   })
 
-  protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAllLiteral(rBlockQuote, m =>
-    "<blockquote>\n" +
-        runBlockGamut(new StringEx(m.group(1)).replaceAllLiteral(rBlockQuoteTrims, "")) +
-        "</blockquote>\n\n")
-
-  protected def encodeCode(code: String): String = code
+  protected def encodeCodeInBlock(code: String): String = code
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
+
+  protected def encodeCodeInSpan(code: String): String = encodeCodeInBlock(code)
       .replaceAll("\\*", charProtector.addToken("*"))
       .replaceAll("_", charProtector.addToken("_"))
       .replaceAll("\\{", charProtector.addToken("{"))
       .replaceAll("\\}", charProtector.addToken("}"))
       .replaceAll("\\[", charProtector.addToken("["))
       .replaceAll("\\\\", charProtector.addToken("\\"))
+
+  protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAllLiteral(rBlockQuote, m =>
+    "<blockquote>\n" +
+        runBlockGamut(new StringEx(m.group(1)).replaceAllLiteral(rBlockQuoteTrims, "")) +
+        "</blockquote>\n\n")
+
+  protected def formParagraphs(text: StringEx): StringEx = new StringEx(
+    rParaSplit.split(text.toString.trim)
+        .map(para => htmlProtector.decode(para) match {
+      case Some(d) => d
+      case _ => "<p>" + runSpanGamut(new StringEx(para)).toString + "</p>"
+    }).mkString("\n\n"))
 
   protected def runSpanGamut(text: StringEx): StringEx = {
     text

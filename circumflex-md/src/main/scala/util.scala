@@ -31,6 +31,11 @@ class Protector {
       key
   }
 
+  /**
+   * Attempts to retrieve an encoded sequence by specified `key`.
+   */
+  def decode(key: String): Option[CharSequence] = protectHash.get(key)
+
   override def toString = protectHash.toString
 }
 
