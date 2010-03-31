@@ -60,11 +60,15 @@ object Markdown {
       ") *$", Pattern.MULTILINE)
   // Lists
   val listExpr = "( {0,3}([-+*]|\\d+\\.) +(?s:.+?)" +
-      "(?:\\z|\\n{2,}(?![-+*]|\\s|\\d+\\.)))"
+      "(?:\\Z|\\n{2,}(?![-+*]|\\s|\\d+\\.)))"
   val rSubList = Pattern.compile("^" + listExpr, Pattern.MULTILINE)
-  val rList = Pattern.compile("(?:(?<=\\n\\n)|\\A\\n?)" + listExpr, Pattern.MULTILINE)
+  val rList = Pattern.compile("(?<=\\n\\n|\\A\\n?)" + listExpr, Pattern.MULTILINE)
   val rListItem = Pattern.compile("(\\n)?^( *)(?:[-+*]|\\d+\\.) +" +
-      "((?s:.+?)\\n{1,2})(?=\\n*(?:\\z|\\2(?:[-+*]|\\d+\\.) +))", Pattern.MULTILINE)
+      "((?s:.+?)\\n{1,2})(?=\\n*(?:\\Z|\\2(?:[-+*]|\\d+\\.) +))", Pattern.MULTILINE)
+  // Code blocks
+  val rCodeBlock = Pattern.compile("(?<=\\n\\n|\\A\\n?)^ {4}" +
+      "((?s:.+?))(?=\\Z|\\n+ {0,3}\\S)", Pattern.MULTILINE)
+  val rCodeLangId = Pattern.compile("^\\s*lang:(.+?)(?=\\n|\\Z)")
 
   /* ## The `apply` method */
 
@@ -77,7 +81,7 @@ object Markdown {
 
 /* # The Processing Stuff */
 
-/**                                                                                        
+/**
  * We collect all processing logic within this class.
  */
 class MarkdownText(source: CharSequence) {
@@ -178,24 +182,23 @@ class MarkdownText(source: CharSequence) {
     doHeaders(text)
     doHorizontalRulers(text)
     doLists(text)
+    doCodeBlocks(text)
     return text
   }
 
-  protected def doHeaders(text: StringEx) = {
-    text.replaceAll(rH1, "<h1>$1</h1>")
-        .replaceAll(rH2, "<h2>$1</h2>")
-        .replaceAllLiteral(rHeaders, m => {
-      val marker = m.group(1)
-      val body = m.group(2)
-      "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
-    })
-  }
+  protected def doHeaders(text: StringEx): StringEx = text
+      .replaceAll(rH1, "<h1>$1</h1>")
+      .replaceAll(rH2, "<h2>$1</h2>")
+      .replaceAllLiteral(rHeaders, m => {
+    val marker = m.group(1)
+    val body = m.group(2)
+    "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
+  })
 
-  protected def doHorizontalRulers(text: StringEx) = {
+  protected def doHorizontalRulers(text: StringEx): StringEx =
     text.replaceAllLiteral(rHr, "<hr/>")
-  }
 
-  protected def doLists(text: StringEx) = {
+  protected def doLists(text: StringEx): StringEx = {
     val pattern = if (listLevel == 0) rList else rSubList
     text.replaceAllLiteral(pattern, m => {
       val list = m.group(1).replaceAll("\\n{2,}", "\n\n\n")
@@ -210,7 +213,7 @@ class MarkdownText(source: CharSequence) {
 
   protected def processListItems(text: String): StringEx = {
     listLevel += 1
-    val sx = new StringEx(text).replaceAll(rListItem, m => {
+    val sx = new StringEx(text).replaceAllLiteral(rListItem, m => {
       val content = m.group(3)
       val leadingLine = m.group(1)
       var item = new StringEx(content).outdent()
@@ -222,6 +225,26 @@ class MarkdownText(source: CharSequence) {
     listLevel -= 1
     return sx
   }
+
+  protected def doCodeBlocks(text: StringEx): StringEx = text.replaceAllLiteral(rCodeBlock, m => {
+    var langExpr = ""
+    val code = new StringEx(encodeCode(m.group(1))).outdent.replaceAllLiteral(rCodeLangId, m => {
+      langExpr = " class=\"" + m.group(1) + "\""
+      ""
+    })
+    "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
+  })
+
+  protected def encodeCode(code: String): String = code
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\\*", charProtector.addToken("*"))
+      .replaceAll("_", charProtector.addToken("_"))
+      .replaceAll("\\{", charProtector.addToken("{"))
+      .replaceAll("\\}", charProtector.addToken("}"))
+      .replaceAll("\\[", charProtector.addToken("["))
+      .replaceAll("\\\\", charProtector.addToken("\\"))
 
   protected def runSpanGamut(text: StringEx): StringEx = {
     text

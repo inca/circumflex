@@ -59,6 +59,16 @@ A paragraph.
  *  Pellentesque eros felis, feugiat a sagittis id, fringilla sed ante. Nam vehicula
     lorem a tellus pulvinar rutrum pellentesque elit congue.
 
+ *  Interesting, what if...
+
+    *  wow, we have sub-list in here
+
+    *  and here, too!!
+
+    What about some para?
+
+ *  Can we please go back to that outer list?
+
 Donec magna orci, tincidunt eget semper a, pellentesque vel massa. Ut et justo purus.
 Fusce at sapien sit amet dui ultrices eleifend. Praesent pulvinar purus eu ante congue
 euismod eget non orci. Vestibulum placerat, risus vitae adipiscing eleifend,
@@ -66,5 +76,22 @@ purus dolor aliquet neque, id ullamcorper elit diam et massa. Donec rutrum variu
 augue in volutpat. Cras imperdiet porta purus nec pellentesque. Morbi sed erat lorem,
 ut dignissim enim. Nullam et neque nec turpis egestas ultrices. Donec pretium, elit
 at egestas egestas, nisi arcu adipiscing nibh, vitae condimentum nisl nunc non risus.
+
+Code blocks
+-----------
+
+Let's look at one:
+
+    lang:scala
+    def addToken(t: CharSequence): String = unprotectHash.get(t) match {
+      case Some(key) => key
+      case _ =>
+        val key = randomKey
+        protectHash += key -> t
+        unprotectHash += t -> key
+        key
+    }
+
+That's it. See, it's way too easy.
 
 

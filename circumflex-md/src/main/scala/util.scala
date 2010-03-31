@@ -22,11 +22,13 @@ class Protector {
   /**
    * Adds the specified token to hash and returns the protection key.
    */
-  def addToken(t: CharSequence): String = {
-    val key = randomKey
-    protectHash += key -> t
-    unprotectHash += t -> key
-    return key
+  def addToken(t: CharSequence): String = unprotectHash.get(t) match {
+    case Some(key) => key
+    case _ =>
+      val key = randomKey
+      protectHash += key -> t
+      unprotectHash += t -> key
+      key
   }
 
   override def toString = protectHash.toString
