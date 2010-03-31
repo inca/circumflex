@@ -51,8 +51,17 @@ object Markdown {
   val rH2 = Pattern.compile("^ {0,3}(\\S.*)\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
   val rHeaders = Pattern.compile("^(#{1,6}) *(\\S.*?) *#?$", Pattern.MULTILINE)
   // Horizontal rulers
-  val rHr = Pattern.compile("^ {0,3}(?:(?:\\* *){3,})|(?:(?:- *){3,})|(?:(?:_ *){3,}) *$",
-    Pattern.MULTILINE)
+  val rHr = Pattern.compile("^ {0,3}(?:" +
+      "(?:(?:\\* *){3,})|" +
+      "(?:(?:- *){3,})|" +
+      "(?:(?:_ *){3,})" +
+      ") *$", Pattern.MULTILINE)
+  // Lists
+  val listExpr = "( {0,3}([-+*]|\\d+\\.) +" +
+      "(?s:.+?)" +
+      "(?:\\z|\\n{2,}(?![-+*]|\\s|\\d+\\.)))"
+  val rSubList = Pattern.compile("^" + listExpr, Pattern.MULTILINE)
+  val rList = Pattern.compile("(?:(?<=\\n\\n)|\\A\\n?)" + listExpr, Pattern.MULTILINE)
 
   /* ## The `apply` method */
 
@@ -69,6 +78,7 @@ object Markdown {
  * We collect all processing logic within this class.
  */
 class MarkdownText(source: CharSequence) {
+  protected var listLevel = 0
   protected var text = new StringEx(source)
   import Markdown._
 
@@ -95,17 +105,17 @@ class MarkdownText(source: CharSequence) {
    * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
    */
   protected def normalize() = {
-    text.replaceAll(rLineEnds, "\n")
-        .replaceAll(rTabs, "    ")
-        .replaceAll(rBlankLines, "")
+    text.replaceAllLiteral(rLineEnds, "\n")
+        .replaceAllLiteral(rTabs, "    ")
+        .replaceAllLiteral(rBlankLines, "")
   }
 
   /**
    * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
    */
   protected def encodeAmpsAndLts() = {
-    text.replaceAll(rEscAmp, "&amp;")
-        .replaceAll(rEscLt, "&lt;")
+    text.replaceAllLiteral(rEscAmp, "&amp;")
+        .replaceAllLiteral(rEscLt, "&lt;")
   }
 
   /**
@@ -134,7 +144,7 @@ class MarkdownText(source: CharSequence) {
       val startIdx = m.start
       text.protectSubseq(htmlProtector, startIdx, endIdx)
       // Continue recursively until all blocks are processes
-      hashHtmlBlocks
+      hashHtmlBlocks()
     }
   }
 
@@ -145,7 +155,7 @@ class MarkdownText(source: CharSequence) {
     val m = text.matcher(rHtmlComment)
     if (m.find) {
       text.protectSubseq(htmlProtector, m.start, m.end)
-      hashHtmlComments
+      hashHtmlComments()
     }
   }
 
@@ -153,7 +163,7 @@ class MarkdownText(source: CharSequence) {
    * Standalone link definitions are added to the dictionary and then
    * stripped from the document.
    */
-  protected def stripLinkDefinitions() = text.replaceAll(rLinkDefinition, m => {
+  protected def stripLinkDefinitions() = text.replaceAllLiteral(rLinkDefinition, m => {
     val id = m.group(1).toLowerCase
     val url = m.group(2)
     val title = if (m.group(3) == null) "" else m.group(3)
@@ -161,23 +171,42 @@ class MarkdownText(source: CharSequence) {
     ""
   })
 
-  protected def processBlocks() {
-    doHeaders()
-    doHorizontalRulers()
+  protected def runBlockGamut(text: StringEx): StringEx = {
+    doHeaders(text)
+    doHorizontalRulers(text)
+    doLists(text)
+    return text
   }
 
-  protected def doHeaders() = {
+  protected def doHeaders(text: StringEx) = {
     text.replaceAll(rH1, "<h1>$1</h1>")
         .replaceAll(rH2, "<h2>$1</h2>")
-        .replaceAll(rHeaders, m => {
+        .replaceAllLiteral(rHeaders, m => {
       val marker = m.group(1)
       val body = m.group(2)
       "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
     })
   }
 
-  protected def doHorizontalRulers() = {
-    text.replaceAll(rHr, "<hr/>")
+  protected def doHorizontalRulers(text: StringEx) = {
+    text.replaceAllLiteral(rHr, "<hr/>")
+  }
+
+  protected def doLists(text: StringEx) = {
+    val pattern = if (listLevel == 0) rList else rSubList
+    text.replaceAllLiteral(pattern, m => {
+      val list = m.group(1).replaceAll("\\n{2,}", "\n\n\n")
+      val listType = m.group(2) match {
+        case s if s.matches("[*+-]") => "ul"
+        case _ => "ol"
+      }
+      val result = processListItems(list)
+      "<" + listType + ">" + result + "</" + listType + ">\n\n"
+    })
+  }
+
+  protected def processListItems(text: String) = {
+    ""
   }
 
   /**
@@ -189,12 +218,8 @@ class MarkdownText(source: CharSequence) {
     hashHtmlComments()
     encodeAmpsAndLts()
     stripLinkDefinitions()
-    processBlocks()
-    println(text)
-    println(htmlProtector)
-    println(charProtector)
-    println(links)
-    ""
+    text = runBlockGamut(text)
+    return text.toString
   }
 
 }

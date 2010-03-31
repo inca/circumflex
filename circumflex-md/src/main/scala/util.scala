@@ -48,17 +48,9 @@ class StringEx(protected var text: StringBuffer) {
 
   /**
    * A convenient equivalent to `String.replaceAll` that accepts `Pattern`
-   * instead of `String`.
-   */
-  def replaceAll(pattern: Pattern, replacement: String): this.type =
-    replaceAll(pattern, m => replacement)
-
-  /**
-   * A convenient equivalent to `String.replaceAll` that accepts `Pattern`
    * instead of `String` and a function `Matcher => String`.
    */
   def replaceAll(pattern: Pattern, replacementFunction: Matcher => String): this.type = {
-    val lastIndex = 0;
     val m = pattern.matcher(text);
     val sb = new StringBuffer();
     while (m.find()) m.appendReplacement(sb, replacementFunction(m));
@@ -66,6 +58,30 @@ class StringEx(protected var text: StringBuffer) {
     text = sb;
     return this
   }
+
+  def replaceAll(pattern: Pattern, replacement: String): this.type =
+    replaceAll(pattern, m => replacement)
+
+  /**
+   * Analogue to `replaceAll`, but places the replacement literally
+   * (without interpreting $1, $2, etc.)
+   */
+  def replaceAllLiteral(pattern: Pattern, replacementFunction: Matcher => String): this.type = {
+    var lastIndex = 0;
+    val m = pattern.matcher(text);
+    val sb = new StringBuffer();
+    while (m.find()) {
+      sb.append(text.subSequence(lastIndex, m.start))
+      sb.append(replacementFunction(m))
+      lastIndex = m.end
+    }
+    sb.append(text.subSequence(lastIndex, text.length))
+    text = sb;
+    return this
+  }
+
+  def replaceAllLiteral(pattern: Pattern, replacement: String): this.type =
+    replaceAllLiteral(pattern, m => replacement)
 
   /**
    * Appends the specified character sequence.
