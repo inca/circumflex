@@ -114,24 +114,22 @@ class MarkdownText(source: CharSequence) {
    * * replace tabs with spaces;
    * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
    */
-  protected def normalize() = {
-    text.replaceAllLiteral(rLineEnds, "\n")
-        .replaceAllLiteral(rTabs, "    ")
-        .replaceAllLiteral(rBlankLines, "")
-  }
+  protected def normalize(text: StringEx) = text
+      .replaceAllLiteral(rLineEnds, "\n")
+      .replaceAllLiteral(rTabs, "    ")
+      .replaceAllLiteral(rBlankLines, "")
 
   /**
    * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
    */
-  protected def encodeAmpsAndLts() = {
-    text.replaceAllLiteral(rEscAmp, "&amp;")
-        .replaceAllLiteral(rEscLt, "&lt;")
-  }
+  protected def encodeAmpsAndLts(text: StringEx) = text
+      .replaceAllLiteral(rEscAmp, "&amp;")
+      .replaceAllLiteral(rEscLt, "&lt;")
 
   /**
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
    */
-  protected def hashHtmlBlocks(): Unit = {
+  protected def hashHtmlBlocks(text: StringEx): StringEx = {
     val m = text.matcher(rInlineHtmlStart)
     if (m.find) {
       val tagName = m.group(1)
@@ -154,26 +152,26 @@ class MarkdownText(source: CharSequence) {
       val startIdx = m.start
       text.protectSubseq(htmlProtector, startIdx, endIdx)
       // Continue recursively until all blocks are processes
-      hashHtmlBlocks()
-    }
+      hashHtmlBlocks(text)
+    } else text
   }
 
   /**
    * All HTML comments are hashified too.
    */
-  protected def hashHtmlComments(): Unit = {
+  protected def hashHtmlComments(text: StringEx): StringEx = {
     val m = text.matcher(rHtmlComment)
     if (m.find) {
       text.protectSubseq(htmlProtector, m.start, m.end)
-      hashHtmlComments()
-    }
+      hashHtmlComments(text)
+    } else text
   }
 
   /**
    * Standalone link definitions are added to the dictionary and then
    * stripped from the document.
    */
-  protected def stripLinkDefinitions() = text.replaceAllLiteral(rLinkDefinition, m => {
+  protected def stripLinkDefinitions(text: StringEx) = text.replaceAllLiteral(rLinkDefinition, m => {
     val id = m.group(1).toLowerCase
     val url = m.group(2)
     val title = if (m.group(3) == null) "" else m.group(3)
@@ -187,6 +185,7 @@ class MarkdownText(source: CharSequence) {
     doLists(text)
     doCodeBlocks(text)
     doBlockQuotes(text)
+    hashHtmlBlocks(text)    // Again, now hashing our generated markup
     return text
   }
 
@@ -263,11 +262,11 @@ class MarkdownText(source: CharSequence) {
    * Transforms the Markdown source into HTML.
    */
   def toHtml(): String = {
-    normalize()
-    hashHtmlBlocks()
-    hashHtmlComments()
-    encodeAmpsAndLts()
-    stripLinkDefinitions()
+    normalize(text)
+    hashHtmlBlocks(text)
+    hashHtmlComments(text)
+    encodeAmpsAndLts(text)
+    stripLinkDefinitions(text)
     text = runBlockGamut(text)
     return text.toString
   }
