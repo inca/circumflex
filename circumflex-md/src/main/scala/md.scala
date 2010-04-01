@@ -24,6 +24,7 @@ object Markdown {
   val blockTags = "p" :: "div" :: "h1" :: "h2" :: "h3" :: "h4" :: "h5" :: "h6" ::
       "blockquote" :: "pre" :: "table" :: "dl" :: "ol" :: "ul" :: "script" ::
       "noscript" :: "form" :: "fieldset" :: "iframe" :: "math" :: "ins" :: "del" :: Nil
+  val htmlNameTokenExpr = "[a-z_:][a-z0-9\\-_:.]*"
 
   /* ## Regex patterns */
 
@@ -48,6 +49,11 @@ object Markdown {
   // Character escaping
   val rEscAmp = Pattern.compile("&(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
   val rEscLt = Pattern.compile("<(?![a-z/?\\$!])")
+  val rInsideTags = Pattern.compile("</?(" + htmlNameTokenExpr + "(?:\\s+(?:" +
+      + "(?:" + htmlNameTokenExpr + "\\s*=\\s*\"[^\"]*\")|" +
+      + "(?:" + htmlNameTokenExpr + "\\s*=\\s*'[^']*')|" +
+      + "(?:" + htmlNameTokenExpr + "\\s*=\\s*[a-z0-9_:.\\-]+)" +
+      ")\\s)*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE)
   // Headers
   val rH1 = Pattern.compile("^ {0,3}(\\S.*)\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
   val rH2 = Pattern.compile("^ {0,3}(\\S.*)\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
