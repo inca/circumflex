@@ -119,4 +119,9 @@ at egestas egestas, nisi arcu adipiscing nibh, vitae condimentum nisl nunc non r
 
 Aaaand that's it. See?
 
+Now weird stuff
+---------------
+We've discovered that things like this: <a href="<a href='<a>`_*& &amp;</a>'></a>"></a>
+are possible. Let's see if we treat this baby carefully.
+
 

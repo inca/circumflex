@@ -49,11 +49,11 @@ object Markdown {
   // Character escaping
   val rEscAmp = Pattern.compile("&(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
   val rEscLt = Pattern.compile("<(?![a-z/?\\$!])")
-  val rInsideTags = Pattern.compile("</?(" + htmlNameTokenExpr + "(?:\\s+(?:" +
-      + "(?:" + htmlNameTokenExpr + "\\s*=\\s*\"[^\"]*\")|" +
-      + "(?:" + htmlNameTokenExpr + "\\s*=\\s*'[^']*')|" +
-      + "(?:" + htmlNameTokenExpr + "\\s*=\\s*[a-z0-9_:.\\-]+)" +
-      ")\\s)*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE)
+  val rInsideTags = Pattern.compile("<(" + htmlNameTokenExpr + "(?:\\s+(?:" +
+      "(?:" + htmlNameTokenExpr + "\\s*=\\s*\"[^\"]*\")|" +
+      "(?:" + htmlNameTokenExpr + "\\s*=\\s*'[^']*')|" +
+      "(?:" + htmlNameTokenExpr + "\\s*=\\s*[a-z0-9_:.\\-]+)" +
+      ")\\s*)*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE)
   // Headers
   val rH1 = Pattern.compile("^ {0,3}(\\S.*)\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
   val rH2 = Pattern.compile("^ {0,3}(\\S.*)\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
@@ -131,6 +131,17 @@ class MarkdownText(source: CharSequence) {
   protected def encodeAmpsAndLts(text: StringEx) = text
       .replaceAll(rEscAmp, "&amp;")
       .replaceAll(rEscLt, "&lt;")
+
+  /**
+   * Encodes specially-treated characters inside the HTML tags.
+   */
+  protected def encodeCharsInsideTags(text: StringEx) = text.replaceAll(rInsideTags, m => {
+    var content = m.group(1)
+    content = encodeUnsafeChars(content)
+    var result = new StringEx(content)
+        .replaceAll(rEscAmp, "&amp;")
+    "<" + result.toString + ">"
+  })
 
   /**
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
@@ -239,15 +250,15 @@ class MarkdownText(source: CharSequence) {
 
   protected def doCodeBlocks(text: StringEx): StringEx = text.replaceAll(rCodeBlock, m => {
     var langExpr = ""
-    val code = new StringEx(encodeCode(m.group(1))).outdent.replaceAll(rCodeLangId, m => {
+    val code = new StringEx(
+      encodeUnsafeChars(m.group(1).replaceAll("&", "&amp;")))
+        .outdent.replaceAll(rCodeLangId, m => {
       langExpr = " class=\"" + m.group(1) + "\""
-      ""
-    })
+      ""})
     "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
   })
 
-  protected def encodeCode(code: String): String = code
-      .replaceAll("&", "&amp;")
+  protected def encodeUnsafeChars(code: String): String = code
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
       .replaceAll("\\*", "&#42;")
@@ -277,6 +288,7 @@ class MarkdownText(source: CharSequence) {
   def toHtml(): String = {
     var result = text
     result = normalize(result)
+    result = encodeCharsInsideTags(result)
     result = hashHtmlBlocks(result)
     result = hashHtmlComments(result)
     result = encodeAmpsAndLts(result)
