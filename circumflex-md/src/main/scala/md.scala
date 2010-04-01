@@ -81,7 +81,6 @@ object Markdown {
    * Converts the `source` from Markdown to HTML.
    */
   def apply(source: String): String = new MarkdownText(source).toHtml
-
 }
 
 /* # The Processing Stuff */
@@ -105,7 +104,6 @@ class MarkdownText(source: CharSequence) {
   /* ## Protectors */
 
   val htmlProtector = new Protector
-  val charProtector = new Protector
 
   /* ## Processing methods */
 
@@ -182,13 +180,15 @@ class MarkdownText(source: CharSequence) {
   })
 
   protected def runBlockGamut(text: StringEx): StringEx = {
-    doHeaders(text)
-    doHorizontalRulers(text)
-    doLists(text)
-    doCodeBlocks(text)
-    doBlockQuotes(text)
-    hashHtmlBlocks(text)    // Again, now hashing our generated markup
-    formParagraphs(text)
+    var result = text
+    result = doHeaders(result)
+    result = doHorizontalRulers(result)
+    result = doLists(result)
+    result = doCodeBlocks(result)
+    result = doBlockQuotes(result)
+    result = hashHtmlBlocks(result)    // Again, now hashing our generated markup
+    result = formParagraphs(result)
+    return result
   }
 
   protected def doHeaders(text: StringEx): StringEx = text
@@ -244,12 +244,10 @@ class MarkdownText(source: CharSequence) {
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
-      .replaceAll("\\*", charProtector.addToken("*"))
-      .replaceAll("_", charProtector.addToken("_"))
-      .replaceAll("\\{", charProtector.addToken("{"))
-      .replaceAll("\\}", charProtector.addToken("}"))
-      .replaceAll("\\[", charProtector.addToken("["))
-      .replaceAll("\\\\", charProtector.addToken("\\"))
+      .replaceAll("\\*", "&#42;")
+      .replaceAll("`", "&#96;")
+      .replaceAll("_", "&#95;")
+      .replaceAll("\\\\", "&#92;")
 
   protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAll(rBlockQuote, m =>
     "<blockquote>\n" +
@@ -271,13 +269,14 @@ class MarkdownText(source: CharSequence) {
    * Transforms the Markdown source into HTML.
    */
   def toHtml(): String = {
-    normalize(text)
-    hashHtmlBlocks(text)
-    hashHtmlComments(text)
-    encodeAmpsAndLts(text)
-    stripLinkDefinitions(text)
-    text = runBlockGamut(text)
-    return text.toString
+    var result = text
+    result = normalize(result)
+    result = hashHtmlBlocks(result)
+    result = hashHtmlComments(result)
+    result = encodeAmpsAndLts(result)
+    result = stripLinkDefinitions(result)
+    result = runBlockGamut(result)
+    return result.toString
   }
 
 }
