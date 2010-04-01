@@ -1,5 +1,6 @@
 package ru.circumflex.md
 
+import java.lang.StringBuilder
 import java.util.regex.{Pattern, Matcher}
 import Markdown._
 
@@ -39,44 +40,24 @@ class Protector {
   override def toString = protectHash.toString
 }
 
-/* # Enhanced String Buffer */
+/* # Enhanced String Builder */
 
 /**
- * A simple wrapper over `StringBuffer`. See, while in general
- * `StringBuilder` provides more speed, for some reason Java regular expressions
- * provide support only for buffers (that are organized in a thread-safe manner, which
- * tend to be much slower than builder). Since we use a single-thread model here, we
- * find that fact offensive to all the `StringBuilder` thang, but sincerely can't do
- * no damn thing about it.
+ * A simple wrapper over `StringBuilder` with utility methods.
  */
-class StringEx(protected var text: StringBuffer) {
+class StringEx(protected var text: StringBuilder) {
 
-  def this(source: CharSequence) = this(new StringBuffer(source))
+  def this(source: CharSequence) = this(new StringBuilder(source))
 
   /**
-   * A convenient equivalent to `String.replaceAll` that accepts `Pattern`
-   * instead of `String` and a function `Matcher => String`.
+   * Creates a `Matcher` using specified `Pattern` and applies replacements literally
+   * (without interpreting $1, $2, etc.) by calling specified `replacementFunction`
+   * on each match.
    */
   def replaceAll(pattern: Pattern, replacementFunction: Matcher => String): this.type = {
-    val m = pattern.matcher(text);
-    val sb = new StringBuffer();
-    while (m.find()) m.appendReplacement(sb, replacementFunction(m));
-    m.appendTail(sb);
-    text = sb;
-    return this
-  }
-
-  def replaceAll(pattern: Pattern, replacement: String): this.type =
-    replaceAll(pattern, m => replacement)
-
-  /**
-   * Analogue to `replaceAll`, but places the replacement literally
-   * (without interpreting $1, $2, etc.)
-   */
-  def replaceAllLiteral(pattern: Pattern, replacementFunction: Matcher => String): this.type = {
     var lastIndex = 0;
     val m = pattern.matcher(text);
-    val sb = new StringBuffer();
+    val sb = new StringBuilder();
     while (m.find()) {
       sb.append(text.subSequence(lastIndex, m.start))
       sb.append(replacementFunction(m))
@@ -87,8 +68,8 @@ class StringEx(protected var text: StringBuffer) {
     return this
   }
 
-  def replaceAllLiteral(pattern: Pattern, replacement: String): this.type =
-    replaceAllLiteral(pattern, m => replacement)
+  def replaceAll(pattern: Pattern, replacement: String): this.type =
+    replaceAll(pattern, m => replacement)
 
   /**
    * Appends the specified character sequence.
@@ -102,7 +83,7 @@ class StringEx(protected var text: StringBuffer) {
    * Prepends the specified character sequence.
    */
   def prepend(s: CharSequence): this.type = {
-    text = new StringBuffer(s).append(text)
+    text = new StringBuilder(s).append(text)
     return this
   }
 
@@ -113,7 +94,7 @@ class StringEx(protected var text: StringBuffer) {
   def protectSubseq(protector: Protector, startIdx: Int, endIdx: Int): String = {
     val subseq = text.subSequence(startIdx, endIdx)
     val key = protector.addToken(subseq)
-    text = new StringBuffer(text.subSequence(0, startIdx))
+    text = new StringBuilder(text.subSequence(0, startIdx))
         .append(key)
         .append("\n")
         .append(text.subSequence(endIdx, text.length))
