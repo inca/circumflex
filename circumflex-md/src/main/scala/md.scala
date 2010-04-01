@@ -64,6 +64,7 @@ object Markdown {
       "(?:(?:- *){3,})|" +
       "(?:(?:_ *){3,})" +
       ") *$", Pattern.MULTILINE)
+  val rHtmlHr = Pattern.compile("<hr\\s*/?>", Pattern.CASE_INSENSITIVE)
   // Lists
   val listExpr = "( {0,3}([-+*]|\\d+\\.) +(?s:.+?)" +
       "(?:\\Z|\\n{2,}(?![-+*]|\\s|\\d+\\.)))"
@@ -80,6 +81,8 @@ object Markdown {
   val rBlockQuoteTrims = Pattern.compile("(?:^ *> ?)|(?:^ *$)|(?-m:\\n+$)", Pattern.MULTILINE)
   // Paragraphs splitter
   val rParaSplit = Pattern.compile("\\n{2,}")
+  // Code spans
+  val rCodeSpan = Pattern.compile("(?<!\\\\)(`+)(.+?)(?<!`)\\1(?!`)")
 
   /* ## The `apply` method */
 
@@ -147,6 +150,7 @@ class MarkdownText(source: CharSequence) {
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
    */
   protected def hashHtmlBlocks(text: StringEx): StringEx = {
+    text.replaceAll(rHtmlHr, m => htmlProtector.addToken("<hr/>"))
     val m = text.matcher(rInlineHtmlStart)
     if (m.find) {
       val tagName = m.group(1)
@@ -250,8 +254,7 @@ class MarkdownText(source: CharSequence) {
 
   protected def doCodeBlocks(text: StringEx): StringEx = text.replaceAll(rCodeBlock, m => {
     var langExpr = ""
-    val code = new StringEx(
-      encodeUnsafeChars(m.group(1).replaceAll("&", "&amp;")))
+    val code = new StringEx(encodeCode(m.group(1)))
         .outdent.replaceAll(rCodeLangId, m => {
       langExpr = " class=\"" + m.group(1) + "\""
       ""})
@@ -266,6 +269,8 @@ class MarkdownText(source: CharSequence) {
       .replaceAll("_", "&#95;")
       .replaceAll("\\\\", "&#92;")
 
+  protected def encodeCode(code: String): String = encodeUnsafeChars(code.replaceAll("&", "&amp;"))
+
   protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAll(rBlockQuote, m =>
     "<blockquote>\n" +
         runBlockGamut(new StringEx(m.group(1)).replaceAll(rBlockQuoteTrims, "")) +
@@ -279,8 +284,13 @@ class MarkdownText(source: CharSequence) {
     }).mkString("\n\n"))
 
   protected def runSpanGamut(text: StringEx): StringEx = {
-    text
+    var result = doCodeSpans(text)
+
+    return result
   }
+
+  protected def doCodeSpans(text: StringEx): StringEx = text.replaceAll(rCodeSpan, m =>
+    "<code>" + encodeCode(m.group(2).trim) + "</code>")
 
   /**
    * Transforms the Markdown source into HTML.
