@@ -87,7 +87,6 @@ object Markdown {
    * Converts the `source` from Markdown to HTML.
    */
   def apply(source: String): String = new MarkdownText(source).toHtml
-
 }
 
 /* # The Processing Stuff */
@@ -111,7 +110,6 @@ class MarkdownText(source: CharSequence) {
   /* ## Protectors */
 
   val htmlProtector = new Protector
-  val charProtector = new Protector
 
   /* ## Processing methods */
 
@@ -123,16 +121,16 @@ class MarkdownText(source: CharSequence) {
    * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
    */
   protected def normalize(text: StringEx) = text
-      .replaceAllLiteral(rLineEnds, "\n")
-      .replaceAllLiteral(rTabs, "    ")
-      .replaceAllLiteral(rBlankLines, "")
+      .replaceAll(rLineEnds, "\n")
+      .replaceAll(rTabs, "    ")
+      .replaceAll(rBlankLines, "")
 
   /**
    * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
    */
   protected def encodeAmpsAndLts(text: StringEx) = text
-      .replaceAllLiteral(rEscAmp, "&amp;")
-      .replaceAllLiteral(rEscLt, "&lt;")
+      .replaceAll(rEscAmp, "&amp;")
+      .replaceAll(rEscLt, "&lt;")
 
   /**
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
@@ -179,7 +177,7 @@ class MarkdownText(source: CharSequence) {
    * Standalone link definitions are added to the dictionary and then
    * stripped from the document.
    */
-  protected def stripLinkDefinitions(text: StringEx) = text.replaceAllLiteral(rLinkDefinition, m => {
+  protected def stripLinkDefinitions(text: StringEx) = text.replaceAll(rLinkDefinition, m => {
     val id = m.group(1).toLowerCase
     val url = m.group(2)
     val title = if (m.group(3) == null) "" else m.group(3)
@@ -188,30 +186,32 @@ class MarkdownText(source: CharSequence) {
   })
 
   protected def runBlockGamut(text: StringEx): StringEx = {
-    doHeaders(text)
-    doHorizontalRulers(text)
-    doLists(text)
-    doCodeBlocks(text)
-    doBlockQuotes(text)
-    hashHtmlBlocks(text)    // Again, now hashing our generated markup
-    formParagraphs(text)
+    var result = text
+    result = doHeaders(result)
+    result = doHorizontalRulers(result)
+    result = doLists(result)
+    result = doCodeBlocks(result)
+    result = doBlockQuotes(result)
+    result = hashHtmlBlocks(result)    // Again, now hashing our generated markup
+    result = formParagraphs(result)
+    return result
   }
 
   protected def doHeaders(text: StringEx): StringEx = text
-      .replaceAll(rH1, "<h1>$1</h1>")
-      .replaceAll(rH2, "<h2>$1</h2>")
-      .replaceAllLiteral(rHeaders, m => {
+      .replaceAll(rH1, m => "<h1>" + m.group(1) + "</h1>")
+      .replaceAll(rH2, m => "<h2>" + m.group(1) + "</h2>")
+      .replaceAll(rHeaders, m => {
     val marker = m.group(1)
     val body = m.group(2)
     "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
   })
 
   protected def doHorizontalRulers(text: StringEx): StringEx =
-    text.replaceAllLiteral(rHr, "<hr/>")
+    text.replaceAll(rHr, "<hr/>")
 
   protected def doLists(text: StringEx): StringEx = {
     val pattern = if (listLevel == 0) rList else rSubList
-    text.replaceAllLiteral(pattern, m => {
+    text.replaceAll(pattern, m => {
       val list = m.group(1).replaceAll("\\n{2,}", "\n\n\n")
       val listType = m.group(2) match {
         case s if s.matches("[*+-]") => "ul"
@@ -224,7 +224,7 @@ class MarkdownText(source: CharSequence) {
 
   protected def processListItems(text: String): StringEx = {
     listLevel += 1
-    val sx = new StringEx(text).replaceAllLiteral(rListItem, m => {
+    val sx = new StringEx(text).replaceAll(rListItem, m => {
       val content = m.group(3)
       val leadingLine = m.group(1)
       var item = new StringEx(content).outdent()
@@ -237,31 +237,27 @@ class MarkdownText(source: CharSequence) {
     return sx
   }
 
-  protected def doCodeBlocks(text: StringEx): StringEx = text.replaceAllLiteral(rCodeBlock, m => {
+  protected def doCodeBlocks(text: StringEx): StringEx = text.replaceAll(rCodeBlock, m => {
     var langExpr = ""
-    val code = new StringEx(encodeCodeInBlock(m.group(1))).outdent.replaceAllLiteral(rCodeLangId, m => {
+    val code = new StringEx(encodeCode(m.group(1))).outdent.replaceAll(rCodeLangId, m => {
       langExpr = " class=\"" + m.group(1) + "\""
       ""
     })
     "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
   })
 
-  protected def encodeCodeInBlock(code: String): String = code
+  protected def encodeCode(code: String): String = code
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
+      .replaceAll("\\*", "&#42;")
+      .replaceAll("`", "&#96;")
+      .replaceAll("_", "&#95;")
+      .replaceAll("\\\\", "&#92;")
 
-  protected def encodeCodeInSpan(code: String): String = encodeCodeInBlock(code)
-      .replaceAll("\\*", charProtector.addToken("*"))
-      .replaceAll("_", charProtector.addToken("_"))
-      .replaceAll("\\{", charProtector.addToken("{"))
-      .replaceAll("\\}", charProtector.addToken("}"))
-      .replaceAll("\\[", charProtector.addToken("["))
-      .replaceAll("\\\\", charProtector.addToken("\\"))
-
-  protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAllLiteral(rBlockQuote, m =>
+  protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAll(rBlockQuote, m =>
     "<blockquote>\n" +
-        runBlockGamut(new StringEx(m.group(1)).replaceAllLiteral(rBlockQuoteTrims, "")) +
+        runBlockGamut(new StringEx(m.group(1)).replaceAll(rBlockQuoteTrims, "")) +
         "</blockquote>\n\n")
 
   protected def formParagraphs(text: StringEx): StringEx = new StringEx(
@@ -279,13 +275,14 @@ class MarkdownText(source: CharSequence) {
    * Transforms the Markdown source into HTML.
    */
   def toHtml(): String = {
-    normalize(text)
-    hashHtmlBlocks(text)
-    hashHtmlComments(text)
-    encodeAmpsAndLts(text)
-    stripLinkDefinitions(text)
-    text = runBlockGamut(text)
-    return text.toString
+    var result = text
+    result = normalize(result)
+    result = hashHtmlBlocks(result)
+    result = hashHtmlComments(result)
+    result = encodeAmpsAndLts(result)
+    result = stripLinkDefinitions(result)
+    result = runBlockGamut(result)
+    return result.toString
   }
 
 }
