@@ -157,6 +157,11 @@ I get 10 times more traffic from [Google][] than from
 
 Now let's taste some <http://autolinks.com> and <emails@thingies.net>.
 
+## Emphasises
+
+Strong number **one**, strong number __two__, em number *one*, em number _two_;
+and for geeks: *You may wonder what that * actually means*.
+
 
 
 

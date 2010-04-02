@@ -107,6 +107,11 @@ object Markdown {
   val rAutoLinks = Pattern.compile("<((https?|ftp):[^'\">\\s]+)>")
   // Autoemails
   val rAutoEmail = Pattern.compile("<([-.\\w]+\\@[-a-z0-9]+(\\.[-a-z0-9]+)*\\.[a-z]+)>")
+  // Ems and strongs
+  val rEm = Pattern.compile("(\\*\\*|__)(?=\\S)(.+?[*_]*)(?<=\\S)\\1")
+  val rStrong = Pattern.compile("(\\*|_)(?=\\S)(.+?)(?<=\\S)\\1")
+  // Manual linebreaks
+  val rBrs = Pattern.compile(" {2,}\n")
 
   /* ## The `apply` method */
 
@@ -316,6 +321,8 @@ class MarkdownText(source: CharSequence) {
     result = doImages(text)
     result = doRefLinks(text)
     result = doAutoLinks(text)
+    result = doEmphasis(text)
+    result = doLineBreaks(text)
     return result
   }
 
@@ -366,6 +373,13 @@ class MarkdownText(source: CharSequence) {
     else if (r < 0.9) "&#x" + Integer.toHexString(c.toInt) + ";"
     else c
   }).mkString
+
+  protected def doEmphasis(text: StringEx): StringEx = text
+      .replaceAll(rStrong, m => "<strong>" + m.group(2) + "</strong>")
+      .replaceAll(rEm, m => "<em>" + m.group(2) + "</em>")
+
+  protected def doLineBreaks(text: StringEx): StringEx = text
+      .replaceAll(rBrs, " <br/>\n")
 
   /**
    * Transforms the Markdown source into HTML.
