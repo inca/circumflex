@@ -103,6 +103,10 @@ object Markdown {
       ("\\\\!" ->  "&#33;") :: Nil
   // Reference-style links
   val rRefLinks = Pattern.compile("(\\[(.*?)\\] ?(?:\\n *)?\\[(.*?)\\])")
+  // Autolinks
+  val rAutoLinks = Pattern.compile("<((https?|ftp):[^'\">\\s]+)>")
+  // Autoemails
+  val rAutoEmail = Pattern.compile("<([-.\\w]+\\@[-a-z0-9]+(\\.[-a-z0-9]+)*\\.[a-z]+)>")
 
   /* ## The `apply` method */
 
@@ -311,6 +315,7 @@ class MarkdownText(source: CharSequence) {
     result = encodeBackslashEscapes(text)
     result = doImages(text)
     result = doRefLinks(text)
+    result = doAutoLinks(text)
     return result
   }
 
@@ -346,6 +351,21 @@ class MarkdownText(source: CharSequence) {
       case _ => wholeMatch
     }
   })
+
+  protected def doAutoLinks(text: StringEx): StringEx = text
+      .replaceAll(rAutoLinks, m => "<a href=\"" + m.group(1) + "\">" + m.group(1) + "</a>")
+      .replaceAll(rAutoEmail, m => {
+    val address = m.group(1)
+    val url = "mailto:" + address
+    "<a href=\"" + encodeEmail(url) + "\">" + encodeEmail(address) + "</a>"
+  })
+
+  protected def encodeEmail(s: String) = s.toList.map(c => {
+    val r = rnd.nextDouble
+    if (r < 0.45) "&#" + c.toInt + ";"
+    else if (r < 0.9) "&#x" + Integer.toHexString(c.toInt) + ";"
+    else c
+  }).mkString
 
   /**
    * Transforms the Markdown source into HTML.
