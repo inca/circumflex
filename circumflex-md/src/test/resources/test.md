@@ -130,6 +130,13 @@ Code spans
 
 We have `` some code with ticks (`) in here ``!!1
 
+Images
+------
+
+Let's try it with titles: ![Alt text](/path/to/img.jpg "Optional title")
+
+Now let's try it without ones: ![Alt text](/path/to/img.jpg)
+
 ## Links
 
 I get 10 times more traffic from [Google] [1] than from

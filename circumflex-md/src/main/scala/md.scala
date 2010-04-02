@@ -83,6 +83,24 @@ object Markdown {
   val rParaSplit = Pattern.compile("\\n{2,}")
   // Code spans
   val rCodeSpan = Pattern.compile("(?<!\\\\)(`+)(.+?)(?<!`)\\1(?!`)")
+  // Images
+  val rImage = Pattern.compile("!\\[(.*?)\\]\\((.*?)( \"(.*?)\")?\\)")
+  // Backslash escapes
+  val backslashEscapes = ("\\\\\\\\" -> "&#92;") ::
+      ("\\\\`" ->  "&#96;") ::
+      ("\\\\_" ->  "&#95;") ::
+      ("\\\\\\*" ->  "&#42;") ::
+      ("\\\\\\{" ->  "&#123;") ::
+      ("\\\\\\}" ->  "&#125;") ::
+      ("\\\\\\[" ->  "&#91;") ::
+      ("\\\\\\]" ->  "&#93;") ::
+      ("\\\\\\(" ->  "&#40;") ::
+      ("\\\\\\)" ->  "&#41;") ::
+      ("\\\\#" ->  "&#35;") ::
+      ("\\\\\\+" ->  "&#43;") ::
+      ("\\\\-" ->  "&#45;") ::
+      ("\\\\\\." ->  "&#46;") ::
+      ("\\\\!" ->  "&#33;") :: Nil
 
   /* ## The `apply` method */
 
@@ -243,7 +261,7 @@ class MarkdownText(source: CharSequence) {
       val content = m.group(3)
       val leadingLine = m.group(1)
       var item = new StringEx(content).outdent()
-      if (leadingLine != null && content.indexOf("\n\n") != -1)
+      if (leadingLine != null || content.indexOf("\n\n") != -1)
         item = runBlockGamut(item)
       else item = runSpanGamut(doLists(item))
       "<li>" + item.toString.trim + "</li>\n";
@@ -269,6 +287,9 @@ class MarkdownText(source: CharSequence) {
       .replaceAll("_", "&#95;")
       .replaceAll("\\\\", "&#92;")
 
+  protected def encodeBackslashEscapes(text: StringEx): StringEx = backslashEscapes.foldLeft(text)((tx, p) =>
+    tx.replaceAll(Pattern.compile(p._1), p._2))
+
   protected def encodeCode(code: String): String = encodeUnsafeChars(code.replaceAll("&", "&amp;"))
 
   protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAll(rBlockQuote, m =>
@@ -285,12 +306,23 @@ class MarkdownText(source: CharSequence) {
 
   protected def runSpanGamut(text: StringEx): StringEx = {
     var result = doCodeSpans(text)
-
+    result = encodeBackslashEscapes(text)
+    result = doImages(text)
     return result
   }
 
   protected def doCodeSpans(text: StringEx): StringEx = text.replaceAll(rCodeSpan, m =>
     "<code>" + encodeCode(m.group(2).trim) + "</code>")
+
+  protected def doImages(text: StringEx): StringEx = text.replaceAll(rImage, m => {
+    val alt = m.group(1)
+    val src = m.group(2)
+    val title = m.group(4)
+    var result = "<img src=\"" + src + "\" alt=\"" + alt + "\""
+    if (title != null && title != "")
+      result += " title=\"" + title + "\""
+    result + "/>"
+  })
 
   /**
    * Transforms the Markdown source into HTML.
