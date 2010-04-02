@@ -101,6 +101,8 @@ object Markdown {
       ("\\\\-" ->  "&#45;") ::
       ("\\\\\\." ->  "&#46;") ::
       ("\\\\!" ->  "&#33;") :: Nil
+  // Reference-style links
+  val rRefLinks = Pattern.compile("(\\[(.*?)\\] ?(?:\\n *)?\\[(.*?)\\])")
 
   /* ## The `apply` method */
 
@@ -308,6 +310,7 @@ class MarkdownText(source: CharSequence) {
     var result = doCodeSpans(text)
     result = encodeBackslashEscapes(text)
     result = doImages(text)
+    result = doRefLinks(text)
     return result
   }
 
@@ -322,6 +325,26 @@ class MarkdownText(source: CharSequence) {
     if (title != null && title != "")
       result += " title=\"" + title + "\""
     result + "/>"
+  })
+
+  protected def doRefLinks(text: StringEx): StringEx = text.replaceAll(rRefLinks, m => {
+    val wholeMatch = m.group(1)
+    val linkText = m.group(2)
+    var id = m.group(3).trim.toLowerCase
+    if (id == null || id == "") id = linkText.trim.toLowerCase
+    links.get(id) match {
+      case Some(ld) =>
+        val title = ld.title
+            .replaceAll("\\*", "&#42;")
+            .replaceAll("_", "&#95;")
+            .trim
+        val url = ld.url
+            .replaceAll("\\*", "&#42;")
+            .replaceAll("_", "&#95;")
+        val titleAttr = if (title != "") " title=\"" + title + "\"" else ""
+        "<a href=\"" + url + "\"" + titleAttr + ">" + linkText + "</a>"
+      case _ => wholeMatch
+    }
   })
 
   /**
