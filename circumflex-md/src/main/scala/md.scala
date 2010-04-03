@@ -10,7 +10,6 @@ import java.util.Random
  * The typical usage is:
  *
  *     val md = Markdown(myMarkdownText)
- *     // do some stuff
  *
  *  [1]: http://daringfireball.net/projects/markdown/syntax "Markdown Syntax"
  */
@@ -256,7 +255,9 @@ class MarkdownText(source: CharSequence) {
   protected def doLists(text: StringEx): StringEx = {
     val pattern = if (listLevel == 0) rList else rSubList
     text.replaceAll(pattern, m => {
-      val list = m.group(1).replaceAll("\\n{2,}", "\n\n\n")
+      val list = new StringEx(m.group(1))
+          .append("\n")
+          .replaceAll(rParaSplit, "\n\n\n")
       val listType = m.group(2) match {
         case s if s.matches("[*+-]") => "ul"
         case _ => "ol"
@@ -266,9 +267,9 @@ class MarkdownText(source: CharSequence) {
     })
   }
 
-  protected def processListItems(text: String): StringEx = {
+  protected def processListItems(text: StringEx): StringEx = {
     listLevel += 1
-    val sx = new StringEx(text).replaceAll(rListItem, m => {
+    val sx = text.replaceAll(rListItem, m => {
       val content = m.group(3)
       val leadingLine = m.group(1)
       var item = new StringEx(content).outdent()
