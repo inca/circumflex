@@ -107,8 +107,8 @@ object Markdown {
   // Autoemails
   val rAutoEmail = Pattern.compile("<([-.\\w]+\\@[-a-z0-9]+(\\.[-a-z0-9]+)*\\.[a-z]+)>")
   // Ems and strongs
-  val rEm = Pattern.compile("(\\*\\*|__)(?=\\S)(.+?[*_]*)(?<=\\S)\\1")
-  val rStrong = Pattern.compile("(\\*|_)(?=\\S)(.+?)(?<=\\S)\\1")
+  val rStrong = Pattern.compile("(\\*\\*|__)(?=\\S)(.+?[*_]*)(?<=\\S)\\1")
+  val rEm = Pattern.compile("(\\*|_)(?=\\S)(.+?)(?<=\\S)\\1")
   // Manual linebreaks
   val rBrs = Pattern.compile(" {2,}\n")
 
