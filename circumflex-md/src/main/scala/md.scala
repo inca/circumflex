@@ -115,8 +115,6 @@ object Markdown {
   // Manual linebreaks
   val rBrs = Pattern.compile(" {2,}\n")
 
-  /* ## The `apply` method */
-
   /**
    * Convert the `source` from Markdown to HTML.
    */
@@ -133,7 +131,9 @@ class MarkdownText(source: CharSequence) {
   protected var text = new StringEx(source)
   import Markdown._
 
-  /* ## Link Definitions */
+  /**
+   * Link Definitions
+   */
 
   case class LinkDefinition(val url: String, val title: String) {
     override def toString = url + " (" + title + ")"
@@ -141,8 +141,7 @@ class MarkdownText(source: CharSequence) {
 
   protected var links: Map[String, LinkDefinition] = Map()
 
-  /* ## Protectors */
-
+  // Protector for HTML blocks
   val htmlProtector = new Protector
 
   /* ## Encoding methods */
