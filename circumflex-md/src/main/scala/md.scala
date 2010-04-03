@@ -27,15 +27,18 @@ object Markdown {
 
   /* ## Regex patterns */
 
-  // outdent
+  // We use precompile several regular expressions that are used for typical
+  // transformations.
+
+  // Outdent
   val rOutdent = Pattern.compile("^ {1,4}", Pattern.MULTILINE)
-  // standardize line endings
+  // Standardize line endings
   val rLineEnds = Pattern.compile("\\r\\n|\\r")
-  // strip out whitespaces in blank lines
+  // Strip out whitespaces in blank lines
   val rBlankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
-  // replace tabs with spaces
+  // Replace tabs with spaces
   val rTabs = Pattern.compile("\\t")
-  // start of inline HTML block
+  // Start of inline HTML block
   val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^/>]*?>",
     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
   // HTML comments
@@ -115,12 +118,12 @@ object Markdown {
   /* ## The `apply` method */
 
   /**
-   * Converts the `source` from Markdown to HTML.
+   * Convert the `source` from Markdown to HTML.
    */
   def apply(source: String): String = new MarkdownText(source).toHtml
 }
 
-/* # The Processing Stuff */
+/* # Processing Stuff */
 
 /**
  * We collect all processing logic within this class.
@@ -142,19 +145,32 @@ class MarkdownText(source: CharSequence) {
 
   val htmlProtector = new Protector
 
-  /* ## Processing methods */
+  /* ## Encoding methods */
 
   /**
-   * Normalization includes following stuff:
-   *
-   * * replace DOS- and Mac-specific line endings with `\n`;
-   * * replace tabs with spaces;
-   * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
+   * All unsafe chars are encoded to SGML entities.
    */
-  protected def normalize(text: StringEx) = text
-      .replaceAll(rLineEnds, "\n")
-      .replaceAll(rTabs, "    ")
-      .replaceAll(rBlankLines, "")
+  protected def encodeUnsafeChars(code: String): String = code
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\\*", "&#42;")
+      .replaceAll("`", "&#96;")
+      .replaceAll("_", "&#95;")
+      .replaceAll("\\\\", "&#92;")
+
+  /**
+   * All characters escaped with backslash are encoded to corresponding
+   * SGML entities.
+   */
+  protected def encodeBackslashEscapes(text: StringEx): StringEx =
+    backslashEscapes.foldLeft(text)((tx, p) =>
+      tx.replaceAll(Pattern.compile(p._1), p._2))
+
+  /**
+   * All unsafe chars are encoded to SGML entities inside code blocks.
+   */
+  protected def encodeCode(code: String): String =
+    encodeUnsafeChars(code.replaceAll("&", "&amp;"))
 
   /**
    * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
@@ -173,6 +189,20 @@ class MarkdownText(source: CharSequence) {
         .replaceAll(rEscAmp, "&amp;")
     "<" + result.toString + ">"
   })
+
+  /* ## Processing methods */
+
+  /**
+   * Normalization includes following stuff:
+   *
+   * * replace DOS- and Mac-specific line endings with `\n`;
+   * * replace tabs with spaces;
+   * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
+   */
+  protected def normalize(text: StringEx) = text
+      .replaceAll(rLineEnds, "\n")
+      .replaceAll(rTabs, "    ")
+      .replaceAll(rBlankLines, "")
 
   /**
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
@@ -228,6 +258,9 @@ class MarkdownText(source: CharSequence) {
     ""
   })
 
+  /**
+   * Block elements are processed within specified `text`.
+   */
   protected def runBlockGamut(text: StringEx): StringEx = {
     var result = text
     result = doHeaders(result)
@@ -240,6 +273,9 @@ class MarkdownText(source: CharSequence) {
     return result
   }
 
+  /**
+   * Process both types of headers.
+   */
   protected def doHeaders(text: StringEx): StringEx = text
       .replaceAll(rH1, m => "<h1>" + m.group(1) + "</h1>")
       .replaceAll(rH2, m => "<h2>" + m.group(1) + "</h2>")
@@ -249,9 +285,19 @@ class MarkdownText(source: CharSequence) {
     "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
   })
 
+  /**
+   * Process horizontal rulers.
+   */
   protected def doHorizontalRulers(text: StringEx): StringEx =
     text.replaceAll(rHr, "<hr/>")
 
+  /**
+   * Process ordered and unordered lists and list items..
+   *
+   * It is possible to have some nested block elements inside
+   * lists, so the contents is passed to `runBlockGamut` after some
+   * minor transformations.
+   */
   protected def doLists(text: StringEx): StringEx = {
     val pattern = if (listLevel == 0) rList else rSubList
     text.replaceAll(pattern, m => {
@@ -282,6 +328,9 @@ class MarkdownText(source: CharSequence) {
     return sx
   }
 
+  /**
+   * Process code blocks.
+   */
   protected def doCodeBlocks(text: StringEx): StringEx = text.replaceAll(rCodeBlock, m => {
     var langExpr = ""
     val code = new StringEx(encodeCode(m.group(1)))
@@ -291,24 +340,22 @@ class MarkdownText(source: CharSequence) {
     "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
   })
 
-  protected def encodeUnsafeChars(code: String): String = code
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll("\\*", "&#42;")
-      .replaceAll("`", "&#96;")
-      .replaceAll("_", "&#95;")
-      .replaceAll("\\\\", "&#92;")
-
-  protected def encodeBackslashEscapes(text: StringEx): StringEx = backslashEscapes.foldLeft(text)((tx, p) =>
-    tx.replaceAll(Pattern.compile(p._1), p._2))
-
-  protected def encodeCode(code: String): String = encodeUnsafeChars(code.replaceAll("&", "&amp;"))
-
+  /**
+   * Process blockquotes.
+   *
+   * It is possible to have some nested block elements inside
+   * blockquotes, so the contents is passed to `runBlockGamut` after some
+   * minor transformations.
+   */
   protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAll(rBlockQuote, m =>
     "<blockquote>\n" +
         runBlockGamut(new StringEx(m.group(1)).replaceAll(rBlockQuoteTrims, "")) +
         "</blockquote>\n\n")
 
+  /**
+   * At this point all HTML blocks should be hashified, so we treat all lines
+   * separated by more than 2 linebreaks as paragraphs.
+   */
   protected def formParagraphs(text: StringEx): StringEx = new StringEx(
     rParaSplit.split(text.toString.trim)
         .map(para => htmlProtector.decode(para) match {
@@ -316,6 +363,9 @@ class MarkdownText(source: CharSequence) {
       case _ => "<p>" + runSpanGamut(new StringEx(para)).toString + "</p>"
     }).mkString("\n\n"))
 
+  /**
+   * Span elements are processed within specified `text`.
+   */
   protected def runSpanGamut(text: StringEx): StringEx = {
     var result = doCodeSpans(text)
     result = encodeBackslashEscapes(text)
@@ -327,9 +377,15 @@ class MarkdownText(source: CharSequence) {
     return result
   }
 
+  /**
+   * Process code spans.
+   */
   protected def doCodeSpans(text: StringEx): StringEx = text.replaceAll(rCodeSpan, m =>
     "<code>" + encodeCode(m.group(2).trim) + "</code>")
 
+  /**
+   * Process images.
+   */
   protected def doImages(text: StringEx): StringEx = text.replaceAll(rImage, m => {
     val alt = m.group(1)
     val src = m.group(2)
@@ -340,6 +396,9 @@ class MarkdownText(source: CharSequence) {
     result + "/>"
   })
 
+  /**
+   * Process reference-style links.
+   */
   protected def doRefLinks(text: StringEx): StringEx = text.replaceAll(rRefLinks, m => {
     val wholeMatch = m.group(1)
     val linkText = m.group(2)
@@ -360,6 +419,9 @@ class MarkdownText(source: CharSequence) {
     }
   })
 
+  /**
+   * Process autolinks.
+   */
   protected def doAutoLinks(text: StringEx): StringEx = text
       .replaceAll(rAutoLinks, m => "<a href=\"" + m.group(1) + "\">" + m.group(1) + "</a>")
       .replaceAll(rAutoEmail, m => {
@@ -368,6 +430,9 @@ class MarkdownText(source: CharSequence) {
     "<a href=\"" + encodeEmail(url) + "\">" + encodeEmail(address) + "</a>"
   })
 
+  /**
+   * Process autoemails in anti-bot manner.
+   */
   protected def encodeEmail(s: String) = s.toList.map(c => {
     val r = rnd.nextDouble
     if (r < 0.45) "&#" + c.toInt + ";"
@@ -375,15 +440,21 @@ class MarkdownText(source: CharSequence) {
     else c
   }).mkString
 
+  /**
+   * Process EMs and STRONGs.
+   */
   protected def doEmphasis(text: StringEx): StringEx = text
       .replaceAll(rStrong, m => "<strong>" + m.group(2) + "</strong>")
       .replaceAll(rEm, m => "<em>" + m.group(2) + "</em>")
 
+  /**
+   * Process manual linebreaks.
+   */
   protected def doLineBreaks(text: StringEx): StringEx = text
       .replaceAll(rBrs, " <br/>\n")
 
   /**
-   * Transforms the Markdown source into HTML.
+   * Transform the Markdown source into HTML.
    */
   def toHtml(): String = {
     var result = text
