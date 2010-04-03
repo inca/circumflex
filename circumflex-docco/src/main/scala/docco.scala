@@ -3,11 +3,14 @@ package ru.circumflex.docco
 import ru.circumflex.freemarker.DefaultConfiguration
 import _root_.freemarker.template.Configuration
 import java.io._
+import ru.circumflex.md.Markdown
 
 case class Section(private var _doc: String, private var _code: String) {
   private var _committed = false
   def this() = this("", "")
-  def trimNewLines(s: String) = s.replaceAll("^\\n+(.*)", "$1").replaceAll("(.*?)\\n+$", "$1")
+  def trimNewLines(s: String) =
+    s.replaceAll("^\\n+(.*)", "$1")
+        .replaceAll("(.*?)\\n+$", "$1")
   def committed_?() = _committed
   def code = trimNewLines(_code)
   def doc = trimNewLines(_doc)
@@ -20,13 +23,17 @@ case class Section(private var _doc: String, private var _code: String) {
     _doc += s + "\n"
     return this
   }
+  def md(): this.type = {
+    _doc = Markdown(_doc)
+    return this
+  }
   def empty_?() = _doc == "" && _code == ""
 }
 
 /* # Scala source documentation utility */
 class Docco(val file: File) {
   var sections: Seq[Section] = Nil
-  /* Scala comment regex */
+  /* Scala comments regex */
   val commentBegin = "^\\s*/\\*\\*? ?(.*)".r
   val commentEnd = "^(.*?)\\*/\\s*".r
   val commentSingleLine = "^\\s*// ?(.*)".r
@@ -42,7 +49,7 @@ class Docco(val file: File) {
       var str = reader.readLine
       def flushSection() = {
         if (!section.empty_?)
-          sections ++= List(section)
+          sections ++= List(section.md)
         section = new Section()
       }
       while (str != null) {
@@ -79,7 +86,8 @@ class Docco(val file: File) {
   def toHtml(writer: Writer, template: String, ftlConfig: Configuration): Unit =
     ftlConfig.getTemplate(template)
         .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
-  def toHtml(writer: Writer, template: String): Unit = toHtml(writer, template, DefaultConfiguration)
+  def toHtml(writer: Writer, template: String): Unit =
+    toHtml(writer, template, DefaultConfiguration)
   def toHtml(writer: Writer): Unit = toHtml(writer, "/default.html.ftl")
 }
 
