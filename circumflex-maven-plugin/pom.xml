@@ -32,6 +32,11 @@
       <artifactId>circumflex-orm-i18n</artifactId>
       <version>0.3</version>
     </dependency>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-docco</artifactId>
+      <version>0.3</version>
+    </dependency>
     <!-- Maven plugin -->
     <dependency>
       <groupId>org.apache.maven</groupId>

@@ -88,6 +88,6 @@ class Docco(val file: File) {
         .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
   def toHtml(writer: Writer, template: String): Unit =
     toHtml(writer, template, DefaultConfiguration)
-  def toHtml(writer: Writer): Unit = toHtml(writer, "/default.html.ftl")
+  def toHtml(writer: Writer): Unit = toHtml(writer, "/page.html.ftl")
 }
 
