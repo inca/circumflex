@@ -105,6 +105,9 @@ object Markdown {
       ("\\\\!" ->  "&#33;") :: Nil
   // Reference-style links
   val rRefLinks = Pattern.compile("(\\[(.*?)\\] ?(?:\\n *)?\\[(.*?)\\])")
+  // Inline links
+  val rInlineLinks = Pattern.compile("\\[(.*?)\\]\\( *<?(.*?)>? *" +
+      "((['\"])(.*?)\\4)?\\)", Pattern.DOTALL)
   // Autolinks
   val rAutoLinks = Pattern.compile("<((https?|ftp):[^'\">\\s]+)>")
   // Autoemails
@@ -370,6 +373,7 @@ class MarkdownText(source: CharSequence) {
     result = encodeBackslashEscapes(text)
     result = doImages(text)
     result = doRefLinks(text)
+    result = doInlineLinks(text)
     result = doAutoLinks(text)
     result = doEmphasis(text)
     result = doLineBreaks(text)
@@ -416,6 +420,24 @@ class MarkdownText(source: CharSequence) {
         "<a href=\"" + url + "\"" + titleAttr + ">" + linkText + "</a>"
       case _ => wholeMatch
     }
+  })
+
+  /**
+   * Process inline links.
+   */
+  protected def doInlineLinks(text: StringEx): StringEx = text.replaceAll(rInlineLinks, m => {
+    val linkText = m.group(1)
+    val url = m.group(2)
+        .replaceAll("\\*", "&#42;")
+        .replaceAll("_", "&#95;")
+    var titleAttr = ""
+    var title = m.group(5)
+    if (title != null) titleAttr = " title=\"" + title
+        .replaceAll("\\*", "&#42;")
+        .replaceAll("_", "&#95;")
+        .replaceAll("\"", "&quot;")
+        .trim + "\""
+    "<a href=\"" + url + "\"" + titleAttr + ">" + linkText + "</a>"
   })
 
   /**
