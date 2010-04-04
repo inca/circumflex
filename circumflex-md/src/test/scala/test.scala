@@ -6,12 +6,13 @@ import java.io.File
 import ru.circumflex.md.Markdown
 import org.apache.commons.io.{IOUtils, FileUtils}
 import org.specs.matcher.Matcher
+import org.specs.specification.Example
 
 class SpecsTest extends JUnit4(MarkdownSpec)
 
 object MarkdownSpec extends Specification {
 
-  val beOK = new Matcher[String] {
+  val beFine = new Matcher[String] {
     def apply(name: => String) = {
       val textFile = new File(this.getClass.getResource("/" + name + ".text").toURI)
       val htmlFile = new File(this.getClass.getResource("/" + name + ".html").toURI)
@@ -21,12 +22,26 @@ object MarkdownSpec extends Specification {
     }
   }
 
-  "MarkdownProcessor" should {
-    "do ampersands and angles" in {
-        "Amps and angle encoding" must beOK
+  def process = addToSusVerb("process")
+
+  "MarkdownProcessor" should process {
+    "Amps and angle encoding" in {
+      "Amps and angle encoding" must beFine
     }
-    "do auto links" in {
-        "Auto links" must beOK
+    "Auto links" in {
+      "Auto links" must beFine
+    }
+    "Backslash escapes" in {
+      "Backslash escapes" must beFine
+    }
+    "Blockquotes with code blocks" in {
+      "Blockquotes with code blocks" must beFine
+    }
+    "Hard-wrapped paragraphs with list-like lines" in {
+      "Hard-wrapped paragraphs with list-like lines" must beFine
+    }
+    "Horizontal rules" in {
+      "Horizontal rules" must beFine
     }
   }
 }
