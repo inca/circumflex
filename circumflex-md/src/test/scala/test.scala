@@ -1,29 +1,29 @@
-package ru.circumflex.md
+package ru.circumflex.md.test
 
-import java.io.{BufferedReader, InputStreamReader}
+import org.specs.runner.JUnit4
+import org.specs.Specification
+import java.io.File
+import ru.circumflex.md.Markdown
+import org.apache.commons.io.{IOUtils, FileUtils}
+import org.specs.matcher.Matcher
 
-object MD {
-  def apply(): String = {
-    var text = ""
-    val reader = new BufferedReader(new InputStreamReader(this.getClass.getResourceAsStream("/test.md")))
-    try {
-      var s = reader.readLine
-      while (s != null) {
-        text += s + "\n"
-        s = reader.readLine
-      }
-      text = Markdown(text)
-    } finally {
-      reader.close
+class SpecsTest extends JUnit4(MarkdownSpec)
+
+object MarkdownSpec extends Specification {
+
+  val beOK = new Matcher[String] {
+    def apply(name: => String) = {
+      val textFile = new File(this.getClass.getResource("/" + name + ".text").toURI)
+      val htmlFile = new File(this.getClass.getResource("/" + name + ".html").toURI)
+      val text = FileUtils.readFileToString(textFile, "UTF-8")
+      val html = FileUtils.readFileToString(htmlFile, "UTF-8")
+      (Markdown(text).trim == html.trim, "\"" + name + "\" is fine", "\"" + name + "\" fails")
     }
-    return text
   }
 
-  def print() = println(apply())
-
-  def calcTime(times: Int) = {
-    val t = System.currentTimeMillis
-    (0 to times).foreach(i => apply())
-    println(System.currentTimeMillis - t)
+  "MarkdownProcessor" should {
+//    "correctly encode ampersands and angles" in {
+//        "Amps and angle encoding" must beOK
+//    }
   }
 }
