@@ -36,8 +36,10 @@ object Markdown {
   val rLineEnds = Pattern.compile("\\r\\n|\\r")
   // Strip out whitespaces in blank lines
   val rBlankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
-  // Replace tabs with spaces
+  // Tabs
   val rTabs = Pattern.compile("\\t")
+  // Trailing whitespace
+  val rTrailingWS = Pattern.compile("\\s+$")
   // Start of inline HTML block
   val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^/>]*?>",
     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
@@ -306,12 +308,13 @@ class MarkdownText(source: CharSequence) {
       val list = new StringEx(m.group(1))
           .append("\n")
           .replaceAll(rParaSplit, "\n\n\n")
+          .replaceAll(rTrailingWS, "\n")
       val listType = m.group(2) match {
         case s if s.matches("[*+-]") => "ul"
         case _ => "ol"
       }
-      val result = processListItems(list)
-      "<" + listType + ">" + result + "</" + listType + ">\n\n"
+      val result = processListItems(list).replaceAll(rTrailingWS, "")
+      "<" + listType + ">\n" + result + "\n</" + listType + ">\n\n"
     })
   }
 
@@ -349,10 +352,11 @@ class MarkdownText(source: CharSequence) {
    * blockquotes, so the contents is passed to `runBlockGamut` after some
    * minor transformations.
    */
-  protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAll(rBlockQuote, m =>
-    "<blockquote>\n" +
-        runBlockGamut(new StringEx(m.group(1)).replaceAll(rBlockQuoteTrims, "")) +
-        "</blockquote>\n\n")
+  protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAll(rBlockQuote, m => {
+    val content = new StringEx(m.group(1))
+        .replaceAll(rBlockQuoteTrims, "")
+    "<blockquote>\n" + runBlockGamut(content) + "\n</blockquote>\n\n"
+  })
 
   /**
    * At this point all HTML blocks should be hashified, so we treat all lines

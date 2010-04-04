@@ -22,8 +22,11 @@ object MarkdownSpec extends Specification {
   }
 
   "MarkdownProcessor" should {
-    "correctly encode ampersands and angles" in {
+    "do ampersands and angles" in {
         "Amps and angle encoding" must beOK
+    }
+    "do auto links" in {
+        "Auto links" must beOK
     }
   }
 }
