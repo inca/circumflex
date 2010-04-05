@@ -29,6 +29,11 @@ public class DoccoMojo extends AbstractCircumflexMojo {
     protected String indexTemplate;
 
     /**
+     * @parameter expression="${filenameRegex}" default-value=".*\\.scala$"
+     */
+    protected String filenameRegex;
+
+    /**
      * @parameter expression="${customResources}"
      */
     protected String[] customResources;
