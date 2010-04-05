@@ -11,9 +11,9 @@ import java.io.File;
 public class DoccoMojo extends AbstractCircumflexMojo {
 
     /**
-     * @parameter expression="${sourcePath}" default-value="${project.build.sourceDirectory}"
+     * @parameter expression="${basePath}" default-value=""
      */
-    protected String sourcePath;
+    protected String basePath;
 
     /**
      * @parameter expression="${outputDirectory}" default-value="target/docco"

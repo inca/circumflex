@@ -4,10 +4,9 @@ import org.specs.runner.JUnit4
 import org.specs.Specification
 import java.io.File
 import ru.circumflex.md.Markdown
-import org.apache.commons.io.{IOUtils, FileUtils}
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.StringUtils
 import org.specs.matcher.Matcher
-import org.specs.specification.Example
 
 class SpecsTest extends JUnit4(MarkdownSpec)
 
