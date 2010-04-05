@@ -79,8 +79,8 @@ object Markdown {
   val rListItem = Pattern.compile("(\\n)?^( *)(?:[-+*]|\\d+\\.) +" +
       "((?s:.+?)\\n{1,2})(?=\\n*(?:\\Z|\\2(?:[-+*]|\\d+\\.) +))", Pattern.MULTILINE)
   // Code blocks
-  val rCodeBlock = Pattern.compile("(?<=\\n\\n|\\A\\n?)^ {4}" +
-      "((?s:.+?))(?=\\Z|\\n+ {0,3}\\S)", Pattern.MULTILINE)
+  val rCodeBlock = Pattern.compile("(?<=\\n\\n|\\A\\n?)" +
+      "(^ {4}(?s:.+?))(?=\\Z|\\n+ {0,3}\\S)", Pattern.MULTILINE)
   val rCodeLangId = Pattern.compile("^\\s*lang:(.+?)(?=\\n|\\Z)")
   // Block quotes
   val rBlockQuote = Pattern.compile("((?:^ *>(?:.+(?:\\n|\\Z))+\\n*)+)",
@@ -345,7 +345,9 @@ class MarkdownText(source: CharSequence) {
     text.replaceAll(rCodeBlock, m => {
       var langExpr = ""
       val code = new StringEx(encodeCode(m.group(1)))
-          .outdent.replaceAll(rCodeLangId, m => {
+          .outdent
+          .replaceAll(rTrailingWS, "")
+          .replaceAll(rCodeLangId, m => {
         langExpr = " class=\"" + m.group(1) + "\""
         ""})
       "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"

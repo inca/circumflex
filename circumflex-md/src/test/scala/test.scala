@@ -57,5 +57,29 @@ object MarkdownSpec extends Specification {
     "Inline HTML comments" in {
       "Inline HTML comments" must beFine
     }
+    "Links, inline style" in {
+      "Links, inline style" must beFine
+    }
+    "Links, reference style" in {
+      "Links, reference style" must beFine
+    }
+    "Literal quotes in titles" in {
+      "Literal quotes in titles" must beFine
+    }
+    "Nested blockquotes" in {
+      "Nested blockquotes" must beFine
+    }
+    "Ordered and unordered lists" in {
+      "Ordered and unordered lists" must beFine
+    }
+    "Strong and em together" in {
+      "Strong and em together" must beFine
+    }
+    "Tabs" in {
+      "Tabs" must beFine
+    }
+    "Tidyness" in {
+      "Tidyness" must beFine
+    }
   }
 }
