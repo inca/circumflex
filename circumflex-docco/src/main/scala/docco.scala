@@ -33,8 +33,6 @@ case class Section(private var _doc: String, private var _code: String) {
   def empty_?() = _doc == "" && _code == ""
 }
 
-/* # Scala source documentation utility */
-
 /**
  * This utility generates a user-friendly HTML for specified Scala source file
  * by placing documentation and corresponding code blocks side by side.
@@ -49,11 +47,14 @@ case class Section(private var _doc: String, private var _code: String) {
  *
  * or with custom template:
  *
- *     Docco("my.scala").toHtml("my.scala.html", "/my-custom-template.html.ftl")
+ *     Docco("my.scala").toHtml("my.scala.html",
+ *                              "/my-custom-template.html.ftl")
  *
  * or even with custom freemarker configuration:
  *
- *     Docco("my.scala").toHtml("my.scala.html", "/my-custom-template.html.ftl", myFtlCfg)
+ *     Docco("my.scala").toHtml("my.scala.html",
+ *                              "/my-custom-template.html.ftl",
+ *                              myFtlCfg)
  *
  */
 
