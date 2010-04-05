@@ -45,16 +45,10 @@ case class Section(private var _doc: String, private var _code: String) {
  *
  *     Docco("my.scala").toHtml
  *
- * or with custom template:
+ * Docco uses [FreeMarker][1] to process pages, so you can provide your own
+ * FreeMarker `Configuration` and templates.
  *
- *     Docco("my.scala").toHtml("my.scala.html",
- *                              "/my-custom-template.html.ftl")
- *
- * or even with custom freemarker configuration:
- *
- *     Docco("my.scala").toHtml("my.scala.html",
- *                              "/my-custom-template.html.ftl",
- *                              myFtlCfg)
+ * [1]: http://freemarker.org "FreeMarker Templating Engine"
  *
  */
 
@@ -67,7 +61,11 @@ object Docco {
 }
 
 class Docco(val file: File) {
+  import Docco._
   var sections: Seq[Section] = Nil
+  /* FreeMarker stuff */
+  var ftlConfig: Configuration = DefaultConfiguration
+  var template: String = DEFAULT_SINGLE_PAGE_TEMPLATE
   /* Scala comments regex */
   val commentBegin = "^\\s*/\\*\\*? ?(.*)".r
   val commentEnd = "^(.*?)\\*/\\s*".r
@@ -120,34 +118,23 @@ class Docco(val file: File) {
 
   /* ## Exporting stuff */
 
-  /* For writers */
-  def toHtml(writer: Writer, template: String, ftlConfig: Configuration): Unit =
+  def toHtml(writer: Writer): Unit =
     ftlConfig.getTemplate(template)
         .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
-  def toHtml(writer: Writer, template: String): Unit =
-    toHtml(writer, template, DefaultConfiguration)
-  def toHtml(writer: Writer): Unit = toHtml(writer, Docco.DEFAULT_SINGLE_PAGE_TEMPLATE)
-  /* Now for files */
-  def toHtml(file: File, template: String, ftlConfig: Configuration): Unit = {
+
+  def toHtml(file: File): Unit = {
     val fw = new FileWriter(file)
     try {
-      toHtml(fw, template, ftlConfig)
+      toHtml(fw)
     } finally {
       fw.close
     }
   }
-  def toHtml(file: File, template: String): Unit =
-    toHtml(file, template, DefaultConfiguration)
-  def toHtml(file: File): Unit =
-    toHtml(file, Docco.DEFAULT_SINGLE_PAGE_TEMPLATE)
-  /* Now for strings with filepaths */
-  def toHtml(file: String, template: String, ftlConfig: Configuration): Unit =
-    toHtml(new File(file), template, ftlConfig)
-  def toHtml(file: String, template: String): Unit =
-    toHtml(file, template, DefaultConfiguration)
-  def toHtml(file: String): Unit =
-    toHtml(file, Docco.DEFAULT_SINGLE_PAGE_TEMPLATE)
-  /* And now kinda "look, ma, no hands" */
+
+  def toHtml(file: String): Unit = toHtml(new File(file))
+
   def toHtml(): Unit = toHtml(file.getAbsolutePath + ".html")
 }
+
+
 
