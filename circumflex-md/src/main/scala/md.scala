@@ -44,7 +44,8 @@ object Markdown {
   val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^/>]*?>",
     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
   // HTML comments
-  val rHtmlComment = Pattern.compile("^ {0,3}<!--(.|\\n)*?-->(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rHtmlComment = Pattern.compile("^ {0,3}(<!--.*?-->)\\s*?(?=\\n+|\\Z)",
+    Pattern.MULTILINE | Pattern.DOTALL)
   // Link definitions
   val rLinkDefinition = Pattern.compile("^ {0,3}\\[(.+)\\]:" +
       " *\\n? *<?(\\S+)>? *\\n? *" +
@@ -68,7 +69,8 @@ object Markdown {
       "(?:(?:- *){3,})|" +
       "(?:(?:_ *){3,})" +
       ") *$", Pattern.MULTILINE)
-  val rHtmlHr = Pattern.compile("<hr\\s*/?>", Pattern.CASE_INSENSITIVE)
+  val rHtmlHr = Pattern.compile("^ {0,3}(<hr.*?>)\\s*?$",
+    Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.MULTILINE)
   // Lists
   val listExpr = "( {0,3}([-+*]|\\d+\\.) +(?s:.+?)" +
       "(?:\\Z|\\n{2,}(?![-+*]|\\s|\\d+\\.)))"
@@ -81,8 +83,10 @@ object Markdown {
       "((?s:.+?))(?=\\Z|\\n+ {0,3}\\S)", Pattern.MULTILINE)
   val rCodeLangId = Pattern.compile("^\\s*lang:(.+?)(?=\\n|\\Z)")
   // Block quotes
-  val rBlockQuote = Pattern.compile("((?:^ *>(?:.+(?:\\n|\\Z))+\\n*)+)", Pattern.MULTILINE)
-  val rBlockQuoteTrims = Pattern.compile("(?:^ *> ?)|(?:^ *$)|(?-m:\\n+$)", Pattern.MULTILINE)
+  val rBlockQuote = Pattern.compile("((?:^ *>(?:.+(?:\\n|\\Z))+\\n*)+)",
+    Pattern.MULTILINE)
+  val rBlockQuoteTrims = Pattern.compile("(?:^ *> ?)|(?:^ *$)|(?-m:\\n+$)",
+    Pattern.MULTILINE)
   // Paragraphs splitter
   val rParaSplit = Pattern.compile("\\n{2,}")
   // Code spans
@@ -187,13 +191,14 @@ class MarkdownText(source: CharSequence) {
   /**
    * Encodes specially-treated characters inside the HTML tags.
    */
-  protected def encodeCharsInsideTags(text: StringEx) = text.replaceAll(rInsideTags, m => {
-    var content = m.group(1)
-    content = encodeUnsafeChars(content)
-    var result = new StringEx(content)
-        .replaceAll(rEscAmp, "&amp;")
-    "<" + result.toString + ">"
-  })
+  protected def encodeCharsInsideTags(text: StringEx) =
+    text.replaceAll(rInsideTags, m => {
+      var content = m.group(1)
+      content = encodeUnsafeChars(content)
+      var result = new StringEx(content)
+          .replaceAll(rEscAmp, "&amp;")
+      "<" + result.toString + ">"
+    })
 
   /* ## Processing methods */
 
@@ -213,7 +218,7 @@ class MarkdownText(source: CharSequence) {
    * All inline HTML blocks are hashified, so that no harm is done to their internals.
    */
   protected def hashHtmlBlocks(text: StringEx): StringEx = {
-    text.replaceAll(rHtmlHr, m => htmlProtector.addToken("<hr/>"))
+    text.replaceAll(rHtmlHr, m => htmlProtector.addToken(m.group(1)) + "\n")
     val m = text.matcher(rInlineHtmlStart)
     if (m.find) {
       val tagName = m.group(1)
@@ -243,25 +248,24 @@ class MarkdownText(source: CharSequence) {
   /**
    * All HTML comments are hashified too.
    */
-  protected def hashHtmlComments(text: StringEx): StringEx = {
-    val m = text.matcher(rHtmlComment)
-    if (m.find) {
-      text.protectSubseq(htmlProtector, m.start, m.end)
-      hashHtmlComments(text)
-    } else text
-  }
+  protected def hashHtmlComments(text: StringEx): StringEx = text.replaceAll(rHtmlComment, m => {
+    val comment = m.group(1)
+    val hash = htmlProtector.addToken(comment)
+    "\n" + hash + "\n"
+  })
 
   /**
    * Standalone link definitions are added to the dictionary and then
    * stripped from the document.
    */
-  protected def stripLinkDefinitions(text: StringEx) = text.replaceAll(rLinkDefinition, m => {
-    val id = m.group(1).toLowerCase
-    val url = m.group(2)
-    val title = if (m.group(3) == null) "" else m.group(3)
-    links += id -> LinkDefinition(url, title.replaceAll("\"", "&quot;"))
-    ""
-  })
+  protected def stripLinkDefinitions(text: StringEx) =
+    text.replaceAll(rLinkDefinition, m => {
+      val id = m.group(1).toLowerCase
+      val url = m.group(2)
+      val title = if (m.group(3) == null) "" else m.group(3)
+      links += id -> LinkDefinition(url, title.replaceAll("\"", "&quot;"))
+      ""
+    })
 
   /**
    * Block elements are processed within specified `text`.
@@ -337,14 +341,15 @@ class MarkdownText(source: CharSequence) {
   /**
    * Process code blocks.
    */
-  protected def doCodeBlocks(text: StringEx): StringEx = text.replaceAll(rCodeBlock, m => {
-    var langExpr = ""
-    val code = new StringEx(encodeCode(m.group(1)))
-        .outdent.replaceAll(rCodeLangId, m => {
-      langExpr = " class=\"" + m.group(1) + "\""
-      ""})
-    "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
-  })
+  protected def doCodeBlocks(text: StringEx): StringEx =
+    text.replaceAll(rCodeBlock, m => {
+      var langExpr = ""
+      val code = new StringEx(encodeCode(m.group(1)))
+          .outdent.replaceAll(rCodeLangId, m => {
+        langExpr = " class=\"" + m.group(1) + "\""
+        ""})
+      "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
+    })
 
   /**
    * Process blockquotes.
@@ -353,11 +358,12 @@ class MarkdownText(source: CharSequence) {
    * blockquotes, so the contents is passed to `runBlockGamut` after some
    * minor transformations.
    */
-  protected def doBlockQuotes(text: StringEx): StringEx = text.replaceAll(rBlockQuote, m => {
-    val content = new StringEx(m.group(1))
-        .replaceAll(rBlockQuoteTrims, "")
-    "<blockquote>\n" + runBlockGamut(content) + "\n</blockquote>\n\n"
-  })
+  protected def doBlockQuotes(text: StringEx): StringEx =
+    text.replaceAll(rBlockQuote, m => {
+      val content = new StringEx(m.group(1))
+          .replaceAll(rBlockQuoteTrims, "")
+      "<blockquote>\n" + runBlockGamut(content) + "\n</blockquote>\n\n"
+    })
 
   /**
    * At this point all HTML blocks should be hashified, so we treat all lines
@@ -430,20 +436,21 @@ class MarkdownText(source: CharSequence) {
   /**
    * Process inline links.
    */
-  protected def doInlineLinks(text: StringEx): StringEx = text.replaceAll(rInlineLinks, m => {
-    val linkText = m.group(1)
-    val url = m.group(2)
-        .replaceAll("\\*", "&#42;")
-        .replaceAll("_", "&#95;")
-    var titleAttr = ""
-    var title = m.group(5)
-    if (title != null) titleAttr = " title=\"" + title
-        .replaceAll("\\*", "&#42;")
-        .replaceAll("_", "&#95;")
-        .replaceAll("\"", "&quot;")
-        .trim + "\""
-    "<a href=\"" + url + "\"" + titleAttr + ">" + linkText + "</a>"
-  })
+  protected def doInlineLinks(text: StringEx): StringEx =
+    text.replaceAll(rInlineLinks, m => {
+      val linkText = m.group(1)
+      val url = m.group(2)
+          .replaceAll("\\*", "&#42;")
+          .replaceAll("_", "&#95;")
+      var titleAttr = ""
+      var title = m.group(5)
+      if (title != null) titleAttr = " title=\"" + title
+          .replaceAll("\\*", "&#42;")
+          .replaceAll("_", "&#95;")
+          .replaceAll("\"", "&quot;")
+          .trim + "\""
+      "<a href=\"" + url + "\"" + titleAttr + ">" + linkText + "</a>"
+    })
 
   /**
    * Process autolinks.

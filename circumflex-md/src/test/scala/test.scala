@@ -5,6 +5,7 @@ import org.specs.Specification
 import java.io.File
 import ru.circumflex.md.Markdown
 import org.apache.commons.io.{IOUtils, FileUtils}
+import org.apache.commons.lang.StringUtils
 import org.specs.matcher.Matcher
 import org.specs.specification.Example
 
@@ -16,9 +17,13 @@ object MarkdownSpec extends Specification {
     def apply(name: => String) = {
       val textFile = new File(this.getClass.getResource("/" + name + ".text").toURI)
       val htmlFile = new File(this.getClass.getResource("/" + name + ".html").toURI)
-      val text = FileUtils.readFileToString(textFile, "UTF-8")
-      val html = FileUtils.readFileToString(htmlFile, "UTF-8")
-      (Markdown(text).trim == html.trim, "\"" + name + "\" is fine", "\"" + name + "\" fails")
+      val text = Markdown(FileUtils.readFileToString(textFile, "UTF-8")).trim
+      val html = FileUtils.readFileToString(htmlFile, "UTF-8").trim
+      val diffIndex = StringUtils.indexOfDifference(text, html)
+      val diff = StringUtils.difference(text, html)
+      (diffIndex == -1,
+          "\"" + name + "\" is fine",
+          "\"" + name + "\" fails at " + diffIndex + ": " + StringUtils.abbreviate(diff, 32))
     }
   }
 
@@ -42,6 +47,15 @@ object MarkdownSpec extends Specification {
     }
     "Horizontal rules" in {
       "Horizontal rules" must beFine
+    }
+    "Inline HTML (Advanced)" in {
+      "Inline HTML (Advanced)" must beFine
+    }
+    "Inline HTML (Simple)" in {
+      "Inline HTML (Simple)" must beFine
+    }
+    "Inline HTML comments" in {
+      "Inline HTML comments" must beFine
     }
   }
 }
