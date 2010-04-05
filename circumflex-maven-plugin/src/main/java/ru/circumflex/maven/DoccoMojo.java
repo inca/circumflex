@@ -3,8 +3,6 @@ package ru.circumflex.maven;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
-import java.io.File;
-
 /**
  * @goal docco
  */
@@ -21,7 +19,7 @@ public class DoccoMojo extends AbstractCircumflexMojo {
     protected String outputDirectory;
 
     /**
-     * @parameter expression="${pageTemplate}" default-value="/page.html.ftl"
+     * @parameter expression="${pageTemplate}" default-value="/single-page.html.ftl"
      */
     protected String pageTemplate;
 
