@@ -9,7 +9,7 @@ import org.apache.maven.plugin.MojoFailureException;
 public class DoccoMojo extends AbstractCircumflexMojo {
 
     /**
-     * @parameter expression="${basePath}" default-value=""
+     * @parameter expression="${basePath}" default-value="."
      */
     protected String basePath;
 

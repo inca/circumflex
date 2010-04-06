@@ -6,6 +6,11 @@ import java.io._
 import ru.circumflex.md.Markdown
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
+import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}
+import java.util.{Comparator, Collections, Collection => JCollection}
+import scala.collection.{Map => SMap}
+import ru.circumflex.core.CircumflexUtil
+import collection.mutable.ListBuffer
 
 /**
  * A simple wrapper over a Documentation -> Code Block tuple.
@@ -127,7 +132,7 @@ class Docco(val file: File) {
   /* Export to HTML */
 
   def toHtml(writer: Writer): Unit = ftlConfig.getTemplate(pageTemplate)
-        .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
+      .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
 
   def toHtml(file: File): Unit = {
     val fw = new FileWriter(file)
@@ -165,6 +170,16 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
   var filenameRegex = ".*\\.scala$"
   /* Custom resources */
   var customResources: List[String] = Nil
+  /* Title for index */
+  var title: String = basePath.getCanonicalFile.getName + " index"
+  /* Filename comparator */
+  val fileComparator = new Comparator[File] {
+    def compare(f1: File, f2: File) = f1.getName.compareTo(f2.getName)
+  }
+
+  /* Sources map */
+  var sourcesMap: SMap[File, Seq[File]] = _
+  var indexMap = Map[String, Seq[String]]()
 
   /**
    * Use this method to build the documentation suite.
@@ -182,10 +197,47 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
       else if (f.isFile) FileUtils.copyFile(f, customResDir)
       else log.warn("Skipping non-existent resource: " + f)
     }
-    // now process the sources
-    // TODO
-
+    // crawl basePath for the sources
+    val bp = basePath.getCanonicalPath
+    val sources = new ListBuffer[File]
+    val srcIt = FileUtils.listFiles(basePath,
+      new RegexFileFilter(filenameRegex),
+      TrueFileFilter.INSTANCE).asInstanceOf[JCollection[File]].iterator
+    while (srcIt.hasNext)
+      sources += srcIt.next
+    // generate doccos
+    val doccos = sources.map(f => {
+      val fp = f.getCanonicalPath
+      val relName = fp.substring(bp.length + 1) + ".html"
+      val outFile = new File(outputDirectory, relName)
+      FileUtils.forceMkdir(outFile.getParentFile)
+      val docco = Docco(f)
+      val out = new FileWriter(outFile)
+      try {
+        var data = Map[String, Any](
+          "title" -> f.getName,
+          "sections" -> docco.sections,
+          "depth" -> relName.toList.filter(c => c == File.separatorChar).length)
+        ftlConfig.getTemplate(pageTemplate).process(data, out)
+      } finally {
+        out.close
+      }
+      outFile
+    })
+    // prepare index
+    sourcesMap = CircumflexUtil.groupBy[File, File](sources, f => f.getParentFile)
+    sourcesMap.foreach(p => {
+      val dirName = p._1.getCanonicalPath.substring(bp.length + 1)
+      val filenames = p._2.map(f => f.getName)
+      indexMap += dirName -> filenames
+    })
+    val out = new FileWriter(new File(outputDirectory, "index.html"))
+    try {
+      var data = Map[String, Any]("index" -> indexMap, "title" -> title)
+      ftlConfig.getTemplate(indexTemplate).process(data, out)
+    } finally {
+      out.close
+    }
   }
-
 
 }
