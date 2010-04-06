@@ -2,11 +2,20 @@ package ru.circumflex.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import ru.circumflex.docco.DoccoBatch;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @goal docco
  */
 public class DoccoMojo extends AbstractCircumflexMojo {
+
+    /**
+     * @parameter expression="${title}" default-value="${project.artifactId}"
+     */
+    protected String title;
 
     /**
      * @parameter expression="${basePath}" default-value="."
@@ -19,7 +28,7 @@ public class DoccoMojo extends AbstractCircumflexMojo {
     protected String outputDirectory;
 
     /**
-     * @parameter expression="${pageTemplate}" default-value="/single-page.html.ftl"
+     * @parameter expression="${pageTemplate}" default-value="/batch-page.html.ftl"
      */
     protected String pageTemplate;
 
@@ -39,6 +48,25 @@ public class DoccoMojo extends AbstractCircumflexMojo {
     protected String[] customResources;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-
+        File base = new File(basePath);
+        File outDir = new File(outputDirectory);
+        if (base.isDirectory()) {
+            DoccoBatch db = new DoccoBatch(base, outDir);
+            db.setTitle(title);
+            db.setPageTemplate(pageTemplate);
+            db.setIndexTemplate(indexTemplate);
+            db.setFilenameRegex(filenameRegex);
+            if (customResources != null)
+                for (String res : customResources)
+                    db.addCustomResource(res);
+            try {
+                getLog().info("Generating docco in " + outDir.getCanonicalPath());
+                db.generate();
+            } catch (IOException e) {
+                throw new MojoExecutionException("Failed to generate docco", e);
+            }
+        } else {
+            throw new MojoExecutionException("Specified basePath does not exist.");
+        }
     }
 }

@@ -177,9 +177,16 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
     def compare(f1: File, f2: File) = f1.getName.compareTo(f2.getName)
   }
 
+  /* For interop with Java */
+  def setPageTemplate(v: String) = { pageTemplate = v }
+  def setIndexTemplate(v: String) = { indexTemplate = v }
+  def setFilenameRegex(v: String) = { filenameRegex = v }
+  def setTitle(v: String) = { title = v }
+  def addCustomResource(v: String) = { customResources ++= List(v) }
+
   /* Sources map */
   var sourcesMap: SMap[File, Seq[File]] = _
-  var indexMap = Map[String, Seq[String]]()
+  var indexMap: Map[String, Seq[String]] = _
 
   /**
    * Use this method to build the documentation suite.
@@ -226,6 +233,7 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
     })
     // prepare index
     sourcesMap = CircumflexUtil.groupBy[File, File](sources, f => f.getParentFile)
+    indexMap = Map[String, Seq[String]]()
     sourcesMap.foreach(p => {
       val dirName = p._1.getCanonicalPath.substring(bp.length + 1)
       val filenames = p._2.map(f => f.getName)
