@@ -48,6 +48,7 @@ public class DoccoMojo extends AbstractCircumflexMojo {
     protected String[] customResources;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+        if (!project.isExecutionRoot()) return;
         File base = new File(basePath);
         File outDir = new File(outputDirectory);
         if (base.isDirectory()) {
