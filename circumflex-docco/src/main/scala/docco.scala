@@ -4,13 +4,13 @@ import ru.circumflex.freemarker.DefaultConfiguration
 import _root_.freemarker.template.Configuration
 import java.io._
 import ru.circumflex.md.Markdown
-import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}
 import java.util.{Comparator, Collections, Collection => JCollection}
 import scala.collection.{Map => SMap}
 import ru.circumflex.core.CircumflexUtil
 import collection.mutable.ListBuffer
+import org.apache.commons.io.{FilenameUtils, IOUtils, FileUtils}
 
 /**
  * A simple wrapper over a Documentation -> Code Block tuple.
@@ -193,7 +193,8 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
    */
   def generate(): Unit = {
     // prepare custom resources
-    customResources ++= List(this.getClass.getResource("/docco").getFile)
+    customResources ++= List("/docco/main.css")
+    customResources ++= List("/docco/highlight.js")
     val customResDir = new File(outputDirectory, ".docco")
     // create output directories if they do not already exist
     FileUtils.forceMkdir(customResDir)
@@ -202,7 +203,19 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
       var f = new File(r)
       if (f.isDirectory) FileUtils.copyDirectory(f, customResDir)
       else if (f.isFile) FileUtils.copyFile(f, customResDir)
-      else log.warn("Skipping non-existent resource: " + f)
+      else {    // try to load the resource as stream
+        val res = getClass.getResource(r)
+        if (res != null) {
+          val in = res.openStream
+          val out = new FileOutputStream(new File(customResDir, FilenameUtils.getName(r)))
+          try {
+            IOUtils.copy(in, out)
+          } finally {
+            in.close
+            out.close
+          }
+        } else log.warn("Skipping non-existent resource: " + r)
+      }
     }
     // crawl basePath for the sources
     val bp = basePath.getCanonicalPath

@@ -13,7 +13,7 @@ import java.io.IOException;
 public class DoccoMojo extends AbstractCircumflexMojo {
 
     /**
-     * @parameter expression="${title}" default-value="${project.artifactId}"
+     * @parameter expression="${title}"
      */
     protected String title;
 
@@ -53,7 +53,8 @@ public class DoccoMojo extends AbstractCircumflexMojo {
         File outDir = new File(outputDirectory);
         if (base.isDirectory()) {
             DoccoBatch db = new DoccoBatch(base, outDir);
-            db.setTitle(title);
+            if (title != null)
+                db.setTitle(title);
             db.setPageTemplate(pageTemplate);
             db.setIndexTemplate(indexTemplate);
             db.setFilenameRegex(filenameRegex);
