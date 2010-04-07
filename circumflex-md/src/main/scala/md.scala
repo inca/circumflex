@@ -62,7 +62,7 @@ object Markdown {
   // Headers
   val rH1 = Pattern.compile("^ {0,3}(\\S.*)\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
   val rH2 = Pattern.compile("^ {0,3}(\\S.*)\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
-  val rHeaders = Pattern.compile("^(#{1,6}) *(\\S.*?) *#?$", Pattern.MULTILINE)
+  val rHeaders = Pattern.compile("^(#{1,6}) *(\\S.*?) *#*?$", Pattern.MULTILINE)
   // Horizontal rulers
   val rHr = Pattern.compile("^ {0,3}(?:" +
       "(?:(?:\\* *){3,})|" +
