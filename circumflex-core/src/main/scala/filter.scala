@@ -11,6 +11,8 @@ import java.io.{FileNotFoundException, File}
 import org.apache.commons.io.FilenameUtils._
 
 /**
+ * ## Circumflex Filters
+ *
  * Provides a base class for Circumflex filter implementations.
  */
 abstract class AbstractCircumflexFilter extends Filter {
@@ -31,16 +33,13 @@ abstract class AbstractCircumflexFilter extends Filter {
 
   /**
    * Determines, if a filter should process the request.
-   * The default behavior is controlled by "cx.process_?" parameter:
-   * <ul>
-   *   <li><code>String</code> or <code>Regex</code> or <code>Pattern</code>
-   *   -- the filter processes request if URI <em>does not match</em> specified regex;</li>
-   *   <li><code>HttpServletRequest => Boolean</code> or <code>() => Boolean</code>
-   *   -- the filter processes request depending on the result of function invocation.</li>
+   * The default behavior is controlled by `cx.process_?` parameter:
+   *
+   *  * `String` or `Regex` or `Pattern`;
+   *  * the filter processes request if URI *does not match* specified regex;
+   *  * `HttpServletRequest => Boolean` or `() => Boolean` functions,
+   *  the filter processes request depending on the result of function invocation.
    * </ul>
-   * @param req   the request instance
-   * @return     <b>true</b> if the request should be processed
-   *             <b>false</b> if the processing should be skipped
    */
   def isProcessed(req: HttpServletRequest): Boolean = Circumflex.cfg("cx.process_?") match {
     case Some(s: String) => !req.getRequestURI.toLowerCase.matches(s)
@@ -52,10 +51,10 @@ abstract class AbstractCircumflexFilter extends Filter {
   }
 
   /**
-   * Instantiates a CircumflexContext object, binds it to current request,
-   * consults <code>isProcessed</code>, whether the request should be processed
+   * Instantiates a `CircumflexContext` object, binds it to current request,
+   * consults `isProcessed, whether the request should be processed
    * and delegates to high-level equivalent
-   * <code>doFilter(CircumflexContext, FilterChain)</code>
+   * `doFilter(CircumflexContext, FilterChain)`
    * if necessary.
    */
   def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
@@ -88,8 +87,6 @@ abstract class AbstractCircumflexFilter extends Filter {
 
   /**
    * Implementing classes should provide their filtering logic for processed requests.
-   * @param ctx    Route Context passed to this filter
-   * @param chain  filter chain to delegate calls to if necessary
    */
   def doFilter(ctx: CircumflexContext, chain: FilterChain): Unit
 
@@ -98,9 +95,7 @@ abstract class AbstractCircumflexFilter extends Filter {
 /**
  * Configures Circumflex-based web application and serves it's requests.
  * Web application should configure it according to JSR-154 (Java Servlet Specification) via
- * <code>your_webapp_root/WEB-INF/web.xml</code> (also known as Deployment Descriptor).
- *
- * @see ru.circumflex.core.RequestRouter
+ * `your_webapp_root/WEB-INF/web.xml` (also known as Deployment Descriptor).
  */
 class CircumflexFilter extends AbstractCircumflexFilter {
 
@@ -116,20 +111,15 @@ class CircumflexFilter extends AbstractCircumflexFilter {
   /**
    * Executed when no routes match current request.
    * Default behavior is to send 404 NOT FOUND.
-   * You may override it, say, to call <code>chain.doFilter</code> to pass request
+   * You may override it, say, to call `chain.doFilter` to pass request
    * along the chain.
-   * @param ctx    Route Context passed to this filter
-   * @param chain  filter chain to delegate calls to if necessary
    */
   def onNoMatch(ctx: CircumflexContext, chain: FilterChain) =
     ErrorResponse(404, "The requested resource does not exist.")(ctx.response)
 
   /**
    * Executed when router throws an exception.
-   * Default behavior is to send the 500 status code to client.
-   * @param e      the router's exception
-   * @param ctx    Route Context passed to this filter
-   * @param chain  filter chain to delegate calls to if necessary
+   * Default behavior is to send the `500 Internal Server Error` to client.
    */
   def onRouterError(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
     log.error("Router threw an exception, see stack trace for details.", e)
@@ -137,12 +127,9 @@ class CircumflexFilter extends AbstractCircumflexFilter {
   }
 
   /**
-   * Executed when <code>java.io.FileNotFoundException</code>
+   * Executed when `java.io.FileNotFoundException`
    * is thrown from router.
-   * Default behavior is to send the 404 status code to client.
-   * @param e      the router's exception
-   * @param ctx    Route Context passed to this filter
-   * @param chain  filter chain to delegate calls to if necessary
+   * Default behavior is to send the `404 Not Found` to client.
    */
   def onNotFound(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
     ErrorResponse(404, e.getMessage)(ctx.response)
@@ -150,8 +137,6 @@ class CircumflexFilter extends AbstractCircumflexFilter {
 
   /**
    * Instantiates a router that processes current request.
-   * @param ctx    Route Context passed to this filter
-   * @param chain  filter chain to delegate calls to if necessary
    */
   def doFilter(ctx: CircumflexContext, chain: FilterChain): Unit = {
     log.debug(ctx.request.toString)
@@ -179,7 +164,6 @@ class CircumflexFilter extends AbstractCircumflexFilter {
 
   /**
    * Called when a filter is instantiated by Servlet Container.
-   * @param cfg filter configuration
    */
   override def init(cfg: FilterConfig) = {
     log.info("Circumflex v. 0.3")

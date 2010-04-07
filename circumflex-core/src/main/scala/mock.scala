@@ -30,7 +30,7 @@ trait MockServer extends StandaloneServer {
 
   override def stop = if (_tester != null) _tester.stop
 
-  /* Methods */
+  /* ## HTTP Methods */
 
   def get(uri: String) = new MockRequest(this, "GET", uri)
 

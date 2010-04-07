@@ -22,7 +22,7 @@ class CircumflexContext(val request: HttpServletRequest,
   var statusCode: Int = 200
   protected var _contentType: String = null
   
-  /* HELPERS */
+  /* ## Helpers */
   val header = new HeadersHelper
   val session = new SessionHelper
   val flash = new FlashHelper
@@ -80,12 +80,10 @@ object Circumflex {
 
   val log = LoggerFactory.getLogger("ru.circumflex.core")
 
-  /* CONFIGURATION */
+  /* ## Configuration */
 
   private val _cfg = new HashMap[String, Any]
   val cfg = new ConfigurationHelper
-
-  /* CONFIGURATION DEFAULTS */
 
   // should filter process request?
   val f: HttpServletRequest => Boolean = r => !r.getRequestURI.toLowerCase.matches("/public/.*")
@@ -122,7 +120,8 @@ object Circumflex {
     case _ => DefaultXSendFileHeader
   }
 
-  try {     // read configuration from "cx.properties" by default
+  // Read configuration from `cx.properties` file by default
+  try {
     val bundle = ResourceBundle.getBundle("cx", Locale.getDefault, classLoader)
     val keys = bundle.getKeys
     while (keys.hasMoreElements) {
@@ -134,7 +133,7 @@ object Circumflex {
   }
 
   /**
-   * For DSL-like configuration
+   * A simple helper for DSL-like configurations.
    */
   class ConfigurationHelper {
     def apply(key: String): Option[Any] = _cfg.get(key)
@@ -143,14 +142,14 @@ object Circumflex {
       _cfg += key -> value
   }
 
-  /* MESSAGES */
+  /* ## Messages */
 
   def msg(locale: Locale): Messages = cfg("cx.messages") match {
     case Some(s: String) => new Messages(s, locale)
     case _ => throw new CircumflexException("'cx.messages' not configured.")
   }
 
-  /* CONTEXT */
+  /* ## Context management */
 
   private val threadLocalContext = new ThreadLocal[CircumflexContext]
 
@@ -169,7 +168,7 @@ object Circumflex {
 
   def destroyContext() = threadLocalContext.set(null)
 
-  /* MISCELLANEOUS */
+  /* ## Miscellaneous */
 
   def mimeTypesMap = new MimetypesFileTypeMap()
 

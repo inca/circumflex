@@ -7,20 +7,14 @@ import org.apache.commons.io.IOUtils
 import java.io.{FileInputStream, File, OutputStream}
 
 /**
- * Author: incarnate
- * Date: Aug 30, 2009
- * Time: 8: 48: 13 PM
- */
-
-/**
- * Represents an <code>HttpServletResponse</code> wrapper for committing responses.
+ * Represents an `HttpServletResponse` wrapper for committing responses.
  * Apply method sets character encoding, content type, status code and headers from
- * <code>CircumflexContext</code> and flushes any associated output.
+ * `CircumflexContext` and flushes any associated output.
  */
 trait HttpResponse {
   /**
    * Applies character encoding, content type, status code and headers to
-   * specified <code>HttpServletResponse</code> and flushes any associated output.
+   * specified `HttpServletResponse` and flushes any associated output.
    * If specified response is committed, returns silently.
    */
   def apply(response: HttpServletResponse) = if (!response.isCommitted) {

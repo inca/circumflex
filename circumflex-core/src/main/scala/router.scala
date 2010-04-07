@@ -5,6 +5,8 @@ import Circumflex._
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
+/* ## Request Router */
+
 class RequestRouter {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
@@ -12,7 +14,7 @@ class RequestRouter {
 
   def ctx = Circumflex.ctx
 
-  /* ROUTES AND MATCHERS */
+  /* ### Routes */
 
   val get = new Route("get")
   val getOrPost = new Route("get", "post")
@@ -24,17 +26,18 @@ class RequestRouter {
   val options = new Route("options")
   val any = new Route("get", "post", "put", "delete", "head", "options")
 
-  /**
-   * Constructs a headers-based matcher.
-   */
+  /* ### Matchers */
+
   def headers(crit: (String, String)*) = new HeadersRegexMatcher(crit : _*)
 
-  /* CONTEXT SHORTCUTS */
+  /* ### Context shortcuts */
 
   def header = ctx.header
   def session = ctx.session
   def flash = ctx.flash
   def uri = ctx.uri
+
+  /* ### Helpers */
 
   /**
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
@@ -46,9 +49,9 @@ class RequestRouter {
 
   /**
    * Rewrites request URI. Normally it causes the request to travel all the way through
-   * the filters and <code>RequestRouter</code> once again but with different URI.
+   * the filters and `RequestRouter` once again but with different URI.
    * You must use this method with caution to prevent infinite loops.
-   * You must also add &lt;dispatcher&gt;FORWARD&lt;/dispatcher&gt; to filter mapping to
+   * You must also add `<dispatcher>FORWARD</dispatcher>` to filter mapping to
    * allow request processing with certain filters.
    */
   def rewrite(target: String): Nothing = {
@@ -72,7 +75,7 @@ class RequestRouter {
   def error(errorCode: Int) = ErrorResponse(errorCode, "no message available")
 
   /**
-   * Sends a 302 MOVED TEMPORARILY redirect (with optional flashes).
+   * Sends a `302 Moved Temporarily` redirect (with optional flashes).
    */
   def redirect(location: String, flashes: Pair[String, Any]*) = {
     flashes.toList.foreach(p => flash(p._1) = p._2)
@@ -80,7 +83,7 @@ class RequestRouter {
   }
 
   /**
-   * Sends empty response HTTP 200 OK.
+   * Sends empty `200 OK` response.
    */
   def done: HttpResponse = done(200)
 
@@ -93,15 +96,13 @@ class RequestRouter {
   }
 
   /**
-   * Immediately stops processing with HTTP 400 Bad Request if one of specified
+   * Immediately stops processing with `400 Bad Request` if one of specified
    * parameters is not provided.
    */
   def requireParams(names: String*) = names.toList.foreach(name => {
     if (param(name) == None)
       throw new RouteMatchedException(Some(error(400, "Missing " + name + " parameter.")))
   })
-
-  /* COMMON HELPERS */
 
   /**
    * Sends a file.
@@ -154,6 +155,8 @@ class RequestRouter {
 }
 
 /**
+ * ## Route
+ *
  * Dispatches current request if it passes all matchers.
  * Common matchers are based on HTTP methods, URI and headers.
  */
@@ -179,6 +182,8 @@ class Route(val matchingMethods: String*) {
   def update(uriRegex: String, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
     dispatch(response, new UriRegexMatcher(uriRegex), matcher1)
 }
+
+/* ## Helpers */
 
 /**
  * A helper for getting and setting response headers in a DSL-like way.
