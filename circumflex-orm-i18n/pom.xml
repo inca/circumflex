@@ -6,13 +6,13 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-orm-i18n</artifactId>
   <packaging>jar</packaging>
-  <version>0.3</version>
+  <version>1.0</version>
   <name>Circumflex ORM I18N Framework</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>0.3</version>
+    <version>1.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -20,7 +20,7 @@
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-orm</artifactId>
-      <version>0.3</version>
+      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>postgresql</groupId>

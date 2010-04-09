@@ -44,13 +44,13 @@ case class FreemarkerResponse(val template:Template) extends HttpResponse {
  */
 object DefaultConfiguration extends Configuration {
   var loaders: Seq[TemplateLoader] = Nil
-  loaders ++= List(new ClassTemplateLoader(getClass, "/"))
   try {
     loaders ++= List(new WebappTemplateLoader(
     Circumflex.ctx.request.getSession.getServletContext, "/templates"))
   } catch {
     case e => log.debug("Not running in Servlet context.", e)
   }
+  loaders ++= List(new ClassTemplateLoader(getClass, "/"))
   setTemplateLoader(new MultiTemplateLoader(loaders.toArray))
   setObjectWrapper(new ScalaObjectWrapper())
   setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER)

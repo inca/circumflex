@@ -1,5 +1,11 @@
 # Circumflex change log
 
+## Version 1.0
+
+### Circumflex Freemarker Views:
+
+* Changed default resolution priority for templating model (now webapp first, classpath second)
+
 ## Version 0.3
 
 * Added Circumflex Docco module.
