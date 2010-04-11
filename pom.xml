@@ -17,7 +17,6 @@
   <modules>
     <module>circumflex-core</module>
     <module>circumflex-orm</module>
-    <module>circumflex-orm-i18n</module>
     <module>circumflex-md</module>
     <module>circumflex-docco</module>
     <module>circumflex-maven-plugin</module>
