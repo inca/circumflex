@@ -2,18 +2,17 @@ package ru.circumflex.orm
 
 import ru.circumflex.core.Circumflex
 
-/**
- * Aggregates all ORM-related interfaces into configuration object.
- * You may want to provide your own implementation of all these methods
- * if you are not satisfied with default ones.
- */
-object ORM extends QueryHelper {
+/* ## Configuration */
 
-  private var _cachedDialect: Dialect = null
+/**
+ * `ORM` singletons aggregates all ORM-related interfaces into a single
+ * configuration object.
+ */
+object ORM {
 
   /**
-   * Returns connection provider.
-   * Can be overriden with "orm.connectionProvider" configuration parameter.
+   * Connection provider.
+   * Can be overriden with `orm.connectionProvider` configuration parameter.
    */
   val connectionProvider: ConnectionProvider = Circumflex.cfg("orm.connectionProvider") match {
     case Some(p: ConnectionProvider) => p
@@ -26,25 +25,21 @@ object ORM extends QueryHelper {
   }
 
   /**
-   * Returns SQL dialect.
-   * Can be overriden with "orm.dialect" configuration parameter.
+   * SQL dialect.
+   * Can be overriden with `orm.dialect` configuration parameter.
    */
   val dialect: Dialect = Circumflex.cfg("orm.dialect") match {
     case Some(d: Dialect) => d
     case Some(c: Class[Dialect]) => c.newInstance
-    case Some(s: String) => {
-      if (_cachedDialect == null)
-        _cachedDialect = Class.forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)
             .newInstance
             .asInstanceOf[Dialect]
-      _cachedDialect
-    }
     case _ => DefaultDialect
   }
 
   /**
-   * Returns SQL type converter.
-   * Can be overriden with "orm.typeConverter" configuration parameter.
+   * SQL type converter.
+   * Can be overriden with `orm.typeConverter` configuration parameter.
    */
   val typeConverter: TypeConverter = Circumflex.cfg("orm.typeConverter") match {
     case Some(tc: TypeConverter) => tc
@@ -55,11 +50,19 @@ object ORM extends QueryHelper {
     case _ => DefaultTypeConverter
   }
 
+  /**
+   * The schema name which is used if not specified explicitly.
+   * Can be overriden with `orm.defaultSchema` configuration parameter.
+   */
   val defaultSchemaName = Circumflex.cfg("orm.defaultSchema") match {
     case Some(s: String) => s
     case _ => "public"
   }
 
+  /**
+   * Transaction manager.
+   * Can be overriden with `orm.transactionManager` configuration parameter.
+   */
   val transactionManager: TransactionManager = Circumflex.cfg("orm.transactionManager") match {
     case Some(tm: TransactionManager) => tm
     case Some(c: Class[TransactionManager]) => c.newInstance
@@ -69,6 +72,9 @@ object ORM extends QueryHelper {
     case _ => DefaultTransactionManager
   }
 
+  /**
+   * Shortcut for retrieving current transaction via `transactionManager.getTransaction`.
+   */
   def tx = transactionManager.getTransaction
 
 }

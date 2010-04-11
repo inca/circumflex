@@ -5,11 +5,10 @@ import ORM._
 
 /**
  * Contains helper constructions that automatically close such JDBC objects as
- * ResultSets and PreparedStatements.
+ * `ResultSet`s and `PreparedStatement`s.
  */
-trait JDBCHelper {
+object JDBC {
   protected val sqlLog = LoggerFactory.getLogger("ru.circumflex.orm")
-
   def autoClose[A <: {def close(): Unit}, B](obj: A)
                                             (actions: A => B)
                                             (errors: Throwable => B): B =
@@ -20,19 +19,25 @@ trait JDBCHelper {
     } finally {
       obj.close
     }
-
   def auto[A <: {def close(): Unit}, B](obj: A)
                                        (actions: A => B): B =
     autoClose(obj)(actions)(throw _)
-
 }
 
-object JDBCHelper extends JDBCHelper
+/**
+ * Simple interface for objects capable to render themselves into SQL statements.
+ */
+trait SQLable {
+  def toSql: String
+  override def toString = toSql
+}
 
-
-trait SQLFragment extends SQLable {
+/**
+ * Simple interface for expressions with JDBC-style parameters
+ */
+trait ParameterizedExpression extends SQLable {
   /**
-   * Returns the parameters associated with this fragment.
+   * The parameters associated with this fragment.
    */
   def parameters: Seq[Any]
 
