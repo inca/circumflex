@@ -1,28 +1,24 @@
 package ru.circumflex.orm
 
 import java.sql.{PreparedStatement, Connection}
-import collection.mutable.HashMap
 
-/*
- * ## Transaction management
- *
- * ### Transaction demarcation
- *
- * *Transaction demarcation* refers to setting the transaction boundaries.
- *
- * Datatabase transaction boundaries are always necessary. No communication with the
- * database can occur outside of a database transaction (this seems to confuse many
- * developers who are used to the auto-commit mode). Always use clear transaction
- * boundaries, even for read-only operations. Depending on your isolation level and
- * database capabilities this might not be required but there is no downside if you
- * always demarcate transactions explicitly.
- *
- * There are several popular transaction demarcation patterns for various application types,
- * most of which operate with some sort of "context" or "scope", to which a single
- * transaction corresponds. For example, in web applications a transaction may correspond
- * to a single request.
- *
- */
+/* ## Transaction management */
+
+/* ### Transaction demarcation */
+
+// *Transaction demarcation* refers to setting the transaction boundaries.
+//
+// Datatabase transaction boundaries are always necessary. No communication with the
+// database can occur outside of a database transaction (this seems to confuse many
+// developers who are used to the auto-commit mode). Always use clear transaction
+// boundaries, even for read-only operations. Depending on your isolation level and
+// database capabilities this might not be required but there is no downside if you
+// always demarcate transactions explicitly.
+//
+// There are several popular transaction demarcation patterns for various application types,
+// most of which operate with some sort of "context" or "scope", to which a single
+// transaction corresponds. For example, in web applications a transaction may correspond
+// to a single request.
 
 /**
  * ### TransactionManager interface
@@ -74,9 +70,9 @@ trait TransactionManager {
 
 object DefaultTransactionManager extends TransactionManager
 
+/* ### Stateful Transactions */
+
 /**
- * ### Stateful Transactions
- *
  * The point to use extra-layer above standard JDBC connections is to maintain
  * a cache for each transaction.
  */
@@ -139,19 +135,17 @@ class StatefulTransaction {
       connection.close
     }
 
-  /*
-   * ### Database communication methods
-   *
-   * In order to ensure that cache is synchronized with transaction we must use these methods
-   * to handle all communications with JDBC in a centralized way.
-   *
-   * The logic is pretty simple: every query that can possibly affect the data
-   * in current transaction (i.e. the one that is usually called via `executeUpdate`)
-   * should lead to full cache invalidation. This way we must re-read every record
-   * after such manipulation -- that fits perfectly with triggers and other stuff that
-   * could possibly affect more data at backend than you intended with any particular
-   * query.
-   */
+  /* ### Database communication methods */
+
+  // In order to ensure that cache is synchronized with transaction we must use these methods
+  // to handle all communications with JDBC in a centralized way.
+  //
+  // The logic is pretty simple: every query that can possibly affect the data
+  // in current transaction (i.e. the one that is usually called via `executeUpdate`)
+  // should lead to full cache invalidation. This way we must re-read every record
+  // after such manipulation -- that fits perfectly with triggers and other stuff that
+  // could possibly affect more data at backend than you intended with any particular
+  // query.
 
   /**
    * Prepare SQL statement and execute an attached block within the transaction scope.
@@ -166,7 +160,7 @@ class StatefulTransaction {
   }
 
   /**
-   *  Executes a block with DML-like actions in state-safe manner (does cleanup afterwards).
+   * Execute a block with DML-like actions in state-safe manner (does cleanup afterwards).
    */
   def dml[A](actions: Connection => A): A = try {
     actions(connection)
@@ -177,5 +171,7 @@ class StatefulTransaction {
   /* ### Cache */
 
   // TODO
+
+  def invalidateCaches: Unit = {}
 
 }
