@@ -81,7 +81,7 @@ object Markdown {
   // Code blocks
   val rCodeBlock = Pattern.compile("(?<=\\n\\n|\\A\\n?)" +
       "(^ {4}(?s:.+?))(?=\\Z|\\n+ {0,3}\\S)", Pattern.MULTILINE)
-  val rCodeLangId = Pattern.compile("^\\s*lang:(.+?)(?=\\n|\\Z)")
+  val rCodeLangId = Pattern.compile("^\\s*lang:(.+?)(?:\\n|\\Z)")
   // Block quotes
   val rBlockQuote = Pattern.compile("((?:^ *>(?:.+(?:\\n|\\Z))+\\n*)+)",
     Pattern.MULTILINE)
