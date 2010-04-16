@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 import org.slf4j.LoggerFactory
 import ORM._
+import ru.circumflex.core.WrapperModel
 
 /* ## Common interfaces */
 
