@@ -10,14 +10,26 @@ import ORM._
  * correspond to a column in a table. We strongly distinguish nullable and
  * non-nullable columns.
  */
-abstract class Column[T, R <: Relation](val record: R,
-                                      val sqlType: String,
-                                      val customName: Option[String],
-                                      protected var _defaultExpr: Option[String])
-        extends WrapperModel {
+abstract class Column[T](val sqlType: String) extends WrapperModel {
 
   // An internally stored value.
   protected var _value: T = _
+
+  // A default expression for DDL.
+  protected[orm] var _default: Option[String] = None
+  def default = _default
+  def default(expr: String): this.type = {
+    _default = Some(expr)
+    this
+  }
+
+  // A custom name overrides the one inferred via reflection.
+  protected[orm] var _customName: Option[String] = None
+  def customName = _customName
+  def customName(name: String): this.type = {
+    _customName = Some(name)
+    this
+  }
 
   // This way the value will be unwrapped by FTL engine.
   def item = getValue
@@ -30,43 +42,33 @@ abstract class Column[T, R <: Relation](val record: R,
   def apply(): T = getValue
 
   /**
-   * If provided, overrides the column name obtained via reflection.
-   */
-  def defaultExpression: Option[String] = _defaultExpr
-
-  def default(expr: String): this.type = {
-    _defaultExpr = Some(expr)
-    this
-  }
-
-  /**
    * Return a `String` representation of internal value.
    */
   override def toString = if (getValue == null) "" else getValue.toString
 
 }
 
-class NotNullColumn[T, R <: Relation](r: R,
-                                    t: String,
-                                    n: Option[String],
-                                    d: Option[String])
-        extends Column[T, R](r, t, n, d) {
+class NotNullColumn[T](t: String) extends Column[T](t) {
   def :=(newValue: T) = setValue(newValue)
-  def nullable(): NullableColumn[T, R] =
-    new NullableColumn[T, R](record, sqlType, customName, defaultExpression)
+  def nullable(): NullableColumn[T] = {
+    val c = new NullableColumn[T](sqlType)
+    c._default = this.default
+    c._customName = this.customName
+    return c
+  }
 }
 
-class NullableColumn[T, R <: Relation](r: R,
-                                     t: String,
-                                     n: Option[String],
-                                     d: Option[String])
-        extends Column[Option[T], R](r, t, n, d) {
+class NullableColumn[T](t: String) extends Column[Option[T]](t) {
   def get(): T = _value.get
   def getOrElse(default: T): T = apply().getOrElse(default)
   def :=(newValue: T) = setValue(Some(newValue))
   def null_!() = setValue(None)
-  def notNull(): NotNullColumn[T, R] =
-    new NotNullColumn[T, R](record, sqlType, customName, defaultExpression)
+  def notNull(): NotNullColumn[T] = {
+    val c = new NotNullColumn[T](sqlType)
+    c._default = this.default
+    c._customName = this.customName
+    return c
+  }
   override def toString = apply() match {
     case Some(value) if value != null => value.toString
     case _ => ""
@@ -75,14 +77,14 @@ class NullableColumn[T, R <: Relation](r: R,
 
 /* ## Meta for columns */
 
-class ColumnMeta[T, R <: Relation](val column: Column[T, R],
-                       val inferredName: String) {
+class ColumnMeta[T](val column: Column[T],
+                    val inferredName: String) {
   val columnName: String = column.customName match {
     case Some(n) => n
     case _ => inferredName
   }
   val sqlType = column.sqlType
-  def nullable_?() = column.isInstanceOf[NullableColumn[T, R]]
-  def default = column.defaultExpression
+  val nullable = column.isInstanceOf[NullableColumn[T]]
+  val default = column.default
   def sqlDefinition: String = dialect.columnDefinition(this)
 }

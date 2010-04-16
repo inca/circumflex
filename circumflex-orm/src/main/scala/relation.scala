@@ -11,8 +11,10 @@ import ORM._
  * class. Since Circumflex ORM employs the Active Relation design approach to
  * persistence, each persistent class should subclass `Relation`.
  */
-class Relation {
+class Relation[R] {
 
-  
+
+  /* ### Column creation */
+  def intColumn = new NotNullColumn(dialect.integerType)
 
 }
