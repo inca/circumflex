@@ -13,7 +13,8 @@ import java.util.Date
  */
 class Relation[R <: Relation[R]] { this: R =>
 
-  val id = longColumn()
+  // If provided, overrides the name inferred via reflection.
+  def relationName: Option[String] = None
 
   /* ### Column creation */
   def intColumn() = new NotNullColumn[Integer](dialect.integerType)

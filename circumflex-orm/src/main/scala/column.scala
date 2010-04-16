@@ -24,10 +24,10 @@ abstract class Column[T](val sqlType: String) extends WrapperModel {
   }
 
   // A custom name overrides the one inferred via reflection.
-  protected[orm] var _name: Option[String] = None
-  def name = _name
-  def name(name: String): this.type = {
-    _name = Some(name)
+  protected[orm] var _columnName: Option[String] = None
+  def columnName = _columnName
+  def columnName(columnName: String): this.type = {
+    _columnName = Some(columnName)
     this
   }
 
@@ -56,7 +56,7 @@ class NotNullColumn[T](t: String) extends Column[T](t) {
   def nullable(): NullableColumn[T] = {
     val c = new NullableColumn[T](sqlType)
     c._default = this.default
-    c._name = this.name
+    c._columnName = this.columnName
     return c
   }
 }
@@ -72,25 +72,11 @@ class NullableColumn[T](t: String) extends Column[Option[T]](t) {
   def notNull(): NotNullColumn[T] = {
     val c = new NotNullColumn[T](sqlType)
     c._default = this.default
-    c._name = this.name
+    c._columnName = this.columnName
     return c
   }
   override def toString = apply() match {
     case Some(value) if value != null => value.toString
     case _ => ""
   }
-}
-
-/* ## Meta for columns */
-
-class ColumnMeta[T](val column: Column[T],
-                    val inferredName: String) {
-  val columnName: String = column.name match {
-    case Some(n) => n
-    case _ => inferredName
-  }
-  val sqlType = column.sqlType
-  val nullable = column.isInstanceOf[NullableColumn[T]]
-  val default = column.default
-  def sqlDefinition: String = dialect.columnDefinition(this)
 }
