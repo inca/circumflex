@@ -1,7 +1,6 @@
 package ru.circumflex.orm
 
 import ru.circumflex.core.{CircumflexContext, AbstractCircumflexFilter}
-import org.slf4j.LoggerFactory
 import ORM._
 import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
 
@@ -21,7 +20,6 @@ import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
  * The filter implementation of transaction-per-request lifecycle.
  */
 class TransactionManagementFilter extends AbstractCircumflexFilter {
-  override protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   /**
    * Commit current transaction at the end of request processing cycle and close
@@ -31,16 +29,16 @@ class TransactionManagementFilter extends AbstractCircumflexFilter {
     chain.doFilter(ctx.request, ctx.response)
     if (transactionManager.hasLiveTransaction ) try {
       tx.commit
-      log.debug("Committed current transaction.")
+      ormLog.debug("Committed current transaction.")
     } catch {
       case e => {
-        log.error("An error has occured while trying to commit current transaction.", e)
+        ormLog.error("An error has occured while trying to commit current transaction.", e)
         tx.rollback
-        log.debug("Rolled back current transaction.")
+        ormLog.debug("Rolled back current transaction.")
       }
     } finally {
       tx.close
-      log.debug("Closed current connection.")
+      ormLog.debug("Closed current connection.")
     }
   }
 }
@@ -49,8 +47,6 @@ class TransactionManagementFilter extends AbstractCircumflexFilter {
  * The request listener implementation of transaction-per-request lifecycle.
  */
 class TransactionManagementListener extends ServletRequestListener {
-  protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
-
   def requestInitialized(sre: ServletRequestEvent) = {}
 
   /**
@@ -60,15 +56,15 @@ class TransactionManagementListener extends ServletRequestListener {
   def requestDestroyed(sre: ServletRequestEvent) =
     if (transactionManager.hasLiveTransaction) try {
       tx.commit
-      log.debug("Committed current transaction.")
+      ormLog.debug("Committed current transaction.")
     } catch {
       case e => {
-        log.error("An error has occured while trying to commit current transaction.", e)
+        ormLog.error("An error has occured while trying to commit current transaction.", e)
         tx.rollback
-        log.debug("Rolled back current transaction.")
+        ormLog.debug("Rolled back current transaction.")
       }
     } finally {
       tx.close
-      log.debug("Closed current connection.")
+      ormLog.debug("Closed current connection.")
     }
 }

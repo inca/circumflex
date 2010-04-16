@@ -17,6 +17,8 @@ import ORM._
  */
 object ORM {
 
+  protected[orm] val ormLog = LoggerFactory.getLogger("ru.circumflex.orm")
+
   /**
    * Connection provider.
    * Can be overriden with `orm.connectionProvider` configuration parameter.
@@ -125,7 +127,6 @@ trait ConnectionProvider {
  *   [c3p0-cfg]: http://www.mchange.com/projects/c3p0/index.html#configuration_properties
  */
 class DefaultConnectionProvider extends ConnectionProvider {
-  protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   protected val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
     case Some("none") => Connection.TRANSACTION_NONE
@@ -134,7 +135,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
     case Some("repeatable_read") => Connection.TRANSACTION_REPEATABLE_READ
     case Some("serializable") => Connection.TRANSACTION_SERIALIZABLE
     case _ => {
-      log.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
+      ormLog.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
       Connection.TRANSACTION_READ_COMMITTED
     }
   }
@@ -147,11 +148,11 @@ class DefaultConnectionProvider extends ConnectionProvider {
     case Some(jndiName: String) => {
       val ctx = new InitialContext
       val ds = ctx.lookup(jndiName).asInstanceOf[DataSource]
-      log.info("Using JNDI datasource ({}).", jndiName)
+      ormLog.info("Using JNDI datasource ({}).", jndiName)
       ds
     }
     case _ => {
-      log.info("Using c3p0 connection pooling.")
+      ormLog.info("Using c3p0 connection pooling.")
       val driver = Circumflex.cfg("orm.connection.driver") match {
         case Some(s: String) => s
         case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")

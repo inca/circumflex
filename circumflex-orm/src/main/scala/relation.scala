@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
-import org.slf4j.LoggerFactory
 import ORM._
+import java.util.Date
 
 /* ## Relation */
 
@@ -11,10 +11,24 @@ import ORM._
  * class. Since Circumflex ORM employs the Active Relation design approach to
  * persistence, each persistent class should subclass `Relation`.
  */
-class Relation[R] {
+class Relation[R <: Relation[R]] { this: R =>
 
+  val id = longColumn()
 
   /* ### Column creation */
-  def intColumn = new NotNullColumn(dialect.integerType)
+  def intColumn() = new NotNullColumn[Integer](dialect.integerType)
+  def longColumn() = new NotNullColumn[Long](dialect.longType)
+  def numericColumn() = new NotNullColumn[Double](dialect.numericType)
+  def numericColumn(precision: Int, scale: Int) =
+    new NotNullColumn[Long](dialect.numericType + "(" + precision + "," + scale + ")")
+  def stringColumn() = new NotNullColumn[String](dialect.stringType)
+  def varcharColumn() = new NotNullColumn[String](dialect.varcharType)
+  def varcharColumn(length: Int) =
+    new NotNullColumn[String](dialect.varcharType + "(" + length + ")")
+  def booleanColumn() = new NotNullColumn[Boolean](dialect.booleanType)
+  def dateColumn() = new NotNullColumn[Date](dialect.dateType)
+  def timeColumn() = new NotNullColumn[Date](dialect.timeType)
+  def timestampColumn() = new NotNullColumn[Date](dialect.timestampType)
+  def column[T](sqlType: String) = new NotNullColumn[T](sqlType)
 
 }
