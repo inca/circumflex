@@ -35,4 +35,19 @@ class Dialect {
 
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
 
+  /**
+   * SQL definition for a column
+   * (e.g. `mycolumn varchar not null`).
+   */
+  def columnDefinition(col: ColumnMeta[_, _]): String = {
+    var result = col.columnName + " " + col.sqlType
+    if (!col.nullable_?) result += " not null"
+    col.default match {
+      case Some(expr) => result += " " + expr
+      case _ =>
+    }
+    return result
+  }
+
+
 }
