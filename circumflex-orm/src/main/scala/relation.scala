@@ -16,6 +16,9 @@ class Relation[R <: Relation[R]] { this: R =>
   // If provided, overrides the name inferred via reflection.
   def relationName: Option[String] = None
 
+  // A default primary key is auto-incremented `BIGINT` column.
+  def primaryKey = longColumn.columnName("id").autoIncrement
+
   /* ### Column creation */
   def intColumn() = new NotNullColumn[Integer](dialect.integerType)
   def longColumn() = new NotNullColumn[Long](dialect.longType)

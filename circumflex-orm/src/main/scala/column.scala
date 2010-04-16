@@ -41,6 +41,16 @@ abstract class Column[T](val sqlType: String) extends WrapperModel {
 
   def apply(): T = getValue
 
+  // Auto-incrementation magic.
+
+  /**
+   * DSL-like way to create a sequence for this column.
+   */
+  def autoIncrement(): this.type = {
+    // TODO
+    this
+  }
+
   /**
    * Return a `String` representation of internal value.
    */
