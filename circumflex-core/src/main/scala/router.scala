@@ -2,6 +2,7 @@ package ru.circumflex.core
 
 import java.io.File
 import Circumflex._
+import util.matching.Regex
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
@@ -63,6 +64,7 @@ class RequestRouter {
    * Retrieves a String parameter from context.
    */
   def param(key: String): Option[String] = ctx.stringParam(key)
+  def param(key: Symbol): Option[String] = param(key.name)
 
   /**
    * Sends error with specified status code and message.
@@ -177,10 +179,16 @@ class Route(val matchingMethods: String*) {
     }
 
   def update(uriRegex: String, response: =>HttpResponse): Unit =
-    dispatch(response, new UriRegexMatcher(uriRegex))
+    dispatch(response, UriMatcher(uriRegex))
+
+  def update(uriRegex: Regex, response: =>HttpResponse): Unit =
+    dispatch(response, UriRegexMatcher(uriRegex))
 
   def update(uriRegex: String, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, new UriRegexMatcher(uriRegex), matcher1)
+    dispatch(response, UriMatcher(uriRegex), matcher1)
+
+  def update(uriRegex: Regex, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
+    dispatch(response, UriRegexMatcher(uriRegex), matcher1)
 }
 
 /* ## Helpers */

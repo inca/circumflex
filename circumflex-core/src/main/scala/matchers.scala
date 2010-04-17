@@ -15,28 +15,28 @@ trait RequestMatcher {
 case class UriMatcher(val path: String) extends RequestMatcher {
 
   val keys = new ListBuffer[String]()
-  val uriRegex = """:(\w+)|[\*.+()]""".r.replaceAllInF(path) {
-    case "*" =>
+  val uriRegex = (""":(\w+)|[\*.+()]""".r.replaceAllInF(path) {
+    case sym@("*" | "+") =>
       keys += "uri$" + (keys.length + 1)
-      "(.*?)"
+      "(." + sym + "?)"
 
-    case sym@("." | "+" | "(" | ")") =>
+    case sym@("." | "(" | ")") =>
       "\\" + sym
 
     case name =>
       keys += name.substring(1)
       "([^/?&#]+)"
-  }
+  }).r
 
   def apply(request: HttpServletRequest) =
-    uriRegex.r.allMatches(URLDecoder.decode(request.getRequestURI, "UTF-8"), i => keys(i - 1))
+    uriRegex.allMatches(URLDecoder.decode(request.getRequestURI, "UTF-8"), i => keys(i - 1))
 
 }
 
-case class UriRegexMatcher(val uriRegex: String) extends RequestMatcher {
+case class UriRegexMatcher(val uriRegex: Regex) extends RequestMatcher {
 
   def apply(request: HttpServletRequest) =
-    uriRegex.r.allMatches(URLDecoder.decode(request.getRequestURI, "UTF-8"), "uri$" + _)
+    uriRegex.allMatches(URLDecoder.decode(request.getRequestURI, "UTF-8"), "uri$" + _)
 
 }
 

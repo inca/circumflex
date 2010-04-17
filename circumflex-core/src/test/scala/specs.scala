@@ -11,10 +11,10 @@ object CircumflexCoreSpec extends Specification {
   class MainRouter extends RequestRouter {
     get("/") = "preved"
     get("/ctx") = if (ctx == null) "null" else ctx.toString
-    get("/capture/?", headers("Accept" -> "([^/]+)/([^/]+)")) =
+    get("/capture/?"r, headers("Accept" -> "([^/]+)/([^/]+)")) =
         "Accept$1 is " + param("Accept$1").getOrElse("") + "; " +
             "Accept$2 is " + param("Accept$2").getOrElse("")
-    get("/capture/(.*)") = "uri$1 is " + param("uri$1").getOrElse("")
+    get("/capture/(.*)"r) = "uri$1 is " + param("uri$1").getOrElse("")
     get("/decode me") = "preved"
     post("/post") = "preved"
     put("/put") = "preved"
@@ -23,7 +23,7 @@ object CircumflexCoreSpec extends Specification {
     get("/redirect") = redirect("/")
     get("/rewrite") = rewrite("/")
     get("/error") = error(503, "preved")
-    get("/contentType\\.(.+)") = {
+    get("/contentType\\.(.+)"r) = {
       ctx.contentType = param("uri$1") match {
         case Some("html") => "text/html"
         case Some("css") => "text/css"
@@ -39,6 +39,14 @@ object CircumflexCoreSpec extends Specification {
       case Some(s: String) => s
       case None => ""
     }
+
+    // Simple urls
+    get("/filename/:name.:ext") = param('name).getOrElse("") + param('ext).getOrElse("")
+    get("*/one/:two/+.:three") =
+      param('uri$1).getOrElse("") +
+      param('two).getOrElse("") +
+      param('uri$3).getOrElse("") +
+      param('three).getOrElse("")
   }
 
   doBeforeSpec{
@@ -87,6 +95,17 @@ object CircumflexCoreSpec extends Specification {
     }
     "process errors" in {
       MockApp.get("/error").execute().getStatus must_== 503
+    }
+  }
+
+  "UriMatcher" should {
+    "match simplified request 1" in {
+      MockApp.get("/filename/file.txt").execute.getContent must_== "filetxt"
+    }
+    "match simplified request 2" in {
+      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00ccddd.e"
+      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00ccddd.e"
+      MockApp.get("/one/bbb00/.ddde").execute.getStatus must_== 404
     }
   }
 
