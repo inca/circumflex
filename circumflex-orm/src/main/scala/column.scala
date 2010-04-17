@@ -10,7 +10,8 @@ import ORM._
  * correspond to a column in a table. We strongly distinguish nullable and
  * non-nullable columns.
  */
-abstract class Column[T](val sqlType: String) extends WrapperModel {
+abstract class Column[R <: Relation[R], T](val relation: R,
+                                           val sqlType: String) extends WrapperModel {
 
   // An internally stored value.
   protected var _value: T = _
@@ -41,16 +42,6 @@ abstract class Column[T](val sqlType: String) extends WrapperModel {
 
   def apply(): T = getValue
 
-  // Auto-incrementation magic.
-
-  /**
-   * DSL-like way to create a sequence for this column.
-   */
-  def autoIncrement(): this.type = {
-    // TODO
-    this
-  }
-
   /**
    * Return a `String` representation of internal value.
    */
@@ -58,20 +49,20 @@ abstract class Column[T](val sqlType: String) extends WrapperModel {
 
 }
 
-class NotNullColumn[T](t: String) extends Column[T](t) {
+class NotNullColumn[R <: Relation[R], T](r: R, t: String) extends Column[R, T](r, t) {
   def :=(newValue: T): this.type = {
     setValue(newValue)
     return this
   }
-  def nullable(): NullableColumn[T] = {
-    val c = new NullableColumn[T](sqlType)
+  def nullable(): NullableColumn[R, T] = {
+    val c = new NullableColumn[R, T](relation, sqlType)
     c._default = this.default
     c._columnName = this.columnName
     return c
   }
 }
 
-class NullableColumn[T](t: String) extends Column[Option[T]](t) {
+class NullableColumn[R <: Relation[R], T](r: R, t: String) extends Column[R, Option[T]](r, t) {
   def get(): T = _value.get
   def getOrElse(default: T): T = apply().getOrElse(default)
   def :=(newValue: T): this.type = {
@@ -79,8 +70,8 @@ class NullableColumn[T](t: String) extends Column[Option[T]](t) {
     return this
   }
   def null_!() = setValue(None)
-  def notNull(): NotNullColumn[T] = {
-    val c = new NotNullColumn[T](sqlType)
+  def notNull(): NotNullColumn[R, T] = {
+    val c = new NotNullColumn[R, T](relation, sqlType)
     c._default = this.default
     c._columnName = this.columnName
     return c

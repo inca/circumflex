@@ -8,8 +8,8 @@ import java.lang.reflect.Method
 /**
  * ## Column meta information
  */
-class ColumnMeta[T](val column: Column[T],
-                    val method: Method) {
+class ColumnMeta[R <: Relation[R], T](val column: Column[R, T],
+                                      val method: Method) {
 
   def inferredName = camelCaseToUnderscore(method.getName)
   val columnName: String = column.columnName match {
@@ -18,7 +18,7 @@ class ColumnMeta[T](val column: Column[T],
   }
 
   val sqlType = column.sqlType
-  val nullable = column.isInstanceOf[NullableColumn[T]]
+  val nullable = column.isInstanceOf[NullableColumn[R, T]]
   val default = column.default
 
   def sqlDefinition: String = dialect.columnDefinition(this)
@@ -38,16 +38,16 @@ class RelationMeta[R <: Relation[R]](val relation: Relation[R]) {
   def className = relation.getClass.getSimpleName
   def inferredName = camelCaseToUnderscore(className)
 
-  val columns: Seq[ColumnMeta[_]] = findColumns(relation.getClass)
-  protected def findColumns(cl: Class[_]): Seq[ColumnMeta[_]] =
+  val columns: Seq[ColumnMeta[R, _]] = findColumns(relation.getClass)
+  protected def findColumns(cl: Class[_]): Seq[ColumnMeta[R, _]] =
     if (cl == classOf[Any]) return Nil
     else {
       val names = cl.getDeclaredFields
-          .filter(f => classOf[Column[_]].isAssignableFrom(f.getType))
+          .filter(f => classOf[Column[R, _]].isAssignableFrom(f.getType))
           .map(f => f.getName)
       return findColumns(cl.getSuperclass) ++
           names.map(n => cl.getMethod(n))
-              .map(m => new ColumnMeta(m.invoke(relation).asInstanceOf[Column[_]], m))
+              .map(m => new ColumnMeta(m.invoke(relation).asInstanceOf[Column[R, _]], m))
     }
 
   override def equals(that: Any) = that match {
