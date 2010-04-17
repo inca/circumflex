@@ -9,7 +9,8 @@ import java.lang.reflect.Method
  * ## Column meta information
  */
 class ColumnMeta[R <: Relation[R], T](val column: Column[R, T],
-                                      val method: Method) {
+                                      val method: Method)
+    extends SQLable {
 
   def inferredName = camelCaseToUnderscore(method.getName)
   val columnName: String = column.columnName match {
@@ -21,9 +22,7 @@ class ColumnMeta[R <: Relation[R], T](val column: Column[R, T],
   val nullable = column.isInstanceOf[NullableColumn[R, T]]
   val default = column.default
 
-  def sqlDefinition: String = dialect.columnDefinition(this)
-
-  override def toString = sqlDefinition
+  def toSql = dialect.columnDefinition(this)
 }
 
 /**

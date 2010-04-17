@@ -11,7 +11,8 @@ import ORM._
  * non-nullable columns.
  */
 abstract class Column[R <: Relation[R], T](val relation: R,
-                                           val sqlType: String) extends WrapperModel {
+                                           val sqlType: String)
+    extends WrapperModel {
 
   // An internally stored value.
   protected var _value: T = _

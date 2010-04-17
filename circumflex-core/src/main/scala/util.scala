@@ -31,10 +31,7 @@ object CircumflexUtil {
    * it translates every `ThisKindOfIdentifiers`
    * into `that_kinds_of_identifiers`.
    */
-  def camelCaseToUnderscore(arg: String) =
-    arg.replaceAll("([A-Z])","_$1")
-        .replaceAll("^_(.*)","$1")
-        .toLowerCase
+  def camelCaseToUnderscore(arg: String) = arg.replaceAll("(?<!^)([A-Z])","_$1").toLowerCase
 
 }
 

@@ -13,11 +13,28 @@ import java.util.Date
  */
 abstract class Relation[R <: Relation[R]] { this: R =>
 
+  /* ### Commons */
+
   // If provided, overrides the name inferred via reflection.
   def relationName: Option[String] = None
 
   // A default primary key is auto-incremented `BIGINT` column.
   def primaryKey = longColumn.columnName("id")
+
+  // Are DML statements allowed with this relation?
+  def readOnly_?(): Boolean = false
+
+  /**
+   * Alias is used for all querying stuff. Due to the fact that two relations should not have the
+   * same alias in one query there is some magic regarding `"this"` alias: in every query it is
+   * expanded with query-unique identifier (e.g. `this_17`).
+   */
+  protected var _alias = "this"
+  def alias = _alias
+  def as(a: String): this.type = {
+    _alias = a
+    this
+  }
 
   /* ### Column creation */
   def intColumn = new NotNullColumn[R, Integer](this, dialect.integerType)
