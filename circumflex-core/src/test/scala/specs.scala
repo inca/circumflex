@@ -14,7 +14,7 @@ object CircumflexCoreSpec extends Specification {
     get("/capture/?"r, headers("Accept" -> "([^/]+)/([^/]+)")) =
         "Accept$1 is " + param("Accept$1").getOrElse("") + "; " +
             "Accept$2 is " + param("Accept$2").getOrElse("")
-    get("/capture/(.*)"r) = "uri$1 is " + param("uri$1").getOrElse("")
+    get("/capture/(.*)"r) = "uri$1 is " + uri(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
     put("/put") = "preved"
@@ -24,9 +24,9 @@ object CircumflexCoreSpec extends Specification {
     get("/rewrite") = rewrite("/")
     get("/error") = error(503, "preved")
     get("/contentType\\.(.+)"r) = {
-      ctx.contentType = param("uri$1") match {
-        case Some("html") => "text/html"
-        case Some("css") => "text/css"
+      ctx.contentType = uri(1) match {
+        case "html" => "text/html"
+        case "css" => "text/css"
         case _ => "application/octet-stream"
       }
       done(200)
@@ -41,12 +41,9 @@ object CircumflexCoreSpec extends Specification {
     }
 
     // Simple urls
-    get("/filename/:name.:ext") = param('name).getOrElse("") + param('ext).getOrElse("")
+    get("/filename/:name.:ext") = uri('name) + uri('ext)
     get("*/one/:two/+.:three") =
-      param('uri$1).getOrElse("") +
-      param('two).getOrElse("") +
-      param('uri$3).getOrElse("") +
-      param('three).getOrElse("")
+      uri(1) + uri('two) + uri(3) + uri('three)
   }
 
   doBeforeSpec{

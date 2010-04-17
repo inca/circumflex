@@ -36,8 +36,11 @@ class RequestRouter {
   def header = ctx.header
   def session = ctx.session
   def flash = ctx.flash
-  def uri = ctx.uri
-
+  def uri: String = ctx.uri
+  def uri(group: Int): String = uri("uri$" + group)
+  def uri(group: Symbol): String = uri(group.name)
+  def uri(group: String): String = param(group).get
+  
   /* ### Helpers */
 
   /**
