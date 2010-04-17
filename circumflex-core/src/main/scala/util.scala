@@ -2,6 +2,7 @@ package ru.circumflex.core
 
 import collection.mutable.{HashMap, ListBuffer}
 import java.io.File
+import util.matching.Regex
 
 /**
  * Contains utility stuff.
@@ -54,4 +55,30 @@ object DefaultXSendFileHeader extends XSendFileHeader {
  */
 abstract class NginxXSendFileHeader extends XSendFileHeader {
   def name = "X-Accel-Redirect"
+}
+
+/**
+ * Rich wrapper for class Regex
+ */
+class RichRegex(regex: Regex) {
+  // TODO: In Scala 2.8 use replaceAllIn
+  def replaceAllInF(source: String)(replacer: String => String): String =
+    regex.findAllIn(source).matchData
+         .map(m => m -> replacer(m.group(0)))
+         .foldRight(source) {
+           case ((m, replacement), result) =>
+             result.substring(0, m.start) + replacement + result.substring(m.end)
+         }
+
+  def allMatches(src: String, groupName: Int => String): Option[Map[String, String]] = {
+    val m = regex.pattern.matcher(src)
+    if (m.matches) {
+      val matches = for (i <- 1 to m.groupCount) yield groupName(i) -> m.group(i)
+      Some(Map(matches: _*))
+    } else None
+  }
+}
+
+object RichRegex {
+  implicit def regex2RichRegex(regex: Regex) = new RichRegex(regex)
 }
