@@ -6,6 +6,16 @@ import util.matching.Regex
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
+/* ## Request Parameters */
+
+class RequestParams(val value: String, params: Array[(String, String)]) {
+  def apply(index: Int): String = params(index - 1)._2
+  def apply(name: String): String = params.find(_._1 == name).get._2
+  def apply(symbol: Symbol): String = apply(symbol.name)
+  def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
+  override def toString = value
+}
+
 /* ## Request Router */
 
 class RequestRouter {
@@ -36,11 +46,8 @@ class RequestRouter {
   def header = ctx.header
   def session = ctx.session
   def flash = ctx.flash
-  def uri: String = ctx.uri
-  def uri(group: Int): String = uri("uri$" + group)
-  def uri(group: Symbol): String = uri(group.name)
-  def uri(group: String): String = param(group).get
-  
+  def uri: RequestParams = param('uri)
+
   /* ### Helpers */
 
   /**
@@ -66,8 +73,8 @@ class RequestRouter {
   /**
    * Retrieves a String parameter from context.
    */
-  def param(key: String): Option[String] = ctx.stringParam(key)
-  def param(key: Symbol): Option[String] = param(key.name)
+  def param(key: String): RequestParams = ctx(key).get.asInstanceOf[RequestParams]
+  def param(key: Symbol): RequestParams = param(key.name)
 
   /**
    * Sends error with specified status code and message.
@@ -170,7 +177,7 @@ class Route(val matchingMethods: String*) {
   protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
     matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
       case Some(_) => {
-        var params = Map[String, String]()
+        var params = Map[String, RequestParams]()
         matchers.toList.foreach(rm => rm(ctx.request) match {
           case None => return
           case Some(p) => params ++= p

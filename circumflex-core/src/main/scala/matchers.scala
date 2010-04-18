@@ -8,7 +8,7 @@ import RichRegex._
 
 trait RequestMatcher {
 
-  def apply(request: HttpServletRequest): Option[Map[String, String]]
+  def apply(request: HttpServletRequest): Option[Map[String, RequestParams]]
 
 }
 
@@ -17,7 +17,7 @@ case class UriMatcher(val path: String) extends RequestMatcher {
   val keys = new ListBuffer[String]()
   val uriRegex = (""":(\w+)|[\*.+()]""".r.replaceAllInF(path) {
     case sym@("*" | "+") =>
-      keys += "uri$" + (keys.length + 1)
+      keys += "splat"
       "(." + sym + "?)"
 
     case sym@("." | "(" | ")") =>
@@ -28,32 +28,37 @@ case class UriMatcher(val path: String) extends RequestMatcher {
       "([^/?&#]+)"
   }).r
 
-  def apply(request: HttpServletRequest) =
-    uriRegex.allMatches(URLDecoder.decode(request.getRequestURI, "UTF-8"), i => keys(i - 1))
-
+  def apply(request: HttpServletRequest) = {
+    val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
+    uriRegex.allMatches(uri, i => keys(i - 1)) map {
+      params => Map("uri" -> new RequestParams(uri, params))
+    }
+  }
 }
 
 case class UriRegexMatcher(val uriRegex: Regex) extends RequestMatcher {
 
-  def apply(request: HttpServletRequest) =
-    uriRegex.allMatches(URLDecoder.decode(request.getRequestURI, "UTF-8"), "uri$" + _)
+  def apply(request: HttpServletRequest) = {
+    val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
+    uriRegex.allMatches(uri, _ => "splat") map {
+      params => Map("uri" -> new RequestParams(uri, params))
+    }
+  }
 
 }
 
 case class HeadersRegexMatcher(val criteria: (String, String)*) extends RequestMatcher {
 
-  def apply(request: HttpServletRequest): Option[Map[String, String]] = {
-    var params = Map[String,String]()
-     for ((name, pattern) <- criteria.toList)
-      matchHeader(name, request.getHeader(name), pattern.r) match {
-        case Some(p) => params ++= p
-        case None    => return None
+  def apply(request: HttpServletRequest): Option[Map[String, RequestParams]] = {
+    var params = Map[String, RequestParams]()
+    for ((headerName, pattern) <- criteria.toList) {
+      val headerValue = request.getHeader(headerName)
+      pattern.r.allMatches(headerValue, _ => "splat") match {
+        case None         => return None
+        case Some(ps) => params += headerName -> new RequestParams(headerValue, ps)
       }
+    }
     Some(params)
   }
-
-  def matchHeader(headerName: String, headerValue: String, crit: Regex): Option[Map[String, String]] =
-    if (headerValue == null) None
-    else crit.allMatches(headerValue, headerName + "$" + _)
 
 }
