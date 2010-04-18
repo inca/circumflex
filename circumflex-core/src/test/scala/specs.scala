@@ -12,8 +12,8 @@ object CircumflexCoreSpec extends Specification {
     get("/") = "preved"
     get("/ctx") = if (ctx == null) "null" else ctx.toString
     get("/capture/?"r, headers("Accept" -> "([^/]+)/([^/]+)")) =
-        "Accept$1 is " + param("Accept$1").getOrElse("") + "; " +
-            "Accept$2 is " + param("Accept$2").getOrElse("")
+        "Accept$1 is " + param('Accept)(1) + "; " +
+        "Accept$2 is " + param('Accept)(2)
     get("/capture/(.*)"r) = "uri$1 is " + uri(1)
     get("/decode me") = "preved"
     post("/post") = "preved"

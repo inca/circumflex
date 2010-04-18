@@ -70,11 +70,11 @@ class RichRegex(regex: Regex) {
              result.substring(0, m.start) + replacement + result.substring(m.end)
          }
 
-  def allMatches(src: String, groupName: Int => String): Option[Map[String, String]] = {
+  def allMatches(src: String, groupName: Int => String): Option[Array[(String, String)]] = {
     val m = regex.pattern.matcher(src)
     if (m.matches) {
       val matches = for (i <- 1 to m.groupCount) yield groupName(i) -> m.group(i)
-      Some(Map(matches: _*))
+      Some(Array(matches: _*))
     } else None
   }
 }
