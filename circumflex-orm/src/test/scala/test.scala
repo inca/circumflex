@@ -1,9 +1,10 @@
 package ru.circumflex.orm
 
-class Country extends Relation[Country] {
-  val name = stringColumn := "Switzerland"
+class Country extends Record[Country] {
+  val name = text := "Switzerland"
 }
 
-class City extends Relation[City] {
-  val name = stringColumn := "Lausanne"
+class City extends Record[City] {
+  val name = text := "Lausanne"
+  val beautiful = boolean := true
 }

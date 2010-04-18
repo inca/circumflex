@@ -41,15 +41,15 @@ class Dialect {
    * SQL definition for a column
    * (e.g. `mycolumn varchar not null`).
    */
-  def columnDefinition(col: ColumnMeta[_, _]): String = {
-    var result = col.columnName + " " + col.sqlType
-    if (!col.nullable) result += " not null"
-    col.default match {
-      case Some(expr) => result += " " + expr
-      case _ =>
-    }
-    return result
-  }
+//  def columnDefinition(col: ColumnMeta[_, _]): String = {
+//    var result = col.columnName + " " + col.sqlType
+//    if (!col.nullable) result += " not null"
+//    col.default match {
+//      case Some(expr) => result += " " + expr
+//      case _ =>
+//    }
+//    return result
+//  }
 
 
 }
