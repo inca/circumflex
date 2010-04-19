@@ -3,6 +3,7 @@ package ru.circumflex.core.test
 import ru.circumflex.core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
+import Convertions._
 
 class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
@@ -11,7 +12,7 @@ object CircumflexCoreSpec extends Specification {
   class MainRouter extends RequestRouter {
     get("/") = "preved"
     get("/ctx") = if (ctx == null) "null" else ctx.toString
-    get("/capture/?"r, headers("Accept" -> "([^/]+)/([^/]+)")) =
+    get("/capture/?"r, headers('Accept -> "+/+")) =
         "Accept$1 is " + param('Accept)(1) + "; " +
         "Accept$2 is " + param('Accept)(2)
     get("/capture/(.*)"r) = "uri$1 is " + uri(1)
@@ -32,10 +33,10 @@ object CircumflexCoreSpec extends Specification {
       done(200)
     }
     get("/flash-set") = {
-      flash("notice") = "preved"
+      flash('notice) = "preved"
       done(200)
     }
-    get("/flash-get") = flash("notice") match {
+    get("/flash-get") = flash('notice) match {
       case Some(s: String) => s
       case None => ""
     }
