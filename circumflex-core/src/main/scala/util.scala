@@ -61,6 +61,7 @@ abstract class NginxXSendFileHeader extends XSendFileHeader {
  * Rich wrapper for class Regex
  */
 class RichRegex(regex: Regex) {
+
   // TODO: In Scala 2.8 use replaceAllIn
   def replaceAllInF(source: String)(replacer: String => String): String =
     regex.findAllIn(source).matchData
@@ -70,15 +71,16 @@ class RichRegex(regex: Regex) {
              result.substring(0, m.start) + replacement + result.substring(m.end)
          }
 
-  def allMatches(src: String, groupName: Int => String): Option[Array[(String, String)]] = {
-    val m = regex.pattern.matcher(src)
-    if (m.matches) {
-      val matches = for (i <- 1 to m.groupCount) yield groupName(i) -> m.group(i)
-      Some(Array(matches: _*))
-    } else None
-  }
 }
 
-object RichRegex {
-  implicit def regex2RichRegex(regex: Regex) = new RichRegex(regex)
+object Convertions {
+
+  implicit def regex2RichRegex(regex: Regex): RichRegex = new RichRegex(regex)
+  implicit def symbol2String(sym: Symbol): String = sym.name
+
+  implicit def string2StringMatcher(str: String): StringMatcher = new SimplifiedMatcher(str)
+  implicit def regex2StringMatcher(regex: Regex): StringMatcher = new RegexMatcher(regex)
+  implicit def pair2String_StringMatcher[A <% String, B <% StringMatcher]
+    (p: (A, B)): (String, StringMatcher) = (p._1, p._2)
+
 }

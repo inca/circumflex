@@ -2,19 +2,8 @@ package ru.circumflex.core
 
 import java.io.File
 import Circumflex._
-import util.matching.Regex
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
-
-/* ## Request Parameters */
-
-class RequestParams(val value: String, params: Array[(String, String)]) {
-  def apply(index: Int): String = params(index - 1)._2
-  def apply(name: String): String = params.find(_._1 == name).get._2
-  def apply(symbol: Symbol): String = apply(symbol.name)
-  def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
-  override def toString = value
-}
 
 /* ## Request Router */
 
@@ -39,14 +28,14 @@ class RequestRouter {
 
   /* ### Matchers */
 
-  def headers(crit: (String, String)*) = new HeadersRegexMatcher(crit : _*)
+  def headers(crit: (String, StringMatcher)*) = new HeaderRequestMatcher(crit : _*)
 
   /* ### Context shortcuts */
 
   def header = ctx.header
   def session = ctx.session
   def flash = ctx.flash
-  def uri: RequestParams = param('uri)
+  def uri: Match = param("uri")
 
   /* ### Helpers */
 
@@ -71,10 +60,9 @@ class RequestRouter {
   }
 
   /**
-   * Retrieves a String parameter from context.
+   * Retrieves a Match from context.
    */
-  def param(key: String): RequestParams = ctx(key).get.asInstanceOf[RequestParams]
-  def param(key: Symbol): RequestParams = param(key.name)
+  def param(key: String): Match = ctx(key).get.asInstanceOf[Match]
 
   /**
    * Sends error with specified status code and message.
@@ -177,7 +165,7 @@ class Route(val matchingMethods: String*) {
   protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
     matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
       case Some(_) => {
-        var params = Map[String, RequestParams]()
+        var params = Map[String, Match]()
         matchers.toList.foreach(rm => rm(ctx.request) match {
           case None => return
           case Some(p) => params ++= p
@@ -188,17 +176,11 @@ class Route(val matchingMethods: String*) {
       } case _ =>
     }
 
-  def update(uriRegex: String, response: =>HttpResponse): Unit =
-    dispatch(response, UriMatcher(uriRegex))
+  def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
+    dispatch(response, new UriRequestMatcher(matcher))
 
-  def update(uriRegex: Regex, response: =>HttpResponse): Unit =
-    dispatch(response, UriRegexMatcher(uriRegex))
-
-  def update(uriRegex: String, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, UriMatcher(uriRegex), matcher1)
-
-  def update(uriRegex: Regex, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, UriRegexMatcher(uriRegex), matcher1)
+  def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
+    dispatch(response, new UriRequestMatcher(matcher), matcher1)
 }
 
 /* ## Helpers */
