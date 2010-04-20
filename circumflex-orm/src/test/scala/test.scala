@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
 class Country extends Record[Country] {
-  val name = TEXT.NOT_NULL.DEFAULT("'Switzerland'") := "Switzerland"
+  val name = TEXT := "Switzerland"
 }
 
 object Country extends Table[Country]

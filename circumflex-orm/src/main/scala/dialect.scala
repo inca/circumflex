@@ -21,15 +21,15 @@ class Dialect {
 
   /* ### SQL types */
 
-  def longType = "bigint"
-  def integerType = "integer"
-  def numericType = "numeric"
-  def stringType = "text"
-  def varcharType = "varchar"
-  def booleanType = "boolean"
-  def dateType = "date"
-  def timeType = "time"
-  def timestampType = "timestamptz"
+  def longType = "BIGINT"
+  def integerType = "INTEGER"
+  def numericType = "NUMERIC"
+  def stringType = "TEXT"
+  def varcharType = "VARCHAR"
+  def booleanType = "BOOLEAN"
+  def dateType = "DATE"
+  def timeType = "TIME"
+  def timestampType = "TIMESTAMPTZ"
 
   /* ### Commons */
 
@@ -50,25 +50,25 @@ class Dialect {
    * with `CONSTRAINT` keyword and constraint name.
    */
   def constraintDefinition(constraint: Constraint) =
-    "constraint " + constraint.constraintName + " " + constraint.sqlDefinition
+    "CONSTRAINT " + constraint.constraintName + " " + constraint.sqlDefinition
 
   /**
    * Produces `ALTER TABLE` statement with abstract action.
    */
   def alterTable(rel: Relation[_], action: String) =
-    "alter table " + rel.qualifiedName + " " + action
+    "ALTER TABLE " + rel.qualifiedName + " " + action
 
   /**
    * Produces `ALTER TABLE` statement with `ADD CONSTRAINT` action.
    */
   def alterTableAddConstraint(constraint: Constraint) =
-    alterTable(constraint.relation, "add " + constraintDefinition(constraint));
+    alterTable(constraint.relation, "ADD " + constraintDefinition(constraint));
 
   /**
    * Produces `ALTER TABLE` statement with `DROP CONSTRAINT` action.
    */
   def alterTableDropConstraint(constraint: Constraint) =
-    alterTable(constraint.relation, "drop constraint " + constraint.constraintName);
+    alterTable(constraint.relation, "DROP CONSTRAINT " + constraint.constraintName);
 
 
   /**
