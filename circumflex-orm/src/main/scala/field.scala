@@ -32,14 +32,16 @@ abstract class Field[R <: Record[R], T](val record: R,
   // Accessors and mutators.
 
   def getValue(): T = _value
-  def setValue(newValue: T) = {_value = newValue}
-
   def apply(): T = getValue
+
+  def setValue(newValue: T) = {_value = newValue}
 
   /**
    * Return a `String` representation of internal value.
    */
-  override def toString = if (getValue == null) "" else getValue.toString
+  def toString(default: String) = if (getValue == null) default else getValue.toString
+
+  override def toString = toString("")
 
 }
 
@@ -77,8 +79,8 @@ class NullableField[R <: Record[R], T](r: R, t: String)
     return c
   }
   def NOT_NULL = notNull
-  override def toString = apply() match {
+  override def toString(default: String) = apply() match {
     case Some(value) if value != null => value.toString
-    case _ => ""
+    case _ => default
   }
 }

@@ -18,6 +18,22 @@ abstract class Record[R <: Record[R]] { this: R =>
   // A default primary key is auto-incremented `BIGINT` column.
   def id = BIGINT
 
+  /**
+   * A `Relation[R]` corresponding to this record.
+   *
+   * In general the relations should be the companion objects of records:
+   *
+   *     class Country extends Record[Country] {
+   *       val name = TEXT.NOT_NULL := "Switzerland"
+   *     }
+   *
+   *     object Country extends Table[Country]
+   *
+   * However, if you prefer different naming conventions, you should override
+   * this method.
+   */
+  def relation = RelationRegistry.getRelation(this)
+
   /* ### Field creation */
   def integer = new NotNullField[R, Integer](this, dialect.integerType)
   def bigint = new NotNullField[R, Long](this, dialect.longType)
@@ -45,5 +61,9 @@ abstract class Record[R <: Record[R]] { this: R =>
   def DATE = date
   def TIME = time
   def TIMESTAMP = timestamp
+
+  /* ### Miscellaneous */
+
+  override def toString = getClass.getSimpleName + "@" + id.toString("UNSAVED")
 
 }
