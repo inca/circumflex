@@ -16,7 +16,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   // ### Commons
 
   // A default primary key is auto-incremented `BIGINT` column.
-  def id = BIGINT
+  val id = BIGINT
 
   /**
    * A `Relation[R]` corresponding to this record.

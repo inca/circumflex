@@ -16,6 +16,15 @@ abstract class Field[R <: Record[R], T](val record: R,
   // An internally stored value.
   protected var _value: T = _
 
+  // Should the `UNIQUE` constraint be generated for this field?
+  protected var _unique: Boolean = false
+  def unique: this.type = {
+    _unique = true
+    return this
+  }
+  def UNIQUE: this.type = unique
+  def unique_?() = _unique
+
   // An optional default expression for DDL.
   protected[orm] var _default: Option[String] = None
   def default = _default

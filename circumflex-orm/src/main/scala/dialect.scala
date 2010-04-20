@@ -77,13 +77,19 @@ class Dialect {
    */
   def columnDefinition(col: Column): String = {
     var result = col.columnName + " " + col.sqlType
-    if (!col.nullable) result += " NOT NULL"
+    if (!col.nullable_?) result += " NOT NULL"
     col.default match {
       case Some(expr) => result += " " + expr
       case _ =>
     }
     return result
   }
+
+  /**
+   * Produces unique constraint definition (e.g. "UNIQUE (name, value)").
+   */
+  def uniqueKeyDefinition(uniq: UniqueKey) =
+    "unique (" + uniq.columns.map(_.columnName).mkString(",") + ")"
 
 
 }

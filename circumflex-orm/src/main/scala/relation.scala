@@ -3,6 +3,8 @@ package ru.circumflex.orm
 import ORM._
 import ru.circumflex.core.Circumflex
 import ru.circumflex.core.CircumflexUtil._
+import collection.mutable.ListBuffer
+import java.lang.reflect.Method
 
 // ## Relations registry
 
@@ -32,6 +34,21 @@ object RelationRegistry {
 
 abstract class Relation[R <: Record[R]] {
 
+  // ### Commons
+
+  val columns = new ListBuffer[Column]
+  val constraints = new ListBuffer[Constraint]
+  val preAux = new ListBuffer[SchemaObject]
+  val postAux = new ListBuffer[SchemaObject]
+
+  // Unique suffix is used to differentiate schema objects which have same names.
+  private var _uniqueCounter = -1
+  protected def uniqueSuffix: String = {
+    _uniqueCounter += 1
+    if (_uniqueCounter == 0) return ""
+    else return "_" + _uniqueCounter
+  }
+
   /**
    * Attempt to find a record class by convention of companion object,
    * e.g. strip trailing `$` from `this.getClass.getName`.
@@ -43,7 +60,7 @@ abstract class Relation[R <: Record[R]] {
    * This sample is used to introspect record for columns, constraints and,
    * possibly, other stuff.
    */
-  protected val recordSample: R = recordClass.newInstance
+  protected[orm] val recordSample: R = recordClass.newInstance
 
   /**
    * Relation name defaults to record's unqualified class name, transformed
@@ -60,6 +77,51 @@ abstract class Relation[R <: Record[R]] {
    * Obtain a qualified name for this relation from dialect.
    */
   def qualifiedName = dialect.relationQualifiedName(this)
+
+  /**
+   * Used to determine, whether DML statements are allowed against this relation.
+   */
+  def readOnly_?(): Boolean = false
+
+  // ### Introspection and Initialization
+
+  /**
+   * Inspect `recordClass` to find column or constraint definitions.
+   */
+  {
+    def findMembers(cl: Class[_]): Unit = {
+      if (cl != classOf[Any]) findMembers(cl.getSuperclass)
+      cl.getDeclaredFields
+          .filter(f => classOf[Field[R, _]].isAssignableFrom(f.getType))
+          .map(f => cl.getMethod(f.getName))
+          .foreach(m => processMember(m))
+    }
+
+    def processMember(m: Method): Unit = {
+      val c = new Column(this, m)
+      this.columns += c
+      if (c.unique_?) this.unique(c)
+      
+    }
+
+    findMembers(recordClass)
+  }
+
+
+  // ### Definitions
+
+  /**
+   * Adds a unique constraint to this relation's definition.
+   */
+  protected[orm] def unique(columns: Column*): UniqueKey = {
+    val constrName = relationName + "_" +
+        columns.map(_.columnName).mkString("_") + "_key"
+    val constr = new UniqueKey(this, constrName, columns.toList)
+    this.constraints += constr
+    return constr
+  }
+
+
 
 }
 
