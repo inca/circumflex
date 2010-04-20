@@ -59,7 +59,7 @@ object ORM {
    * The schema name which is used if not specified explicitly.
    * Can be overriden with `orm.defaultSchema` configuration parameter.
    */
-  val defaultSchemaName = Circumflex.cfg("orm.defaultSchema") match {
+  val defaultSchema = Circumflex.cfg("orm.defaultSchema") match {
     case Some(s: String) => s
     case _ => "public"
   }

@@ -33,9 +33,43 @@ class Dialect {
 
   /* ### Commons */
 
+  /**
+   * Quotes literal expression as described in SQL92 standard.
+   */
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
 
+  /**
+   * Qualifies relation name with it's schema.
+   */
+  def relationQualifiedName(relation: Relation[_]) = relation.schema + "." + relation.relationName
+
   /* ### DDL */
+
+  /**
+   * Produces a full definition of constraint (prepends the specific definition
+   * with `CONSTRAINT` keyword and constraint name.
+   */
+  def constraintDefinition(constraint: Constraint) =
+    "constraint " + constraint.constraintName + " " + constraint.sqlDefinition
+
+  /**
+   * Produces `ALTER TABLE` statement with abstract action.
+   */
+  def alterTable(rel: Relation[_], action: String) =
+    "alter table " + rel.qualifiedName + " " + action
+
+  /**
+   * Produces `ALTER TABLE` statement with `ADD CONSTRAINT` action.
+   */
+  def alterTableAddConstraint(constraint: Constraint) =
+    alterTable(constraint.relation, "add " + constraintDefinition(constraint));
+
+  /**
+   * Produces `ALTER TABLE` statement with `DROP CONSTRAINT` action.
+   */
+  def alterTableDropConstraint(constraint: Constraint) =
+    alterTable(constraint.relation, "drop constraint " + constraint.constraintName);
+
 
   /**
    * SQL definition for a column

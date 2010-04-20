@@ -1,5 +1,6 @@
 package ru.circumflex.orm
 
+import ORM._
 import ru.circumflex.core.Circumflex
 import ru.circumflex.core.CircumflexUtil._
 
@@ -49,6 +50,16 @@ abstract class Relation[R <: Record[R]] {
    * with `Circumflex.camelCaseToUnderscore`.
    */
   def relationName = camelCaseToUnderscore(recordClass.getSimpleName)
+
+  /**
+   * Schema is used to produce a qualified name for relation.
+   */
+  val schema: String = defaultSchema
+
+  /**
+   * Obtain a qualified name for this relation from dialect.
+   */
+  def qualifiedName = dialect.relationQualifiedName(this)
 
 }
 
