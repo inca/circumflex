@@ -16,7 +16,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   /* ### Commons */
 
   // A default primary key is auto-incremented `BIGINT` column.
-  def id = bigint
+  def id = BIGINT
 
   /* ### Field creation */
   def integer = new NotNullField[R, Integer](this, dialect.integerType)
@@ -33,5 +33,17 @@ abstract class Record[R <: Record[R]] { this: R =>
   def time = new NotNullField[R, Date](this, dialect.timeType)
   def timestamp = new NotNullField[R, Date](this, dialect.timestampType)
   def field[T](sqlType: String) = new NotNullField[R, T](this, sqlType)
+
+  def INTEGER = integer
+  def BIGINT = bigint
+  def NUMERIC = numeric
+  def NUMERIC(precision: Int, scale: int) = numeric(precision, scale)
+  def TEXT = text
+  def VARCHAR = varchar
+  def VARCHAR(length: Int) = varchar(length)
+  def BOOLEAN = boolean
+  def DATE = date
+  def TIME = time
+  def TIMESTAMP = timestamp
 
 }

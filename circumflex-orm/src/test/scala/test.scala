@@ -1,10 +1,10 @@
 package ru.circumflex.orm
 
 class Country extends Record[Country] {
-  val name = text := "Switzerland"
+  val name = TEXT.NOT_NULL.DEFAULT("'Switzerland'") := "Switzerland"
 }
 
 class City extends Record[City] {
-  val name = text := "Lausanne"
-  val beautiful = boolean := true
+  val name = TEXT := "Lausanne"
+  val beautiful = BOOLEAN := true
 }
