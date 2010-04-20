@@ -26,10 +26,8 @@ object ORM {
   val connectionProvider: ConnectionProvider = Circumflex.cfg("orm.connectionProvider") match {
     case Some(p: ConnectionProvider) => p
     case Some(c: Class[ConnectionProvider]) => c.newInstance
-    case Some(s: String) => Class
-        .forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Circumflex.loadClass[ConnectionProvider](s)
         .newInstance
-        .asInstanceOf[ConnectionProvider]
     case _ => DefaultConnectionProvider
   }
 
@@ -40,9 +38,8 @@ object ORM {
   val dialect: Dialect = Circumflex.cfg("orm.dialect") match {
     case Some(d: Dialect) => d
     case Some(c: Class[Dialect]) => c.newInstance
-    case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Circumflex.loadClass[Dialect](s)
         .newInstance
-        .asInstanceOf[Dialect]
     case _ => DefaultDialect
   }
 
@@ -53,9 +50,8 @@ object ORM {
   val typeConverter: TypeConverter = Circumflex.cfg("orm.typeConverter") match {
     case Some(tc: TypeConverter) => tc
     case Some(c: Class[TypeConverter]) => c.newInstance
-    case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Circumflex.loadClass[TypeConverter](s)
         .newInstance
-        .asInstanceOf[TypeConverter]
     case _ => DefaultTypeConverter
   }
 
@@ -75,9 +71,8 @@ object ORM {
   val transactionManager: TransactionManager = Circumflex.cfg("orm.transactionManager") match {
     case Some(tm: TransactionManager) => tm
     case Some(c: Class[TransactionManager]) => c.newInstance
-    case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Circumflex.loadClass[TransactionManager](s)
         .newInstance
-        .asInstanceOf[TransactionManager]
     case _ => DefaultTransactionManager
   }
 

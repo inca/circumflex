@@ -100,6 +100,9 @@ object Circumflex {
     case _ => Thread.currentThread.getContextClassLoader
   }
 
+  def loadClass[C](name: String): Class[C] =
+    Class.forName(name, true, classLoader).asInstanceOf[Class[C]]
+
   val webappRoot: File = cfg("cx.root") match {
     case Some(s: String) => new File(separatorsToSystem(s))
     case _ => throw new CircumflexException("'cx.root' not configured.")
@@ -113,10 +116,8 @@ object Circumflex {
   val XSendFileHeader: XSendFileHeader = cfg("cx.XSendFileHeader") match {
     case Some(h: XSendFileHeader) => h
     case Some(c: Class[XSendFileHeader]) => c.newInstance
-    case Some(s: String) => Class
-        .forName(s, true, classLoader)
+    case Some(s: String) => loadClass[XSendFileHeader](s)
         .newInstance
-        .asInstanceOf[XSendFileHeader]
     case _ => DefaultXSendFileHeader
   }
 
