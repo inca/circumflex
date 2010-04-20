@@ -1,6 +1,6 @@
 package ru.circumflex.orm
 
-/* ## SQL dialect */
+// ## SQL dialect
 
 /**
  * A default dialect singleton.
@@ -19,7 +19,7 @@ object DefaultDialect extends Dialect
  */
 class Dialect {
 
-  /* ### SQL types */
+  // ### SQL types
 
   def longType = "BIGINT"
   def integerType = "INTEGER"
@@ -31,41 +31,41 @@ class Dialect {
   def timeType = "TIME"
   def timestampType = "TIMESTAMPTZ"
 
-  /* ### Commons */
+  // ### Commons
 
   /**
-   * Quotes literal expression as described in SQL92 standard.
+   * Quote literal expression as described in SQL92 standard.
    */
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
 
   /**
-   * Qualifies relation name with it's schema.
+   * Qualify relation name with it's schema.
    */
   def relationQualifiedName(relation: Relation[_]) = relation.schema + "." + relation.relationName
 
-  /* ### DDL */
+  // ### DDL
 
   /**
-   * Produces a full definition of constraint (prepends the specific definition
+   * Produce a full definition of constraint (prepends the specific definition
    * with `CONSTRAINT` keyword and constraint name.
    */
   def constraintDefinition(constraint: Constraint) =
     "CONSTRAINT " + constraint.constraintName + " " + constraint.sqlDefinition
 
   /**
-   * Produces `ALTER TABLE` statement with abstract action.
+   * Produce `ALTER TABLE` statement with abstract action.
    */
   def alterTable(rel: Relation[_], action: String) =
     "ALTER TABLE " + rel.qualifiedName + " " + action
 
   /**
-   * Produces `ALTER TABLE` statement with `ADD CONSTRAINT` action.
+   * Produce `ALTER TABLE` statement with `ADD CONSTRAINT` action.
    */
   def alterTableAddConstraint(constraint: Constraint) =
     alterTable(constraint.relation, "ADD " + constraintDefinition(constraint));
 
   /**
-   * Produces `ALTER TABLE` statement with `DROP CONSTRAINT` action.
+   * Produce `ALTER TABLE` statement with `DROP CONSTRAINT` action.
    */
   def alterTableDropConstraint(constraint: Constraint) =
     alterTable(constraint.relation, "DROP CONSTRAINT " + constraint.constraintName);
@@ -73,17 +73,17 @@ class Dialect {
 
   /**
    * SQL definition for a column
-   * (e.g. `mycolumn varchar not null`).
+   * (e.g. `mycolumn VARCHAR NOT NULL`).
    */
-//  def columnDefinition(col: ColumnMeta[_, _]): String = {
-//    var result = col.columnName + " " + col.sqlType
-//    if (!col.nullable) result += " not null"
-//    col.default match {
-//      case Some(expr) => result += " " + expr
-//      case _ =>
-//    }
-//    return result
-//  }
+  def columnDefinition(col: Column): String = {
+    var result = col.columnName + " " + col.sqlType
+    if (!col.nullable) result += " NOT NULL"
+    col.default match {
+      case Some(expr) => result += " " + expr
+      case _ =>
+    }
+    return result
+  }
 
 
 }

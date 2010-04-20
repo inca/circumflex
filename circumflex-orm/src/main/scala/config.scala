@@ -9,7 +9,7 @@ import javax.sql.DataSource
 import org.slf4j.LoggerFactory
 import ORM._
 
-/* ## Configuration */
+// ## Configuration
 
 /**
  * `ORM` singleton aggregates all ORM-related interfaces into a single
@@ -82,7 +82,7 @@ object ORM {
   def tx = transactionManager.getTransaction
 }
 
-/* ### Connection provider */
+// ### Connection provider
 
 /**
  * *Connection provider* is used to acquire JDBC connections throughout the application.
@@ -189,7 +189,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
 
 object DefaultConnectionProvider extends DefaultConnectionProvider
 
-/* ### Type converter */
+// ### Type converter
 
 /**
  * *Type converters* are used to read atomic values from JDBC result sets and to set

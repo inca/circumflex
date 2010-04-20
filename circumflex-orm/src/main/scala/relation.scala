@@ -4,7 +4,7 @@ import ORM._
 import ru.circumflex.core.Circumflex
 import ru.circumflex.core.CircumflexUtil._
 
-/* ## Relations registry */
+// ## Relations registry
 
 /**
  * This singleton holds mappings between `Record` classes and their
@@ -28,7 +28,7 @@ object RelationRegistry {
 
 }
 
-/* ## Relation */
+// ## Relation
 
 abstract class Relation[R <: Record[R]] {
 
@@ -63,6 +63,6 @@ abstract class Relation[R <: Record[R]] {
 
 }
 
-/* ## Table */
+// ## Table
 
 class Table[R <: Record[R]] extends Relation[R]

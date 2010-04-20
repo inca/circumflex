@@ -22,7 +22,7 @@ class CircumflexContext(val request: HttpServletRequest,
   var statusCode: Int = 200
   protected var _contentType: String = null
   
-  /* ## Helpers */
+  // ## Helpers 
   val header = new HeadersHelper
   val session = new SessionHelper
   val flash = new FlashHelper
@@ -80,7 +80,7 @@ object Circumflex {
 
   val log = LoggerFactory.getLogger("ru.circumflex.core")
 
-  /* ## Configuration */
+  // ## Configuration
 
   private val _cfg = new HashMap[String, Any]
   val cfg = new ConfigurationHelper
@@ -143,14 +143,14 @@ object Circumflex {
       _cfg += key -> value
   }
 
-  /* ## Messages */
+  // ## Messages
 
   def msg(locale: Locale): Messages = cfg("cx.messages") match {
     case Some(s: String) => new Messages(s, locale)
     case _ => throw new CircumflexException("'cx.messages' not configured.")
   }
 
-  /* ## Context management */
+  // ## Context management
 
   private val threadLocalContext = new ThreadLocal[CircumflexContext]
 
@@ -169,7 +169,7 @@ object Circumflex {
 
   def destroyContext() = threadLocalContext.set(null)
 
-  /* ## Miscellaneous */
+  // ## Miscellaneous
 
   def mimeTypesMap = new MimetypesFileTypeMap()
 

@@ -2,7 +2,7 @@ package ru.circumflex.orm
 
 import ru.circumflex.core.WrapperModel
 
-/* ## Field */
+// ## Field
 
 /**
  * *Field* is an atomic data carrier unit. Each field of persistent class

@@ -3,7 +3,7 @@ package ru.circumflex.orm
 import ORM._
 import java.util.Date
 
-/* ## Record */
+// ## Record
 
 /**
  * *Record* is a cornerstone of relational model. In general, each instance of
@@ -13,7 +13,7 @@ import java.util.Date
  */
 abstract class Record[R <: Record[R]] { this: R =>
 
-  /* ### Commons */
+  // ### Commons
 
   // A default primary key is auto-incremented `BIGINT` column.
   def id = BIGINT
@@ -34,7 +34,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def relation = RelationRegistry.getRelation(this)
 
-  /* ### Field creation */
+  // ### Field creation
   def integer = new NotNullField[R, Integer](this, dialect.integerType)
   def bigint = new NotNullField[R, Long](this, dialect.longType)
   def numeric = new NotNullField[R, Double](this, dialect.numericType)
@@ -62,7 +62,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   def TIME = time
   def TIMESTAMP = timestamp
 
-  /* ### Miscellaneous */
+  // ### Miscellaneous
 
   override def toString = getClass.getSimpleName + "@" + id.toString("UNSAVED")
 

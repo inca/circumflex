@@ -2,9 +2,9 @@ package ru.circumflex.orm
 
 import java.sql.{PreparedStatement, Connection}
 
-/* ## Transaction management */
+// ## Transaction management
 
-/* ### Transaction demarcation */
+// ### Transaction demarcation
 
 // *Transaction demarcation* refers to setting the transaction boundaries.
 //
@@ -70,7 +70,7 @@ trait TransactionManager {
 
 object DefaultTransactionManager extends TransactionManager
 
-/* ### Stateful Transactions */
+// ### Stateful Transactions
 
 /**
  * The point to use extra-layer above standard JDBC connections is to maintain
@@ -135,7 +135,7 @@ class StatefulTransaction {
       connection.close
     }
 
-  /* ### Database communication methods */
+  // ### Database communication methods
 
   // In order to ensure that cache is synchronized with transaction we must use these methods
   // to handle all communications with JDBC in a centralized way.
@@ -168,7 +168,7 @@ class StatefulTransaction {
     cleanup()
   }
 
-  /* ### Cache */
+  // ### Cache
 
   // TODO
 

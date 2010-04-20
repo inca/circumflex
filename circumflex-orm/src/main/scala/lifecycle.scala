@@ -4,7 +4,7 @@ import ru.circumflex.core.{CircumflexContext, AbstractCircumflexFilter}
 import ORM._
 import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
 
-/* ## Web Application lifecycle */
+// ## Web Application lifecycle
 
 // It is best practice to demarcate transactions in your web application using
 // transaction-per-request design. `TransactionManagementFilter` and
