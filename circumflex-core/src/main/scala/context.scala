@@ -22,7 +22,7 @@ class CircumflexContext(val request: HttpServletRequest,
   var statusCode: Int = 200
   protected var _contentType: String = null
   
-  /* ## Helpers */
+  // ## Helpers 
   val header = new HeadersHelper
   val session = new SessionHelper
   val flash = new FlashHelper
@@ -80,7 +80,7 @@ object Circumflex {
 
   val log = LoggerFactory.getLogger("ru.circumflex.core")
 
-  /* ## Configuration */
+  // ## Configuration
 
   private val _cfg = new HashMap[String, Any]
   val cfg = new ConfigurationHelper
@@ -100,6 +100,9 @@ object Circumflex {
     case _ => Thread.currentThread.getContextClassLoader
   }
 
+  def loadClass[C](name: String): Class[C] =
+    Class.forName(name, true, classLoader).asInstanceOf[Class[C]]
+
   val webappRoot: File = cfg("cx.root") match {
     case Some(s: String) => new File(separatorsToSystem(s))
     case _ => throw new CircumflexException("'cx.root' not configured.")
@@ -113,10 +116,8 @@ object Circumflex {
   val XSendFileHeader: XSendFileHeader = cfg("cx.XSendFileHeader") match {
     case Some(h: XSendFileHeader) => h
     case Some(c: Class[XSendFileHeader]) => c.newInstance
-    case Some(s: String) => Class
-        .forName(s, true, classLoader)
+    case Some(s: String) => loadClass[XSendFileHeader](s)
         .newInstance
-        .asInstanceOf[XSendFileHeader]
     case _ => DefaultXSendFileHeader
   }
 
@@ -142,14 +143,14 @@ object Circumflex {
       _cfg += key -> value
   }
 
-  /* ## Messages */
+  // ## Messages
 
   def msg(locale: Locale): Messages = cfg("cx.messages") match {
     case Some(s: String) => new Messages(s, locale)
     case _ => throw new CircumflexException("'cx.messages' not configured.")
   }
 
-  /* ## Context management */
+  // ## Context management
 
   private val threadLocalContext = new ThreadLocal[CircumflexContext]
 
@@ -168,7 +169,7 @@ object Circumflex {
 
   def destroyContext() = threadLocalContext.set(null)
 
-  /* ## Miscellaneous */
+  // ## Miscellaneous
 
   def mimeTypesMap = new MimetypesFileTypeMap()
 

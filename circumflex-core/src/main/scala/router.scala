@@ -5,7 +5,7 @@ import Circumflex._
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
-/* ## Request Router */
+// ## Request Router
 
 class RequestRouter {
 
@@ -14,7 +14,7 @@ class RequestRouter {
 
   def ctx = Circumflex.ctx
 
-  /* ### Routes */
+  // ### Routes
 
   val get = new Route("get")
   val getOrPost = new Route("get", "post")
@@ -26,18 +26,18 @@ class RequestRouter {
   val options = new Route("options")
   val any = new Route("get", "post", "put", "delete", "head", "options")
 
-  /* ### Matchers */
+  // ### Matchers
 
   def headers(crit: (String, StringMatcher)*) = new HeaderRequestMatcher(crit : _*)
 
-  /* ### Context shortcuts */
+  // ### Context shortcuts
 
   def header = ctx.header
   def session = ctx.session
   def flash = ctx.flash
   def uri: Match = param("uri")
 
-  /* ### Helpers */
+  // ### Helpers
 
   /**
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
@@ -183,7 +183,7 @@ class Route(val matchingMethods: String*) {
     dispatch(response, new UriRequestMatcher(matcher), matcher1)
 }
 
-/* ## Helpers */
+// ## Helpers
 
 /**
  * A helper for getting and setting response headers in a DSL-like way.

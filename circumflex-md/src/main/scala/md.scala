@@ -3,7 +3,7 @@ package ru.circumflex.md
 import java.util.regex._
 import java.util.Random
 
-/* # The Markdown Processor */
+// # The Markdown Processor
 
 /**
  * This utility converts a plain text written in [Markdown][1] into HTML fragment.
@@ -15,7 +15,7 @@ import java.util.Random
  */
 object Markdown {
 
-  /* ## Commons */
+  // ## Commons
 
   val keySize = 20
   val chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -25,7 +25,7 @@ object Markdown {
       "noscript" :: "form" :: "fieldset" :: "iframe" :: "math" :: "ins" :: "del" :: Nil
   val htmlNameTokenExpr = "[a-z_:][a-z0-9\\-_:.]*"
 
-  /* ## Regex patterns */
+  // ## Regex patterns
 
   // We use precompile several regular expressions that are used for typical
   // transformations.
@@ -131,7 +131,7 @@ object Markdown {
   def apply(source: String): String = new MarkdownText(source).toHtml
 }
 
-/* # Processing Stuff */
+// # Processing Stuff
 
 /**
  * We collect all processing logic within this class.
@@ -154,7 +154,7 @@ class MarkdownText(source: CharSequence) {
   // Protector for HTML blocks
   val htmlProtector = new Protector
 
-  /* ## Encoding methods */
+  // ## Encoding methods
 
   /**
    * All unsafe chars are encoded to SGML entities.
@@ -200,7 +200,7 @@ class MarkdownText(source: CharSequence) {
       "<" + result.toString + ">"
     })
 
-  /* ## Processing methods */
+  // ## Processing methods
 
   /**
    * Normalization includes following stuff:

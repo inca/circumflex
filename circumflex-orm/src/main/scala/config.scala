@@ -9,13 +9,15 @@ import javax.sql.DataSource
 import org.slf4j.LoggerFactory
 import ORM._
 
-/* ## Configuration */
+// ## Configuration
 
 /**
  * `ORM` singleton aggregates all ORM-related interfaces into a single
  * configuration object.
  */
 object ORM {
+
+  protected[orm] val ormLog = LoggerFactory.getLogger("ru.circumflex.orm")
 
   /**
    * Connection provider.
@@ -24,10 +26,8 @@ object ORM {
   val connectionProvider: ConnectionProvider = Circumflex.cfg("orm.connectionProvider") match {
     case Some(p: ConnectionProvider) => p
     case Some(c: Class[ConnectionProvider]) => c.newInstance
-    case Some(s: String) => Class
-        .forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Circumflex.loadClass[ConnectionProvider](s)
         .newInstance
-        .asInstanceOf[ConnectionProvider]
     case _ => DefaultConnectionProvider
   }
 
@@ -38,9 +38,8 @@ object ORM {
   val dialect: Dialect = Circumflex.cfg("orm.dialect") match {
     case Some(d: Dialect) => d
     case Some(c: Class[Dialect]) => c.newInstance
-    case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Circumflex.loadClass[Dialect](s)
         .newInstance
-        .asInstanceOf[Dialect]
     case _ => DefaultDialect
   }
 
@@ -51,9 +50,8 @@ object ORM {
   val typeConverter: TypeConverter = Circumflex.cfg("orm.typeConverter") match {
     case Some(tc: TypeConverter) => tc
     case Some(c: Class[TypeConverter]) => c.newInstance
-    case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Circumflex.loadClass[TypeConverter](s)
         .newInstance
-        .asInstanceOf[TypeConverter]
     case _ => DefaultTypeConverter
   }
 
@@ -61,7 +59,7 @@ object ORM {
    * The schema name which is used if not specified explicitly.
    * Can be overriden with `orm.defaultSchema` configuration parameter.
    */
-  val defaultSchemaName = Circumflex.cfg("orm.defaultSchema") match {
+  val defaultSchema = Circumflex.cfg("orm.defaultSchema") match {
     case Some(s: String) => s
     case _ => "public"
   }
@@ -73,9 +71,8 @@ object ORM {
   val transactionManager: TransactionManager = Circumflex.cfg("orm.transactionManager") match {
     case Some(tm: TransactionManager) => tm
     case Some(c: Class[TransactionManager]) => c.newInstance
-    case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)
+    case Some(s: String) => Circumflex.loadClass[TransactionManager](s)
         .newInstance
-        .asInstanceOf[TransactionManager]
     case _ => DefaultTransactionManager
   }
 
@@ -85,7 +82,7 @@ object ORM {
   def tx = transactionManager.getTransaction
 }
 
-/* ### Connection provider */
+// ### Connection provider
 
 /**
  * *Connection provider* is used to acquire JDBC connections throughout the application.
@@ -125,7 +122,6 @@ trait ConnectionProvider {
  *   [c3p0-cfg]: http://www.mchange.com/projects/c3p0/index.html#configuration_properties
  */
 class DefaultConnectionProvider extends ConnectionProvider {
-  protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   protected val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
     case Some("none") => Connection.TRANSACTION_NONE
@@ -134,7 +130,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
     case Some("repeatable_read") => Connection.TRANSACTION_REPEATABLE_READ
     case Some("serializable") => Connection.TRANSACTION_SERIALIZABLE
     case _ => {
-      log.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
+      ormLog.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
       Connection.TRANSACTION_READ_COMMITTED
     }
   }
@@ -147,11 +143,11 @@ class DefaultConnectionProvider extends ConnectionProvider {
     case Some(jndiName: String) => {
       val ctx = new InitialContext
       val ds = ctx.lookup(jndiName).asInstanceOf[DataSource]
-      log.info("Using JNDI datasource ({}).", jndiName)
+      ormLog.info("Using JNDI datasource ({}).", jndiName)
       ds
     }
     case _ => {
-      log.info("Using c3p0 connection pooling.")
+      ormLog.info("Using c3p0 connection pooling.")
       val driver = Circumflex.cfg("orm.connection.driver") match {
         case Some(s: String) => s
         case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
@@ -193,7 +189,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
 
 object DefaultConnectionProvider extends DefaultConnectionProvider
 
-/* ### Type converter */
+// ### Type converter
 
 /**
  * *Type converters* are used to read atomic values from JDBC result sets and to set

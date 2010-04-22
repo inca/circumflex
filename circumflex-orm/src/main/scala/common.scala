@@ -3,7 +3,7 @@ package ru.circumflex.orm
 import org.slf4j.LoggerFactory
 import ORM._
 
-/* ## Common interfaces */
+// ## Common interfaces
 
 /**
  * Simple interface for objects capable to render themselves into SQL statements.
@@ -63,7 +63,7 @@ trait SchemaObject {
   override def toString = objectName
 }
 
-/* ## JDBC utilities */
+// ## JDBC utilities
 
 /**
  * Helper constructions that automatically close such JDBC objects as
@@ -86,7 +86,7 @@ object JDBC {
     autoClose(obj)(actions)(throw _)
 }
 
-/* ## Exceptions */
+// ## Exceptions
 
 /**
  * The most generic exception class. 

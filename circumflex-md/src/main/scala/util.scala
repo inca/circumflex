@@ -4,7 +4,7 @@ import java.lang.StringBuilder
 import java.util.regex.{Pattern, Matcher}
 import Markdown._
 
-/* # Character protector */
+// # Character protector
 
 /**
  * We use character protector mechanism to ensure that certain elements of markup,
@@ -40,7 +40,7 @@ class Protector {
   override def toString = protectHash.toString
 }
 
-/* # Enhanced String Builder */
+// # Enhanced String Builder
 
 /**
  * A simple wrapper over `StringBuilder` with utility methods.
