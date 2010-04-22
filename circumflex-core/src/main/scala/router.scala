@@ -28,14 +28,14 @@ class RequestRouter {
 
   /* ### Matchers */
 
-  def headers(crit: (String, String)*) = new HeadersRegexMatcher(crit : _*)
+  def headers(crit: (String, StringMatcher)*) = new HeaderRequestMatcher(crit : _*)
 
   /* ### Context shortcuts */
 
   def header = ctx.header
   def session = ctx.session
   def flash = ctx.flash
-  def uri = ctx.uri
+  def uri: Match = param("uri")
 
   /* ### Helpers */
 
@@ -60,9 +60,9 @@ class RequestRouter {
   }
 
   /**
-   * Retrieves a String parameter from context.
+   * Retrieves a Match from context.
    */
-  def param(key: String): Option[String] = ctx.stringParam(key)
+  def param(key: String): Match = ctx(key).get.asInstanceOf[Match]
 
   /**
    * Sends error with specified status code and message.
@@ -165,7 +165,7 @@ class Route(val matchingMethods: String*) {
   protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
     matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
       case Some(_) => {
-        var params = Map[String, String]()
+        var params = Map[String, Match]()
         matchers.toList.foreach(rm => rm(ctx.request) match {
           case None => return
           case Some(p) => params ++= p
@@ -176,11 +176,11 @@ class Route(val matchingMethods: String*) {
       } case _ =>
     }
 
-  def update(uriRegex: String, response: =>HttpResponse): Unit =
-    dispatch(response, new UriRegexMatcher(uriRegex))
+  def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
+    dispatch(response, new UriRequestMatcher(matcher))
 
-  def update(uriRegex: String, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, new UriRegexMatcher(uriRegex), matcher1)
+  def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
+    dispatch(response, new UriRequestMatcher(matcher), matcher1)
 }
 
 /* ## Helpers */

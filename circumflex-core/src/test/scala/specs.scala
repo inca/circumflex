@@ -3,6 +3,7 @@ package ru.circumflex.core.test
 import ru.circumflex.core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
+import Convertions._
 
 class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
@@ -11,10 +12,10 @@ object CircumflexCoreSpec extends Specification {
   class MainRouter extends RequestRouter {
     get("/") = "preved"
     get("/ctx") = if (ctx == null) "null" else ctx.toString
-    get("/capture/?", headers("Accept" -> "([^/]+)/([^/]+)")) =
-        "Accept$1 is " + param("Accept$1").getOrElse("") + "; " +
-            "Accept$2 is " + param("Accept$2").getOrElse("")
-    get("/capture/(.*)") = "uri$1 is " + param("uri$1").getOrElse("")
+    get("/capture/?"r, headers('Accept -> "+/+")) =
+        "Accept$1 is " + param('Accept)(1) + "; " +
+        "Accept$2 is " + param('Accept)(2)
+    get("/capture/(.*)"r) = "uri$1 is " + uri(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
     put("/put") = "preved"
@@ -23,22 +24,27 @@ object CircumflexCoreSpec extends Specification {
     get("/redirect") = redirect("/")
     get("/rewrite") = rewrite("/")
     get("/error") = error(503, "preved")
-    get("/contentType\\.(.+)") = {
-      ctx.contentType = param("uri$1") match {
-        case Some("html") => "text/html"
-        case Some("css") => "text/css"
+    get("/contentType\\.(.+)"r) = {
+      ctx.contentType = uri(1) match {
+        case "html" => "text/html"
+        case "css" => "text/css"
         case _ => "application/octet-stream"
       }
       done(200)
     }
     get("/flash-set") = {
-      flash("notice") = "preved"
+      flash('notice) = "preved"
       done(200)
     }
-    get("/flash-get") = flash("notice") match {
+    get("/flash-get") = flash('notice) match {
       case Some(s: String) => s
       case None => ""
     }
+
+    // Simple urls
+    get("/filename/:name.:ext") = uri('name) + uri('ext)
+    get("*/one/:two/+.:three") =
+      uri(1) + uri('two) + uri(3) + uri('three)
   }
 
   doBeforeSpec{
@@ -87,6 +93,17 @@ object CircumflexCoreSpec extends Specification {
     }
     "process errors" in {
       MockApp.get("/error").execute().getStatus must_== 503
+    }
+  }
+
+  "UriMatcher" should {
+    "match simplified request 1" in {
+      MockApp.get("/filename/file.txt").execute.getContent must_== "filetxt"
+    }
+    "match simplified request 2" in {
+      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00ccddd.e"
+      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00ccddd.e"
+      MockApp.get("/one/bbb00/.ddde").execute.getStatus must_== 404
     }
   }
 
