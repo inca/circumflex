@@ -2,6 +2,10 @@
 
 ## Version 1.0
 
+### Circumflex Web Framework:
+
+* Introduced Sinatra-like named parameters and greatly simplified matching.
+
 ### Circumflex Freemarker Views:
 
 * Changed default resolution priority for templating model (now webapp first, classpath second)
