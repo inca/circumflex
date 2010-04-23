@@ -30,8 +30,8 @@ trait ValueHolder[R <: Record[R], T] extends WrapperModel {
     _value = newValue
     return this
   }
-  def :=(newValue: T): this.type = setValue(T)
-  def update(newValue: T): this.type = setValue(T)
+  def :=(newValue: T): this.type = setValue(newValue)
+  def update(newValue: T): this.type = setValue(newValue)
 
   /**
    * Return a `String` representation of internal value.
