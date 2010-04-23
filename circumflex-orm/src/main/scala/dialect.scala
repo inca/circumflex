@@ -85,13 +85,13 @@ class Dialect {
 
 
   /**
-   * SQL definition for a column
+   * SQL definition for a column represented by specified `field`
    * (e.g. `mycolumn VARCHAR NOT NULL`).
    */
-  def columnDefinition(col: Column): String = {
-    var result = col.columnName + " " + col.sqlType
-    if (!col.nullable_?) result += " NOT NULL"
-    col.default match {
+  def columnDefinition(field: Field[_, _]): String = {
+    var result = field.name + " " + field.sqlType
+    if (!field.isInstanceOf[NotNullField[_, _]]) result += " NOT NULL"
+    field.default match {
       case Some(expr) => result += " " + expr
       case _ =>
     }
@@ -102,7 +102,7 @@ class Dialect {
    * Produces unique constraint definition (e.g. "UNIQUE (name, value)").
    */
   def uniqueKeyDefinition(uniq: UniqueKey) =
-    "UNIQUE (" + uniq.columns.map(_.columnName).mkString(",") + ")"
+    "UNIQUE (" + uniq.fields.map(_.name).mkString(",") + ")"
 
 
 }

@@ -12,7 +12,7 @@ import ru.circumflex.core.WrapperModel
 abstract class Field[R <: Record[R], T](val record: R,
                                         val name: String,
                                         val sqlType: String)
-    extends ValueHolder[R, T] {
+    extends SQLable with ValueHolder[R, T] {
 
   // Should the `UNIQUE` constraint be generated for this field?
   protected var _unique: Boolean = false
@@ -31,6 +31,8 @@ abstract class Field[R <: Record[R], T](val record: R,
     this
   }
   def DEFAULT(expr: String): this.type = default(expr)
+
+  def toSql = dialect.columnDefinition(this)
 
 }
 

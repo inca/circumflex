@@ -37,7 +37,7 @@ abstract class Relation[R <: Record[R]] {
   // ### Commons
 
   // TODO add `protected[orm]` modifier
-  val columns = new ListBuffer[Column]
+  val fields = new ListBuffer[Field[R, _]]
   val constraints = new ListBuffer[Constraint]
   val preAux = new ListBuffer[SchemaObject]
   val postAux = new ListBuffer[SchemaObject]
@@ -58,7 +58,7 @@ abstract class Relation[R <: Record[R]] {
       .loadClass[R](this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
 
   /**
-   * This sample is used to introspect record for columns, constraints and,
+   * This sample is used to introspect record for fields, constraints and,
    * possibly, other stuff.
    */
   protected[orm] val recordSample: R = recordClass.newInstance
@@ -87,7 +87,7 @@ abstract class Relation[R <: Record[R]] {
   // ### Introspection and Initialization
 
   /**
-   * Inspect `recordClass` to find columns and constraints definitions.
+   * Inspect `recordClass` to find fields and constraints definitions.
    */
   private def findMembers(cl: Class[_]): Unit = {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
@@ -99,9 +99,9 @@ abstract class Relation[R <: Record[R]] {
 
   private def processMember(m: Method): Unit = m.getReturnType match {
     case cl if classOf[Field[R, _]].isAssignableFrom(cl) =>
-      val col = new Column(this, m)
-      this.columns += col
-      if (col.unique_?) this.unique(col)
+      val f = m.invoke(recordSample).asInstanceOf[Field[R, _]]
+      this.fields += f
+      if (f.unique_?) this.unique(f)
     case _ =>
   }
 
@@ -112,15 +112,15 @@ abstract class Relation[R <: Record[R]] {
   /**
    * Adds a unique constraint to this relation's definition.
    */
-  protected[orm] def unique(columns: Column*): UniqueKey = {
+  protected[orm] def unique(fields: Field[R, _]*): UniqueKey = {
     val constrName = relationName + "_" +
-        columns.map(_.columnName).mkString("_") + "_key"
-    val constr = new UniqueKey(this, constrName, columns.toList)
+        fields.map(_.name).mkString("_") + "_key"
+    val constr = new UniqueKey(this, constrName, fields.toList)
     this.constraints += constr
     return constr
   }
 
-  protected[orm] def UNIQUE(columns: Column*) = unique(columns: _*)
+  protected[orm] def UNIQUE(fields: Field[R, _]*) = unique(fields: _*)
 
 }
 
