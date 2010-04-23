@@ -134,7 +134,7 @@ abstract class Relation[R <: Record[R]] {
     case _ => false
   }
 
-  override def hashCode = this.relationName.toLowerCase
+  override def hashCode = this.relationName.toLowerCase.hashCode
 
   override def toString = qualifiedName
 

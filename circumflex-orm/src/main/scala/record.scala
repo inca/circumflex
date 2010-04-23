@@ -15,7 +15,10 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   // ### Implicits
 
-  implicit def str2fieldHelper(str: String): FieldHelper[R] = new FieldHelper(this, str)
+  implicit def str2fieldHelper(str: String): FieldHelper =
+    new FieldHelper(str)
+  implicit def str2assocHelper(str: String): AssociationHelper[R] =
+    new AssociationHelper(this, str)
 
   // ### Commons
 
@@ -53,13 +56,9 @@ abstract class Record[R <: Record[R]] { this: R =>
 // ## Helper for fields DSL
 
 /**
- * This is a tiny builder that helps to instantiate `Field`s and `Association`s in
- * a neat DSL-like way.
+ * This is a tiny builder that helps to instantiate `Field`s in a neat DSL-like way.
  */
-class FieldHelper[R <: Record[R]](record: R, name: String) {
-
-  // ### Fields creation
-
+class FieldHelper(name: String) {
   def integer = new NotNullField[Int](name, dialect.integerType)
   def bigint = new NotNullField[Long](name, dialect.longType)
   def numeric(precision: Int = -1, scale: Int = 0) = {
@@ -86,9 +85,12 @@ class FieldHelper[R <: Record[R]](record: R, name: String) {
   def DATE = date
   def TIME = time
   def TIMESTAMP = timestamp
+}
 
-  // ### Associations creation
-
+/**
+ * This is a tiny builder that helps to instantiate `Association`s in a neat DSL-like way.
+ */
+class AssociationHelper[R <: Record[R]](record: R, name: String) {
   def references[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
     new NotNullAssociation[R, F](name, record, relation)
 
