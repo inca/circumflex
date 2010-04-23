@@ -50,7 +50,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   }
   def text = new NotNullField[R, String](this, dialect.stringType)
   def varchar(length: Int = -1) = {
-    val l = if (l == -1) "" else "(" + length + ")"
+    val l = if (length == -1) "" else "(" + length + ")"
     new NotNullField[R, String](this, dialect.varcharType + l)
   }
   def boolean = new NotNullField[R, Boolean](this, dialect.booleanType)
@@ -61,11 +61,9 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   def INTEGER = integer
   def BIGINT = bigint
-  def NUMERIC = numeric
   def NUMERIC(precision: Int = -1, scale: Int = 1) = numeric(precision, scale)
   def TEXT = text
-  def VARCHAR = varchar
-  def VARCHAR(length: Int) = varchar(length)
+  def VARCHAR(length: Int = -1) = varchar(length)
   def BOOLEAN = boolean
   def DATE = date
   def TIME = time
