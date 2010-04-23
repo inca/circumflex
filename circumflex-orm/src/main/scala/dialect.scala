@@ -97,7 +97,7 @@ class Dialect {
    * Produces unique constraint definition (e.g. "UNIQUE (name, value)").
    */
   def uniqueKeyDefinition(uniq: UniqueKey) =
-    "unique (" + uniq.columns.map(_.columnName).mkString(",") + ")"
+    "UNIQUE (" + uniq.columns.map(_.columnName).mkString(",") + ")"
 
 
 }
