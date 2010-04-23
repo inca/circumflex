@@ -38,6 +38,7 @@ abstract class Relation[R <: Record[R]] {
 
   // TODO add `protected[orm]` modifier
   val fields = new ListBuffer[Field[_]]
+  val associations = new ListBuffer[Association[R,_]]
   val constraints = new ListBuffer[Constraint]
   val preAux = new ListBuffer[SchemaObject]
   val postAux = new ListBuffer[SchemaObject]
@@ -97,7 +98,6 @@ abstract class Relation[R <: Record[R]] {
   private def findMembers(cl: Class[_]): Unit = {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
     cl.getDeclaredFields
-        .filter(f => classOf[Field[_]].isAssignableFrom(f.getType))
         .map(f => cl.getMethod(f.getName))
         .foreach(m => processMember(m))
   }
@@ -107,6 +107,10 @@ abstract class Relation[R <: Record[R]] {
       val f = m.invoke(recordSample).asInstanceOf[Field[_]]
       this.fields += f
       if (f.unique_?) this.unique(f)
+    case cl if classOf[Association[R, _]].isAssignableFrom(cl) =>
+      val a = m.invoke(recordSample).asInstanceOf[Association[R, _]]
+      this.associations += a
+      this.fields += a.field
     case _ =>
   }
 

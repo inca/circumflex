@@ -4,13 +4,14 @@ import ORM._
 
 // ## Association
 
-abstract class Assocation[R <: Record[R], F <: Record[F]](val name: String,
-                                                          val record: R,
-                                                          val foreignRelation: Relation[F])
+abstract class Association[R <: Record[R], F <: Record[F]](val name: String,
+                                                           val record: R,
+                                                           val foreignRelation: Relation[F])
     extends ValueHolder[F] {
 
   // ### Commons
 
+  def field: Field[Long]
 
   // ### Cascading actions for DDL
 
@@ -38,4 +39,8 @@ abstract class Assocation[R <: Record[R], F <: Record[F]](val name: String,
 class NotNullAssociation[R <: Record[R], F <: Record[F]](name: String,
                                                          record: R,
                                                          foreignRelation: Relation[F])
-    extends Assocation[R, F](name, record, foreignRelation)
+    extends Association[R, F](name, record, foreignRelation) {
+
+  val field = new FieldHelper(name).BIGINT
+
+}

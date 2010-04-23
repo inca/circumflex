@@ -47,6 +47,11 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def primaryKey: Field[Long] = id
 
+  /**
+   * Non-DSL field creation.
+   */
+  def field[T](name: String, sqlType: String) = new NotNullField[T](name, sqlType)
+
   // ### Miscellaneous
 
   override def toString = getClass.getSimpleName + "@" + id.toString("UNSAVED")
@@ -74,7 +79,6 @@ class FieldHelper(name: String) {
   def date = new NotNullField[Date](name, dialect.dateType)
   def time = new NotNullField[Date](name, dialect.timeType)
   def timestamp = new NotNullField[Date](name, dialect.timestampType)
-  def field[T](sqlType: String) = new NotNullField[T](name, sqlType)
 
   def INTEGER = integer
   def BIGINT = bigint
@@ -91,9 +95,9 @@ class FieldHelper(name: String) {
  * This is a tiny builder that helps to instantiate `Association`s in a neat DSL-like way.
  */
 class AssociationHelper[R <: Record[R]](record: R, name: String) {
-  def references[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
+  def references[F <: Record[F]](relation: Relation[F]): Association[R, F] =
     new NotNullAssociation[R, F](name, record, relation)
 
-  def REFERENCES[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
+  def REFERENCES[F <: Record[F]](relation: Relation[F]): Association[R, F] =
     references(relation)
 }
