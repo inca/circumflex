@@ -44,13 +44,15 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   def integer = new NotNullField[R, Int](this, dialect.integerType)
   def bigint = new NotNullField[R, Long](this, dialect.longType)
-  def numeric = new NotNullField[R, Double](this, dialect.numericType)
-  def numeric(precision: Int, scale: Int) =
-    new NotNullField[R, Long](this, dialect.numericType + "(" + precision + "," + scale + ")")
+  def numeric(precision: Int = -1, scale: Int = 0) = {
+    val p = if (precision == -1) "" else "(" + precision + "," + scale + ")"
+    new NotNullField[R, Long](this, dialect.numericType + p)
+  }
   def text = new NotNullField[R, String](this, dialect.stringType)
-  def varchar = new NotNullField[R, String](this, dialect.varcharType)
-  def varchar(length: Int) =
-    new NotNullField[R, String](this, dialect.varcharType + "(" + length + ")")
+  def varchar(length: Int = -1) = {
+    val l = if (l == -1) "" else "(" + length + ")"
+    new NotNullField[R, String](this, dialect.varcharType + l)
+  }
   def boolean = new NotNullField[R, Boolean](this, dialect.booleanType)
   def date = new NotNullField[R, Date](this, dialect.dateType)
   def time = new NotNullField[R, Date](this, dialect.timeType)
@@ -60,7 +62,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   def INTEGER = integer
   def BIGINT = bigint
   def NUMERIC = numeric
-  def NUMERIC(precision: Int, scale: int) = numeric(precision, scale)
+  def NUMERIC(precision: Int = -1, scale: Int = 1) = numeric(precision, scale)
   def TEXT = text
   def VARCHAR = varchar
   def VARCHAR(length: Int) = varchar(length)

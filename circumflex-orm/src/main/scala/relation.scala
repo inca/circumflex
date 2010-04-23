@@ -122,8 +122,6 @@ abstract class Relation[R <: Record[R]] {
 
   protected[orm] def UNIQUE(columns: Column*) = unique(columns: _*)
 
-
-
 }
 
 // ## Table
