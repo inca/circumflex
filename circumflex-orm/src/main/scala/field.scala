@@ -26,7 +26,12 @@ trait ValueHolder[R <: Record[R], T] extends WrapperModel {
   def getValue(): T = _value
   def apply(): T = getValue
 
-  def setValue(newValue: T) = {_value = newValue}
+  def setValue(newValue: T): this.type = {
+    _value = newValue
+    return this
+  }
+  def :=(newValue: T): this.type = setValue(T)
+  def update(newValue: T): this.type = setValue(T)
 
   /**
    * Return a `String` representation of internal value.
@@ -69,38 +74,38 @@ abstract class Field[R <: Record[R], T](val record: R,
 
 class NotNullField[R <: Record[R], T](r: R, t: String)
     extends Field[R, T](r, t) {
-  def :=(newValue: T): this.type = {
-    setValue(newValue)
-    return this
-  }
+
   def nullable: NullableField[R, T] = {
     val c = new NullableField[R, T](record, sqlType)
     c._default = this.default
     return c
   }
   def NULLABLE = nullable
+
   def notNull: NotNullField[R, T] = this
   def NOT_NULL = notNull
+
 }
 
 class NullableField[R <: Record[R], T](r: R, t: String)
     extends Field[R, Option[T]](r, t) {
+
   def get(): T = _value.get
   def getOrElse(default: T): T = apply().getOrElse(default)
-  def :=(newValue: T): this.type = {
-    setValue(Some(newValue))
-    return this
-  }
+
   def null_!() = setValue(None)
   def NULL_!() = null_!
+
   def nullable: NullableField[R, T] = this
   def NULLABLE = nullable
+
   def notNull: NotNullField[R, T] = {
     val c = new NotNullField[R, T](record, sqlType)
     c._default = this.default
     return c
   }
   def NOT_NULL = notNull
+
   override def toString(default: String) = apply() match {
     case Some(value) if value != null => value.toString
     case _ => default
