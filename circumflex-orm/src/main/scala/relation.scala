@@ -84,6 +84,11 @@ abstract class Relation[R <: Record[R]] {
    */
   def readOnly_?(): Boolean = false
 
+  /**
+   * Primary key field of this relation.
+   */
+  def primaryKey = recordSample.primaryKey
+
   // ### Introspection and Initialization
 
   /**
@@ -121,6 +126,17 @@ abstract class Relation[R <: Record[R]] {
   }
 
   protected[orm] def UNIQUE(fields: Field[_]*) = unique(fields: _*)
+
+  // ### Equality and toString
+
+  override def equals(that: Any) = that match {
+    case r: Relation[R] => r.relationName.equalsIgnoreCase(this.relationName)
+    case _ => false
+  }
+
+  override def hashCode = this.relationName.toLowerCase
+
+  override def toString = qualifiedName
 
 }
 
