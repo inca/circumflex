@@ -33,7 +33,6 @@ class UniqueKey(r: Relation[_], n: String, val columns: Seq[Column])
   def sqlDefinition = dialect.uniqueKeyDefinition(this)
 }
 
-
 // ### Columns
 
 class Column(val relation: Relation[_],
@@ -50,3 +49,13 @@ class Column(val relation: Relation[_],
   def toSql = dialect.columnDefinition(this)
 
 }
+
+// ### Foreign Keys
+
+trait ForeignKeyAction
+
+object NoAction extends ForeignKeyAction
+object CascadeAction extends ForeignKeyAction
+object RestrictAction extends ForeignKeyAction
+object SetNullAction extends ForeignKeyAction
+object SetDefaultAction extends ForeignKeyAction

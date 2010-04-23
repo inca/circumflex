@@ -2,19 +2,49 @@ package ru.circumflex.orm
 
 import ru.circumflex.core.WrapperModel
 
-// ## Field
+// ## Value Holder
 
 /**
- * *Field* is an atomic data carrier unit. Each field of persistent class
- * correspond to a field of record in a relation. We strongly distinguish
- * `NULLABLE` and `NOT_NULL` fields.
+ * *Value holder* is designed to be an extensible atomic data carrier unit
+ * of record. It is subclassed by 'Field' and 'Association'.
  */
-abstract class Field[R <: Record[R], T](val record: R,
-                                        val sqlType: String)
-    extends WrapperModel {
+trait ValueHolder[R <: Record[R], T] extends WrapperModel {
 
   // An internally stored value.
   protected var _value: T = _
+
+  /**
+   * An enclosing record.
+   */
+  def record: R
+
+  // This way the value will be unwrapped by FTL engine.
+  def item = getValue
+
+  // Accessors and mutators.
+
+  def getValue(): T = _value
+  def apply(): T = getValue
+
+  def setValue(newValue: T) = {_value = newValue}
+
+  /**
+   * Return a `String` representation of internal value.
+   */
+  def toString(default: String) = if (getValue == null) default else getValue.toString
+
+  override def toString = toString("")
+}
+
+// ## Field
+
+/**
+ * Each field of persistent class correspond to a field of record in a relation.
+ * We strongly distinguish `NULLABLE` and `NOT_NULL` fields.
+ */
+abstract class Field[R <: Record[R], T](val record: R,
+                                                val sqlType: String)
+    extends ValueHolder[R, T] {
 
   // Should the `UNIQUE` constraint be generated for this field?
   protected var _unique: Boolean = false
@@ -34,23 +64,6 @@ abstract class Field[R <: Record[R], T](val record: R,
   }
   def DEFAULT = default
   def DEFAULT(expr: String): this.type = default(expr)
-
-  // This way the value will be unwrapped by FTL engine.
-  def item = getValue
-
-  // Accessors and mutators.
-
-  def getValue(): T = _value
-  def apply(): T = getValue
-
-  def setValue(newValue: T) = {_value = newValue}
-
-  /**
-   * Return a `String` representation of internal value.
-   */
-  def toString(default: String) = if (getValue == null) default else getValue.toString
-
-  override def toString = toString("")
 
 }
 

@@ -97,11 +97,12 @@ abstract class Relation[R <: Record[R]] {
           .foreach(m => processMember(m))
     }
 
-    def processMember(m: Method): Unit = {
-      val c = new Column(this, m)
-      this.columns += c
-      if (c.unique_?) this.unique(c)
-      
+    def processMember(m: Method): Unit = m.getReturnType match {
+      case cl if classOf[Field[R, _]].isAssignableFrom(cl) =>
+        val col = new Column(this, m)
+        this.columns += col
+        if (col.unique_?) this.unique(col)
+      case _ =>
     }
 
     findMembers(recordClass)
