@@ -42,7 +42,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    * We only support auto-generated `BIGINT` columns as primary keys
    * for a couple of reasons. Sorry.
    */
-  def primaryKey: Field[R, Long] = id
+  def primaryKey: Field[Long] = id
 
   // ### Miscellaneous
 
@@ -60,22 +60,22 @@ class FieldHelper[R <: Record[R]](record: R, name: String) {
 
   // ### Fields creation
 
-  def integer = new NotNullField[R, Int](record, name, dialect.integerType)
-  def bigint = new NotNullField[R, Long](record, name, dialect.longType)
+  def integer = new NotNullField[Int](name, dialect.integerType)
+  def bigint = new NotNullField[Long](name, dialect.longType)
   def numeric(precision: Int = -1, scale: Int = 0) = {
     val p = if (precision == -1) "" else "(" + precision + "," + scale + ")"
-    new NotNullField[R, Long](record, name, dialect.numericType + p)
+    new NotNullField[Long](name, dialect.numericType + p)
   }
-  def text = new NotNullField[R, String](record, name, dialect.stringType)
+  def text = new NotNullField[String](name, dialect.stringType)
   def varchar(length: Int = -1) = {
     val l = if (length == -1) "" else "(" + length + ")"
-    new NotNullField[R, String](record, name, dialect.varcharType + l)
+    new NotNullField[String](name, dialect.varcharType + l)
   }
-  def boolean = new NotNullField[R, Boolean](record, name, dialect.booleanType)
-  def date = new NotNullField[R, Date](record, name, dialect.dateType)
-  def time = new NotNullField[R, Date](record, name, dialect.timeType)
-  def timestamp = new NotNullField[R, Date](record, name, dialect.timestampType)
-  def field[T](sqlType: String) = new NotNullField[R, T](record, name, sqlType)
+  def boolean = new NotNullField[Boolean](name, dialect.booleanType)
+  def date = new NotNullField[Date](name, dialect.dateType)
+  def time = new NotNullField[Date](name, dialect.timeType)
+  def timestamp = new NotNullField[Date](name, dialect.timestampType)
+  def field[T](sqlType: String) = new NotNullField[T](name, sqlType)
 
   def INTEGER = integer
   def BIGINT = bigint
@@ -90,7 +90,7 @@ class FieldHelper[R <: Record[R]](record: R, name: String) {
   // ### Associations creation
 
   def references[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
-    new NotNullAssociation[R, F](record, name, relation)
+    new NotNullAssociation[R, F](name, record, relation)
 
   def REFERENCES[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
     references(relation)

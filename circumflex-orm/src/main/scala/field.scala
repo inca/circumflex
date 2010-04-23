@@ -1,7 +1,6 @@
 package ru.circumflex.orm
 
 import ORM._
-import ru.circumflex.core.WrapperModel
 
 // ## Field
 
@@ -9,10 +8,9 @@ import ru.circumflex.core.WrapperModel
  * Each field of persistent class correspond to a field of record in a relation.
  * We strongly distinguish `NULLABLE` and `NOT_NULL` fields.
  */
-abstract class Field[R <: Record[R], T](val record: R,
-                                        val name: String,
-                                        val sqlType: String)
-    extends SQLable with ValueHolder[R, T] {
+abstract class Field[T](val name: String,
+                        val sqlType: String)
+    extends SQLable with ValueHolder[T] {
 
   // Should the `UNIQUE` constraint be generated for this field?
   protected var _unique: Boolean = false
@@ -36,23 +34,23 @@ abstract class Field[R <: Record[R], T](val record: R,
 
 }
 
-class NotNullField[R <: Record[R], T](r: R, n: String, t: String)
-    extends Field[R, T](r, n, t) {
+class NotNullField[T](name: String, sqlType: String)
+    extends Field[T](name, sqlType) {
 
-  def nullable: NullableField[R, T] = {
-    val c = new NullableField[R, T](record, name, sqlType)
+  def nullable: NullableField[T] = {
+    val c = new NullableField[T](this.name, this.sqlType)
     c._default = this.default
     return c
   }
   def NULLABLE = nullable
 
-  def notNull: NotNullField[R, T] = this
+  def notNull: NotNullField[T] = this
   def NOT_NULL = notNull
 
 }
 
-class NullableField[R <: Record[R], T](r: R, n: String, t: String)
-    extends Field[R, Option[T]](r, n, t) {
+class NullableField[T](name: String, sqlType: String)
+    extends Field[Option[T]](name, sqlType) {
 
   def get(): T = _value.get
   def getOrElse(default: T): T = apply().getOrElse(default)
@@ -60,11 +58,11 @@ class NullableField[R <: Record[R], T](r: R, n: String, t: String)
   def null_!() = setValue(None)
   def NULL_!() = null_!
 
-  def nullable: NullableField[R, T] = this
+  def nullable: NullableField[T] = this
   def NULLABLE = nullable
 
-  def notNull: NotNullField[R, T] = {
-    val c = new NotNullField[R, T](record, name, sqlType)
+  def notNull: NotNullField[T] = {
+    val c = new NotNullField[T](this.name, this.sqlType)
     c._default = this.default
     return c
   }

@@ -37,7 +37,7 @@ abstract class Relation[R <: Record[R]] {
   // ### Commons
 
   // TODO add `protected[orm]` modifier
-  val fields = new ListBuffer[Field[R, _]]
+  val fields = new ListBuffer[Field[_]]
   val constraints = new ListBuffer[Constraint]
   val preAux = new ListBuffer[SchemaObject]
   val postAux = new ListBuffer[SchemaObject]
@@ -92,14 +92,14 @@ abstract class Relation[R <: Record[R]] {
   private def findMembers(cl: Class[_]): Unit = {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
     cl.getDeclaredFields
-        .filter(f => classOf[Field[R, _]].isAssignableFrom(f.getType))
+        .filter(f => classOf[Field[_]].isAssignableFrom(f.getType))
         .map(f => cl.getMethod(f.getName))
         .foreach(m => processMember(m))
   }
 
   private def processMember(m: Method): Unit = m.getReturnType match {
-    case cl if classOf[Field[R, _]].isAssignableFrom(cl) =>
-      val f = m.invoke(recordSample).asInstanceOf[Field[R, _]]
+    case cl if classOf[Field[_]].isAssignableFrom(cl) =>
+      val f = m.invoke(recordSample).asInstanceOf[Field[_]]
       this.fields += f
       if (f.unique_?) this.unique(f)
     case _ =>
@@ -112,7 +112,7 @@ abstract class Relation[R <: Record[R]] {
   /**
    * Adds a unique constraint to this relation's definition.
    */
-  protected[orm] def unique(fields: Field[R, _]*): UniqueKey = {
+  protected[orm] def unique(fields: Field[_]*): UniqueKey = {
     val constrName = relationName + "_" +
         fields.map(_.name).mkString("_") + "_key"
     val constr = new UniqueKey(this, constrName, fields.toList)
@@ -120,7 +120,7 @@ abstract class Relation[R <: Record[R]] {
     return constr
   }
 
-  protected[orm] def UNIQUE(fields: Field[R, _]*) = unique(fields: _*)
+  protected[orm] def UNIQUE(fields: Field[_]*) = unique(fields: _*)
 
 }
 

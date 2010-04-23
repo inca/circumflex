@@ -4,10 +4,10 @@ import ORM._
 
 // ## Association
 
-abstract class Assocation[R <: Record[R], F <: Record[F]](val record: R,
-                                                          val name: String,
+abstract class Assocation[R <: Record[R], F <: Record[F]](val name: String,
+                                                          val record: R,
                                                           val foreignRelation: Relation[F])
-    extends ValueHolder[R, F] {
+    extends ValueHolder[F] {
 
   // ### Commons
 
@@ -35,5 +35,7 @@ abstract class Assocation[R <: Record[R], F <: Record[F]](val record: R,
 
 }
 
-class NotNullAssociation[R <: Record[R], F <: Record[F]](rec: R, name: String, rel: Relation[F])
-    extends Assocation[R, F](rec, name, rel)
+class NotNullAssociation[R <: Record[R], F <: Record[F]](name: String,
+                                                         record: R,
+                                                         foreignRelation: Relation[F])
+    extends Assocation[R, F](name, record, foreignRelation)

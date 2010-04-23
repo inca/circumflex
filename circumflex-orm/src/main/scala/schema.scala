@@ -28,7 +28,7 @@ abstract class Constraint(val relation: Relation[_],
 /**
  * An SQL `UNIQUE` constraint.
  */
-class UniqueKey(r: Relation[_], n: String, val fields: Seq[Field[_, _]])
+class UniqueKey(r: Relation[_], n: String, val fields: Seq[Field[_]])
     extends Constraint(r, n) {
   def sqlDefinition = dialect.uniqueKeyDefinition(this)
 }

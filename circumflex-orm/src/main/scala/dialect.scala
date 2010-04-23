@@ -88,9 +88,9 @@ class Dialect {
    * SQL definition for a column represented by specified `field`
    * (e.g. `mycolumn VARCHAR NOT NULL`).
    */
-  def columnDefinition(field: Field[_, _]): String = {
+  def columnDefinition(field: Field[_]): String = {
     var result = field.name + " " + field.sqlType
-    if (!field.isInstanceOf[NotNullField[_, _]]) result += " NOT NULL"
+    if (!field.isInstanceOf[NotNullField[_]]) result += " NOT NULL"
     field.default match {
       case Some(expr) => result += " " + expr
       case _ =>

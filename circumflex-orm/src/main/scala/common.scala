@@ -68,16 +68,11 @@ trait SchemaObject {
  * *Value holder* is designed to be an extensible atomic data carrier unit
  * of record. It is subclassed by 'Field' and 'Association'.
  */
-trait ValueHolder[R <: Record[R], T]
+trait ValueHolder[T]
     extends WrapperModel {
 
   // An internally stored value.
   protected var _value: T = _
-
-  /**
-   * An enclosing record.
-   */
-  def record: R
 
   /**
    * A name by of this value holder.
@@ -102,23 +97,11 @@ trait ValueHolder[R <: Record[R], T]
   // Equality methods.
 
   override def equals(that: Any) = that match {
-    case vh: ValueHolder[R, T] => vh.getValue == this.getValue
+    case vh: ValueHolder[T] => vh.getValue == this.getValue
     case _ => false
   }
 
   override def hashCode = if (this.getValue == null) 0 else this.getValue.hashCode
-
-  /**
-   * We cannot use `equals` and `hashCode` to test value holders for equality,
-   * because this methods check the underlying value. Instead, we use this method
-   * to differentiate between value holders.
-   */
-  def sameAs(that: Any) = that match {
-    case vh: ValueHolder[R, T] =>
-      vh.record.relation == this.record.relation &&
-        vh.name == this.name
-    case _ => false
-  }
 
   /**
    * Return a `String` representation of internal value.
