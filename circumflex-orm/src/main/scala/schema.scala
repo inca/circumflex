@@ -234,8 +234,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("DROP OBJECT " + o.objectName + ": OK")
       })(e => {
-        errMsgs += ("DROP OBJECT " + o.objectName + ": " + e.getMessage)
         log.trace("Error dropping auxiliary object.", e)
+        errMsgs += ("DROP OBJECT " + o.objectName + ": " + e.getMessage)
       })
 
   def dropPostAuxiliaryObjects(conn: Connection) =
@@ -245,8 +245,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("DROP OBJECT " + o.objectName + ": OK")
       })(e => {
-        errMsgs += ("DROP OBJECT " + o.objectName + ": " + e.getMessage)
         log.trace("Error dropping auxiliary object.", e)
+        errMsgs += ("DROP OBJECT " + o.objectName + ": " + e.getMessage)
       })
 
   def dropViews(conn: Connection) =
@@ -256,8 +256,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("DROP VIEW " + v.objectName + ": OK")
       })(e => {
-        errMsgs += ("DROP VIEW " + v.objectName + ": " + e.getMessage)
         log.trace("Error dropping view.", e)
+        errMsgs += ("DROP VIEW " + v.objectName + ": " + e.getMessage)
       })
     }
 
@@ -268,8 +268,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("DROP CONSTRAINT " + c.objectName + ": OK")
       })(e => {
-        errMsgs += ("DROP CONSTRAINT " + c.objectName + ": " + e.getMessage)
         log.trace("Error dropping constraint.", e)
+        errMsgs += ("DROP CONSTRAINT " + c.objectName + ": " + e.getMessage)
       })
 
   def dropTables(conn: Connection) =
@@ -279,8 +279,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("DROP TABLE " + t.objectName + ": OK")
       })(e => {
-        errMsgs += ("DROP TABLE " + t.objectName + ": " + e.getMessage)
         log.trace("Error dropping table.", e)
+        errMsgs += ("DROP TABLE " + t.objectName + ": " + e.getMessage)
       })
 
   def dropSchemata(conn: Connection) =
@@ -290,8 +290,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("DROP SCHEMA " + s.objectName + ": OK")
       })(e => {
-        errMsgs += ("DROP SCHEMA " + s.objectName + ": " + e.getMessage)
         log.trace("Error dropping schema.", e)
+        errMsgs += ("DROP SCHEMA " + s.objectName + ": " + e.getMessage)
       })
 
   def createSchemata(conn: Connection) =
@@ -301,8 +301,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("CREATE SCHEMA " + s.objectName + ": OK")
       })(e => {
-        errMsgs += ("CRAETE SCHEMA " + s.objectName + ": " + e.getMessage)
         log.trace("Error creating schema.", e)
+        errMsgs += ("CRAETE SCHEMA " + s.objectName + ": " + e.getMessage)
       })
 
   def createTables(conn: Connection) =
@@ -312,8 +312,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("CREATE TABLE " + t.objectName + ": OK")
       })(e => {
-        errMsgs += ("CREATE TABLE " + t.objectName + ": " + e.getMessage)
         log.trace("Error creating table.", e)
+        errMsgs += ("CREATE TABLE " + t.objectName + ": " + e.getMessage)
       })
 
   def createConstraints(conn: Connection) = {
@@ -324,8 +324,8 @@ class DDLExport extends JDBCHelper {
           st.executeUpdate
           infoMsgs += ("CREATE CONSTRAINT " + c.objectName + ": OK")
         })(e => {
-          errMsgs += ("CREATE CONSTRAINT " + c.objectName + ": " + e.getMessage)
           log.trace("Error creating constraint.", e)
+          errMsgs += ("CREATE CONSTRAINT " + c.objectName + ": " + e.getMessage)
         })
     create(constraints.filter(!_.isInstanceOf[ForeignKey[_, _]]))
     create(constraints.filter(_.isInstanceOf[ForeignKey[_, _]]))
@@ -338,8 +338,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("CREATE VIEW " + v.objectName + ": OK")
       })(e => {
-        errMsgs += ("CREATE VIEW " + v.objectName + ": " + e.getMessage)
         log.trace("Error creating view.", e)
+        errMsgs += ("CREATE VIEW " + v.objectName + ": " + e.getMessage)
       })
 
   def createPreAuxiliaryObjects(conn: Connection) =
@@ -349,8 +349,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("CREATE OBJECT " + o.objectName + ": OK")
       })(e => {
-        errMsgs += ("CREATE OBJECT " + o.objectName + ": " + e.getMessage)
         log.trace("Error creating auxiliary object.", e)
+        errMsgs += ("CREATE OBJECT " + o.objectName + ": " + e.getMessage)
       })
 
   def createPostAuxiliaryObjects(conn: Connection) =
@@ -360,8 +360,8 @@ class DDLExport extends JDBCHelper {
         st.executeUpdate
         infoMsgs += ("CREATE OBJECT " + o.objectName + ": OK")
       })(e => {
-        errMsgs += ("CREATE OBJECT " + o.objectName + ": " + e.getMessage)
         log.trace("Error creating auxiliary object.", e)
+        errMsgs += ("CREATE OBJECT " + o.objectName + ": " + e.getMessage)
       })
 
 }
