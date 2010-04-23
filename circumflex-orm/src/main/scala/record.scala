@@ -13,6 +13,10 @@ import java.util.Date
  */
 abstract class Record[R <: Record[R]] { this: R =>
 
+  // ### Implicits
+
+  implicit def str2fieldHelper(str: String): FieldHelper[R] = new FieldHelper(this, str)
+
   // ### Commons
 
   /**
@@ -21,7 +25,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    * In general the relations should be the companion objects of records:
    *
    *     class Country extends Record[Country] {
-   *       val name = TEXT.NOT_NULL := "Switzerland"
+   *       val name = TEXT NOT_NULL
    *     }
    *
    *     object Country extends Table[Country]
@@ -32,7 +36,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   def relation = RelationRegistry.getRelation(this)
 
   // A default primary key is an auto-incremented `BIGINT` column.
-  val id = BIGINT
+  val id = "id" BIGINT
 
   /**
    * We only support auto-generated `BIGINT` columns as primary keys
@@ -40,24 +44,38 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def primaryKey: Field[R, Long] = id
 
+  // ### Miscellaneous
+
+  override def toString = getClass.getSimpleName + "@" + id.toString("UNSAVED")
+
+}
+
+// ## Helper for fields DSL
+
+/**
+ * This is a tiny builder that helps to instantiate `Field`s and `Association`s in
+ * a neat DSL-like way.
+ */
+class FieldHelper[R <: Record[R]](record: R, name: String) {
+
   // ### Fields creation
 
-  def integer = new NotNullField[R, Int](this, dialect.integerType)
-  def bigint = new NotNullField[R, Long](this, dialect.longType)
+  def integer = new NotNullField[R, Int](record, name, dialect.integerType)
+  def bigint = new NotNullField[R, Long](record, name, dialect.longType)
   def numeric(precision: Int = -1, scale: Int = 0) = {
     val p = if (precision == -1) "" else "(" + precision + "," + scale + ")"
-    new NotNullField[R, Long](this, dialect.numericType + p)
+    new NotNullField[R, Long](record, name, dialect.numericType + p)
   }
-  def text = new NotNullField[R, String](this, dialect.stringType)
+  def text = new NotNullField[R, String](record, name, dialect.stringType)
   def varchar(length: Int = -1) = {
     val l = if (length == -1) "" else "(" + length + ")"
-    new NotNullField[R, String](this, dialect.varcharType + l)
+    new NotNullField[R, String](record, name, dialect.varcharType + l)
   }
-  def boolean = new NotNullField[R, Boolean](this, dialect.booleanType)
-  def date = new NotNullField[R, Date](this, dialect.dateType)
-  def time = new NotNullField[R, Date](this, dialect.timeType)
-  def timestamp = new NotNullField[R, Date](this, dialect.timestampType)
-  def field[T](sqlType: String) = new NotNullField[R, T](this, sqlType)
+  def boolean = new NotNullField[R, Boolean](record, name, dialect.booleanType)
+  def date = new NotNullField[R, Date](record, name, dialect.dateType)
+  def time = new NotNullField[R, Date](record, name, dialect.timeType)
+  def timestamp = new NotNullField[R, Date](record, name, dialect.timestampType)
+  def field[T](sqlType: String) = new NotNullField[R, T](record, name, sqlType)
 
   def INTEGER = integer
   def BIGINT = bigint
@@ -71,14 +89,9 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   // ### Associations creation
 
-  def referenceTo[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
-    new NotNullAssociation[R, F](this, relation)
+  def references[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
+    new NotNullAssociation[R, F](record, name, relation)
 
-  def REFERENCE_TO[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
-    referenceTo(relation)
-
-  // ### Miscellaneous
-
-  override def toString = getClass.getSimpleName + "@" + id.toString("UNSAVED")
-
+  def REFERENCES[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
+    references(relation)
 }

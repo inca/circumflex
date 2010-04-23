@@ -5,12 +5,12 @@ import ORM._
 // ## Association
 
 abstract class Assocation[R <: Record[R], F <: Record[F]](val record: R,
+                                                          val name: String,
                                                           val foreignRelation: Relation[F])
     extends ValueHolder[R, F] {
 
   // ### Commons
 
-  val field = record.BIGINT
 
   // ### Cascading actions for DDL
 
@@ -35,5 +35,5 @@ abstract class Assocation[R <: Record[R], F <: Record[F]](val record: R,
 
 }
 
-class NotNullAssociation[R <: Record[R], F <: Record[F]](rec: R, rel: Relation[F])
-    extends Assocation[R, F](rec, rel)
+class NotNullAssociation[R <: Record[R], F <: Record[F]](rec: R, name: String, rel: Relation[F])
+    extends Assocation[R, F](rec, name, rel)

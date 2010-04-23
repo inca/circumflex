@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 import org.slf4j.LoggerFactory
 import ORM._
+import ru.circumflex.core.WrapperModel
 
 // ## Common interfaces
 
@@ -61,6 +62,70 @@ trait SchemaObject {
   }
 
   override def toString = objectName
+}
+
+/**
+ * *Value holder* is designed to be an extensible atomic data carrier unit
+ * of record. It is subclassed by 'Field' and 'Association'.
+ */
+trait ValueHolder[R <: Record[R], T]
+    extends WrapperModel {
+
+  // An internally stored value.
+  protected var _value: T = _
+
+  /**
+   * An enclosing record.
+   */
+  def record: R
+
+  /**
+   * A name by of this value holder.
+   */
+  def name: String
+
+  // This way the value will be unwrapped by FTL engine.
+  def item = getValue
+
+  // Accessors and mutators.
+
+  def getValue(): T = _value
+  def apply(): T = getValue
+
+  def setValue(newValue: T): this.type = {
+    _value = newValue
+    return this
+  }
+  def :=(newValue: T): this.type = setValue(newValue)
+  def update(newValue: T): this.type = setValue(newValue)
+
+  // Equality methods.
+
+  override def equals(that: Any) = that match {
+    case vh: ValueHolder[R, T] => vh.getValue == this.getValue
+    case _ => false
+  }
+
+  override def hashCode = if (this.getValue == null) 0 else this.getValue.hashCode
+
+  /**
+   * We cannot use `equals` and `hashCode` to test value holders for equality,
+   * because this methods check the underlying value. Instead, we use this method
+   * to differentiate between value holders.
+   */
+  def sameAs(that: Any) = that match {
+    case vh: ValueHolder[R, T] =>
+      vh.record.relation == this.record.relation &&
+        vh.name == this.name
+    case _ => false
+  }
+
+  /**
+   * Return a `String` representation of internal value.
+   */
+  def toString(default: String) = if (getValue == null) default else getValue.toString
+
+  override def toString = toString("")
 }
 
 // ## JDBC utilities

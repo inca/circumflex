@@ -51,6 +51,11 @@ class Dialect {
    */
   def relationQualifiedName(relation: Relation[_]) = relation.schema + "." + relation.relationName
 
+  /**
+   * Just prepend specified expression with `DEFAULT` keyword.
+   */
+  def defaultExpression(expr: String) = "DEFAULT " + expr
+
   // ### DDL
 
   /**
