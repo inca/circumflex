@@ -31,6 +31,14 @@ class Dialect {
   def timeType = "TIME"
   def timestampType = "TIMESTAMPTZ"
 
+  // ### Actions for Foreign Keys
+
+  def fkNoAction = "NO ACTION"
+  def fkCascade = "CASCADE"
+  def fkRestrict = "RESTRICT"
+  def fkSetNull = "SET NULL"
+  def fkSetDefault = "SET DEFAULT"
+
   // ### Commons
 
   /**

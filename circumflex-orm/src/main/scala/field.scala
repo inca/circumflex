@@ -8,7 +8,8 @@ import ru.circumflex.core.WrapperModel
  * *Value holder* is designed to be an extensible atomic data carrier unit
  * of record. It is subclassed by 'Field' and 'Association'.
  */
-trait ValueHolder[R <: Record[R], T] extends WrapperModel {
+trait ValueHolder[R <: Record[R], T]
+    extends WrapperModel {
 
   // An internally stored value.
   protected var _value: T = _
@@ -48,7 +49,7 @@ trait ValueHolder[R <: Record[R], T] extends WrapperModel {
  * We strongly distinguish `NULLABLE` and `NOT_NULL` fields.
  */
 abstract class Field[R <: Record[R], T](val record: R,
-                                                val sqlType: String)
+                                        val sqlType: String)
     extends ValueHolder[R, T] {
 
   // Should the `UNIQUE` constraint be generated for this field?
@@ -67,7 +68,6 @@ abstract class Field[R <: Record[R], T](val record: R,
     _default = Some(expr)
     this
   }
-  def DEFAULT = default
   def DEFAULT(expr: String): this.type = default(expr)
 
 }

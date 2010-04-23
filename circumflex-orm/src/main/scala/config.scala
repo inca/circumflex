@@ -80,6 +80,15 @@ object ORM {
    * Shortcut for retrieving current transaction via `transactionManager.getTransaction`.
    */
   def tx = transactionManager.getTransaction
+
+  // ### Constants
+
+  val NO_ACTION = ForeignKeyAction(dialect.fkNoAction)
+  val CASCADE = ForeignKeyAction(dialect.fkCascade)
+  val RESTRICT = ForeignKeyAction(dialect.fkRestrict)
+  val SET_NULL = ForeignKeyAction(dialect.fkSetNull)
+  val SET_DEFAULT = ForeignKeyAction(dialect.fkSetDefault)
+
 }
 
 // ### Connection provider

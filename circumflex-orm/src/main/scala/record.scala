@@ -15,9 +15,6 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   // ### Commons
 
-  // A default primary key is auto-incremented `BIGINT` column.
-  val id = BIGINT
-
   /**
    * A `Relation[R]` corresponding to this record.
    *
@@ -34,8 +31,18 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def relation = RelationRegistry.getRelation(this)
 
-  // ### Field creation
-  def integer = new NotNullField[R, Integer](this, dialect.integerType)
+  // A default primary key is an auto-incremented `BIGINT` column.
+  val id = BIGINT
+
+  /**
+   * We only support auto-generated `BIGINT` columns as primary keys
+   * for a couple of reasons. Sorry.
+   */
+  def primaryKey: Field[R, Long] = id
+
+  // ### Fields creation
+
+  def integer = new NotNullField[R, Int](this, dialect.integerType)
   def bigint = new NotNullField[R, Long](this, dialect.longType)
   def numeric = new NotNullField[R, Double](this, dialect.numericType)
   def numeric(precision: Int, scale: Int) =
@@ -61,6 +68,14 @@ abstract class Record[R <: Record[R]] { this: R =>
   def DATE = date
   def TIME = time
   def TIMESTAMP = timestamp
+
+  // ### Associations creation
+
+  def referenceTo[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
+    new NotNullAssociation[R, F](this, relation)
+
+  def REFERENCE_TO[F <: Record[F]](relation: Relation[F]): Assocation[R, F] =
+    referenceTo(relation)
 
   // ### Miscellaneous
 

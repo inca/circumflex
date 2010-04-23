@@ -71,6 +71,7 @@ trait SchemaObject {
  */
 object JDBC {
   protected val sqlLog = LoggerFactory.getLogger("ru.circumflex.orm")
+
   def autoClose[A <: {def close(): Unit}, B](obj: A)
                                             (actions: A => B)
                                             (errors: Throwable => B): B =
@@ -81,6 +82,7 @@ object JDBC {
     } finally {
       obj.close
     }
+
   def auto[A <: {def close(): Unit}, B](obj: A)
                                        (actions: A => B): B =
     autoClose(obj)(actions)(throw _)

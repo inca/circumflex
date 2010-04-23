@@ -36,6 +36,7 @@ abstract class Relation[R <: Record[R]] {
 
   // ### Commons
 
+  // TODO add `protected[orm]` modifier
   val columns = new ListBuffer[Column]
   val constraints = new ListBuffer[Constraint]
   val preAux = new ListBuffer[SchemaObject]
@@ -86,28 +87,25 @@ abstract class Relation[R <: Record[R]] {
   // ### Introspection and Initialization
 
   /**
-   * Inspect `recordClass` to find column or constraint definitions.
+   * Inspect `recordClass` to find columns and constraints definitions.
    */
-  {
-    def findMembers(cl: Class[_]): Unit = {
-      if (cl != classOf[Any]) findMembers(cl.getSuperclass)
-      cl.getDeclaredFields
-          .filter(f => classOf[Field[R, _]].isAssignableFrom(f.getType))
-          .map(f => cl.getMethod(f.getName))
-          .foreach(m => processMember(m))
-    }
-
-    def processMember(m: Method): Unit = m.getReturnType match {
-      case cl if classOf[Field[R, _]].isAssignableFrom(cl) =>
-        val col = new Column(this, m)
-        this.columns += col
-        if (col.unique_?) this.unique(col)
-      case _ =>
-    }
-
-    findMembers(recordClass)
+  private def findMembers(cl: Class[_]): Unit = {
+    if (cl != classOf[Any]) findMembers(cl.getSuperclass)
+    cl.getDeclaredFields
+        .filter(f => classOf[Field[R, _]].isAssignableFrom(f.getType))
+        .map(f => cl.getMethod(f.getName))
+        .foreach(m => processMember(m))
   }
 
+  private def processMember(m: Method): Unit = m.getReturnType match {
+    case cl if classOf[Field[R, _]].isAssignableFrom(cl) =>
+      val col = new Column(this, m)
+      this.columns += col
+      if (col.unique_?) this.unique(col)
+    case _ =>
+  }
+
+  findMembers(recordClass)
 
   // ### Definitions
 
@@ -121,6 +119,8 @@ abstract class Relation[R <: Record[R]] {
     this.constraints += constr
     return constr
   }
+
+  protected[orm] def UNIQUE(columns: Column*) = unique(columns: _*)
 
 
 
