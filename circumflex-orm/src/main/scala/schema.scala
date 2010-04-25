@@ -33,6 +33,16 @@ class UniqueKey(r: Relation[_], n: String, val fields: Seq[Field[_]])
   def sqlDefinition = dialect.uniqueKeyDefinition(this)
 }
 
+class ForeignKey(r: Relation[_],
+                 n: String,
+                 val foreignRelation: Relation[_],
+                 val localFields: Seq[Field[_]],
+                 val foreignFields: Seq[Field[_]],
+                 val onDelete: ForeignKeyAction,
+                 val onUpdate: ForeignKeyAction) extends Constraint(r, n) {
+  def sqlDefinition = dialect.foreignKeyDefinition(this)
+}
+
 // ### Foreign Keys
 
 case class ForeignKeyAction(val toSql: String) extends SQLable

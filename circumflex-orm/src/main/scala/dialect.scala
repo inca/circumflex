@@ -118,10 +118,22 @@ class Dialect {
   }
 
   /**
-   * Produces unique constraint definition (e.g. "UNIQUE (name, value)").
+   * Produces unique constraint definition (e.g. `UNIQUE (name, value)`).
    */
   def uniqueKeyDefinition(uniq: UniqueKey) =
     "UNIQUE (" + uniq.fields.map(_.name).mkString(",") + ")"
+
+  /**
+   * Produces foreign key constraint definition for association (e.g.
+   * `FOREIGN KEY (country_id) REFERENCES country(id) ON DELETE CASCADE`).
+   */
+  def foreignKeyDefinition(fk: ForeignKey) =
+    "FOREIGN KEY (" + fk.localFields.map(_.name).mkString(", ") +
+        ") REFERENCES " + fk.foreignRelation.qualifiedName + " (" +
+        fk.foreignFields.map(_.name).mkString(", ") + ") " +
+        "ON DELETE " + fk.onDelete.toSql + " " +
+        "ON UPDATE " + fk.onUpdate.toSql
+
 
 
 }

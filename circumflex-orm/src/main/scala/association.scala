@@ -4,11 +4,11 @@ import ORM._
 
 // ## Association
 
-abstract class Association[R <: Record[R], F <: Record[F]](val name: String,
-                                                           val uuid: String,
+abstract class Association[R <: Record[R], F <: Record[F]](name: String,
+                                                           uuid: String,
                                                            val record: R,
                                                            val foreignRelation: Relation[F])
-    extends ValueHolder[F] {
+    extends ValueHolder[F](name, uuid) {
 
   // ### Commons
 

@@ -69,7 +69,7 @@ abstract class Relation[R <: Record[R]] {
    * e.g. strip trailing `$` from `this.getClass.getName`.
    */
   val recordClass: Class[R] = Circumflex
-      .loadClass[R](this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
+          .loadClass[R](this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
 
   /**
    * This sample is used to introspect record for fields, constraints and,
@@ -117,8 +117,8 @@ abstract class Relation[R <: Record[R]] {
   private def findMembers(cl: Class[_]): Unit = {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
     cl.getDeclaredFields
-        .map(f => cl.getMethod(f.getName))
-        .foreach(m => processMember(m))
+            .map(f => cl.getMethod(f.getName))
+            .foreach(m => processMember(m))
   }
 
   private def processMember(m: Method): Unit = m.getReturnType match {
@@ -132,10 +132,23 @@ abstract class Relation[R <: Record[R]] {
       this._associations ++= List[Association[R, _]](a)
       this._fields ++= List(a.field)
       this._vhMap += a.field -> m
+      this._constraints ++= List(associationFK(a))
     case _ =>
   }
 
+  private def associationFK(assoc: Association[_, _]): ForeignKey = {
+    val name = relationName + "_" + assoc.name + "_fkey"
+    new ForeignKey(this,
+      name,
+      assoc.foreignRelation,
+      List(assoc.field),
+      List(assoc.foreignRelation.primaryKey),
+      assoc.onDelete,
+      assoc.onUpdate)
+  }
+
   findMembers(recordClass)
+
 
   // ### Definitions
 
@@ -144,7 +157,7 @@ abstract class Relation[R <: Record[R]] {
    */
   protected[orm] def unique(fields: Field[_]*): UniqueKey = {
     val constrName = relationName + "_" +
-        fields.map(_.name).mkString("_") + "_key"
+            fields.map(_.name).mkString("_") + "_key"
     val constr = new UniqueKey(this, constrName, fields.toList)
     this._constraints ++= List(constr)
     return constr

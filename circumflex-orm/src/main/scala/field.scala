@@ -8,10 +8,10 @@ import ORM._
  * Each field of persistent class correspond to a field of record in a relation.
  * We strongly distinguish `NULLABLE` and `NOT_NULL` fields.
  */
-abstract class Field[T](val name: String,
-                        val uuid: String,
+abstract class Field[T](name: String,
+                        uuid: String,
                         val sqlType: String)
-    extends SQLable with ValueHolder[T] {
+    extends ValueHolder[T](name, uuid) with SQLable {
 
   // Should the `UNIQUE` constraint be generated for this field?
   protected var _unique: Boolean = false

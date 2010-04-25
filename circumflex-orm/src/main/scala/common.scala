@@ -68,21 +68,10 @@ trait SchemaObject {
  * *Value holder* is designed to be an extensible atomic data carrier unit
  * of record. It is subclassed by 'Field' and 'Association'.
  */
-trait ValueHolder[T]
-    extends WrapperModel {
+abstract class ValueHolder[T](val name: String, val uuid: String) extends WrapperModel {
 
   // An internally stored value.
   protected var _value: T = _
-
-  /**
-   * A name by of this value holder.
-   */
-  def name: String
-
-  /**
-   * Used to differentiate between holders.
-   */
-  def uuid: String
 
   // This way the value will be unwrapped by FTL engine.
   def item = getValue
