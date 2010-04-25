@@ -206,4 +206,26 @@ class Dialect {
     return result
   }
 
+  /**
+   * Produces `SELECT` statement (without `LIMIT`, `OFFSET` and `ORDER BY`
+   * clauses).
+   */
+  def subselect(q: Subselect): String = {
+    var result = "SELECT " + q.projections.map(_.toSql).mkString(", ")
+    if (q.relations.size > 0)
+      result += " FROM " + q.relations.map(_.toSql).mkString(", ")
+    if (q.where != EmptyPredicate)
+      result += " WHERE " + q.where.toSql
+    if (q.groupBy.size > 0)
+      result += " GROUP BY " + q.groupBy.flatMap(_.sqlAliases).mkString(", ")
+    if (q.having != EmptyPredicate)
+      result += " HAVING " + q.having.toSql
+    q.setOps.foreach {
+      case (op: SetOperation, subq: Subselect) =>
+        result += " " + op.toSql + " ( " + subq.toSubselectSql + " )"
+      case _ =>
+    }
+    return result
+  }
+
 }

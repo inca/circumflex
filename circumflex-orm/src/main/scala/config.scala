@@ -8,6 +8,7 @@ import javax.naming.InitialContext
 import javax.sql.DataSource
 import org.slf4j.LoggerFactory
 import ORM._
+import java.util.regex.Pattern
 
 // ## Configuration
 
@@ -27,6 +28,8 @@ object ORM {
     new SimpleExpressionHelper(expression)
   implicit def string2predicate(expression: String): Predicate =
     new SimpleExpression(expression, Nil)
+  implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
+    new SimpleExpression(expression.toSql, expression.parameters)
 
   // ### Global Configuration Objects
 
@@ -105,12 +108,12 @@ object ORM {
   val RIGHT_JOIN = JoinType(dialect.rightJoin)
   val FULL_JOIN = JoinType(dialect.fullJoin)
 
-  val UNION = SetOperation(dialect.union)
-  val UNION_ALL = SetOperation(dialect.unionAll)
-  val EXCEPT = SetOperation(dialect.except)
-  val EXCEPT_ALL = SetOperation(dialect.exceptAll)
-  val INTERSECT = SetOperation(dialect.intersect)
-  val INTERSECT_ALL = SetOperation(dialect.intersectAll)
+  val OP_UNION = SetOperation(dialect.union)
+  val OP_UNION_ALL = SetOperation(dialect.unionAll)
+  val OP_EXCEPT = SetOperation(dialect.except)
+  val OP_EXCEPT_ALL = SetOperation(dialect.exceptAll)
+  val OP_INTERSECT = SetOperation(dialect.intersect)
+  val OP_INTERSECT_ALL = SetOperation(dialect.intersectAll)
 
   // ### SQL shortcuts
 
@@ -125,6 +128,25 @@ object ORM {
   def not(predicate: Predicate) =
     new SimpleExpression(dialect.not(predicate.toSql), predicate.parameters)
   def NOT(predicate: Predicate) = not(predicate)
+
+  def expr(expression: String, params: Any*): SimpleExpression =
+    new SimpleExpression(expression, params.toList)
+
+  def prepareExpr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
+    var sqlText = expression
+    var parameters: Seq[Any] = Nil
+    val paramsMap = Map[String, Any](params: _*)
+    val pattern = Pattern.compile(":([a-zA-Z_]+)\\b")
+    val matcher = pattern.matcher(expression)
+    while(matcher.find) paramsMap.get(matcher.group(1)) match {
+      case Some(param) => parameters ++= List(param)
+      case _ => parameters ++= List(null)
+    }
+    sqlText = matcher.replaceAll("?")
+    return new SimpleExpression(sqlText, parameters)
+  }
+
+
 }
 
 // ### Connection provider

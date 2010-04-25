@@ -137,7 +137,7 @@ case class SetOperation(val toSql: String) extends SQLable {
  * `ResultSet`s and `PreparedStatement`s.
  */
 object JDBC {
-  protected val sqlLog = LoggerFactory.getLogger("ru.circumflex.orm")
+  protected[orm] val sqlLog = LoggerFactory.getLogger("ru.circumflex.orm")
 
   def autoClose[A <: {def close(): Unit}, B](obj: A)
                                             (actions: A => B)
