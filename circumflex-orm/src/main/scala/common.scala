@@ -28,6 +28,7 @@ trait ParameterizedExpression extends SQLable {
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
     sql.replaceFirst("\\?", typeConverter.toString(p)))
 
+  override def toString = toSql
 }
 
 /**
@@ -111,12 +112,16 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
  * An action for `ON UPDATE` and `ON DELETE` clauses of
  * foreign key definitions.
  */
-case class ForeignKeyAction(val toSql: String) extends SQLable
+case class ForeignKeyAction(val toSql: String) extends SQLable {
+  override def toString = toSql
+}
 
 /**
  * Join types for use in `FROM` clauses of SQL queries.
  */
-case class JoinType(val toSql: String) extends SQLable
+case class JoinType(val toSql: String) extends SQLable {
+  override def toString = toSql
+}
 
 // ## JDBC utilities
 

@@ -21,6 +21,8 @@ abstract class Constraint(val relation: Relation[_],
   def toSql = dialect.constraintDefinition(this)
 
   def sqlDefinition: String
+
+  override def toString = toSql
 }
 
 /**

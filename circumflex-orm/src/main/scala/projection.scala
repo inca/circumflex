@@ -25,6 +25,7 @@ trait Projection[T] extends SQLable {
    */
   def sqlAliases: Seq[String]
 
+  override def toString = toSql
 }
 
 /**

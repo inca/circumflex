@@ -47,6 +47,28 @@ class Dialect {
   def rightJoin = "RIGHT JOIN"
   def fullJoin = "FULL JOIN"
 
+  // ### Predicates
+
+  def EQ = "= ?"
+  def NE = "<> ?"
+  def GT = "> ?"
+  def GE = ">= ?"
+  def LT = "< ?"
+  def LE = "<= ?"
+
+  def emptyPredicate = "1 = 1"
+  def isNull = "IS NULL"
+  def isNotNull = "IS NOT NULL"
+  def like = "LIKE ?"
+  def ilike = "ILIKE ?"
+  def between = "BETWEEN ? AND ?"
+  def parameterizedIn(params: Seq[_]) =
+    "IN (" + params.map(p => "?").mkString(", ") + ")"
+
+  def and = "AND"
+  def or = "OR"
+  def not = "NOT"
+
   // ### Features compliance
 
   def supportsSchema_?(): Boolean = true
@@ -84,7 +106,12 @@ class Dialect {
   /**
    * Take specified `expression` into parentheses and prepend `ON`.
    */
-   def on(expression: String) = "ON (" + expression + ")"
+  def on(expression: String) = "ON (" + expression + ")"
+
+  /**
+   * Take specified `expression` in parentheses and prepend `NOT`.
+   */
+  def not(expression: String) = "NOT (" + expression + ")"
 
 
   // ### DDL
@@ -141,10 +168,10 @@ class Dialect {
    */
   def foreignKeyDefinition(fk: ForeignKey) =
     "FOREIGN KEY (" + fk.localFields.map(_.name).mkString(", ") +
-        ") REFERENCES " + fk.foreignRelation.qualifiedName + " (" +
-        fk.foreignFields.map(_.name).mkString(", ") + ") " +
-        "ON DELETE " + fk.onDelete.toSql + " " +
-        "ON UPDATE " + fk.onUpdate.toSql
+            ") REFERENCES " + fk.foreignRelation.qualifiedName + " (" +
+            fk.foreignFields.map(_.name).mkString(", ") + ") " +
+            "ON DELETE " + fk.onDelete.toSql + " " +
+            "ON UPDATE " + fk.onUpdate.toSql
 
   // ### SQL
 
@@ -161,8 +188,8 @@ class Dialect {
     node match {
       case j: JoinNode[_, _] =>
         result += joinInternal(j.left, on) +
-            " " + j.joinType.toSql + " " +
-            joinInternal(j.right, j.sqlOn)
+                " " + j.joinType.toSql + " " +
+                joinInternal(j.right, j.sqlOn)
       case _ =>
         result += node.toSql
         if (on != null) result += " " + on

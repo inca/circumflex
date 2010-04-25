@@ -19,6 +19,17 @@ object ORM {
 
   protected[orm] val ormLog = LoggerFactory.getLogger("ru.circumflex.orm")
 
+  // ### Implicits
+
+  implicit def relation2node[R <: Record[R]](relation: Relation[R]): RelationNode[R] =
+    relation.as("this")
+  implicit def string2helper(expression: String): SimpleExpressionHelper =
+    new SimpleExpressionHelper(expression)
+  implicit def string2predicate(expression: String): Predicate =
+    new SimpleExpression(expression, Nil)
+
+  // ### Global Configuration Objects
+
   /**
    * Connection provider.
    * Can be overriden with `orm.connectionProvider` configuration parameter.
@@ -94,6 +105,19 @@ object ORM {
   val RIGHT_JOIN = JoinType(dialect.rightJoin)
   val FULL_JOIN = JoinType(dialect.fullJoin)
 
+  // ### SQL shortcuts
+
+  def and(predicates: Predicate*) =
+    new AggregatePredicate(dialect.and, predicates.toList)
+  def AND(predicates: Predicate*) = and(predicates: _*)
+
+  def or(predicates: Predicate*) =
+    new AggregatePredicate(dialect.or, predicates.toList)
+  def OR(predicates: Predicate*) = or(predicates: _*)
+
+  def not(predicate: Predicate) =
+    new SimpleExpression(dialect.not(predicate.toSql), predicate.parameters)
+  def NOT(predicate: Predicate) = not(predicate)
 }
 
 // ### Connection provider
