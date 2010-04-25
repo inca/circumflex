@@ -4,7 +4,6 @@ import ORM._
 import ru.circumflex.core.Circumflex
 import ru.circumflex.core.CircumflexUtil._
 import java.lang.reflect.Method
-import java.util.UUID
 
 // ## Relations registry
 
@@ -53,8 +52,9 @@ abstract class Relation[R <: Record[R]] {
 
   // Since we use reflection to read `Record`s from database
   // we need this map to remember, what `Method` on `Record`
-  // instance should we invoke for each `ValueHolder`.
-  protected[orm] var _vhMap: Map[ValueHolder[_], Method] = Map()
+  // instance should we invoke for each `Field`.
+  protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
+  def methodsMap: Map[Field[_], Method] = _methodsMap
 
   // Unique suffix is used to differentiate schema objects which have same names.
   private var _uniqueCounter = -1
@@ -100,9 +100,16 @@ abstract class Relation[R <: Record[R]] {
   def qualifiedName = dialect.relationQualifiedName(this)
 
   /**
-   * Used to determine, whether DML statements are allowed against this relation.
+   * Are DML statements allowed against this relation?
    */
   def readOnly_?(): Boolean = false
+
+  /**
+   * Is this relation *virtual*? Virtual records do not have primary keys
+   * (therefore they cannot be cached and retrieved by method `get`). The
+   * basic use case is statistical `View` that can return heterogeneous data.
+   */
+  def virtual_?(): Boolean = false
 
   /**
    * Primary key field of this relation.
@@ -138,12 +145,12 @@ abstract class Relation[R <: Record[R]] {
       val f = m.invoke(recordSample).asInstanceOf[Field[_]]
       this._fields ++= List(f)
       if (f.unique_?) this.unique(f)
-      this._vhMap += f -> m
+      this._methodsMap += f -> m
     case cl if classOf[Association[R, _]].isAssignableFrom(cl) =>
       val a = m.invoke(recordSample).asInstanceOf[Association[R, _]]
       this._associations ++= List[Association[R, _]](a)
       this._fields ++= List(a.field)
-      this._vhMap += a.field -> m
+      this._methodsMap += a.field -> m
       this._constraints ++= List(associationFK(a))
     case _ =>
   }

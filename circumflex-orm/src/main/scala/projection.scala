@@ -144,8 +144,40 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
 
   def subProjections = _fieldProjections
 
-  // TODO implement it
-  def read(rs: ResultSet): Option[R] = None
+  def read(rs: ResultSet): Option[R] =
+    if (node.relation.virtual_?) {
+      // skip caches and read record
+      readRecord(rs)
+    } else {
+      val pk = node.relation.primaryKey
+      _fieldProjections.find(_.field == pk) match {
+        case Some(pkProjection) => pkProjection.read(rs) match {
+          case Some(id) => tx.getCachedRecord(node.relation, id) match {
+            case Some(record: R) => Some(record)
+            case _ => readRecord(rs)
+          } case _ => None
+        } case _ => None
+      }
+    }
+
+  protected def readRecord(rs: ResultSet): Option[R] = {
+    val record:R = node.relation.recordClass.newInstance
+    _fieldProjections.foreach(p => p.read(rs) match {
+      case Some(value) => node.relation.methodsMap(p.field).invoke(record) match {
+        case f: NullableField[Any] => f.setValue(Some(value))
+        case f: NotNullField[Any] => f.setValue(value)
+        case _ => throw new ORMException("Could not set a field " + p.field +
+                " on record " + record.uuid + ".")
+      } case _ =>
+    })
+    // if record remains unidentified, do not return it
+    if (record.transient_?) return None
+    else {
+      // otherwise cache it and return
+      tx.updateRecordCache(record)
+      return Some(record)
+    }
+  }
 
   override def equals(obj: Any) = obj match {
     case p: RecordProjection[R] => this.node == p.node
