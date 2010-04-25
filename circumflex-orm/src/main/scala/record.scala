@@ -44,13 +44,18 @@ abstract class Record[R <: Record[R]] { this: R =>
   def relation = RelationRegistry.getRelation(this)
 
   // A default primary key is an auto-incremented `BIGINT` column.
-  val id = "id" BIGINT
+  val id = "id".BIGINT.NULLABLE
 
   /**
    * We only support auto-generated `BIGINT` columns as primary keys
    * for a couple of reasons. Sorry.
    */
-  def primaryKey: Field[Long] = id
+  def primaryKey: Field[Option[Long]] = id
+
+  /**
+   * Yield `true` if `primaryKey` field is empty (contains `None`).
+   */
+  def transient_?(): Boolean = id() == None
 
   /**
    * Non-DSL field creation.
@@ -60,7 +65,7 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   // ### Miscellaneous
 
-  override def toString = getClass.getSimpleName + "@" + id.toString("UNSAVED")
+  override def toString = getClass.getSimpleName + "@" + id.string("TRANSIENT")
 
 }
 

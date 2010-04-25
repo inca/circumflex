@@ -100,9 +100,9 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   /**
    * Return a `String` representation of internal value.
    */
-  def toString(default: String) = if (getValue == null) default else getValue.toString
+  def string(default: String = "") = if (getValue == null) default else getValue.toString
 
-  override def toString = toString("")
+  override def toString = string()
 }
 
 // ## JDBC utilities

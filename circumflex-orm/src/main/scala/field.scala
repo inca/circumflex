@@ -53,6 +53,9 @@ class NotNullField[T](name: String, uuid: String, sqlType: String)
 class NullableField[T](name: String, uuid: String, sqlType: String)
     extends Field[Option[T]](name, uuid, sqlType) {
 
+  // `None` is default value instead of `null`
+  setValue(None)
+
   def get(): T = _value.get
   def getOrElse(default: T): T = apply().getOrElse(default)
 
@@ -69,7 +72,7 @@ class NullableField[T](name: String, uuid: String, sqlType: String)
   }
   def NOT_NULL = notNull
 
-  override def toString(default: String) = apply() match {
+  override def string(default: String) = apply() match {
     case Some(value) if value != null => value.toString
     case _ => default
   }

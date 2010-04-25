@@ -1,6 +1,7 @@
 package ru.circumflex.orm
 
 import java.sql.{PreparedStatement, Connection}
+import collection.mutable.HashMap
 
 // ## Transaction management
 
@@ -170,8 +171,16 @@ class StatefulTransaction {
 
   // ### Cache
 
-  // TODO
+  protected[orm] var recordCache = new HashMap[String, Any]
+  protected[orm] var mtoCache = new HashMap[String, Any]
+  protected[orm] var otmCache = new HashMap[String, Seq[Any]]
 
-  def invalidateCaches: Unit = {}
+  def invalidateCaches: Unit = {
+    recordCache = new HashMap[String, Any]
+    mtoCache = new HashMap[String, Any]
+    otmCache = new HashMap[String, Seq[Any]]
+  }
+
+  
 
 }
