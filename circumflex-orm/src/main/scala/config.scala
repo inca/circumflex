@@ -105,6 +105,13 @@ object ORM {
   val RIGHT_JOIN = JoinType(dialect.rightJoin)
   val FULL_JOIN = JoinType(dialect.fullJoin)
 
+  val UNION = SetOperation(dialect.union)
+  val UNION_ALL = SetOperation(dialect.unionAll)
+  val EXCEPT = SetOperation(dialect.except)
+  val EXCEPT_ALL = SetOperation(dialect.exceptAll)
+  val INTERSECT = SetOperation(dialect.intersect)
+  val INTERSECT_ALL = SetOperation(dialect.intersectAll)
+
   // ### SQL shortcuts
 
   def and(predicates: Predicate*) =

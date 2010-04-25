@@ -69,6 +69,15 @@ class Dialect {
   def or = "OR"
   def not = "NOT"
 
+  // ### Set operations
+
+  def union = "UNION"
+  def unionAll = "UNION ALL"
+  def except = "EXCEPT"
+  def exceptAll = "EXCEPT ALL"
+  def intersect = "INTERSECT"
+  def intersectAll = "INTERSECT ALL"
+
   // ### Features compliance
 
   def supportsSchema_?(): Boolean = true

@@ -123,6 +123,13 @@ case class JoinType(val toSql: String) extends SQLable {
   override def toString = toSql
 }
 
+/**
+ * Set operations for use in SQL queries.
+ */
+case class SetOperation(val toSql: String) extends SQLable {
+  override def toString = toSql
+}
+
 // ## JDBC utilities
 
 /**
