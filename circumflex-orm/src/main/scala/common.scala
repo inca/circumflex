@@ -11,7 +11,6 @@ import ru.circumflex.core.WrapperModel
  */
 trait SQLable {
   def toSql: String
-  override def toString = toSql
 }
 
 /**
@@ -100,9 +99,12 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   /**
    * Return a `String` representation of internal value.
    */
-  def string(default: String = "") = if (getValue == null) default else getValue.toString
+  def toString(default: String = "") = if (getValue == null) default else getValue.toString
 
-  override def toString = string()
+  /**
+   * Return `uuid` as this holder's identifier.
+   */
+  override def toString = uuid
 }
 
 /**

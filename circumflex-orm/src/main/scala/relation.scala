@@ -114,6 +114,13 @@ abstract class Relation[R <: Record[R]] {
    */
   def as(alias: String) = new RelationNode[R](this).as(alias)
 
+  /**
+   * Try to find an association to specified `relation`.
+   */
+  def findAssociation[F <: Record[F]](relation: Relation[F]): Option[Association[R, F]] =
+    associations.find(_.foreignRelation == relation)
+            .asInstanceOf[Option[Association[R, F]]]
+
   // ### Introspection and Initialization
 
   /**

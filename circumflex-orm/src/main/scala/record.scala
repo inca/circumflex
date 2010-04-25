@@ -65,7 +65,7 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   // ### Miscellaneous
 
-  override def toString = getClass.getSimpleName + "@" + id.string("TRANSIENT")
+  override def toString = getClass.getSimpleName + "@" + id.toString("TRANSIENT")
 
 }
 

@@ -32,7 +32,6 @@ abstract class Field[T](name: String,
   def DEFAULT(expr: String): this.type = default(expr)
 
   def toSql = dialect.columnDefinition(this)
-
 }
 
 class NotNullField[T](name: String, uuid: String, sqlType: String)
@@ -72,7 +71,7 @@ class NullableField[T](name: String, uuid: String, sqlType: String)
   }
   def NOT_NULL = notNull
 
-  override def string(default: String) = apply() match {
+  override def toString(default: String) = apply() match {
     case Some(value) if value != null => value.toString
     case _ => default
   }
