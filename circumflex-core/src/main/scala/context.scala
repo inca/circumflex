@@ -16,6 +16,7 @@ class CircumflexContext(val request: HttpServletRequest,
 
   val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
   val params = new HashMap[String, Any]
+  var matches: Map[String, Match] = _
 
   val stringHeaders = new HashMap[String, String]
   val dateHeaders = new HashMap[String, Long]

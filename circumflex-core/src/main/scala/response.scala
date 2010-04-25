@@ -78,3 +78,13 @@ case class DirectStreamResponse(val streamingFunc: OutputStream => Unit)
     streamingFunc(response.getOutputStream)
   }
 }
+
+case class ContextualResponse(f: CircumflexContext => HttpResponse) extends HttpResponse {
+  override def apply(response: HttpServletResponse) =
+    try {
+      f(ctx)(response)
+    }
+    catch {
+      case e: MatchError => ErrorResponse(400, "" + e)(response) // TODO: log error
+    }
+}

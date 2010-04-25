@@ -15,6 +15,7 @@ class Match(val value: String, params: Array[(String, String)]) {
   def apply(index: Int): String = params(index - 1)._2
   def apply(name: String): String = params.find(_._1 == name).get._2
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
+  def toSeq: Seq[String] = params.map(_._2).toSeq
   override def toString = value
   
 }

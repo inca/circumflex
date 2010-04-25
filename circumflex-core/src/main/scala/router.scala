@@ -35,7 +35,7 @@ class RequestRouter {
   def header = ctx.header
   def session = ctx.session
   def flash = ctx.flash
-  def uri: Match = param("uri")
+  def uri: Match = matching("uri")
 
   /* ### Helpers */
 
@@ -60,9 +60,15 @@ class RequestRouter {
   }
 
   /**
-   * Retrieves a Match from context.
+   * Retrieves a String parameter from context.
    */
-  def param(key: String): Match = ctx(key).get.asInstanceOf[Match]
+  def param(key: String): Option[String] = ctx.stringParam(key)
+
+  /**
+   * Retrieves a Match from context.
+   * Since route matching has success it supposes the key existence.
+   */
+  def matching(key: String): Match = ctx.matches(key)
 
   /**
    * Sends error with specified status code and message.
@@ -77,8 +83,8 @@ class RequestRouter {
   /**
    * Sends a `302 Moved Temporarily` redirect (with optional flashes).
    */
-  def redirect(location: String, flashes: Pair[String, Any]*) = {
-    flashes.toList.foreach(p => flash(p._1) = p._2)
+  def redirect(location: String, flashes: (String, Any)*) = {
+    for ((key, value) <- flashes) flash(key) = value
     RedirectResponse(location)
   }
 
@@ -152,6 +158,51 @@ class RequestRouter {
     return this
   }
 
+  /* ## Request extractors */
+  
+  object Uri {
+    def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
+      Some(ctx.matches("uri").toSeq)
+  }
+
+  case class HeaderExtractor(name: String) {
+    def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
+      ctx.matches.get(name) match {
+        case Some(m) => Some(m.toSeq)
+        case None    => ctx.header(name) map { List(_) }
+      }
+  }
+
+  val Accept = HeaderExtractor("Accept")
+  val AcceptCharset = HeaderExtractor("Accept-Charset")
+  val AcceptEncoding = HeaderExtractor("Accept-Encoding")
+  val AcceptLanguage = HeaderExtractor("Accept-Language")
+  val AcceptRanges = HeaderExtractor("Accept-Ranges")
+  val Authorization = HeaderExtractor("Authorization")
+  val CacheControl = HeaderExtractor("Cache-Control")
+  val Connection = HeaderExtractor("Connection")
+  val Cookie = HeaderExtractor("Cookie")
+  val ContentLength = HeaderExtractor("Content-Length")
+  val ContentType = HeaderExtractor("Content-Type")
+  val HeaderDate = HeaderExtractor("Date")
+  val Expect = HeaderExtractor("Expect")
+  val From = HeaderExtractor("From")
+  val Host = HeaderExtractor("Host")
+  val IfMatch = HeaderExtractor("If-Match")
+  val IfModifiedSince = HeaderExtractor("If-Modified-Since")
+  val IfNoneMatch = HeaderExtractor("If-None-Match")
+  val IfRange = HeaderExtractor("If-Range")
+  val IfUnmodifiedSince = HeaderExtractor("If-Unmodified-Since")
+  val MaxForwards = HeaderExtractor("Max-Forwards")
+  val Pragma = HeaderExtractor("Pragma")
+  val ProxyAuthorization = HeaderExtractor("Proxy-Authorization")
+  val Range = HeaderExtractor("Range")
+  val Referer = HeaderExtractor("Referer")
+  val TE = HeaderExtractor("TE")
+  val Upgrade = HeaderExtractor("Upgrade")
+  val UserAgent = HeaderExtractor("User-Agent")
+  val Via = HeaderExtractor("Via")
+  val War = HeaderExtractor("War")
 }
 
 /**
@@ -171,11 +222,23 @@ class Route(val matchingMethods: String*) {
           case Some(p) => params ++= p
         })
         // All matchers succeeded
-        ctx ++= params
+        ctx.matches = params
         throw RouteMatchedException(Some(response))
       } case _ =>
     }
 
+  /**
+   * For syntax "get(...) { case Extractors(...) => ... }"
+   */
+  def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
+    dispatch(ContextualResponse(f), new UriRequestMatcher(matcher))
+
+  def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
+    dispatch(ContextualResponse(f), new UriRequestMatcher(matcher), matcher1)
+
+  /**
+   * For syntax "get(...) = response"
+   */
   def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
     dispatch(response, new UriRequestMatcher(matcher))
 

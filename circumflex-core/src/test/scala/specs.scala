@@ -13,8 +13,8 @@ object CircumflexCoreSpec extends Specification {
     get("/") = "preved"
     get("/ctx") = if (ctx == null) "null" else ctx.toString
     get("/capture/?"r, headers('Accept -> "+/+")) =
-        "Accept$1 is " + param('Accept)(1) + "; " +
-        "Accept$2 is " + param('Accept)(2)
+        "Accept$1 is " + matching('Accept)(1) + "; " +
+        "Accept$2 is " + matching('Accept)(2)
     get("/capture/(.*)"r) = "uri$1 is " + uri(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
@@ -45,6 +45,16 @@ object CircumflexCoreSpec extends Specification {
     get("/filename/:name.:ext") = uri('name) + uri('ext)
     get("*/one/:two/+.:three") =
       uri(1) + uri('two) + uri(3) + uri('three)
+
+    // Extractors
+    get("/self/:name/:id", headers('Accept -> "+/+")) {
+      case Uri(name, Int(id)) & Accept("text", what) =>
+        "Name is " + name + "; 2*ID is " + (2 * id) + "; what is " + what
+    }
+    get("/host") {
+      case Host("localhost") => "local"
+      case _                 => "remote"
+    }
   }
 
   doBeforeSpec{
@@ -94,6 +104,15 @@ object CircumflexCoreSpec extends Specification {
     "process errors" in {
       MockApp.get("/error").execute().getStatus must_== 503
     }
+    "process URI extractors" in {
+      MockApp.get("/self/abc/12")
+             .setHeader("Accept", "text/plain")
+             .execute.getContent must_== "Name is abc; 2*ID is 24; what is plain"
+    }
+    "process HOST extractors" in {
+      MockApp.get("/host").execute.getContent must_== "local"
+    }
+
   }
 
   "UriMatcher" should {
