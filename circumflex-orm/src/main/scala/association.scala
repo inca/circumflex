@@ -5,6 +5,7 @@ import ORM._
 // ## Association
 
 abstract class Association[R <: Record[R], F <: Record[F]](val name: String,
+                                                           val uuid: String,
                                                            val record: R,
                                                            val foreignRelation: Relation[F])
     extends ValueHolder[F] {
@@ -37,10 +38,11 @@ abstract class Association[R <: Record[R], F <: Record[F]](val name: String,
 }
 
 class NotNullAssociation[R <: Record[R], F <: Record[F]](name: String,
+                                                         uuid: String,
                                                          record: R,
                                                          foreignRelation: Relation[F])
-    extends Association[R, F](name, record, foreignRelation) {
+    extends Association[R, F](name, uuid, record, foreignRelation) {
 
-  val field = new FieldHelper(name).BIGINT
+  val field = new DefinitionHelper(record, name).BIGINT
 
 }

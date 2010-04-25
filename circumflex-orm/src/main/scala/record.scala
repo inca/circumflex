@@ -15,21 +15,26 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   // ### Implicits
 
-  implicit def str2fieldHelper(str: String): FieldHelper =
-    new FieldHelper(str)
-  implicit def str2assocHelper(str: String): AssociationHelper[R] =
-    new AssociationHelper(this, str)
+  implicit def str2ddlHelper(str: String): DefinitionHelper[R] =
+    new DefinitionHelper(this, str)
 
   // ### Commons
+
+  /**
+   * Unique identifier based on fully-qualified class name of
+   * this record, which is used to uniquely identify this record
+   * class among others.
+   */
+  val uuid = getClass.getName
 
   /**
    * A `Relation[R]` corresponding to this record.
    *
    * In general the relations should be the companion objects of records:
    *
-   *     class Country extends Record[Country] {
+   *     class Country extends Record[Country]  {
    *       val name = TEXT NOT_NULL
-   *     }
+   * }
    *
    *     object Country extends Table[Country]
    *
@@ -50,7 +55,8 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Non-DSL field creation.
    */
-  def field[T](name: String, sqlType: String) = new NotNullField[T](name, sqlType)
+  def field[T](name: String, sqlType: String) =
+    new NotNullField[T](name, uuid + "." + name, sqlType)
 
   // ### Miscellaneous
 
@@ -61,24 +67,28 @@ abstract class Record[R <: Record[R]] { this: R =>
 // ## Helper for fields DSL
 
 /**
- * This is a tiny builder that helps to instantiate `Field`s in a neat DSL-like way.
+ * A tiny builder that helps to instantiate `Field`s and `Association`s
+ * in a neat DSL-like way.
  */
-class FieldHelper(name: String) {
-  def integer = new NotNullField[Int](name, dialect.integerType)
-  def bigint = new NotNullField[Long](name, dialect.longType)
+class DefinitionHelper[R <: Record[R]](record: R, name: String) {
+
+  def uuid = record.uuid + "." + name
+
+  def integer = new NotNullField[Int](name, uuid, dialect.integerType)
+  def bigint = new NotNullField[Long](name, uuid, dialect.longType)
   def numeric(precision: Int = -1, scale: Int = 0) = {
     val p = if (precision == -1) "" else "(" + precision + "," + scale + ")"
-    new NotNullField[Long](name, dialect.numericType + p)
+    new NotNullField[Long](name, uuid, dialect.numericType + p)
   }
-  def text = new NotNullField[String](name, dialect.stringType)
+  def text = new NotNullField[String](name, uuid, dialect.stringType)
   def varchar(length: Int = -1) = {
     val l = if (length == -1) "" else "(" + length + ")"
-    new NotNullField[String](name, dialect.varcharType + l)
+    new NotNullField[String](name, uuid, dialect.varcharType + l)
   }
-  def boolean = new NotNullField[Boolean](name, dialect.booleanType)
-  def date = new NotNullField[Date](name, dialect.dateType)
-  def time = new NotNullField[Date](name, dialect.timeType)
-  def timestamp = new NotNullField[Date](name, dialect.timestampType)
+  def boolean = new NotNullField[Boolean](name, uuid, dialect.booleanType)
+  def date = new NotNullField[Date](name, uuid, dialect.dateType)
+  def time = new NotNullField[Date](name, uuid, dialect.timeType)
+  def timestamp = new NotNullField[Date](name, uuid, dialect.timestampType)
 
   def INTEGER = integer
   def BIGINT = bigint
@@ -89,14 +99,9 @@ class FieldHelper(name: String) {
   def DATE = date
   def TIME = time
   def TIMESTAMP = timestamp
-}
 
-/**
- * This is a tiny builder that helps to instantiate `Association`s in a neat DSL-like way.
- */
-class AssociationHelper[R <: Record[R]](record: R, name: String) {
   def references[F <: Record[F]](relation: Relation[F]): Association[R, F] =
-    new NotNullAssociation[R, F](name, record, relation)
+    new NotNullAssociation[R, F](name, uuid, record, relation)
 
   def REFERENCES[F <: Record[F]](relation: Relation[F]): Association[R, F] =
     references(relation)

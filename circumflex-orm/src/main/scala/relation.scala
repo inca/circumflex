@@ -4,6 +4,7 @@ import ORM._
 import ru.circumflex.core.Circumflex
 import ru.circumflex.core.CircumflexUtil._
 import java.lang.reflect.Method
+import java.util.UUID
 
 // ## Relations registry
 
@@ -75,6 +76,12 @@ abstract class Relation[R <: Record[R]] {
    * possibly, other stuff.
    */
   protected[orm] val recordSample: R = recordClass.newInstance
+
+  /**
+   * Unique identifier based on `recordClass` to identify this relation
+   * among others.
+   */
+  def uuid = recordSample.uuid
 
   /**
    * Relation name defaults to record's unqualified class name, transformed

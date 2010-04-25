@@ -79,6 +79,11 @@ trait ValueHolder[T]
    */
   def name: String
 
+  /**
+   * Used to differentiate between holders.
+   */
+  def uuid: String
+
   // This way the value will be unwrapped by FTL engine.
   def item = getValue
 
@@ -94,14 +99,14 @@ trait ValueHolder[T]
   def :=(newValue: T): this.type = setValue(newValue)
   def update(newValue: T): this.type = setValue(newValue)
 
-  // Value equality methods.
+  // Equality methods.
 
   override def equals(that: Any) = that match {
-    case vh: ValueHolder[T] => vh.getValue == this.getValue
+    case vh: ValueHolder[T] => vh.uuid == this.uuid
     case _ => false
   }
 
-  override def hashCode = if (this.getValue == null) 0 else this.getValue.hashCode
+  override def hashCode = this.uuid.hashCode
 
   /**
    * Return a `String` representation of internal value.

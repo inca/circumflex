@@ -9,6 +9,7 @@ import ORM._
  * We strongly distinguish `NULLABLE` and `NOT_NULL` fields.
  */
 abstract class Field[T](val name: String,
+                        val uuid: String,
                         val sqlType: String)
     extends SQLable with ValueHolder[T] {
 
@@ -34,11 +35,11 @@ abstract class Field[T](val name: String,
 
 }
 
-class NotNullField[T](name: String, sqlType: String)
-    extends Field[T](name, sqlType) {
+class NotNullField[T](name: String, uuid: String, sqlType: String)
+    extends Field[T](name, uuid, sqlType) {
 
   def nullable: NullableField[T] = {
-    val c = new NullableField[T](this.name, this.sqlType)
+    val c = new NullableField[T](this.name, this.uuid, this.sqlType)
     c._default = this.default
     return c
   }
@@ -49,8 +50,8 @@ class NotNullField[T](name: String, sqlType: String)
 
 }
 
-class NullableField[T](name: String, sqlType: String)
-    extends Field[Option[T]](name, sqlType) {
+class NullableField[T](name: String, uuid: String, sqlType: String)
+    extends Field[Option[T]](name, uuid, sqlType) {
 
   def get(): T = _value.get
   def getOrElse(default: T): T = apply().getOrElse(default)
@@ -62,7 +63,7 @@ class NullableField[T](name: String, sqlType: String)
   def NULLABLE = nullable
 
   def notNull: NotNullField[T] = {
-    val c = new NotNullField[T](this.name, this.sqlType)
+    val c = new NotNullField[T](this.name, this.uuid, this.sqlType)
     c._default = this.default
     return c
   }
