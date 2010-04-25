@@ -4,7 +4,6 @@ import ORM._
 import ru.circumflex.core.Circumflex
 import ru.circumflex.core.CircumflexUtil._
 import java.lang.reflect.Method
-import collection.mutable.{HashMap, ListBuffer}
 
 // ## Relations registry
 
@@ -36,17 +35,25 @@ abstract class Relation[R <: Record[R]] {
 
   // ### Commons
 
-  // TODO add `protected[orm]` modifier
-  val fields = new ListBuffer[Field[_]]
-  val associations = new ListBuffer[Association[R,_]]
-  val constraints = new ListBuffer[Constraint]
-  val preAux = new ListBuffer[SchemaObject]
-  val postAux = new ListBuffer[SchemaObject]
+  protected[orm] var _fields: List[Field[_]] = Nil
+  def fields: Seq[Field[_]] = _fields
+
+  protected[orm] var _associations: List[Association[R, _]] = Nil
+  def associations: Seq[Association[R, _]] = _associations
+
+  protected[orm] var _constraints: List[Constraint] = Nil
+  def constraints: Seq[Constraint] = _constraints
+
+  protected[orm] var _preAux: List[SchemaObject] = Nil
+  def preAux: Seq[SchemaObject] = _preAux
+
+  protected[orm] var _postAux: List[SchemaObject] = Nil
+  def postAux: Seq[SchemaObject] = _postAux
 
   // Since we use reflection to read `Record`s from database
   // we need this map to remember, what `Method` on `Record`
   // instance should we invoke for each `ValueHolder`.
-  val vhMap = new HashMap[ValueHolder[_], Method]
+  protected[orm] var _vhMap: Map[ValueHolder[_], Method] = Map()
 
   // Unique suffix is used to differentiate schema objects which have same names.
   private var _uniqueCounter = -1
@@ -110,14 +117,14 @@ abstract class Relation[R <: Record[R]] {
   private def processMember(m: Method): Unit = m.getReturnType match {
     case cl if classOf[Field[_]].isAssignableFrom(cl) =>
       val f = m.invoke(recordSample).asInstanceOf[Field[_]]
-      this.fields += f
+      this._fields ++= List(f)
       if (f.unique_?) this.unique(f)
-      this.vhMap += f -> m
+      this._vhMap += f -> m
     case cl if classOf[Association[R, _]].isAssignableFrom(cl) =>
       val a = m.invoke(recordSample).asInstanceOf[Association[R, _]]
-      this.associations += a
-      this.fields += a.field
-      this.vhMap += a.field -> m
+      this._associations ++= List[Association[R, _]](a)
+      this._fields ++= List(a.field)
+      this._vhMap += a.field -> m
     case _ =>
   }
 
@@ -132,7 +139,7 @@ abstract class Relation[R <: Record[R]] {
     val constrName = relationName + "_" +
         fields.map(_.name).mkString("_") + "_key"
     val constr = new UniqueKey(this, constrName, fields.toList)
-    this.constraints += constr
+    this._constraints ++= List(constr)
     return constr
   }
 

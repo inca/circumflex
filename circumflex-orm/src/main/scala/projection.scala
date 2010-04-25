@@ -107,7 +107,7 @@ class ExpressionProjection[T](val expression: String,
 // ## Field Projection
 
 /**
- * Represents a projection for single field of a record.
+ * A projection for single field of a record.
  */
 class FieldProjection[T, R <: Record[R]](val node: RelationNode[R],
                                          val field: Field[T])
@@ -129,5 +129,29 @@ class FieldProjection[T, R <: Record[R]](val node: RelationNode[R],
   override def hashCode = node.hashCode * 31 + field.name.hashCode
 }
 
+// ## Record Projection
 
+/**
+ * A projection for reading entire `Record`.
+ */
+class RecordProjection[R <: Record[R]](val node: RelationNode[R])
+        extends CompositeProjection[R] {
 
+  protected val _fieldProjections: Seq[FieldProjection[Any, R]] = node
+          .relation
+          .fields
+          .map(f => new FieldProjection(node, f.asInstanceOf[Field[Any]]))
+
+  def subProjections = _fieldProjections
+
+  // TODO implement it
+  def read(rs: ResultSet): Option[R] = None
+
+  override def equals(obj: Any) = obj match {
+    case p: RecordProjection[R] => this.node == p.node
+    case _ => false
+  }
+
+  override def hashCode = node.hashCode
+
+}

@@ -18,4 +18,9 @@ abstract class RelationNode[R <: Record[R]](val relation: Relation[R])
    */
   def alias = _alias
 
+  /**
+   * Construct a new `RecordProjection` for this node.
+   */
+  def * = new RecordProjection[R](this)
+
 }
