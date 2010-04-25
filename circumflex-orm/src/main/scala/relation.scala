@@ -3,8 +3,8 @@ package ru.circumflex.orm
 import ORM._
 import ru.circumflex.core.Circumflex
 import ru.circumflex.core.CircumflexUtil._
-import collection.mutable.ListBuffer
 import java.lang.reflect.Method
+import collection.mutable.{HashMap, ListBuffer}
 
 // ## Relations registry
 
@@ -42,6 +42,11 @@ abstract class Relation[R <: Record[R]] {
   val constraints = new ListBuffer[Constraint]
   val preAux = new ListBuffer[SchemaObject]
   val postAux = new ListBuffer[SchemaObject]
+
+  // Since we use reflection to read `Record`s from database
+  // we need this map to remember, what `Method` on `Record`
+  // instance should we invoke for each `ValueHolder`.
+  val vhMap = new HashMap[ValueHolder[_], Method]
 
   // Unique suffix is used to differentiate schema objects which have same names.
   private var _uniqueCounter = -1
@@ -107,10 +112,12 @@ abstract class Relation[R <: Record[R]] {
       val f = m.invoke(recordSample).asInstanceOf[Field[_]]
       this.fields += f
       if (f.unique_?) this.unique(f)
+      this.vhMap += f -> m
     case cl if classOf[Association[R, _]].isAssignableFrom(cl) =>
       val a = m.invoke(recordSample).asInstanceOf[Association[R, _]]
       this.associations += a
       this.fields += a.field
+      this.vhMap += a.field -> m
     case _ =>
   }
 

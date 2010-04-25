@@ -94,7 +94,7 @@ trait ValueHolder[T]
   def :=(newValue: T): this.type = setValue(newValue)
   def update(newValue: T): this.type = setValue(newValue)
 
-  // Equality methods.
+  // Value equality methods.
 
   override def equals(that: Any) = that match {
     case vh: ValueHolder[T] => vh.getValue == this.getValue

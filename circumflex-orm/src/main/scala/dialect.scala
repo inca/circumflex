@@ -56,6 +56,25 @@ class Dialect {
    */
   def defaultExpression(expr: String) = "DEFAULT " + expr
 
+  /**
+   * Just append `AS` and specified `alias` to specified `expression`.
+   */
+  def scalarAlias(expression: String, alias: String) = expression + " AS " + alias
+
+  /**
+   * Qualify a column with table alias (e.g. "p.id")
+   */
+  def qualifyColumn(field: Field[_], tableAlias: String) =
+    tableAlias + "." + field.name
+
+  /**
+   * Qualify column with table alias and append `AS` and it's alias.
+   */
+  def columnAlias(field: Field[_], columnAlias: String, tableAlias: String) =
+    qualifyColumn(field, tableAlias) + " AS " + columnAlias
+
+
+
   // ### DDL
 
   /**
