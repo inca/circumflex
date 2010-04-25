@@ -4,6 +4,7 @@ package ru.circumflex.orm
 
 /**
  * A default dialect singleton.
+ *
  * If you feel that some of the statements do not work
  * with your RDBMS vendor, trace the exact method and provide it's
  * implementation in your own class. After that, set the `orm.dialect`
@@ -31,13 +32,25 @@ class Dialect {
   def timeType = "TIME"
   def timestampType = "TIMESTAMPTZ"
 
-  // ### Actions for Foreign Keys
+  // ### Actions for foreign keys
 
   def fkNoAction = "NO ACTION"
   def fkCascade = "CASCADE"
   def fkRestrict = "RESTRICT"
   def fkSetNull = "SET NULL"
   def fkSetDefault = "SET DEFAULT"
+
+  // ### Join keywords
+
+  def innerJoin = "INNER JOIN"
+  def leftJoin = "LEFT JOIN"
+  def rightJoin = "RIGHT JOIN"
+  def fullJoin = "FULL JOIN"
+
+  // ### Features compliance
+
+  def supportsSchema_?(): Boolean = true
+  def supportDropConstraints_?(): Boolean = true
 
   // ### Commons
 
@@ -60,19 +73,13 @@ class Dialect {
   /**
    * Just append `AS` and specified `alias` to specified `expression`.
    */
-  def scalarAlias(expression: String, alias: String) = expression + " AS " + alias
+  def alias(expression: String, alias: String) = expression + " AS " + alias
 
   /**
    * Qualify a column with table alias (e.g. "p.id")
    */
   def qualifyColumn(field: Field[_], tableAlias: String) =
     tableAlias + "." + field.name
-
-  /**
-   * Qualify column with table alias and append `AS` and it's alias.
-   */
-  def columnAlias(field: Field[_], columnAlias: String, tableAlias: String) =
-    qualifyColumn(field, tableAlias) + " AS " + columnAlias
 
 
 
@@ -134,7 +141,6 @@ class Dialect {
         fk.foreignFields.map(_.name).mkString(", ") + ") " +
         "ON DELETE " + fk.onDelete.toSql + " " +
         "ON UPDATE " + fk.onUpdate.toSql
-
 
 
 }

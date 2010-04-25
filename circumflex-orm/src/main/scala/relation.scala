@@ -109,6 +109,11 @@ abstract class Relation[R <: Record[R]] {
    */
   def primaryKey = recordSample.primaryKey
 
+  /**
+   * Create new `RelationNode` with specified `alias`.
+   */
+  def as(alias: String) = new RelationNode[R](this).as(alias)
+
   // ### Introspection and Initialization
 
   /**
@@ -165,7 +170,7 @@ abstract class Relation[R <: Record[R]] {
 
   protected[orm] def UNIQUE(fields: Field[_]*) = unique(fields: _*)
 
-  // ### Equality and toString
+  // ### Equality and others
 
   override def equals(that: Any) = that match {
     case r: Relation[R] => r.relationName.equalsIgnoreCase(this.relationName)

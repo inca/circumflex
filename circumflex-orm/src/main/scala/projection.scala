@@ -93,7 +93,7 @@ class ExpressionProjection[T](val expression: String,
 
   override def grouping_?() = grouping
 
-  def toSql = dialect.scalarAlias(expression, alias)
+  def toSql = dialect.alias(expression, alias)
 
   override def equals(obj: Any) = obj match {
     case p: ExpressionProjection[T] =>
@@ -118,7 +118,7 @@ class FieldProjection[T, R <: Record[R]](val node: RelationNode[R],
    */
   def expr = dialect.qualifyColumn(field, node.alias)
 
-  def toSql = dialect.columnAlias(field, alias, node.alias)
+  def toSql = dialect.alias(expr, alias)
 
   override def equals(obj: Any) = obj match {
     case p: FieldProjection[T, R] =>
