@@ -29,6 +29,8 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
     return this
   }
 
+  def AS(alias: String): this.type = as(alias)
+
   // ### Projections
 
   /**
@@ -40,6 +42,36 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
    * Default projections for this node.
    */
   def projections: Seq[Projection[_]] = List(*)
+
+  // ### Joins
+
+  def findAssociation[F <: Record[F]](node: RelationNode[F]): Option[Association[R, F]] =
+    relation.findAssociation(node.relation)
+
+  /**
+   * Explicit join.
+   */
+  def join[J <: Record[J]](node: RelationNode[J],
+                           on: String,
+                           joinType: JoinType): JoinNode[R, J] =
+    new ExplicitJoin(this, node, on, joinType)
+
+  /**
+   * Auto-join (the `ON` subclause is evaluated by searching matching association).
+   */
+  def join[J <: Record[J]](node: RelationNode[J],
+                           joinType: JoinType = LEFT_JOIN): JoinNode[R, J] =
+    findAssociation(node) match {
+      case Some(a: Association[R, J]) =>  // many-to-one join
+        new ManyToOneJoin[R, J](this, node, a, joinType)
+      case _ => node.findAssociation(this) match {
+        case Some(a: Association[J, R]) =>  // one-to-many join
+          new OneToManyJoin[R, J](this, node, a, joinType)
+        case _ =>
+          throw new ORMException("Failed to join " + this + " and " + node +
+                  ": no associations found.")
+      }
+    }
 
   // ### Equality and others
 
@@ -58,6 +90,8 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
   override def clone(): this.type = super.clone.asInstanceOf[this.type]
 
   def toSql = dialect.alias(relation.qualifiedName, alias)
+
+  override def toString = toSql
 }
 
 // ## Proxy Node
@@ -101,18 +135,21 @@ class ProxyNode[R <: Record[R]](protected[orm] var node: RelationNode[R])
 /**
  * This node represents a relational join between two nodes (`left` and `right`).
  */
-class JoinNode[L <: Record[L], R <: Record[R]](
+abstract class JoinNode[L <: Record[L], R <: Record[R]](
         protected var _left: RelationNode[L],
         protected var _right: RelationNode[R],
-        protected var _on: String,
         protected var _joinType: JoinType) extends ProxyNode[L](_left) {
 
   def left = _left
   def right = _right
   def joinType = _joinType
-  def on = _on
 
-  def sqlOn = dialect.on(this._on)
+  /**
+   * Join condition expression (used in `ON` subclauses).
+   */
+  def on: String
+
+  def sqlOn = dialect.on(this.on)
 
   /**
    * Join node returns projections of `left` node appended with projections
@@ -143,5 +180,37 @@ class JoinNode[L <: Record[L], R <: Record[R]](
   override def clone(): this.type = super.clone()
           .replaceLeft(this.left.clone)
           .replaceRight(this.right.clone)
+}
 
+/**
+ * A join with explicit join condition.
+ */
+class ExplicitJoin[L <: Record[L], R <: Record[R]](
+        left: RelationNode[L],
+        right: RelationNode[R],
+        val on: String,
+        joinType: JoinType) extends JoinNode[L, R](left, right, joinType)
+
+/**
+ * A join in many-to-one direction.
+ */
+class ManyToOneJoin[L <: Record[L], R <: Record[R]](
+        childNode: RelationNode[L],
+        parentNode: RelationNode[R],
+        val association: Association[L, R],
+        joinType: JoinType) extends JoinNode[L, R](childNode, parentNode, joinType) {
+  def on = childNode.alias + "." + association.name + " = " +
+          parentNode.alias + "." + association.foreignRelation.primaryKey.name
+}
+
+/**
+ * A join in one-to-many direction.
+ */
+class OneToManyJoin[L <: Record[L], R <: Record[R]](
+        parentNode: RelationNode[L],
+        childNode: RelationNode[R],
+        val association: Association[R, L],
+        joinType: JoinType) extends JoinNode[L, R](parentNode, childNode, joinType) {
+  def on = childNode.alias + "." + association.name + " = " +
+          parentNode.alias + "." + association.foreignRelation.primaryKey.name
 }
