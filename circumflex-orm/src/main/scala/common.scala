@@ -105,6 +105,17 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   override def toString = string()
 }
 
+/**
+ * An action for `ON UPDATE` and `ON DELETE` clauses of
+ * foreign key definitions.
+ */
+case class ForeignKeyAction(val toSql: String) extends SQLable
+
+/**
+ * Join types for use in `FROM` clauses of SQL queries.
+ */
+case class JoinType(val toSql: String) extends SQLable
+
 // ## JDBC utilities
 
 /**

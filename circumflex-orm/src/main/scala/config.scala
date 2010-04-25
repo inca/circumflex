@@ -89,6 +89,11 @@ object ORM {
   val SET_NULL = ForeignKeyAction(dialect.fkSetNull)
   val SET_DEFAULT = ForeignKeyAction(dialect.fkSetDefault)
 
+  val INNER_JOIN = JoinType(dialect.innerJoin)
+  val LEFT_JOIN = JoinType(dialect.leftJoin)
+  val RIGHT_JOIN = JoinType(dialect.rightJoin)
+  val FULL_JOIN = JoinType(dialect.fullJoin)
+
 }
 
 // ### Connection provider

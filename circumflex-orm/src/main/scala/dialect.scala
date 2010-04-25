@@ -81,6 +81,10 @@ class Dialect {
   def qualifyColumn(field: Field[_], tableAlias: String) =
     tableAlias + "." + field.name
 
+  /**
+   * Take specified `expression` into parentheses and prepend `ON`.
+   */
+   def on(expression: String) = "ON (" + expression + ")"
 
 
   // ### DDL
@@ -142,5 +146,28 @@ class Dialect {
         "ON DELETE " + fk.onDelete.toSql + " " +
         "ON UPDATE " + fk.onUpdate.toSql
 
+  // ### SQL
+
+  /**
+   * Produces SQL representation of joined tree of relations (`JoinNode` instance).
+   */
+  def join(j: JoinNode[_, _]): String = joinInternal(j, null)
+
+  /**
+   * Some magic to convert join tree to SQL.
+   */
+  protected def joinInternal(node: RelationNode[_], on: String): String = {
+    var result = ""
+    node match {
+      case j: JoinNode[_, _] =>
+        result += joinInternal(j.left, on) +
+            " " + j.joinType.toSql + " " +
+            joinInternal(j.right, j.sqlOn)
+      case _ =>
+        result += node.toSql
+        if (on != null) result += " " + on
+    }
+    return result
+  }
 
 }

@@ -1,8 +1,6 @@
 package ru.circumflex.orm
 
 import ORM._
-import ru.circumflex.core.CircumflexUtil._
-import java.lang.reflect.Method
 
 // ## Schema Objects for DDL
 
@@ -42,7 +40,3 @@ class ForeignKey(r: Relation[_],
                  val onUpdate: ForeignKeyAction) extends Constraint(r, n) {
   def sqlDefinition = dialect.foreignKeyDefinition(this)
 }
-
-// ### Foreign Keys
-
-case class ForeignKeyAction(val toSql: String) extends SQLable
