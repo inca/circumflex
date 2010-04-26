@@ -168,6 +168,11 @@ abstract class Relation[R <: Record[R]] {
 
   findMembers(recordClass)
 
+  /**
+   * Allow dialects to override the initialization logic.
+   */
+  dialect.initializeRelation(this)
+
 
   // ### Definitions
 
@@ -183,6 +188,16 @@ abstract class Relation[R <: Record[R]] {
   }
 
   protected[orm] def UNIQUE(fields: Field[_]*) = unique(fields: _*)
+
+  def addPreAux(objects: SchemaObject*): this.type = {
+    objects.foreach(o => if (!_preAux.contains(o)) _preAux += o)
+    return this
+  }
+
+  def addPostAux(objects: SchemaObject*): this.type = {
+    objects.foreach(o => if (!_postAux.contains(o)) _postAux += o)
+    return this
+  }
 
   // ### Equality and others
 

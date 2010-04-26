@@ -194,6 +194,21 @@ class Dialect {
   }
 
   /**
+   * Make necessary stuff for relation initialization.
+   *
+   * This implementation adds an auxiliary sequence for primary key
+   * (sequences are supported by PostgreSQL, Oracle and DB2 dialects).
+   */
+  def initializeRelation(relation: Relation[_]): Unit = {
+    val seq = new SchemaObject{
+      def objectName = relation.qualifiedName + "_" + relation.primaryKey.name + "_seq"
+      def sqlDrop = "DROP SEQUENCE " + objectName
+      def sqlCreate = "CREATE SEQUENCE " + objectName
+    }
+    relation.addPreAux(seq)
+  }
+
+  /**
    * Produces unique constraint definition (e.g. `UNIQUE (name, value)`).
    */
   def uniqueKeyDefinition(uniq: UniqueKey) =
