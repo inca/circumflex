@@ -11,7 +11,7 @@ import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
  * This filter should be the first in chain.
  */
 class TransactionManagementFilter extends AbstractCircumflexFilter {
-  override protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
+  protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
   /**
    * Commits current transaction at the end of request processing cycle and closes current connection.

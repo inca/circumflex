@@ -1,5 +1,4 @@
 package ru.circumflex.core
-import java.io.File
 import javax.servlet.Filter
 import org.mortbay.jetty.servlet.{ServletHolder, DefaultServlet, Context}
 import org.mortbay.jetty.{Handler, Server}

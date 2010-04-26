@@ -4,9 +4,8 @@ import java.lang.reflect.InvocationTargetException
 import java.util.regex.Pattern
 import util.matching.Regex
 import javax.servlet._
-import http.{HttpServletResponse, HttpServletRequest}
+import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
-import Circumflex._
 import java.io.{FileNotFoundException, File}
 import org.apache.commons.io.FilenameUtils._
 
@@ -16,8 +15,6 @@ import org.apache.commons.io.FilenameUtils._
  * Provides a base class for Circumflex filter implementations.
  */
 abstract class AbstractCircumflexFilter extends Filter {
-
-  protected val log = LoggerFactory.getLogger("ru.circumflex.core")
 
   /**
    * Place your application initialization code here.
@@ -122,7 +119,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * Default behavior is to send the `500 Internal Server Error` to client.
    */
   def onRouterError(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
-    log.error("Router threw an exception, see stack trace for details.", e)
+    cxLog.error("Router threw an exception, see stack trace for details.", e)
     ErrorResponse(500, e.getMessage)(ctx.response)
   }
 
@@ -139,7 +136,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * Instantiates a router that processes current request.
    */
   def doFilter(ctx: CircumflexContext, chain: FilterChain): Unit = {
-    log.debug(ctx.request.toString)
+    cxLog.debug(ctx.request.toString)
     // Set X-Powered-By header
     ctx.response.setHeader("X-Powered-By", "Circumflex v. 0.3")
     // Set character encoding
@@ -166,7 +163,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * Called when a filter is instantiated by Servlet Container.
    */
   override def init(cfg: FilterConfig) = {
-    log.info("Circumflex v. 0.3")
+    cxLog.info("Circumflex v. 0.3")
   }
 
 }

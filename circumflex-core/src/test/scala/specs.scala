@@ -3,7 +3,6 @@ package ru.circumflex.core.test
 import ru.circumflex.core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
-import Convertions._
 
 class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
@@ -12,9 +11,11 @@ object CircumflexCoreSpec extends Specification {
   class MainRouter extends RequestRouter {
     get("/") = "preved"
     get("/ctx") = if (ctx == null) "null" else ctx.toString
-    get("/capture/?"r, headers('Accept -> "+/+")) =
-        "Accept$1 is " + param('Accept)(1) + "; " +
-        "Accept$2 is " + param('Accept)(2)
+    get("/capture/?"r, accept("+/+") & content_type("+/+")) =
+        "Accept$1 is " + matching('Accept)(1) + "; " +
+        "Accept$2 is " + matching('Accept)(2) + "; " +
+        "Content$1 is " + matching("Content-Type")(1) + "; " +
+        "Content$2 is " + matching("Content-Type")(2)
     get("/capture/(.*)"r) = "uri$1 is " + uri(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
@@ -45,6 +46,16 @@ object CircumflexCoreSpec extends Specification {
     get("/filename/:name.:ext") = uri('name) + uri('ext)
     get("*/one/:two/+.:three") =
       uri(1) + uri('two) + uri(3) + uri('three)
+
+    // Extractors
+    get("/self/:name/:id", accept("+/+")) {
+      case uri(name, Int(id)) & accept("text", what) =>
+        "Name is " + name + "; 2*ID is " + (2 * id) + "; what is " + what
+    }
+    get("/host") {
+      case host("localhost") => "local"
+      case _                 => "remote"
+    }
   }
 
   doBeforeSpec{
@@ -94,6 +105,26 @@ object CircumflexCoreSpec extends Specification {
     "process errors" in {
       MockApp.get("/error").execute().getStatus must_== 503
     }
+    "process URI extractors" in {
+      MockApp.get("/self/abc/12")
+             .setHeader("Accept", "text/plain")
+             .execute.getContent must_== "Name is abc; 2*ID is 24; what is plain"
+    }
+    "process HOST extractors" in {
+      MockApp.get("/host").execute.getContent must_== "local"
+    }
+
+  }
+
+  "UriMatcher" should {
+    "match simplified request 1" in {
+      MockApp.get("/filename/file.txt").execute.getContent must_== "filetxt"
+    }
+    "match simplified request 2" in {
+      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00ccddd.e"
+      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00ccddd.e"
+      MockApp.get("/one/bbb00/.ddde").execute.getStatus must_== 404
+    }
   }
 
   "UriMatcher" should {
@@ -121,8 +152,9 @@ object CircumflexCoreSpec extends Specification {
     "contain captured groups from headers" in {
       MockApp.get("/capture")
           .setHeader("Accept", "text/plain")
+          .setHeader("Content-Type", "text/html")
           .execute()
-          .getContent must_== "Accept$1 is text; Accept$2 is plain"
+          .getContent must_== "Accept$1 is text; Accept$2 is plain; Content$1 is text; Content$2 is html"
     }
     "set response content type" in {
       MockApp.get("/contentType.html").execute()
