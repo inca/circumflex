@@ -30,6 +30,8 @@ object ORM {
     new SimpleExpression(expression, Nil)
   implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
     new SimpleExpression(expression.toSql, expression.parameters)
+  implicit def string2projection(expression: String): Projection[Any] =
+    new ExpressionProjection[Any](expression, false)
 
   // ### Global Configuration Objects
 
