@@ -3,9 +3,7 @@ package ru.circumflex.freemarker
 import _root_.freemarker.template.{TemplateExceptionHandler, Template, Configuration}
 import _root_.freemarker.cache._
 import ru.circumflex.core._
-import Circumflex._
 import javax.servlet.http.HttpServletResponse
-import org.slf4j.LoggerFactory
 
 trait FreemarkerHelper {
 
@@ -48,7 +46,7 @@ object DefaultConfiguration extends Configuration {
     loaders ++= List(new WebappTemplateLoader(
     Circumflex.ctx.request.getSession.getServletContext, "/templates"))
   } catch {
-    case e => log.debug("Not running in Servlet context.", e)
+    case e => cxLog.debug("Not running in Servlet context.", e)
   }
   loaders ++= List(new ClassTemplateLoader(getClass, "/"))
   setTemplateLoader(new MultiTemplateLoader(loaders.toArray))

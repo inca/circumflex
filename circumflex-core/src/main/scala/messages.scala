@@ -1,17 +1,15 @@
 package ru.circumflex.core
 
-import java.util.{Locale, MissingResourceException, ResourceBundle}
+import java.util.{Locale, ResourceBundle}
 import org.slf4j.LoggerFactory
 
 class Messages(val baseName: String, val locale: Locale) extends HashModel {
-
-  val log = LoggerFactory.getLogger("ru.circumflex.core")
 
   val msgBundle: ResourceBundle = try {
     ResourceBundle.getBundle(baseName, locale)
   } catch {
     case e => {
-      log.trace("ResourceBundle for messages instance not found: " + baseName)
+      cxLog.trace("ResourceBundle for messages instance not found: " + baseName)
       null
     }
   }
@@ -32,7 +30,7 @@ class Messages(val baseName: String, val locale: Locale) extends HashModel {
 
   def get(key: String) = apply(key) match {
     case None =>
-      log.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)
+      cxLog.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)
       Some("")
     case v => v
   }
@@ -40,7 +38,7 @@ class Messages(val baseName: String, val locale: Locale) extends HashModel {
   def get(key: String, params: collection.Map[String, String]) =
     apply(key, params) match {
       case None =>
-        log.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)
+        cxLog.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)
         Some("")
       case v => v
     }
