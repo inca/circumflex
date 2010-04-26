@@ -1,8 +1,6 @@
 package ru.circumflex.core
 
-import javax.servlet.http._
 import scala.collection.mutable.HashMap
-import Circumflex._
 
 /**
  * A helper for setting flashes. Flashes provide a way to pass temporary objects between requests.

@@ -1,7 +1,6 @@
 package ru.circumflex.core
 
 import java.io.File
-import Circumflex._
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
@@ -11,8 +10,6 @@ class RequestRouter {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
-
-  def ctx = Circumflex.ctx
 
   /* ### Routes */
 
@@ -29,7 +26,9 @@ class RequestRouter {
   /* ### Matchers */
 
   def headers(crit: (String, StringMatcher)*) = new HeaderRequestMatcher(crit : _*)
-
+  implicit def pair2String_StringMatcher[A <% String, B <% StringMatcher]
+    (p: (A, B)): (String, StringMatcher) = (p._1, p._2)
+  
   /* ### Context shortcuts */
 
   def header = ctx.header
@@ -68,7 +67,7 @@ class RequestRouter {
    * Retrieves a Match from context.
    * Since route matching has success it supposes the key existence.
    */
-  def matching(key: String): Match = ctx.matches(key)
+  def matching(key: String): Match = ctx.matchParam(key).get
 
   /**
    * Sends error with specified status code and message.
@@ -98,7 +97,7 @@ class RequestRouter {
    */
   def done(statusCode: Int): HttpResponse = {
     ctx.statusCode = statusCode
-    EmptyResponse()
+    new EmptyResponse
   }
 
   /**
@@ -162,12 +161,12 @@ class RequestRouter {
   
   object Uri {
     def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
-      Some(ctx.matches("uri").toSeq)
+      Some(ctx.matchParam("uri").get.toSeq)
   }
 
   case class HeaderExtractor(name: String) {
     def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
-      ctx.matches.get(name) match {
+      ctx.matchParam(name) match {
         case Some(m) => Some(m.toSeq)
         case None    => ctx.header(name) map { List(_) }
       }
@@ -222,7 +221,7 @@ class Route(val matchingMethods: String*) {
           case Some(p) => params ++= p
         })
         // All matchers succeeded
-        ctx.matches = params
+        ctx._matches = params
         throw RouteMatchedException(Some(response))
       } case _ =>
     }

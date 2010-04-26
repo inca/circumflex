@@ -1,6 +1,6 @@
 package ru.circumflex.core
 
-import java.util.{Locale, MissingResourceException, ResourceBundle}
+import java.util.{Locale, ResourceBundle}
 import org.slf4j.LoggerFactory
 
 class Messages(val baseName: String, val locale: Locale) extends HashModel {

@@ -4,11 +4,8 @@ import java.net.URLDecoder
 import javax.servlet.http.HttpServletRequest
 import util.matching.Regex
 import collection.mutable.ListBuffer
-import Convertions._
 
-/**
- * Matching result
- */
+/* ## Matching result */
 
 class Match(val value: String, params: Array[(String, String)]) {
 
@@ -20,15 +17,11 @@ class Match(val value: String, params: Array[(String, String)]) {
   
 }
 
-/**
- * Basics matchers
- */
+/* ## Basics matchers */
 
 trait StringMatcher extends (String => Option[Match])
 
-class RegexMatcher(val regex: Regex) extends StringMatcher {
-
-  def this() = this(null)
+class RegexMatcher(val regex: Regex = null) extends StringMatcher {
 
   def groupName(index: Int): String = "splat"
 
@@ -46,26 +39,26 @@ class SimplifiedMatcher(path: String) extends RegexMatcher {
 
   val keys = new ListBuffer[String]()
   
-  override val regex = (""":(\w+)|[\*.+()]""".r.replaceAllInF(path) {
-    case sym@("*" | "+") =>
-      keys += "splat"
-      "(." + sym + "?)"
+  override val regex = (""":\w+|[\*.+()]""".r.replaceAllInS(path) { s =>
+    s match {
+      case "*" | "+" =>
+        keys += "splat"
+        "(." + s + "?)"
 
-    case sym@("." | "(" | ")") =>
-      "\\" + sym
+      case "." | "(" | ")" =>
+        "\\\\" + s
 
-    case name =>
-      keys += name.substring(1)
-      "([^/?&#]+)"
+      case _ =>
+        keys += s.substring(1)
+        "([^/?&#]+)"
+    }
   }).r
 
   override def groupName(index: Int): String = keys(index - 1)
 
 }
 
-/**
- * Request matchers
- */
+/* ## Request matchers */
 
 trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]])
 

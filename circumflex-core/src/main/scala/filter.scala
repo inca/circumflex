@@ -4,9 +4,8 @@ import java.lang.reflect.InvocationTargetException
 import java.util.regex.Pattern
 import util.matching.Regex
 import javax.servlet._
-import http.{HttpServletResponse, HttpServletRequest}
+import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.slf4j.LoggerFactory
-import Circumflex._
 import java.io.{FileNotFoundException, File}
 import org.apache.commons.io.FilenameUtils._
 

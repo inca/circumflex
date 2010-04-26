@@ -2,7 +2,6 @@ package ru.circumflex.core
 
 import collection.mutable.HashMap
 import java.io.File
-import java.net.URLDecoder
 import java.util.{Locale, ResourceBundle}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import javax.activation.MimetypesFileTypeMap
@@ -14,9 +13,8 @@ class CircumflexContext(val request: HttpServletRequest,
                         val filter: AbstractCircumflexFilter)
     extends HashModel {
 
-  val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
-  val params = new HashMap[String, Any]
-  var matches: Map[String, Match] = _
+  private val _params = new HashMap[String, Any]
+  private[core] var _matches: Map[String, Match] = _
 
   val stringHeaders = new HashMap[String, String]
   val dateHeaders = new HashMap[String, Long]
@@ -28,9 +26,9 @@ class CircumflexContext(val request: HttpServletRequest,
   val session = new SessionHelper
   val flash = new FlashHelper
 
-  params += ("header" -> header)
-  params += ("session" -> session)
-  params += ("flash" -> flash)
+  _params += ("header" -> header)
+  _params += ("session" -> session)
+  _params += ("flash" -> flash)
 
   def contentType: Option[String] =
     if (_contentType == null) None
@@ -43,7 +41,7 @@ class CircumflexContext(val request: HttpServletRequest,
   def method: String =
     get("_method").getOrElse(request.getMethod).toString
 
-  def get(key: String): Option[Any] = params.get(key) match {
+  def get(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => Some(value)
     case _ => {
       val value = request.getParameter(key)
@@ -52,10 +50,9 @@ class CircumflexContext(val request: HttpServletRequest,
     }
   }
 
-  def stringParam(key: String): Option[String] = get(key) match {
-    case Some(value) => Some(value.toString)
-    case _ => None
-  }
+  def stringParam(key: String): Option[String] = get(key) map { _.toString }
+
+  def matchParam(key: String): Option[Match] = _matches.get(key)
 
   def getOrElse[A](key: String, default: A): A = get(key) match {
     case Some(value: A) => value;
@@ -68,16 +65,15 @@ class CircumflexContext(val request: HttpServletRequest,
     dateHeaders += "Expires" -> 0l
   }
 
-  def +=(pair: Pair[String, Any]): Unit = params += pair
-
-  def ++=(map: Map[String, Any]): Unit = params ++= map
-
   def apply(key: String): Option[Any] = get(key)
+
+  def update(key: String, value: Any) { _params += key -> value }
+  def +=(pair: (String, Any)) { _params += pair }
 
 }
 
 
-object Circumflex {
+object Circumflex { // TODO: move all into package object?
 
   val log = LoggerFactory.getLogger("ru.circumflex.core")
 

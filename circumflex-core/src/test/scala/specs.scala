@@ -3,7 +3,6 @@ package ru.circumflex.core.test
 import ru.circumflex.core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
-import Convertions._
 
 class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
