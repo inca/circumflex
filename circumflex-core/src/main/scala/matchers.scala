@@ -12,7 +12,7 @@ class Match(val value: String, params: Array[(String, String)]) {
   def apply(index: Int): String = params(index - 1)._2
   def apply(name: String): String = params.find(_._1 == name).get._2
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
-  def toSeq: Seq[String] = params.map(_._2).toSeq
+  def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] = Some(params.map(_._2).toSeq)
   override def toString = value
   
 }
@@ -35,9 +35,9 @@ class RegexMatcher(val regex: Regex = null) extends StringMatcher {
 
 }
 
-class SimplifiedMatcher(path: String) extends RegexMatcher {
+class SimpleMatcher(path: String) extends RegexMatcher {
 
-  val keys = new ListBuffer[String]()
+  val keys = ListBuffer[String]()
   
   override val regex = (""":\w+|[\*.+()]""".r.replaceAllInS(path) { s =>
     s match {
@@ -60,27 +60,41 @@ class SimplifiedMatcher(path: String) extends RegexMatcher {
 
 /* ## Request matchers */
 
-trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]])
+trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]]) {
+  private var _matchers = ListBuffer[RequestMatcher]()
+  _matchers += this
 
-class UriRequestMatcher(matcher: StringMatcher) extends RequestMatcher {
+  /* Composite pattern */
+  def &(matcher: RequestMatcher): RequestMatcher = {
+    _matchers += matcher
+    this
+  }
 
-  def apply(request: HttpServletRequest) =
-    matcher(URLDecoder.decode(request.getRequestURI, "UTF-8")) map {
-      m => Map("uri" -> m)
-    }
+  def apply(request: HttpServletRequest): Option[Map[String, Match]] = {
+    var res = Map[String, Match]()
+    for (matcher <- _matchers)
+      matcher.run(request) match {
+        case Some(m) => res += matcher.name -> m
+        case None     => return None
+      }
+    Some(res)
+  }
+
+  val name: String
+  def run(request: HttpServletRequest): Option[Match]
+}
+
+class UriMatcher(matcher: StringMatcher) extends RequestMatcher {
+
+  val name = "uri"
+  def run(request: HttpServletRequest) =
+    matcher(URLDecoder.decode(request.getRequestURI, "UTF-8"))
 
 }
 
-class HeaderRequestMatcher(criteria: (String, StringMatcher)*) extends RequestMatcher {
-
-  def apply(request: HttpServletRequest): Option[Map[String, Match]] = {
-    var params = Map[String, Match]()
-    for ((headerName, matcher) <- criteria.toList)
-      matcher(request.getHeader(headerName)) match {
-        case None    => return None
-        case Some(m) => params += headerName -> m
-      }
-    Some(params)
-  }
+class HeaderMatcher(val name: String, matcher: StringMatcher) extends RequestMatcher {
+  
+  def run(request: HttpServletRequest) =
+    matcher(request.getHeader(name))
 
 }

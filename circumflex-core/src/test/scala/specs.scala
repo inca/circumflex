@@ -11,9 +11,11 @@ object CircumflexCoreSpec extends Specification {
   class MainRouter extends RequestRouter {
     get("/") = "preved"
     get("/ctx") = if (ctx == null) "null" else ctx.toString
-    get("/capture/?"r, headers('Accept -> "+/+")) =
+    get("/capture/?"r, accept("+/+") & content_type("+/+")) =
         "Accept$1 is " + matching('Accept)(1) + "; " +
-        "Accept$2 is " + matching('Accept)(2)
+        "Accept$2 is " + matching('Accept)(2) + "; " +
+        "Content$1 is " + matching("Content-Type")(1) + "; " +
+        "Content$2 is " + matching("Content-Type")(2)
     get("/capture/(.*)"r) = "uri$1 is " + uri(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
@@ -46,12 +48,12 @@ object CircumflexCoreSpec extends Specification {
       uri(1) + uri('two) + uri(3) + uri('three)
 
     // Extractors
-    get("/self/:name/:id", headers('Accept -> "+/+")) {
-      case Uri(name, Int(id)) & Accept("text", what) =>
+    get("/self/:name/:id", accept("+/+")) {
+      case uri(name, Int(id)) & accept("text", what) =>
         "Name is " + name + "; 2*ID is " + (2 * id) + "; what is " + what
     }
     get("/host") {
-      case Host("localhost") => "local"
+      case host("localhost") => "local"
       case _                 => "remote"
     }
   }
@@ -139,8 +141,9 @@ object CircumflexCoreSpec extends Specification {
     "contain captured groups from headers" in {
       MockApp.get("/capture")
           .setHeader("Accept", "text/plain")
+          .setHeader("Content-Type", "text/html")
           .execute()
-          .getContent must_== "Accept$1 is text; Accept$2 is plain"
+          .getContent must_== "Accept$1 is text; Accept$2 is plain; Content$1 is text; Content$2 is html"
     }
     "set response content type" in {
       MockApp.get("/contentType.html").execute()

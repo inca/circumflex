@@ -14,13 +14,10 @@ class FlashHelper extends HashModel {
       case m: HashMap[String, Any] => m
       case _ => new HashMap[String, Any]()
     }
-    flashMap.get(key) match {
-      case Some(value) =>
-        ctx.request.getSession.setAttribute(_key, flashMap - key)
-        return Some(value)
-      case _ => return None
-    }
-      
+    flashMap.get(key) map { value => {
+      ctx.request.getSession.setAttribute(_key, flashMap - key)
+      value
+    }}
   }
 
   def update(key: String, value: Any): Unit = {

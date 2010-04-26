@@ -22,19 +22,13 @@ class RequestRouter {
   val head = new Route("head")
   val options = new Route("options")
   val any = new Route("get", "post", "put", "delete", "head", "options")
-
-  /* ### Matchers */
-
-  def headers(crit: (String, StringMatcher)*) = new HeaderRequestMatcher(crit : _*)
-  implicit def pair2String_StringMatcher[A <% String, B <% StringMatcher]
-    (p: (A, B)): (String, StringMatcher) = (p._1, p._2)
   
   /* ### Context shortcuts */
 
   def header = ctx.header
   def session = ctx.session
   def flash = ctx.flash
-  def uri: Match = matching("uri")
+  lazy val uri: Match = matching("uri")
 
   /* ### Helpers */
 
@@ -158,50 +152,47 @@ class RequestRouter {
   }
 
   /* ## Request extractors */
-  
-  object Uri {
-    def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
-      Some(ctx.matchParam("uri").get.toSeq)
-  }
 
   case class HeaderExtractor(name: String) {
+    def apply(matcher: StringMatcher) = new HeaderMatcher(name, matcher)
+    
     def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
       ctx.matchParam(name) match {
-        case Some(m) => Some(m.toSeq)
+        case Some(m) => m.unapplySeq(ctx)
         case None    => ctx.header(name) map { List(_) }
       }
   }
 
-  val Accept = HeaderExtractor("Accept")
-  val AcceptCharset = HeaderExtractor("Accept-Charset")
-  val AcceptEncoding = HeaderExtractor("Accept-Encoding")
-  val AcceptLanguage = HeaderExtractor("Accept-Language")
-  val AcceptRanges = HeaderExtractor("Accept-Ranges")
-  val Authorization = HeaderExtractor("Authorization")
-  val CacheControl = HeaderExtractor("Cache-Control")
-  val Connection = HeaderExtractor("Connection")
-  val Cookie = HeaderExtractor("Cookie")
-  val ContentLength = HeaderExtractor("Content-Length")
-  val ContentType = HeaderExtractor("Content-Type")
-  val HeaderDate = HeaderExtractor("Date")
-  val Expect = HeaderExtractor("Expect")
-  val From = HeaderExtractor("From")
-  val Host = HeaderExtractor("Host")
-  val IfMatch = HeaderExtractor("If-Match")
-  val IfModifiedSince = HeaderExtractor("If-Modified-Since")
-  val IfNoneMatch = HeaderExtractor("If-None-Match")
-  val IfRange = HeaderExtractor("If-Range")
-  val IfUnmodifiedSince = HeaderExtractor("If-Unmodified-Since")
-  val MaxForwards = HeaderExtractor("Max-Forwards")
-  val Pragma = HeaderExtractor("Pragma")
-  val ProxyAuthorization = HeaderExtractor("Proxy-Authorization")
-  val Range = HeaderExtractor("Range")
-  val Referer = HeaderExtractor("Referer")
-  val TE = HeaderExtractor("TE")
-  val Upgrade = HeaderExtractor("Upgrade")
-  val UserAgent = HeaderExtractor("User-Agent")
-  val Via = HeaderExtractor("Via")
-  val War = HeaderExtractor("War")
+  val accept = HeaderExtractor("Accept")
+  val accept_charset = HeaderExtractor("Accept-Charset")
+  val accept_encoding = HeaderExtractor("Accept-Encoding")
+  val accept_language = HeaderExtractor("Accept-Language")
+  val accept_ranges = HeaderExtractor("Accept-Ranges")
+  val authorization = HeaderExtractor("Authorization")
+  val cache_control = HeaderExtractor("Cache-Control")
+  val connection = HeaderExtractor("Connection")
+  val cookie = HeaderExtractor("Cookie")
+  val content_length = HeaderExtractor("Content-Length")
+  val content_type = HeaderExtractor("Content-Type")
+  val header_date = HeaderExtractor("Date")
+  val expect = HeaderExtractor("Expect")
+  val from = HeaderExtractor("From")
+  val host = HeaderExtractor("Host")
+  val if_match = HeaderExtractor("If-Match")
+  val if_modified_since = HeaderExtractor("If-Modified-Since")
+  val if_none_match = HeaderExtractor("If-None-Match")
+  val if_range = HeaderExtractor("If-Range")
+  val if_unmodified_since = HeaderExtractor("If-Unmodified-Since")
+  val max_forwards = HeaderExtractor("Max-Forwards")
+  val pragma = HeaderExtractor("Pragma")
+  val proxy_authorization = HeaderExtractor("Proxy-Authorization")
+  val range = HeaderExtractor("Range")
+  val referer = HeaderExtractor("Referer")
+  val te = HeaderExtractor("TE")
+  val upgrade = HeaderExtractor("Upgrade")
+  val user_agent = HeaderExtractor("User-Agent")
+  val via = HeaderExtractor("Via")
+  val war = HeaderExtractor("War")
 }
 
 /**
@@ -230,19 +221,19 @@ class Route(val matchingMethods: String*) {
    * For syntax "get(...) { case Extractors(...) => ... }"
    */
   def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
-    dispatch(ContextualResponse(f), new UriRequestMatcher(matcher))
+    dispatch(ContextualResponse(f), new UriMatcher(matcher))
 
   def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
-    dispatch(ContextualResponse(f), new UriRequestMatcher(matcher), matcher1)
+    dispatch(ContextualResponse(f), new UriMatcher(matcher), matcher1)
 
   /**
    * For syntax "get(...) = response"
    */
   def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, new UriRequestMatcher(matcher))
+    dispatch(response, new UriMatcher(matcher))
 
   def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, new UriRequestMatcher(matcher), matcher1)
+    dispatch(response, new UriMatcher(matcher), matcher1)
 }
 
 /* ## Helpers */
