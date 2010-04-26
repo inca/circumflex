@@ -4,14 +4,14 @@ import java.io.File
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
-/* ## Request Router */
+// ## Request Router
 
 class RequestRouter {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
 
-  /* ### Routes */
+  // ### Routes
 
   val get = new Route("get")
   val getOrPost = new Route("get", "post")
@@ -23,7 +23,7 @@ class RequestRouter {
   val options = new Route("options")
   val any = new Route("get", "post", "put", "delete", "head", "options")
 
-  /* ### Context shortcuts */
+  // ### Context shortcuts
 
   def header = ctx.header
   def session = ctx.session
@@ -31,7 +31,7 @@ class RequestRouter {
 
   lazy val uri: Match = matching("uri")
 
-  /* ### Helpers */
+  // ### Helpers
 
   /**
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
@@ -238,7 +238,7 @@ class Route(val matchingMethods: String*) {
 
 }
 
-/* ## Helpers */
+// ## Helpers
 
 /**
  * A helper for getting and setting response headers in a DSL-like way.
