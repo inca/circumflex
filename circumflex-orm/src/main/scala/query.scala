@@ -154,6 +154,10 @@ class NativeSQLQuery(expression: ParameterizedExpression) extends SQLQuery {
 
 // ## Subselect
 
+/**
+ * A subset of `SELECT` query -- the one that can participate in subqueries,
+ * it does not support `ORDER BY`, `LIMIT` and `OFFSET` clauses.
+ */
 class Subselect extends SQLQuery {
 
   // ### Commons
@@ -315,5 +319,56 @@ class Subselect extends SQLQuery {
   def toSubselectSql = dialect.subselect(this)
 
   def toSql = toSubselectSql
+}
+
+// ## Full Select
+
+/**
+ * A full-fledged `SELECT` query.
+ */
+class Select extends Subselect {
+
+  protected var _orders: Seq[Order] = Nil
+  protected var _limit: Int = -1
+  protected var _offset: Int = 0
+
+  def this(nodes: RelationNode[_]*) = {
+    this()
+    nodes.toList.foreach(addFrom(_))
+  }
+
+  override def parameters: Seq[Any] =
+    super.parameters ++ _orders.flatMap(_.parameters)
+
+  // ### ORDER BY clause
+
+  def orderBy = _orders
+  def orderBy(order: Order*): this.type = {
+    this._orders ++= order.toList
+    return this
+  }
+  def ORDER_BY(order: Order*): this.type =
+    orderBy(order: _*)
+
+  // ### LIMIT and OFFSET clauses
+
+  def limit = this._limit
+  def limit(value: Int): this.type = {
+    _limit = value
+    return this
+  }
+  def LIMIT(value: Int): this.type = limit(value)
+
+  def offset = this._offset
+  def offset(value: Int): this.type = {
+    _offset = value
+    return this
+  }
+  def OFFSET(value: Int): this.type = offset(value)
+
+  // ### Miscellaneous
+
+  override def toSql = dialect.select(this)
+
 }
 

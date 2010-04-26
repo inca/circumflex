@@ -78,6 +78,11 @@ class Dialect {
   def intersect = "INTERSECT"
   def intersectAll = "INTERSECT ALL"
 
+  // ### Order specificators
+
+  def asc = "ASC"
+  def desc = "DESC"
+
   // ### Features compliance
 
   def supportsSchema_?(): Boolean = true
@@ -227,5 +232,20 @@ class Dialect {
     }
     return result
   }
+
+  /**
+   * Produces `SELECT` statement with `?` parameters.
+   */
+  def select(q: Select): String = {
+    var result = subselect(q)
+    if (q.orderBy.size > 0)
+      result += " ORDER BY " + q.orderBy.map(_.toSql).mkString(", ")
+    if (q.limit > -1)
+      result += " LIMIT " + q.limit
+    if (q.offset > 0)
+      result += " OFFSET " + q.offset
+    return result
+  }
+
 
 }

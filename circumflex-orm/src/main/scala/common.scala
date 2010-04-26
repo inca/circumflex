@@ -130,6 +130,33 @@ case class SetOperation(val toSql: String) extends SQLable {
   override def toString = toSql
 }
 
+/**
+ * An expression to use in `ORDER BY` clause.
+ */
+class Order(val expression: String, val parameters: Seq[Any])
+    extends ParameterizedExpression {
+
+  // Specificator (`ASC` or `DESC`).
+
+  protected[orm] var _specificator = dialect.asc
+
+  def asc: this.type = {
+    this._specificator = dialect.asc
+    return this
+  }
+  def ASC: this.type = asc
+
+  def desc: this.type = {
+    this._specificator = dialect.desc
+    return this
+  }
+  def DESC: this.type = desc
+
+  // Miscellaneous.
+
+  def toSql = expression + " " + _specificator
+}
+
 // ## JDBC utilities
 
 /**
