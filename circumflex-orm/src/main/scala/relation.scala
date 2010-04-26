@@ -190,12 +190,12 @@ abstract class Relation[R <: Record[R]] {
   protected[orm] def UNIQUE(fields: Field[_]*) = unique(fields: _*)
 
   def addPreAux(objects: SchemaObject*): this.type = {
-    objects.foreach(o => if (!_preAux.contains(o)) _preAux += o)
+    objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
     return this
   }
 
   def addPostAux(objects: SchemaObject*): this.type = {
-    objects.foreach(o => if (!_postAux.contains(o)) _postAux += o)
+    objects.foreach(o => if (!_postAux.contains(o)) _postAux ++= List(o))
     return this
   }
 
