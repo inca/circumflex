@@ -184,7 +184,7 @@ class StatefulTransaction {
   }
 
   def getCachedRecord[R <: Record[R]](relation: Relation[R], id: Any): Option[R] =
-    recordCache(key(relation, id)).asInstanceOf[Option[R]]
+    recordCache.get(key(relation, id)).asInstanceOf[Option[R]]
 
   def updateRecordCache[R <: Record[R]](record: R): Unit = {
     if (record.transient_?) throw new ORMException("Transient records cannot be cached.")

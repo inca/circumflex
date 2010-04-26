@@ -372,3 +372,18 @@ class Select extends Subselect {
 
 }
 
+/**
+ * A helper for query DSLs.
+ */
+class SelectHelper(val projections: Seq[Projection[_]]) {
+  def from(nodes: RelationNode[_]*): Select = {
+    val q = new Select(nodes: _*)
+    if (projections.size > 0) {
+      q.clearProjections
+      q.addProjection(projections: _*)
+    }
+    return q
+  }
+  def FROM(nodes: RelationNode[_]*): Select = from(nodes: _*)
+}
+

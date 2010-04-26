@@ -46,6 +46,15 @@ class AggregatePredicate(val operator: String,
     else "(" + predicates.map(_.toSql).mkString(" " + operator + " ") + ")"
 }
 
+/**
+ * An expression with subquery.
+ */
+class SubqueryExpression(expression: String,
+                         val subselect: Subselect)
+    extends SimpleExpression(
+      dialect.subquery(expression, subselect),
+      subselect.parameters)
+
 // ## Helper
 
 /**
@@ -95,35 +104,49 @@ class SimpleExpressionHelper(val expr: String) {
 
   /* ### Simple subqueries */
 
-//  def in(subselect: Subselect) =
-//    new SubqueryExpression(expr + " in", subselect)
-//  def notIn(subselect: Subselect) =
-//    new SubqueryExpression(expr + " not in", subselect)
-//
-//  def allEq(subselect: Subselect) =
-//    new SubqueryExpression(expr + " = all", subselect)
-//  def allNe(subselect: Subselect) =
-//    new SubqueryExpression(expr + " <> all", subselect)
-//  def allGt(subselect: Subselect) =
-//    new SubqueryExpression(expr + " > all", subselect)
-//  def allGe(subselect: Subselect) =
-//    new SubqueryExpression(expr + " >= all", subselect)
-//  def allLt(subselect: Subselect) =
-//    new SubqueryExpression(expr + " < all", subselect)
-//  def allLe(subselect: Subselect) =
-//    new SubqueryExpression(expr + " <= all", subselect)
-//
-//  def someEq(subselect: Subselect) =
-//    new SubqueryExpression(expr + " = some", subselect)
-//  def someNe(subselect: Subselect) =
-//    new SubqueryExpression(expr + " <> some", subselect)
-//  def someGt(subselect: Subselect) =
-//    new SubqueryExpression(expr + " > some", subselect)
-//  def someGe(subselect: Subselect) =
-//    new SubqueryExpression(expr + " >= some", subselect)
-//  def someLt(subselect: Subselect) =
-//    new SubqueryExpression(expr + " < some", subselect)
-//  def someLe(subselect: Subselect) =
-//    new SubqueryExpression(expr + " <= some", subselect)
+  def in(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.in, subselect)
+  def IN(subselect: Subselect) = in(subselect)
+  def notIn(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.notIn, subselect)
+  def NOT_IN(subselect: Subselect) = notIn(subselect)
+
+  def allEq(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.EQ + " " + dialect.all, subselect)
+  def ALL_EQ(subselect: Subselect) = allEq(subselect)
+  def allNe(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.NE + " " + dialect.all, subselect)
+  def ALL_NE(subselect: Subselect) = allNe(subselect)
+  def allGt(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.GT + " " + dialect.all, subselect)
+  def ALL_GT(subselect: Subselect) = allGt(subselect)
+  def allGe(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.GE + " " + dialect.all, subselect)
+  def ALL_GE(subselect: Subselect) = allGe(subselect)
+  def allLt(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.LT + " " + dialect.all, subselect)
+  def ALL_LT(subselect: Subselect) = allLt(subselect)
+  def allLe(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.LE + " " + dialect.all, subselect)
+  def ALL_LE(subselect: Subselect) = allLe(subselect)
+
+  def someEq(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.EQ + " " + dialect.some, subselect)
+  def SOME_EQ(subselect: Subselect) = someEq(subselect)
+  def someNe(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.NE + " " + dialect.some, subselect)
+  def SOME_NE(subselect: Subselect) = someNe(subselect)
+  def someGt(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.GT + " " + dialect.some, subselect)
+  def SOME_GT(subselect: Subselect) = someGt(subselect)
+  def someGe(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.GE + " " + dialect.some, subselect)
+  def SOME_GE(subselect: Subselect) = someGe(subselect)
+  def someLt(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.LT + " " + dialect.some, subselect)
+  def SOME_LT(subselect: Subselect) = someLt(subselect)
+  def someLe(subselect: Subselect) =
+    new SubqueryExpression(expr + " " + dialect.LE + " " + dialect.some, subselect)
+  def SOME_LE(subselect: Subselect) = someLe(subselect)
 
 }

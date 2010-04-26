@@ -117,6 +117,8 @@ object ORM {
 
   // ### SQL shortcuts
 
+  // Predicates.
+
   def and(predicates: Predicate*) =
     new AggregatePredicate(dialect.and, predicates.toList)
   def AND(predicates: Predicate*) = and(predicates: _*)
@@ -145,6 +147,48 @@ object ORM {
     sqlText = matcher.replaceAll("?")
     return new SimpleExpression(sqlText, parameters)
   }
+
+  // Simple subqueries.
+
+  def exists(subselect: Subselect) =
+    new SubqueryExpression(dialect.exists, subselect)
+  def EXISTS(subselect: Subselect) = exists(subselect)
+
+  def notExists(subselect: Subselect) =
+    new SubqueryExpression(dialect.notExists, subselect)
+  def NOT_EXISTS(subselect: Subselect) = notExists(subselect)
+
+  // Simple projections.
+
+  def count(expr: String) =
+    new ExpressionProjection[Int](dialect.count + "(" + expr + ")",  true)
+  def COUNT(expr: String) = count(expr)
+
+  def countDistinct(expr: String) =
+    new ExpressionProjection[Int](
+      dialect.count + "(" + dialect.distinct + " " + expr + ")", true)
+  def COUNT_DISTINCT(expr: String) = countDistinct(expr)
+
+  def max(expr: String) =
+    new ExpressionProjection[Any](dialect.max + "(" + expr + ")", true)
+  def MAX(expr: String) = max(expr)
+
+  def min(expr: String) =
+    new ExpressionProjection[Any](dialect.min + "(" + expr + ")", true)
+  def MIN(expr: String) = min(expr)
+
+  def sum(expr: String) =
+    new ExpressionProjection[Any](dialect.sum + "(" + expr + ")", true)
+  def SUM(expr: String) = sum(expr)
+
+  def avg(expr: String) =
+    new ExpressionProjection[Any](dialect.avg + "(" + expr + ")", true)
+  def AVG(expr: String) = avg(expr)
+
+  // Query DSLs
+
+  def select(projections: Projection[_]*) = new SelectHelper(projections.toList)
+  def SELECT(projections: Projection[_]*) = select(projections: _*)
 
 
 }

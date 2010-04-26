@@ -56,6 +56,11 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
                            joinType: JoinType): JoinNode[R, J] =
     new ExplicitJoin(this, node, on, joinType)
 
+  def JOIN[J <: Record[J]](node: RelationNode[J],
+                           on: String,
+                           joinType: JoinType): JoinNode[R, J] =
+    join(node, on, joinType)
+
   /**
    * Auto-join (the `ON` subclause is evaluated by searching matching association).
    */
@@ -72,6 +77,10 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
                   ": no associations found.")
       }
     }
+
+  def JOIN[J <: Record[J]](node: RelationNode[J],
+                           joinType: JoinType = LEFT_JOIN): JoinNode[R, J] =
+    join(node, joinType)
 
   // ### Equality and others
 

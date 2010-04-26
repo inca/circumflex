@@ -62,12 +62,29 @@ class Dialect {
   def like = "LIKE ?"
   def ilike = "ILIKE ?"
   def between = "BETWEEN ? AND ?"
+  def in = "IN"
+  def notIn = "NOT IN"
   def parameterizedIn(params: Seq[_]) =
     "IN (" + params.map(p => "?").mkString(", ") + ")"
 
   def and = "AND"
   def or = "OR"
   def not = "NOT"
+
+  def all = "ALL"
+  def some = "SOME"
+
+  def exists = "EXISTS"
+  def notExists = "NOT EXISTS"
+
+  // ### Functions and others
+
+  def distinct = "DISTINCT"
+  def count = "COUNT"
+  def max = "MAX"
+  def min = "MIN"
+  def sum = "SUM"
+  def avg = "AVG"
 
   // ### Set operations
 
@@ -127,6 +144,12 @@ class Dialect {
    */
   def not(expression: String) = "NOT (" + expression + ")"
 
+  /**
+   * Take specified `subquery` into parentheses and prepend with
+   * specified `expression`.
+   */
+  def subquery(expression: String, subquery: Subselect) =
+    expression + " ( " + subquery.toSubselectSql + " )"
 
   // ### DDL
 
