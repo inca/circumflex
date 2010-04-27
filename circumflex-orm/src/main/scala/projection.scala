@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 import ORM._
 import java.sql.ResultSet
+import collection.mutable.ListBuffer
 
 // ## Projection Basics
 
@@ -117,6 +118,21 @@ class FieldProjection[T, R <: Record[R]](val node: RelationNode[R],
   }
 
   override def hashCode = node.hashCode * 31 + field.name.hashCode
+}
+
+// ## Projections to return tuples
+
+class AnyTupleProjection(val projections: Projection[_]*)
+        extends CompositeProjection[Array[Any]] {
+  def subProjections = projections
+  def read(rs: ResultSet): Option[Array[Any]] = {
+    val values = new ListBuffer[Any]
+    subProjections.foreach(p => p.read(rs) match {
+      case Some(v: Any) => values += v
+      case _ => values += null
+    })
+    return Some(values.toArray)
+  }
 }
 
 // ## Record Projection

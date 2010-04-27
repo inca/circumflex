@@ -75,14 +75,17 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
   /**
    * Execute a query and return a list of `Option[T]`, where `T` is designated by query projection.
    */
-  def list(): Seq[Option[T]] = resultSet(rs => {
+  def listOpts(): Seq[Option[T]] = resultSet(rs => {
     val result = new ListBuffer[Option[T]]()
     while (rs.next)
       result += projection.read(rs)
     return result
   })
 
-  def list_!(): Seq[T] = list().map {
+  /**
+   * Execute a query and return `Seq[T]`, where `T` is designated by query projection.
+   */
+  def list(): Seq[T] = listOpts().map {
     case Some(value: T) => value
     case _ => null.asInstanceOf[T] 
   }
