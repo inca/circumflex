@@ -73,7 +73,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
   // ### Executors
 
   /**
-   * Execute a query and return a list, designated by query projection.
+   * Execute a query and return a list of `Option[T]`, where `T` is designated by query projection.
    */
   def list(): Seq[Option[T]] = resultSet(rs => {
     val result = new ListBuffer[Option[T]]()
@@ -81,6 +81,16 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
       result += projection.read(rs)
     return result
   })
+
+  def list_!(): Seq[T] = resultSet(rs => {
+    val result = new ListBuffer[T]()
+    while (rs.next) projection.read(rs) match {
+      case Some(value: T) => result += value
+      case _ => result += null.asInstanceOf[T]
+    }
+    return result
+  })
+
 
   /**
    * Execute a query and return a unique result.

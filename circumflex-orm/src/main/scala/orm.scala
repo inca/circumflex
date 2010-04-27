@@ -133,8 +133,8 @@ object ORM {
     new SimpleExpression(dialect.not(predicate.toSql), predicate.parameters)
   def NOT(predicate: Predicate) = not(predicate)
 
-  def expr(expression: String, params: Any*): SimpleExpression =
-    new SimpleExpression(expression, params.toList)
+  def expr[T](expression: String): ExpressionProjection[T] =
+    new ExpressionProjection[T](expression)
 
   def prepareExpr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
     var sqlText = expression
