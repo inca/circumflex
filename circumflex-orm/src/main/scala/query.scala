@@ -41,39 +41,13 @@ trait Query extends SQLable with ParameterizedExpression {
 // ## SQL Queries
 
 /**
- * A conrtact for SQL queries (data-retrieval).
+ * A conrtact for SQL queries (data-retrieval). Specified `projection`
+ * will be rendered in `SELECT` clause and will be used to read `ResultSet`.
  */
-trait SQLQuery extends Query {
-
-  // ### Projections
-
-  protected var _projections: Seq[Projection[_]] = Nil
+abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   /**
-   * The `SELECT` clause of this query.
-   */
-  def projections: Seq[Projection[_]] = _projections
-
-  /**
-   * Clear out the `SELECT` clause of this query.
-   */
-  def clearProjections: this.type = {
-    this._projections = Nil
-    return this
-  }
-
-  /**
-   * Add specified projections to `SELECT` clause.
-   * All projections with `this` alias are assigned query-unique alias.
-   */
-  def addProjection(projections: Projection[_]*): this.type = {
-    projections.toList.foreach(ensureProjectionAlias(_))
-    this._projections ++= projections
-    return this
-  }
-
-  /**
-   * Ensure that projections with alias `this` are assigned query-unique alias.
+   * Make sure that projections with alias `this` are assigned query-unique alias.
    */
   protected def ensureProjectionAlias[T](projection: Projection[T]): Unit =
     projection match {
@@ -83,30 +57,12 @@ trait SQLQuery extends Query {
       case _ =>
     }
 
-  /**
-   * Find specified `projection` in specified `projectionsList` (search deeply).
-   */
-  protected def findProjection(projection: Projection[_],
-                               projectionsList: Seq[Projection[_]]): Option[Projection[_]] = {
-    if (projectionsList == Nil) return None
-    projectionsList.find(p => p == projection) match {
-      case None => findProjection(projection, projectionsList.flatMap {
-        case p: CompositeProjection[_] => p.subProjections
-        case _ => Nil
-      })
-      case value => value
-    }
-  }
-
-  /**
-   * Render the `SELECT` clause.
-   */
-  def sqlProjections = projections.toList.map(_.toSql).mkString(", ")
+  ensureProjectionAlias(projection)
 
   // ### Data Retrieval Stuff
 
   /**
-   * Execute a query, open a JDBC `ResultSet` and executes provided actions.
+   * Execute a query, open a JDBC `ResultSet` and executes specified `actions`.
    */
   def resultSet[A](actions: ResultSet => A): A = transactionManager.sql(toSql)(st => {
     sqlLog.debug(toSql)
@@ -114,21 +70,15 @@ trait SQLQuery extends Query {
     auto(st.executeQuery)(actions)
   })
 
-  /**
-   * Read a tuple from specified `ResultSet` using the projections of this query.
-   */
-  def readTuple(rs: ResultSet): Array[Any] =
-    projections.map(_.read(rs).getOrElse(null)).toArray
-
   // ### Executors
 
   /**
-   * Execute a query and return a list of tuples, designated by query projections.
+   * Execute a query and return a list, designated by query projection.
    */
-  def list(): Seq[Array[Any]] = resultSet(rs => {
-    val result = new ListBuffer[Array[Any]]()
+  def list(): Seq[Option[T]] = resultSet(rs => {
+    val result = new ListBuffer[Option[T]]()
     while (rs.next)
-      result += readTuple(rs)
+      result += projection.read(rs)
     return result
   })
 
@@ -137,19 +87,27 @@ trait SQLQuery extends Query {
    *
    * An exception is thrown if result set yields more than one row.
    */
-  def unique(): Option[Array[Any]] = resultSet(rs => {
+  def unique(): Option[T] = resultSet(rs => {
     if (!rs.next) return None
-    else if (rs.isLast) return Some(projections.map(_.read(rs).getOrElse(null)).toArray)
+    else if (rs.isLast) return projection.read(rs)
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
+
+  // ### Miscellaneous
+
+  def sqlSelect: String
+
+  def toSql = sqlSelect
 
 }
 
 // ## Native SQL
 
-class NativeSQLQuery(expression: ParameterizedExpression) extends SQLQuery {
+class NativeSQLQuery[T](projection: Projection[T],
+                        expression: ParameterizedExpression)
+    extends SQLQuery[T](projection) {
   def parameters = expression.parameters
-  def toSql = expression.toSql.replaceAll("\\{\\*\\}", sqlProjections)
+  def sqlSelect = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
 }
 
 // ## Subselect
@@ -158,7 +116,8 @@ class NativeSQLQuery(expression: ParameterizedExpression) extends SQLQuery {
  * A subset of `SELECT` query -- the one that can participate in subqueries,
  * it does not support `ORDER BY`, `LIMIT` and `OFFSET` clauses.
  */
-class Subselect extends SQLQuery {
+class Subselect[T](projection: Projection[T])
+    extends SQLQuery[T](projection) {
 
   // ### Commons
 
@@ -166,19 +125,14 @@ class Subselect extends SQLQuery {
   protected var _where: Predicate = EmptyPredicate
   protected var _having: Predicate = EmptyPredicate
   protected var _groupBy: Seq[Projection[_]] = Nil
-  protected var _setOps: Seq[Pair[SetOperation, Subselect]] = Nil
-
-  def this(nodes: RelationNode[_]*) = {
-    this()
-    nodes.foreach(addFrom(_))
-  }
+  protected var _setOps: Seq[Pair[SetOperation, SQLQuery[_]]] = Nil
 
   /**
    * Query parameters.
    */
   def parameters: Seq[Any] = _where.parameters ++
-          _having.parameters ++
-          _setOps.flatMap(p => p._2.parameters)
+      _having.parameters ++
+      _setOps.flatMap(p => p._2.parameters)
 
   /**
    * Queries combined with this subselect using specific set operation
@@ -188,19 +142,18 @@ class Subselect extends SQLQuery {
 
   // ### FROM clause
 
-  def relations = _relations
+  def from = _relations
 
   /**
-   * Add specified `node` to `FROM` clause.
+   * Applies specified `nodes` as this query's `FROM` clause.
    * All nodes with `this` alias are assigned query-unique alias.
-   * All projections are added too.
    */
-  def addFrom(node: RelationNode[_]): this.type = {
+  def from(node: RelationNode[_]): this.type = {
     ensureNodeAlias(node)
     this._relations ++= List[RelationNode[_]](node)
-    addProjection(node.projections: _*)
     return this
   }
+  def FROM(node: RelationNode[_]): this.type = from(node)
 
   protected def ensureNodeAlias(node: RelationNode[_]): RelationNode[_] =
     node match {
@@ -252,13 +205,7 @@ class Subselect extends SQLQuery {
 
   // ### GROUP BY clause
 
-  def groupBy: Seq[Projection[_]] = {
-    var result = _groupBy
-    if (projections.exists(_.grouping_?))
-      projections.filter(!_.grouping_?)
-              .foreach(p => if (!result.contains(p)) result ++= List(p))
-    return result
-  }
+  def groupBy: Seq[Projection[_]] = _groupBy
 
   def groupBy(proj: Projection[_]*): this.type = {
     proj.toList.foreach(p => addGroupByProjection(p))
@@ -266,59 +213,66 @@ class Subselect extends SQLQuery {
   }
   def GROUP_BY(proj: Projection[_]*): this.type = groupBy(proj: _*)
 
-  protected def addGroupByProjection(proj: Projection[_]): this.type = {
-    val pr = findProjection(proj, _projections) match {
-      case Some(p) => p
-      case _ => {
-        addProjection(proj)
-        proj
-      }
+  protected def addGroupByProjection(proj: Projection[_]): Unit = {
+    findProjection(projection, p => p.equals(proj)) match {
+      case None => ensureProjectionAlias(proj)
+      case _ =>
     }
-    this._groupBy ++= List[Projection[_]](pr)
-    return this
+    this._groupBy ++= List[Projection[_]](proj)
   }
+
+  /**
+   * Search deeply for a projection that matches specified `predicate` function.
+   */
+  protected def findProjection(projection: Projection[_],
+                               predicate: Projection[_] => Boolean): Option[Projection[_]] =
+    if (predicate(projection)) return Some(projection)
+    else projection match {
+      case p: CompositeProjection[_] =>
+        return p.subProjections.find(predicate)
+      case _ => return None
+    }
 
   // ### Set Operations
 
-  protected def addSetOp(op: SetOperation, subselect: Subselect): this.type = {
-    _setOps ++= List(op -> subselect)
+  protected def addSetOp(op: SetOperation, sql: SQLQuery[_]): this.type = {
+    _setOps ++= List(op -> sql)
     return this
   }
 
-  def union(subselect: Subselect): this.type =
-    addSetOp(OP_UNION, subselect)
-  def UNION(subselect: Subselect): this.type = union(subselect)
+  def union(sql: SQLQuery[_]): this.type =
+    addSetOp(OP_UNION, sql)
+  def UNION(sql: SQLQuery[_]): this.type = union(sql)
 
-  def unionAll(subselect: Subselect): this.type =
-    addSetOp(OP_UNION_ALL, subselect)
-  def UNION_ALL(subselect: Subselect): this.type =
-    unionAll(subselect)
+  def unionAll(sql: SQLQuery[_]): this.type =
+    addSetOp(OP_UNION_ALL, sql)
+  def UNION_ALL(sql: SQLQuery[_]): this.type =
+    unionAll(sql)
 
-  def except(subselect: Subselect): this.type =
-    addSetOp(OP_EXCEPT, subselect)
-  def EXCEPT(subselect: Subselect): this.type =
-    except(subselect)
+  def except(sql: SQLQuery[_]): this.type =
+    addSetOp(OP_EXCEPT, sql)
+  def EXCEPT(sql: SQLQuery[_]): this.type =
+    except(sql)
 
-  def exceptAll(subselect: Subselect): this.type =
-    addSetOp(OP_EXCEPT_ALL, subselect)
-  def EXCEPT_ALL(subselect: Subselect): this.type =
-    exceptAll(subselect)
+  def exceptAll(sql: SQLQuery[_]): this.type =
+    addSetOp(OP_EXCEPT_ALL, sql)
+  def EXCEPT_ALL(sql: SQLQuery[_]): this.type =
+    exceptAll(sql)
 
-  def intersect(subselect: Subselect): this.type =
-    addSetOp(OP_INTERSECT, subselect)
-  def INTERSECT(subselect: Subselect): this.type =
-    intersect(subselect)
+  def intersect(sql: SQLQuery[_]): this.type =
+    addSetOp(OP_INTERSECT, sql)
+  def INTERSECT(sql: SQLQuery[_]): this.type =
+    intersect(sql)
 
-  def intersectAll(subselect: Subselect): this.type =
-    addSetOp(OP_INTERSECT_ALL, subselect)
-  def INTERSECT_ALL(subselect: Subselect): this.type =
-    intersectAll(subselect)
+  def intersectAll(sql: SQLQuery[_]): this.type =
+    addSetOp(OP_INTERSECT_ALL, sql)
+  def INTERSECT_ALL(sql: SQLQuery[_]): this.type =
+    intersectAll(sql)
 
   // ### Miscellaneous
 
-  def toSubselectSql = dialect.subselect(this)
+  override def sqlSelect = dialect.subselect(this)
 
-  def toSql = toSubselectSql
 }
 
 // ## Full Select
@@ -326,16 +280,11 @@ class Subselect extends SQLQuery {
 /**
  * A full-fledged `SELECT` query.
  */
-class Select extends Subselect {
+class Select[T](projection: Projection[T]) extends Subselect[T](projection) {
 
   protected var _orders: Seq[Order] = Nil
   protected var _limit: Int = -1
   protected var _offset: Int = 0
-
-  def this(nodes: RelationNode[_]*) = {
-    this()
-    nodes.toList.foreach(addFrom(_))
-  }
 
   override def parameters: Seq[Any] =
     super.parameters ++ _orders.flatMap(_.parameters)
@@ -371,19 +320,3 @@ class Select extends Subselect {
   override def toSql = dialect.select(this)
 
 }
-
-/**
- * A helper for query DSLs.
- */
-class SelectHelper(val projections: Seq[Projection[_]]) {
-  def from(nodes: RelationNode[_]*): Select = {
-    val q = new Select(nodes: _*)
-    if (projections.size > 0) {
-      q.clearProjections
-      q.addProjection(projections: _*)
-    }
-    return q
-  }
-  def FROM(nodes: RelationNode[_]*): Select = from(nodes: _*)
-}
-

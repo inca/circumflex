@@ -31,7 +31,7 @@ object ORM {
   implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
     new SimpleExpression(expression.toSql, expression.parameters)
   implicit def string2projection(expression: String): Projection[Any] =
-    new ExpressionProjection[Any](expression, false)
+    new ExpressionProjection[Any](expression)
 
   // ### Global Configuration Objects
 
@@ -152,45 +152,45 @@ object ORM {
 
   // Simple subqueries.
 
-  def exists(subselect: Subselect) =
-    new SubqueryExpression(dialect.exists, subselect)
-  def EXISTS(subselect: Subselect) = exists(subselect)
+  def exists(subquery: SQLQuery[_]) =
+    new SubqueryExpression(dialect.exists, subquery)
+  def EXISTS(subquery: SQLQuery[_]) = exists(subquery)
 
-  def notExists(subselect: Subselect) =
-    new SubqueryExpression(dialect.notExists, subselect)
-  def NOT_EXISTS(subselect: Subselect) = notExists(subselect)
+  def notExists(subquery: SQLQuery[_]) =
+    new SubqueryExpression(dialect.notExists, subquery)
+  def NOT_EXISTS(subquery: SQLQuery[_]) = notExists(subquery)
 
   // Simple projections.
 
   def count(expr: String) =
-    new ExpressionProjection[Int](dialect.count + "(" + expr + ")",  true)
+    new ExpressionProjection[Int](dialect.count + "(" + expr + ")")
   def COUNT(expr: String) = count(expr)
 
   def countDistinct(expr: String) =
     new ExpressionProjection[Int](
-      dialect.count + "(" + dialect.distinct + " " + expr + ")", true)
+      dialect.count + "(" + dialect.distinct + " " + expr + ")")
   def COUNT_DISTINCT(expr: String) = countDistinct(expr)
 
   def max(expr: String) =
-    new ExpressionProjection[Any](dialect.max + "(" + expr + ")", true)
+    new ExpressionProjection[Any](dialect.max + "(" + expr + ")")
   def MAX(expr: String) = max(expr)
 
   def min(expr: String) =
-    new ExpressionProjection[Any](dialect.min + "(" + expr + ")", true)
+    new ExpressionProjection[Any](dialect.min + "(" + expr + ")")
   def MIN(expr: String) = min(expr)
 
   def sum(expr: String) =
-    new ExpressionProjection[Any](dialect.sum + "(" + expr + ")", true)
+    new ExpressionProjection[Any](dialect.sum + "(" + expr + ")")
   def SUM(expr: String) = sum(expr)
 
   def avg(expr: String) =
-    new ExpressionProjection[Any](dialect.avg + "(" + expr + ")", true)
+    new ExpressionProjection[Any](dialect.avg + "(" + expr + ")")
   def AVG(expr: String) = avg(expr)
 
   // Query DSLs
 
-  def select(projections: Projection[_]*) = new SelectHelper(projections.toList)
-  def SELECT(projections: Projection[_]*) = select(projections: _*)
+  def select[T](projection: Projection[T]) = new Select(projection)
+  def SELECT[T](projection: Projection[T]) = select(projection)
 
 
 }

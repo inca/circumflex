@@ -13,14 +13,6 @@ trait Projection[T] extends SQLable {
   def read(rs: ResultSet): Option[T]
 
   /**
-   * Return true for aggregate projections.
-   *
-   * If at least one grouping projection presents in query, then all non-grouping
-   * projections of the same query should appear in `GROUP BY` clause.
-   */
-  def grouping_?(): Boolean = false
-
-  /**
    * Returns the list of aliases, from which this projection is composed.
    */
   def sqlAliases: Seq[String]
@@ -88,21 +80,18 @@ trait CompositeProjection[R] extends Projection[R] {
  * This projection represents an arbitrary expression that RDBMS can understand
  * within `SELECT` clause (for example, `current_timestamp` or `count(*)`).
  */
-class ExpressionProjection[T](val expression: String,
-                              val grouping: Boolean)
+class ExpressionProjection[T](val expression: String)
         extends AtomicProjection[T] {
-
-  override def grouping_?() = grouping
 
   def toSql = dialect.alias(expression, alias)
 
   override def equals(obj: Any) = obj match {
     case p: ExpressionProjection[T] =>
-      p.expression == this.expression && p.grouping == this.grouping
+      p.expression == this.expression
     case _ => false
   }
 
-  override def hashCode = expression.hashCode * 31 + grouping.hashCode
+  override def hashCode = expression.hashCode
 }
 
 // ## Field Projection
