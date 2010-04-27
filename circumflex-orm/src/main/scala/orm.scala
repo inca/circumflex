@@ -314,14 +314,14 @@ trait TypeConverter {
   /**
    * Read a value from specified `ResultSet` at specified column `alias`.
    */
-  def read(rs: ResultSet, alias: String): Option[Any] = {
+  def read(rs: ResultSet, alias: String): Any = {
     val result = rs.getObject(alias)
-    if (rs.wasNull) return None
-    else return Some(result)
+    if (rs.wasNull) return null
+    else return result
   }
 
   /**
-   * Write a value to specified `PreparedStatement` at specified column `paramIndex`.
+   * Write a value to specified `PreparedStatement` at specified `paramIndex`.
    */
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit = parameter match {
     case Some(p) => write(st, p, paramIndex)

@@ -11,7 +11,7 @@ trait Projection[T] extends SQLable {
   /**
    * Extract a value from result set.
    */
-  def read(rs: ResultSet): Option[T]
+  def read(rs: ResultSet): T
 
   /**
    * Returns the list of aliases, from which this projection is composed.
@@ -31,9 +31,7 @@ trait AtomicProjection[T] extends Projection[T] {
    */
   protected[orm] var alias: String = "this"
 
-  def read(rs: ResultSet) = typeConverter
-          .read(rs, alias)
-          .asInstanceOf[Option[T]]
+  def read(rs: ResultSet) = typeConverter.read(rs, alias).asInstanceOf[T]
 
   /**
    * Change an alias of this projection.
@@ -47,8 +45,7 @@ trait AtomicProjection[T] extends Projection[T] {
 }
 
 /**
- * A contract for multi-column projections that should be
- * read as a composite object.
+ * A contract for multi-column projections that should be read as a composite object.
  */
 trait CompositeProjection[R] extends Projection[R] {
 
@@ -120,21 +117,6 @@ class FieldProjection[T, R <: Record[R]](val node: RelationNode[R],
   override def hashCode = node.hashCode * 31 + field.name.hashCode
 }
 
-// ## Projections to return tuples
-
-class AnyTupleProjection(val projections: Projection[_]*)
-        extends CompositeProjection[Array[Any]] {
-  def subProjections = projections
-  def read(rs: ResultSet): Option[Array[Any]] = {
-    val values = new ListBuffer[Any]
-    subProjections.foreach(p => p.read(rs) match {
-      case Some(v: Any) => values += v
-      case _ => values += null
-    })
-    return Some(values.toArray)
-  }
-}
-
 // ## Record Projection
 
 /**
@@ -142,15 +124,16 @@ class AnyTupleProjection(val projections: Projection[_]*)
  */
 class RecordProjection[R <: Record[R]](val node: RelationNode[R])
         extends CompositeProjection[R] {
-
   protected val _fieldProjections: Seq[FieldProjection[Any, R]] = node
           .relation
           .fields
           .map(f => new FieldProjection(node, f.asInstanceOf[Field[Any]]))
-
   def subProjections = _fieldProjections
 
-  def read(rs: ResultSet): Option[R] =
+  // We will return this `null`s in any failure conditions.
+  protected def nope: R = null.asInstanceOf[R]
+
+  def read(rs: ResultSet): R =
     if (node.relation.virtual_?) {
       // skip caches and read record
       readRecord(rs)
@@ -158,29 +141,28 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
       val pk = node.relation.primaryKey
       _fieldProjections.find(_.field == pk) match {
         case Some(pkProjection) => pkProjection.read(rs) match {
-          case Some(id) => tx.getCachedRecord(node.relation, id) match {
-            case Some(record: R) => Some(record)
+          case null => nope
+          case id => tx.getCachedRecord(node.relation, id) match {
+            case Some(record: R) => record
             case _ => readRecord(rs)
-          } case _ => None
-        } case _ => None
+          }
+        } case _ => nope
       }
     }
 
-  protected def readRecord(rs: ResultSet): Option[R] = {
+  protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance
-    _fieldProjections.foreach(p => p.read(rs) match {
-      case Some(value) => node.relation.methodsMap(p.field).invoke(record) match {
-        case vh: ValueHolder[_] => setValue(vh, value)
-        case _ => throw new ORMException("Could not set a field " + p.field +
-                " on record " + record.uuid + ".")
-      } case _ =>
+    _fieldProjections.foreach(p => node.relation.methodsMap(p.field).invoke(record) match {
+      case vh: ValueHolder[_] => setValue(vh, p.read(rs))
+      case _ => throw new ORMException("Could not set a field " + p.field +
+              " on record " + record.uuid + ".")
     })
     // if record remains unidentified, do not return it
-    if (record.transient_?) return None
+    if (record.transient_?) return nope
     else {
       // otherwise cache it and return
       tx.updateRecordCache(record)
-      return Some(record)
+      return record
     }
   }
 
@@ -188,7 +170,7 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
     case f: NullableField[Any] => f.setValue(Some(value))
     case f: NotNullField[Any] => f.setValue(value)
     case a: Association[_, _] => setValue(a.field, value)
-    case _ => 
+    case _ =>
   }
 
   override def equals(obj: Any) = obj match {
@@ -198,4 +180,11 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
 
   override def hashCode = node.hashCode
 
+}
+
+// ## Projections for tuples
+
+class AnyTupleProjection(val subProjections: Projection[_]*)
+        extends CompositeProjection[Array[Any]] {
+  def read(rs: ResultSet): Array[Any] = subProjections.map(_.read(rs)).toArray
 }
