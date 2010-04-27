@@ -8,7 +8,18 @@ class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
 object CircumflexCoreSpec extends Specification {
 
+  class SubRouterA(prefix: String = "") extends RequestRouter(prefix) {
+    new SubRouterB(prefix + "/sub1")
+    new SubRouterB(prefix + "/sub2")
+    get("/testA") = "preved"
+  }
+  class SubRouterB(prefix: String = "") extends RequestRouter(prefix) {
+    get("/testB") = "preved"
+  }
+
   class MainRouter extends RequestRouter {
+    new SubRouterA("/sub")
+
     get("/") = "preved"
     get("/ctx") = if (ctx == null) "null" else ctx.toString
     get("/capture/?"r, accept("+/+") & content_type("+/+")) =
@@ -112,6 +123,11 @@ object CircumflexCoreSpec extends Specification {
     }
     "process HOST extractors" in {
       MockApp.get("/host").execute.getContent must_== "local"
+    }
+    "process sub routers" in {
+      MockApp.get("/testA").execute.getStatus must_== 404
+      MockApp.get("/sub/testA").execute.getContent must_== "preved"
+      MockApp.get("/sub/sub1/testB").execute.getContent must_== "preved"
     }
 
   }

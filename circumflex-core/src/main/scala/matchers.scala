@@ -61,7 +61,7 @@ class SimpleMatcher(path: String) extends RegexMatcher {
 /* ## Request matchers */
 
 trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]]) {
-  private var _matchers = ListBuffer[RequestMatcher]()
+  private val _matchers = ListBuffer[RequestMatcher]()
   _matchers += this
 
   /* Composite pattern */
@@ -75,7 +75,7 @@ trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]]) 
     for (matcher <- _matchers)
       matcher.run(request) match {
         case Some(m) => res += matcher.name -> m
-        case None     => return None
+        case None    => return None
       }
     Some(res)
   }
@@ -84,11 +84,16 @@ trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]]) 
   def run(request: HttpServletRequest): Option[Match]
 }
 
-class UriMatcher(matcher: StringMatcher) extends RequestMatcher {
+class UriMatcher(prefix: String, matcher: StringMatcher) extends RequestMatcher {
 
   val name = "uri"
-  def run(request: HttpServletRequest) =
-    matcher(URLDecoder.decode(request.getRequestURI, "UTF-8"))
+  def run(request: HttpServletRequest) = {
+    val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
+    if (uri.startsWith(prefix))
+      matcher(uri.substring(prefix.length))
+    else
+      None
+  }
 
 }
 

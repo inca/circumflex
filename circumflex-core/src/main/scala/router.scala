@@ -1,15 +1,58 @@
 package ru.circumflex.core
 
 import java.io.File
+import collection.mutable.Stack
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
 // ## Request Router
 
-class RequestRouter {
+class RequestRouter(val uri_prefix: String = "") {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
+
+  /**
+   * ## Route
+   *
+   * Dispatches current request if it passes all matchers.
+   * Common matchers are based on HTTP methods, URI and headers.
+   */
+  class Route(matchingMethods: String*) {
+  
+    protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
+      matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
+        case Some(_) => {
+          var params = Map[String, Match]()
+          matchers.toList.foreach(rm => rm(ctx.request) match {
+            case None => return
+            case Some(p) => params ++= p
+          })
+          // All matchers succeeded
+          ctx._matches = params
+          throw RouteMatchedException(Some(response))
+        } case _ =>
+      }
+
+    /**
+     * For syntax "get(...) { case Extractors(...) => ... }"
+     */
+    def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
+      dispatch(ContextualResponse(f), new UriMatcher(uri_prefix, matcher))
+
+    def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
+      dispatch(ContextualResponse(f), new UriMatcher(uri_prefix, matcher), matcher1)
+
+    /**
+     * For syntax "get(...) = response"
+     */
+    def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
+      dispatch(response, new UriMatcher(uri_prefix, matcher))
+
+    def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
+      dispatch(response, new UriMatcher(uri_prefix, matcher), matcher1)
+
+  }
 
   // ### Routes
 
@@ -194,48 +237,6 @@ class RequestRouter {
   val user_agent = HeaderExtractor("User-Agent")
   val via = HeaderExtractor("Via")
   val war = HeaderExtractor("War")
-}
-
-/**
- * ## Route
- *
- * Dispatches current request if it passes all matchers.
- * Common matchers are based on HTTP methods, URI and headers.
- */
-class Route(val matchingMethods: String*) {
-
-  protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
-    matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
-      case Some(_) => {
-        var params = Map[String, Match]()
-        matchers.toList.foreach(rm => rm(ctx.request) match {
-          case None => return
-          case Some(p) => params ++= p
-        })
-        // All matchers succeeded
-        ctx._matches = params
-        throw RouteMatchedException(Some(response))
-      } case _ =>
-    }
-
-  /**
-   * For syntax "get(...) { case Extractors(...) => ... }"
-   */
-  def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
-    dispatch(ContextualResponse(f), new UriMatcher(matcher))
-
-  def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
-    dispatch(ContextualResponse(f), new UriMatcher(matcher), matcher1)
-
-  /**
-   * For syntax "get(...) = response"
-   */
-  def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, new UriMatcher(matcher))
-
-  def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, new UriMatcher(matcher), matcher1)
-
 }
 
 // ## Helpers

@@ -5,7 +5,6 @@ import java.io.File
 import java.util.{Locale, ResourceBundle}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import javax.activation.MimetypesFileTypeMap
-import org.slf4j.LoggerFactory
 import org.apache.commons.io.FilenameUtils._
 
 class CircumflexContext(val request: HttpServletRequest,
