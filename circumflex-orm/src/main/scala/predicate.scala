@@ -111,42 +111,42 @@ class SimpleExpressionHelper(val expr: String) {
     new SubqueryExpression(expr + " " + dialect.notIn, subselect)
   def NOT_IN(subselect: Subselect) = notIn(subselect)
 
-  def allEq(subselect: Subselect) =
+  def eqAll(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.EQ + " " + dialect.all, subselect)
-  def ALL_EQ(subselect: Subselect) = allEq(subselect)
-  def allNe(subselect: Subselect) =
+  def EQ_ALL(subselect: Subselect) = eqAll(subselect)
+  def neAll(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.NE + " " + dialect.all, subselect)
-  def ALL_NE(subselect: Subselect) = allNe(subselect)
-  def allGt(subselect: Subselect) =
+  def NE_ALL(subselect: Subselect) = neAll(subselect)
+  def gtAll(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.GT + " " + dialect.all, subselect)
-  def ALL_GT(subselect: Subselect) = allGt(subselect)
-  def allGe(subselect: Subselect) =
+  def GT_ALL(subselect: Subselect) = gtAll(subselect)
+  def geAll(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.GE + " " + dialect.all, subselect)
-  def ALL_GE(subselect: Subselect) = allGe(subselect)
-  def allLt(subselect: Subselect) =
+  def GE_ALL(subselect: Subselect) = geAll(subselect)
+  def ltAll(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.LT + " " + dialect.all, subselect)
-  def ALL_LT(subselect: Subselect) = allLt(subselect)
-  def allLe(subselect: Subselect) =
+  def LT_ALL(subselect: Subselect) = ltAll(subselect)
+  def leAll(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.LE + " " + dialect.all, subselect)
-  def ALL_LE(subselect: Subselect) = allLe(subselect)
+  def LE_ALL(subselect: Subselect) = leAll(subselect)
 
-  def someEq(subselect: Subselect) =
+  def eqSome(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.EQ + " " + dialect.some, subselect)
-  def SOME_EQ(subselect: Subselect) = someEq(subselect)
-  def someNe(subselect: Subselect) =
+  def EQ_SOME(subselect: Subselect) = eqSome(subselect)
+  def neSome(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.NE + " " + dialect.some, subselect)
-  def SOME_NE(subselect: Subselect) = someNe(subselect)
-  def someGt(subselect: Subselect) =
+  def NE_SOME(subselect: Subselect) = neSome(subselect)
+  def gtSome(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.GT + " " + dialect.some, subselect)
-  def SOME_GT(subselect: Subselect) = someGt(subselect)
-  def someGe(subselect: Subselect) =
+  def GT_SOME(subselect: Subselect) = gtSome(subselect)
+  def geSome(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.GE + " " + dialect.some, subselect)
-  def SOME_GE(subselect: Subselect) = someGe(subselect)
-  def someLt(subselect: Subselect) =
+  def GE_SOME(subselect: Subselect) = geSome(subselect)
+  def ltSome(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.LT + " " + dialect.some, subselect)
-  def SOME_LT(subselect: Subselect) = someLt(subselect)
-  def someLe(subselect: Subselect) =
+  def LT_SOME(subselect: Subselect) = ltSome(subselect)
+  def leSome(subselect: Subselect) =
     new SubqueryExpression(expr + " " + dialect.LE + " " + dialect.some, subselect)
-  def SOME_LE(subselect: Subselect) = someLe(subselect)
+  def LE_SOME(subselect: Subselect) = leSome(subselect)
 
 }
