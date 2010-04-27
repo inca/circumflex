@@ -82,15 +82,10 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
     return result
   })
 
-  def list_!(): Seq[T] = resultSet(rs => {
-    val result = new ListBuffer[T]()
-    while (rs.next) projection.read(rs) match {
-      case Some(value: T) => result += value
-      case _ => result += null.asInstanceOf[T]
-    }
-    return result
-  })
-
+  def list_!(): Seq[T] = list().map {
+    case Some(value: T) => value
+    case _ => null.asInstanceOf[T] 
+  }
 
   /**
    * Execute a query and return a unique result.
@@ -135,7 +130,7 @@ class Subselect[T](projection: Projection[T])
   protected var _where: Predicate = EmptyPredicate
   protected var _having: Predicate = EmptyPredicate
   protected var _groupBy: Seq[Projection[_]] = Nil
-  protected var _setOps: Seq[Pair[SetOperation, SQLQuery[_]]] = Nil
+  protected var _setOps: Seq[Pair[SetOperation, SQLQuery[T]]] = Nil
 
   /**
    * Query parameters.
@@ -245,38 +240,38 @@ class Subselect[T](projection: Projection[T])
 
   // ### Set Operations
 
-  protected def addSetOp(op: SetOperation, sql: SQLQuery[_]): this.type = {
+  protected def addSetOp(op: SetOperation, sql: SQLQuery[T]): this.type = {
     _setOps ++= List(op -> sql)
     return this
   }
 
-  def union(sql: SQLQuery[_]): this.type =
+  def union(sql: SQLQuery[T]): this.type =
     addSetOp(OP_UNION, sql)
-  def UNION(sql: SQLQuery[_]): this.type = union(sql)
+  def UNION(sql: SQLQuery[T]): this.type = union(sql)
 
-  def unionAll(sql: SQLQuery[_]): this.type =
+  def unionAll(sql: SQLQuery[T]): this.type =
     addSetOp(OP_UNION_ALL, sql)
-  def UNION_ALL(sql: SQLQuery[_]): this.type =
+  def UNION_ALL(sql: SQLQuery[T]): this.type =
     unionAll(sql)
 
-  def except(sql: SQLQuery[_]): this.type =
+  def except(sql: SQLQuery[T]): this.type =
     addSetOp(OP_EXCEPT, sql)
-  def EXCEPT(sql: SQLQuery[_]): this.type =
+  def EXCEPT(sql: SQLQuery[T]): this.type =
     except(sql)
 
-  def exceptAll(sql: SQLQuery[_]): this.type =
+  def exceptAll(sql: SQLQuery[T]): this.type =
     addSetOp(OP_EXCEPT_ALL, sql)
-  def EXCEPT_ALL(sql: SQLQuery[_]): this.type =
+  def EXCEPT_ALL(sql: SQLQuery[T]): this.type =
     exceptAll(sql)
 
-  def intersect(sql: SQLQuery[_]): this.type =
+  def intersect(sql: SQLQuery[T]): this.type =
     addSetOp(OP_INTERSECT, sql)
-  def INTERSECT(sql: SQLQuery[_]): this.type =
+  def INTERSECT(sql: SQLQuery[T]): this.type =
     intersect(sql)
 
-  def intersectAll(sql: SQLQuery[_]): this.type =
+  def intersectAll(sql: SQLQuery[T]): this.type =
     addSetOp(OP_INTERSECT_ALL, sql)
-  def INTERSECT_ALL(sql: SQLQuery[_]): this.type =
+  def INTERSECT_ALL(sql: SQLQuery[T]): this.type =
     intersectAll(sql)
 
   // ### Miscellaneous
