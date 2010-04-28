@@ -148,12 +148,12 @@ class Subselect[T](projection: Projection[T])
    * Applies specified `nodes` as this query's `FROM` clause.
    * All nodes with `this` alias are assigned query-unique alias.
    */
-  def from(node: RelationNode[_]): this.type = {
-    ensureNodeAlias(node)
-    this._relations ++= List[RelationNode[_]](node)
+  def from(nodes: RelationNode[_]*): this.type = {
+    this._relations = nodes.toList
+    from.foreach(ensureNodeAlias(_))
     return this
   }
-  def FROM(node: RelationNode[_]): this.type = from(node)
+  def FROM(nodes: RelationNode[_]*): this.type = from(nodes: _*)
 
   protected def ensureNodeAlias(node: RelationNode[_]): RelationNode[_] =
     node match {
