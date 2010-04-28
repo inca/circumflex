@@ -2,6 +2,7 @@ package ru.circumflex.core
 
 import java.lang.reflect.InvocationTargetException
 import java.util.regex.Pattern
+import util.matching.Regex
 import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import java.io.{FileNotFoundException, File}
