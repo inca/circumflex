@@ -184,6 +184,17 @@ abstract class Relation[R <: Record[R]] {
         localFields.map(_.name).mkString("_") + "_fkey", localFields)
   def FOREIGN_KEY(localFields: Field[_]*): ForeignKeyHelper =
     foreignKey(localFields: _*)
+  
+  /**
+   * Add an index to this relation's definition.
+   */
+  def index(indexName: String, expression: String): Index = {
+    val idx = new Index(this, indexName, expression)
+    addPostAux(idx)
+    return idx
+  }
+  def INDEX(indexName: String, expression: String): Index =
+      index(indexName, expression)
 
   /**
    * Add specified `objects` to this relation's `preAux` queue.
