@@ -2,10 +2,8 @@ package ru.circumflex.core
 
 import java.lang.reflect.InvocationTargetException
 import java.util.regex.Pattern
-import util.matching.Regex
 import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import org.slf4j.LoggerFactory
 import java.io.{FileNotFoundException, File}
 import org.apache.commons.io.FilenameUtils._
 
@@ -161,7 +159,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
    * Called when a filter is instantiated by Servlet Container.
    */
   override def init(cfg: FilterConfig) = {
-    cxLog.info("Circumflex v. 0.3")
+    cxLog.info("Circumflex v. 1.0")
   }
 
 }

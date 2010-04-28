@@ -4,10 +4,15 @@ import java.sql.Connection
 import JDBC._
 import ORM._
 
+// ## DDL stuff
+
 /**
  * A Unit-of-Work for generating database schema.
  */
 class DDLUnit {
+  import DDLUnit._
+
+  // ### Objects
 
   protected var _schemata: Seq[Schema] = Nil
   def schemata = _schemata
@@ -22,14 +27,13 @@ class DDLUnit {
   protected var _postAux: Seq[SchemaObject] = Nil
   def postAux = _postAux
 
-  protected var _infoMsgs: Seq[Pair[String, String]] = Nil
-  def infoMsgs = _infoMsgs
-  protected var _errorMsgs: Seq[Pair[String, String]] = Nil
-  def errorMsgs = _errorMsgs
+  protected var _msgs: Seq[Msg] = Nil
+  def messages = _msgs
+  def msgsArray: Array[Msg] = messages.toArray
 
-  def reset() = {
-    _infoMsgs = Nil
-    _errorMsgs = Nil
+  def resetMsgs(): this.type = {
+    _msgs = Nil
+    return this
   }
 
   def clear() = {
@@ -39,7 +43,7 @@ class DDLUnit {
     _constraints = Nil
     _preAux = Nil
     _postAux = Nil
-    reset()
+    resetMsgs()
   }
 
   def add(objects: SchemaObject*): this.type = {
@@ -74,23 +78,23 @@ class DDLUnit {
     return this
   }
 
+  // ### Workers
+
   protected def dropObjects(objects: Seq[SchemaObject], conn: Connection) =
     for (o <- objects.reverse)
       autoClose(conn.prepareStatement(o.sqlDrop))(st => {
         st.executeUpdate
-        _infoMsgs ++= List("DROP "  + o.objectName + ": OK" -> o.sqlDrop)
-      })(e => {
-        _errorMsgs ++= List("DROP " + o.objectName + ": " + e.getMessage -> o.sqlDrop)
-      })
+        _msgs ++= List(InfoMsg("DROP "  + o.objectName + ": OK", o.sqlDrop))
+      })(e =>
+        _msgs ++= List(ErrorMsg("DROP " + o.objectName + ": " + e.getMessage, o.sqlDrop)))
 
   protected def createObjects(objects: Seq[SchemaObject], conn: Connection) =
     for (o <- objects)
       autoClose(conn.prepareStatement(o.sqlCreate))(st => {
         st.executeUpdate
-        _infoMsgs ++= List("CREATE " + o.objectName + ": OK" -> o.sqlCreate)
-      })(e => {
-        _errorMsgs ++= List("CREATE " + o.objectName + ": " + e.getMessage -> o.sqlCreate)
-      })
+        _msgs ++= List(InfoMsg("CREATE " + o.objectName + ": OK", o.sqlCreate))
+      })(e =>
+        _msgs ++= List(ErrorMsg("CREATE " + o.objectName + ": " + e.getMessage, o.sqlCreate)))
 
   /**
    * Execute a DROP script for added objects.
@@ -138,5 +142,15 @@ class DDLUnit {
     drop()
     create()
   }
+}
 
+// ### Messages
+
+object DDLUnit {
+  trait Msg {
+    def body: String
+    def sql: String
+  }
+  case class InfoMsg(val body: String, val sql: String) extends Msg
+  case class ErrorMsg(val body: String, val sql: String) extends Msg
 }

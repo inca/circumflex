@@ -1,7 +1,6 @@
 package ru.circumflex.core
 
 import java.io.File
-import collection.mutable.Stack
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
@@ -179,6 +178,15 @@ class RequestRouter(val uri_prefix: String = "") {
   }
 
   /**
+   * Adds an Content-Disposition header with "attachment" content and specified UTF-8 filename.
+   */
+  def attachment(filename: String): this.type = {
+    header("Content-Disposition") =
+        "attachment; filename=\"" + new String(filename.getBytes("UTF-8"), "ISO-8859-1") + "\""
+    return this
+  }
+
+  /**
    * Sets content type header.
    */
   def contentType(ct: String): this.type = {
@@ -187,12 +195,12 @@ class RequestRouter(val uri_prefix: String = "") {
   }
 
   /**
-   * Adds an Content-Disposition header with "attachment" content and specified UTF-8 filename.
+   * A helper to sets appropriate headers for disabling client-side caching.
    */
-  def attachment(filename: String): this.type = {
-    header("Content-Disposition") =
-        "attachment; filename=\"" + new String(filename.getBytes("UTF-8"), "ISO-8859-1") + "\""
-    return this
+  def noCache() {
+    header('Pragma) = "no-cache"
+    header("Cache-Control") = "no-store"
+    header('Expires) = 0l
   }
 
   /* ## Request extractors */

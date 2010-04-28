@@ -24,6 +24,11 @@
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-orm</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-docco</artifactId>
       <version>1.0</version>
     </dependency>
