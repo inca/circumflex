@@ -1,9 +1,11 @@
 package ru.circumflex.orm
 
 import ORM._
+import JDBC._
 import ru.circumflex.core.Circumflex
 import ru.circumflex.core.CircumflexUtil._
 import java.lang.reflect.Method
+import java.sql.PreparedStatement
 
 // ## Relations registry
 
@@ -101,7 +103,7 @@ abstract class Relation[R <: Record[R]] {
   /**
    * Primary key field of this relation.
    */
-  def primaryKey = recordSample.primaryKey
+  def primaryKey = recordSample.id
 
   /**
    * Create new `RelationNode` with specified `alias`.
@@ -163,6 +165,9 @@ abstract class Relation[R <: Record[R]] {
 
   // ### Definitions
 
+  /**
+   * A helper for creating named constraints.
+   */
   protected[orm] def constraint(name: String): ConstraintHelper =
     new ConstraintHelper(this, name)
   protected[orm] def CONSTRAINT(name: String): ConstraintHelper =
@@ -212,6 +217,32 @@ abstract class Relation[R <: Record[R]] {
     return this
   }
 
+  // ### Persistence
+
+  /**
+   * A helper to set parameters to `PreparedStatement`.
+   */
+  protected[orm] def setParams(record: R, st: PreparedStatement, fields: Seq[Field[_]]) =
+    (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).apply(), ix + 1))
+
+  /**
+   * Skips the validation and performs `INSERT` statement for specified `record`.
+   * All empty fields with `DEFAULT` expressions are omitted.
+   */
+  def insert_!(record: R): Int = {
+    if (readOnly_?)
+      throw new ORMException("The relation " + qualifiedName + " is read-only.")
+    transactionManager.dml(conn => {
+      val fields = record.getFields.filter(f => !(f.empty_? && f.default != None))
+      val sql = dialect.insertRecord(record, fields)
+      sqlLog.debug(sql)
+      auto(conn.prepareStatement(sql))(st => {
+        setParams(record, st, fields)
+        st.executeUpdate
+      })
+    })
+  }
+
   // ### Equality and others
 
   override def equals(that: Any) = that match {
@@ -230,8 +261,8 @@ abstract class Relation[R <: Record[R]] {
 abstract class Table[R <: Record[R]] extends Relation[R]
     with SchemaObject {
   val objectName = "TABLE " + qualifiedName
-  val sqlDrop = dialect.dropTable(this)
-  val sqlCreate = dialect.createTable(this)
+  lazy val sqlDrop = dialect.dropTable(this)
+  lazy val sqlCreate = dialect.createTable(this)
 }
 
 // ## View
@@ -252,6 +283,6 @@ abstract class View[R <: Record[R]] extends Relation[R]
   // ### Miscellaneous
 
   val objectName = "VIEW " + qualifiedName
-  val sqlDrop = dialect.dropView(this)
-  val sqlCreate = dialect.createView(this)
+  lazy val sqlDrop = dialect.dropView(this)
+  lazy val sqlCreate = dialect.createView(this)
 }

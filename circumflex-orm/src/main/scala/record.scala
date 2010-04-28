@@ -43,14 +43,11 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def relation = RelationRegistry.getRelation(this)
 
-  // A default primary key is an auto-incremented `BIGINT` column.
-  val id = "id".BIGINT.NULLABLE
-
   /**
    * We only support auto-generated `BIGINT` columns as primary keys
    * for a couple of reasons. Sorry.
    */
-  def primaryKey: Field[Option[Long]] = id
+  val id = new PrimaryKeyField(this)
 
   /**
    * Yield `true` if `primaryKey` field is empty (contains `None`).
@@ -64,6 +61,36 @@ abstract class Record[R <: Record[R]] { this: R =>
     new NotNullField[T](name, uuid + "." + name, sqlType)
 
   // ### Miscellaneous
+
+  /**
+   * Get all fields of current record (involves some reflection).
+   */
+  def getFields(): Seq[Field[_]] = relation.fields
+      .map(f => relation.methodsMap(f).invoke(this) match {
+    case f: Field[_] => f
+    case a: Association[_, _] => a.field
+    case m => throw new ORMException("Unknown member: " + m)
+  })
+
+  /**
+   * Set a specified `value` to specified `holder`.
+   */
+  def setValue(vh: ValueHolder[_], value: Any): Unit = value match {
+    case Some(value) => setValue(vh, value)
+    case None => setValue(vh, null)
+    case _ => vh match {
+      case f: NullableField[Any] => f.setValue(Some(value))
+      case f: NotNullField[Any] => f.setValue(value)
+      case a: Association[_, _] => value match {
+        case id: Long => setValue(a.field, id)
+        case rec: Record[_] => setValue(a.field, rec.id())
+        case _ => throw new ORMException("Could not set value " + value +
+            " to association " + a + ".")
+      }
+      case _ => throw new ORMException("Could not set value " + value +
+          " to specified value holder " + vh + ".")
+    }
+  }
 
   override def toString = getClass.getSimpleName + "@" + id.toString("TRANSIENT")
 
@@ -107,7 +134,6 @@ class DefinitionHelper[R <: Record[R]](record: R, name: String) {
 
   def references[F <: Record[F]](relation: Relation[F]): Association[R, F] =
     new NotNullAssociation[R, F](name, uuid, record, relation)
-
   def REFERENCES[F <: Record[F]](relation: Relation[F]): Association[R, F] =
     references(relation)
 }

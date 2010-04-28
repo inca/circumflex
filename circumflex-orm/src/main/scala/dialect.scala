@@ -220,20 +220,20 @@ class Dialect {
   /**
    * Produce `CREATE INDEX` statement.
    */
-   def createIndex(idx: Index): String = {
-     var result = "CREATE "
-     if (idx.unique_?) result += "UNIQUE "
-     result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
-       " USING " + idx.using + " (" + idx.expression + ")"
-     if (idx.where != EmptyPredicate)
-       result += " WHERE " + idx.where.toInlineSql
-     return result
-   }
+  def createIndex(idx: Index): String = {
+    var result = "CREATE "
+    if (idx.unique_?) result += "UNIQUE "
+    result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
+        " USING " + idx.using + " (" + idx.expression + ")"
+    if (idx.where != EmptyPredicate)
+      result += " WHERE " + idx.where.toInlineSql
+    return result
+  }
 
   /**
    * Produce `DROP INDEX` statement.
    */
-   def dropIndex(idx: Index) = "DROP INDEX " + idx.relation.schema.name + "." + idx.name
+  def dropIndex(idx: Index) = "DROP INDEX " + idx.relation.schema.name + "." + idx.name
 
   /**
    * SQL definition for a column represented by specified `field`
@@ -256,16 +256,20 @@ class Dialect {
    * (sequences are supported by PostgreSQL, Oracle and DB2 dialects).
    */
   def initializeRelation(relation: Relation[_]): Unit = {
-    val seqName = pkSequenceName(relation) 
+    val seqName = pkSequenceName(relation)
     val seq = new SchemaObject {
       val objectName = "SEQUENCE " + seqName
       val sqlDrop = "DROP SEQUENCE " + seqName
       val sqlCreate = "CREATE SEQUENCE " + seqName
     }
     relation.addPreAux(seq)
-    // Add default expression to primary key column.
-    relation.primaryKey.default("NEXTVAL('" + seqName + "')")
   }
+
+  /**
+   * An expression for primary key column.
+   */
+  def primaryKeyExpression(record: Record[_]) =
+    "DEFAULT NEXTVAL('" + pkSequenceName(record.relation) + "')"
 
   protected def pkSequenceName(relation: Relation[_]) =
     relation.qualifiedName + "_" + relation.primaryKey.name + "_seq"
@@ -282,10 +286,10 @@ class Dialect {
    */
   def foreignKeyDefinition(fk: ForeignKey) =
     "FOREIGN KEY (" + fk.localFields.map(_.name).mkString(", ") +
-            ") REFERENCES " + fk.foreignRelation.qualifiedName + " (" +
-            fk.foreignFields.map(_.name).mkString(", ") + ") " +
-            "ON DELETE " + fk.onDelete.toSql + " " +
-            "ON UPDATE " + fk.onUpdate.toSql
+        ") REFERENCES " + fk.foreignRelation.qualifiedName + " (" +
+        fk.foreignFields.map(_.name).mkString(", ") + ") " +
+        "ON DELETE " + fk.onDelete.toSql + " " +
+        "ON UPDATE " + fk.onUpdate.toSql
 
   /**
    * Produces check constraint definition (e.g. `CHECK (index > 0)`).
@@ -308,8 +312,8 @@ class Dialect {
     node match {
       case j: JoinNode[_, _] =>
         result += joinInternal(j.left, on) +
-                " " + j.joinType.toSql + " " +
-                joinInternal(j.right, j.sqlOn)
+            " " + j.joinType.toSql + " " +
+            joinInternal(j.right, j.sqlOn)
       case _ =>
         result += node.toSql
         if (on != null) result += " " + on
@@ -352,6 +356,17 @@ class Dialect {
       result += " OFFSET " + q.offset
     return result
   }
+
+  // ### DML
+
+  /**
+   * Produce `INSERT INTO .. VALUES` statement for specified `record` and specified `fields`.
+   */
+  def insertRecord(record: Record[_], fields: Seq[Field[_]]) =
+    "INSERT INTO " + record.relation.qualifiedName +
+        " (" + fields.map(_.name).mkString(", ") +
+        ") VALUES (" + fields.map(f => "?").mkString(", ") + ")"
+
 
 
 }

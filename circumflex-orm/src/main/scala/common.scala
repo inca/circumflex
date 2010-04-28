@@ -90,6 +90,7 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
 
   def getValue(): T = _value
   def apply(): T = getValue
+  def empty_?(): Boolean = getValue() == null
 
   def setValue(newValue: T): this.type = {
     _value = newValue

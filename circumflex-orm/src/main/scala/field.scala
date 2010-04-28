@@ -23,10 +23,10 @@ abstract class Field[T](name: String,
   def unique_?() = _unique
 
   // An optional default expression for DDL.
-  protected[orm] var _default: Option[String] = None
-  def default = _default
+  protected[orm] var _defaultExpr: Option[String] = None
+  def default = _defaultExpr
   def default(expr: String): this.type = {
-    _default = Some(dialect.defaultExpression(expr))
+    _defaultExpr = Some(dialect.defaultExpression(expr))
     this
   }
   def DEFAULT(expr: String): this.type = default(expr)
@@ -39,7 +39,7 @@ class NotNullField[T](name: String, uuid: String, sqlType: String)
 
   def nullable: NullableField[T] = {
     val c = new NullableField[T](this.name, this.uuid, this.sqlType)
-    c._default = this.default
+    c._defaultExpr = this.default
     return c
   }
   def NULLABLE = nullable
@@ -55,6 +55,8 @@ class NullableField[T](name: String, uuid: String, sqlType: String)
   // `None` is default value instead of `null`
   setValue(None)
 
+  override def empty_?() = getValue == None
+
   def get(): T = _value.get
   def getOrElse(default: T): T = apply().getOrElse(default)
 
@@ -66,13 +68,19 @@ class NullableField[T](name: String, uuid: String, sqlType: String)
 
   def notNull: NotNullField[T] = {
     val c = new NotNullField[T](this.name, this.uuid, this.sqlType)
-    c._default = this.default
+    c._defaultExpr = this.default
     return c
   }
   def NOT_NULL = notNull
+
 
   override def toString(default: String) = apply() match {
     case Some(value) if value != null => value.toString
     case _ => default
   }
+}
+
+class PrimaryKeyField(val record: Record[_])
+    extends NullableField[Long]("id", record.uuid + "." + "id", dialect.longType) {
+  override def default = Some(dialect.primaryKeyExpression(record))
 }

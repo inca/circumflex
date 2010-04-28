@@ -368,6 +368,7 @@ trait TypeConverter {
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit = parameter match {
     case Some(p) => write(st, p, paramIndex)
     case None | null => st.setObject(paramIndex, null)
+    case record: Record[_] => write(st, record.id(), paramIndex)
     case value => st.setObject(paramIndex, convert(value))
   }
 

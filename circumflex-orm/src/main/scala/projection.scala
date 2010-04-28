@@ -146,7 +146,7 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
   protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance
     _fieldProjections.foreach(p => node.relation.methodsMap(p.field).invoke(record) match {
-      case vh: ValueHolder[_] => setValue(vh, p.read(rs))
+      case vh: ValueHolder[_] => record.setValue(vh, p.read(rs))
       case _ => throw new ORMException("Could not set a field " + p.field +
           " on record " + record.uuid + ".")
     })
@@ -157,13 +157,6 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
       tx.updateRecordCache(record)
       return record
     }
-  }
-
-  protected def setValue(vh: ValueHolder[_], value: Any): Unit = vh match {
-    case f: NullableField[Any] => f.setValue(Some(value))
-    case f: NotNullField[Any] => f.setValue(value)
-    case a: Association[_, _] => setValue(a.field, value)
-    case _ =>
   }
 
   override def equals(obj: Any) = obj match {
