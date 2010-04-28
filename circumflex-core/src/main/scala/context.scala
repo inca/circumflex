@@ -122,14 +122,6 @@ class CircumflexContext(val request: HttpServletRequest,
 
   def getMatch(key: String): Option[Match] = _matches.get(key)
 
-  // ### ???
-
-  def noCache() {
-    header('Pragma) = "no-cache"
-    header("Cache-Control") = "no-store"
-    header('Expires) = 0l
-  }
-
 }
 
 object CircumflexContext {
