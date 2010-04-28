@@ -136,3 +136,51 @@ class ForeignKeyHelper(relation: Relation[_], name: String, localFields: Seq[Fie
                  foreignFields: Field[_]*): ForeignKey =
     references(foreignRelation, foreignFields: _*)
 }
+
+// ### Indexes
+
+/**
+ * Index definition for the relation.
+ */
+class Index(val relation: Relation[_],
+            val name: String,
+            val expression: String) 
+    extends SchemaObject {
+
+  /**
+   * DSL for defining `UNIQUE` indexes.
+   */  
+  protected var _unique: Boolean = false
+  def unique_?() = _unique
+  def unique: this.type = {
+    this._unique = true
+    return this
+  }
+  def UNIQUE: this.type = unique
+
+  /**
+   * DSL for defining indexing method.
+   */
+  private var _method: String = "btree"
+  def using = _method
+  def using(method: String): this.type = {
+    this._method = method
+    return this
+  }
+  def USING(method: String): this.type = using(method)
+
+  /**
+   * DSL for defining indexing predicate.
+   */
+  private var _predicate: Predicate = EmptyPredicate
+  def where = _predicate
+  def where(predicate: Predicate): this.type = {
+    this._predicate = predicate
+    return this
+  }
+  def WHERE(predicate: Predicate): this.type = where(predicate)
+
+  def objectName = name
+  def sqlCreate = dialect.createIndex(this)
+  def sqlDrop = dialect.dropIndex(this)
+}

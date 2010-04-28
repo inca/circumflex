@@ -192,7 +192,23 @@ class Dialect {
   def dropTable(table: Table[_]) =
     "DROP TABLE " + table.qualifiedName
 
+  /**
+   * Produce `CREATE INDEX` statement.
+   */
+   def createIndex(idx: Index): String = {
+     var result = "CREATE "
+     if (idx.unique_?) result += "UNIQUE "
+     result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
+       " USING " + idx.using + " (" + idx.expression + ")"
+     if (idx.where != EmptyPredicate)
+       result += " WHERE " + idx.where.toInlineSql
+     return result
+   }
 
+  /**
+   * Produce `DROP INDEX` statement.
+   */
+   def dropIndex(idx: Index) = "DROP INDEX " + idx.relation.schema + "." + idx.name
 
   /**
    * SQL definition for a column represented by specified `field`
