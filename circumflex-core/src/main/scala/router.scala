@@ -6,7 +6,7 @@ case class RouteMatchedException(val response: Option[HttpResponse]) extends Exc
 
 // ## Request Router
 
-class RequestRouter(val uri_prefix: String = "") {
+class RequestRouter(val uriPrefix: String = "") {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
@@ -37,19 +37,19 @@ class RequestRouter(val uri_prefix: String = "") {
      * For syntax "get(...) { case Extractors(...) => ... }"
      */
     def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
-      dispatch(ContextualResponse(f), new UriMatcher(uri_prefix, matcher))
+      dispatch(ContextualResponse(f), new UriMatcher(uriPrefix, matcher))
 
     def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
-      dispatch(ContextualResponse(f), new UriMatcher(uri_prefix, matcher), matcher1)
+      dispatch(ContextualResponse(f), new UriMatcher(uriPrefix, matcher), matcher1)
 
     /**
      * For syntax "get(...) = response"
      */
     def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
-      dispatch(response, new UriMatcher(uri_prefix, matcher))
+      dispatch(response, new UriMatcher(uriPrefix, matcher))
 
     def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-      dispatch(response, new UriMatcher(uri_prefix, matcher), matcher1)
+      dispatch(response, new UriMatcher(uriPrefix, matcher), matcher1)
 
   }
 
