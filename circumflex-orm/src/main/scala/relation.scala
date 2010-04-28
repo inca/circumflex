@@ -61,16 +61,15 @@ abstract class Relation[R <: Record[R]] {
    * e.g. strip trailing `$` from `this.getClass.getName`.
    */
   val recordClass: Class[R] = Circumflex
-          .loadClass[R](this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
+      .loadClass[R](this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
 
   /**
    * This sample is used to introspect record for fields, constraints and,
    * possibly, other stuff.
    */
   protected[orm] val recordSample: R = recordClass.newInstance
-  protected[orm] def >() = recordSample
-  protected[orm] def me = >()
-  protected[orm] def r = >()
+  def r: R = recordSample
+  def >() = r
 
   /**
    * Unique identifier based on `recordClass` to identify this relation
@@ -114,7 +113,7 @@ abstract class Relation[R <: Record[R]] {
    */
   def findAssociation[F <: Record[F]](relation: Relation[F]): Option[Association[R, F]] =
     associations.find(_.foreignRelation == relation)
-            .asInstanceOf[Option[Association[R, F]]]
+        .asInstanceOf[Option[Association[R, F]]]
 
   // ### Introspection and Initialization
 
@@ -124,8 +123,8 @@ abstract class Relation[R <: Record[R]] {
   private def findMembers(cl: Class[_]): Unit = {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
     cl.getDeclaredFields
-            .map(f => cl.getMethod(f.getName))
-            .foreach(m => processMember(m))
+        .map(f => cl.getMethod(f.getName))
+        .foreach(m => processMember(m))
   }
 
   private def processMember(m: Method): Unit = m.getReturnType match {
@@ -170,23 +169,33 @@ abstract class Relation[R <: Record[R]] {
     constraint(name)
 
   /**
-   * Adds a unique constraint to this relation's definition.
+   * Add a unique constraint to this relation's definition.
    */
-  protected[orm] def unique(fields: Field[_]*): UniqueKey = {
-    val constrName = relationName + "_" +
-            fields.map(_.name).mkString("_") + "_key"
-    val constr = new UniqueKey(this, constrName, fields.toList)
-    this._constraints ++= List(constr)
-    return constr
-  }
-
+  protected[orm] def unique(fields: Field[_]*): UniqueKey =
+    constraint(relationName + "_" + fields.map(_.name).mkString("_") + "_key")
+        .unique(fields: _*)
   protected[orm] def UNIQUE(fields: Field[_]*) = unique(fields: _*)
 
+  /**
+   * Add a foreign key constraint to this relation's definition.
+   */
+  def foreignKey(localFields: Field[_]*): ForeignKeyHelper =
+    new ForeignKeyHelper(this, relationName + "_" +
+        localFields.map(_.name).mkString("_") + "_fkey", localFields)
+  def FOREIGN_KEY(localFields: Field[_]*): ForeignKeyHelper =
+    foreignKey(localFields: _*)
+
+  /**
+   * Add specified `objects` to this relation's `preAux` queue.
+   */
   def addPreAux(objects: SchemaObject*): this.type = {
     objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
     return this
   }
-
+  
+  /**
+   * Add specified `objects` to this relaion's `postAux` queue.
+   */
   def addPostAux(objects: SchemaObject*): this.type = {
     objects.foreach(o => if (!_postAux.contains(o)) _postAux ++= List(o))
     return this

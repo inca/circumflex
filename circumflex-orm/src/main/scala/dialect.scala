@@ -227,7 +227,7 @@ class Dialect {
    * Produce unique constraint definition (e.g. `UNIQUE (name, value)`).
    */
   def uniqueKeyDefinition(uniq: UniqueKey) =
-    "UNIQUE (" + uniq.fields.map(_.name).mkString(",") + ")"
+    "UNIQUE (" + uniq.fields.map(_.name).mkString(", ") + ")"
 
   /**
    * Produce foreign key constraint definition for association (e.g.

@@ -34,6 +34,8 @@ object ORM {
     new ExpressionProjection[Any](expression)
   implicit def association2field(association: Association[_, _]): Field[Long] =
     association.field
+  implicit def relation2recordSample[R <: Record[R]](relation: Relation[R]): R =
+    relation.r
 
   // ### Global Configuration Objects
 
