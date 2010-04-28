@@ -37,6 +37,9 @@ object ORM {
   implicit def relation2recordSample[R <: Record[R]](relation: Relation[R]): R =
     relation.r
 
+  implicit def tuple2proj[T1, T2](t: Tuple2[Projection[T1], Projection[T2]]): Tuple2Projection[T1, T2] =
+    new Tuple2Projection(t._1, t._2)
+
   // ### Global Configuration Objects
 
   /**

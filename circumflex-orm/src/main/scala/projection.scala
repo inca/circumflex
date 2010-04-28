@@ -181,3 +181,11 @@ class AnyTupleProjection(val subProjections: Projection[_]*)
     extends CompositeProjection[Array[Any]] {
   def read(rs: ResultSet): Array[Any] = subProjections.map(_.read(rs)).toArray
 }
+
+case class Tuple2Projection[T1, T2] (val _1: Projection[T1],
+                                     val _2: Projection[T2]) 
+        extends CompositeProjection[Tuple2[T1, T2]] {
+  def subProjections = _1 :: _2 :: Nil
+  def read(rs: ResultSet): Tuple2[T1, T2] = Tuple(_1.read(rs), _2.read(rs))
+}
+
