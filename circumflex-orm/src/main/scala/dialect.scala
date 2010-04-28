@@ -184,7 +184,7 @@ class Dialect {
   def createTable(table: Table[_]) =
     "CREATE TABLE " + table.qualifiedName + " (" +
         table.fields.map(_.toSql).mkString(", ") +
-        ", PRIMARY KEY (" + table.primaryKey.name + ")" + ")"
+        ", PRIMARY KEY (" + table.primaryKey.name + "))"
 
   /**
    * Produce `DROP TABLE` statement.
@@ -224,13 +224,13 @@ class Dialect {
   }
 
   /**
-   * Produces unique constraint definition (e.g. `UNIQUE (name, value)`).
+   * Produce unique constraint definition (e.g. `UNIQUE (name, value)`).
    */
   def uniqueKeyDefinition(uniq: UniqueKey) =
     "UNIQUE (" + uniq.fields.map(_.name).mkString(",") + ")"
 
   /**
-   * Produces foreign key constraint definition for association (e.g.
+   * Produce foreign key constraint definition for association (e.g.
    * `FOREIGN KEY (country_id) REFERENCES country(id) ON DELETE CASCADE`).
    */
   def foreignKeyDefinition(fk: ForeignKey) =
@@ -240,10 +240,16 @@ class Dialect {
             "ON DELETE " + fk.onDelete.toSql + " " +
             "ON UPDATE " + fk.onUpdate.toSql
 
+  /**
+   * Produces check constraint definition (e.g. `CHECK (index > 0)`).
+   */
+  def checkConstraintDefinition(check: CheckConstraint) =
+    "CHECK (" + check.expression + ")"
+
   // ### SQL
 
   /**
-   * Produces SQL representation of joined tree of relations (`JoinNode` instance).
+   * Produce SQL representation of joined tree of relations (`JoinNode` instance).
    */
   def join(j: JoinNode[_, _]): String = joinInternal(j, null)
 
@@ -287,7 +293,7 @@ class Dialect {
   }
 
   /**
-   * Produces `SELECT` statement with `?` parameters.
+   * Produce `SELECT` statement with `?` parameters.
    */
   def select(q: Select[_]): String = {
     var result = subselect(q)

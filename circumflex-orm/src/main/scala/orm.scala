@@ -32,6 +32,8 @@ object ORM {
     new SimpleExpression(expression.toSql, expression.parameters)
   implicit def string2projection(expression: String): Projection[Any] =
     new ExpressionProjection[Any](expression)
+  implicit def association2field(association: Association[_, _]): Field[Long] =
+    association.field
 
   // ### Global Configuration Objects
 

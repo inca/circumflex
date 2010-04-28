@@ -14,4 +14,6 @@ class City extends Record[City] {
   val country = "country_id" REFERENCES(Country) ON_DELETE CASCADE ON_UPDATE CASCADE
 }
 
-object City extends Table[City]
+object City extends Table[City] {
+  CONSTRAINT("city_name_country_id_key") UNIQUE (r.name, r.country)
+}

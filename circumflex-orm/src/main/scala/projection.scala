@@ -2,7 +2,6 @@ package ru.circumflex.orm
 
 import ORM._
 import java.sql.ResultSet
-import collection.mutable.ListBuffer
 
 // ## Projection Basics
 

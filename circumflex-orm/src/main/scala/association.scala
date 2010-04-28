@@ -26,13 +26,12 @@ abstract class Association[R <: Record[R], F <: Record[F]](name: String,
     _onDelete = action
     return this
   }
+  def ON_DELETE(action: ForeignKeyAction): this.type = onDelete(action)
 
   def onUpdate(action: ForeignKeyAction): this.type = {
     _onUpdate = action
     return this
   }
-
-  def ON_DELETE(action: ForeignKeyAction): this.type = onDelete(action)
   def ON_UPDATE(action: ForeignKeyAction): this.type = onUpdate(action)
 
 }

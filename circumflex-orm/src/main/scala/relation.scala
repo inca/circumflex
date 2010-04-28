@@ -56,14 +56,6 @@ abstract class Relation[R <: Record[R]] {
   protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
   def methodsMap: Map[Field[_], Method] = _methodsMap
 
-  // Unique suffix is used to differentiate schema objects which have same names.
-  private var _uniqueCounter = -1
-  protected def uniqueSuffix: String = {
-    _uniqueCounter += 1
-    if (_uniqueCounter == 0) return ""
-    else return "_" + _uniqueCounter
-  }
-
   /**
    * Attempt to find a record class by convention of companion object,
    * e.g. strip trailing `$` from `this.getClass.getName`.
@@ -76,6 +68,9 @@ abstract class Relation[R <: Record[R]] {
    * possibly, other stuff.
    */
   protected[orm] val recordSample: R = recordClass.newInstance
+  protected[orm] def >() = recordSample
+  protected[orm] def me = >()
+  protected[orm] def r = >()
 
   /**
    * Unique identifier based on `recordClass` to identify this relation
@@ -168,6 +163,11 @@ abstract class Relation[R <: Record[R]] {
 
 
   // ### Definitions
+
+  protected[orm] def constraint(name: String): ConstraintHelper =
+    new ConstraintHelper(this, name)
+  protected[orm] def CONSTRAINT(name: String): ConstraintHelper =
+    constraint(name)
 
   /**
    * Adds a unique constraint to this relation's definition.
