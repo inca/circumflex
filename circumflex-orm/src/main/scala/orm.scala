@@ -37,8 +37,39 @@ object ORM {
   implicit def relation2recordSample[R <: Record[R]](relation: Relation[R]): R =
     relation.r
 
-  implicit def tuple2proj[T1, T2](t: Tuple2[Projection[T1], Projection[T2]]): Tuple2Projection[T1, T2] =
+  implicit def tuple2proj[T1, T2](
+        t: Tuple2[Projection[T1],Projection[T2]]) =
     new Tuple2Projection(t._1, t._2)
+  implicit def tuple3proj[T1, T2, T3](
+        t: Tuple3[Projection[T1], Projection[T2], Projection[T3]]) =
+    new Tuple3Projection(t._1, t._2, t._3)
+  implicit def tuple4proj[T1, T2, T3, T4](
+        t: Tuple4[Projection[T1], Projection[T2], Projection[T3], Projection[T4]]) =
+    new Tuple4Projection(t._1, t._2, t._3, t._4)
+  implicit def tuple5proj[T1, T2, T3, T4, T5](
+        t: Tuple5[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5]]) =
+    new Tuple5Projection(t._1, t._2, t._3, t._4, t._5)
+  implicit def tuple6proj[T1, T2, T3, T4, T5, T6](
+        t: Tuple6[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6]]) =
+    new Tuple6Projection(t._1, t._2, t._3, t._4, t._5, t._6)
+  implicit def tuple7proj[T1, T2, T3, T4, T5, T6, T7](
+        t: Tuple7[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6], Projection[T7]]) =
+    new Tuple7Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7)
+  implicit def tuple8proj[T1, T2, T3, T4, T5, T6, T7, T8](
+        t: Tuple8[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6], Projection[T7], Projection[T8]]) =
+    new Tuple8Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8)
+  implicit def tuple9proj[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+        t: Tuple9[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6], Projection[T7], Projection[T8], Projection[T9]]) =
+    new Tuple9Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9)
+  implicit def tuple10proj[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
+        t: Tuple10[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                   Projection[T6], Projection[T7], Projection[T8], Projection[T9], Projection[T10]]) =
+    new Tuple10Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)
+
 
   // ### Global Configuration Objects
 
