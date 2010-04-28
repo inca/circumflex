@@ -18,10 +18,8 @@ trait HttpResponse {
   def apply(response: HttpServletResponse) {
     if (!response.isCommitted) {
       response.setCharacterEncoding("UTF-8")
-      response.setContentType(ctx.contentType.getOrElse("text/html"))
-      response.setStatus(ctx.statusCode)
-      ctx.stringHeaders.foreach(p => { response.setHeader(p._1, p._2) })
-      ctx.dateHeaders.foreach(p => { response.setDateHeader(p._1, p._2) })
+      response.setContentType(context.contentType.getOrElse("text/html"))
+      response.setStatus(context.statusCode)
     }
   }
 }
@@ -30,7 +28,7 @@ class EmptyResponse extends HttpResponse
 
 case class ErrorResponse(val errorCode: Int, val msg: String) extends HttpResponse {
   override def apply(response: HttpServletResponse) {
-    ctx.statusCode = errorCode
+    context.statusCode = errorCode
     response.sendError(errorCode, msg)
   }
 }
@@ -55,11 +53,10 @@ case class BinaryResponse(val data: Array[Byte]) extends HttpResponse {
 
 case class FileResponse(val file: File) extends HttpResponse {
   override def apply(response: HttpServletResponse) {
-    ctx.contentType = ctx.contentType match {
-      case None =>          // determine mime type by extension
-        Circumflex.mimeTypesMap.getContentType(file)
-      case Some(ct) => ct   // use already provided one
-    }
+    // determine mime type by extension
+    if (context.contentType.isEmpty)
+      context.contentType = Circumflex.mimeTypesMap.getContentType(file)
+
     super.apply(response)
     // transfer a file
     val is = new FileInputStream(file)
@@ -82,7 +79,7 @@ case class DirectStreamResponse(val streamingFunc: OutputStream => Unit)
 case class ContextualResponse(f: CircumflexContext => HttpResponse) extends HttpResponse {
   override def apply(response: HttpServletResponse) =
     try {
-      f(ctx)(response)
+      f(context)(response)
     }
     catch {
       case e: MatchError => ErrorResponse(400, "" + e)(response) // TODO: log error

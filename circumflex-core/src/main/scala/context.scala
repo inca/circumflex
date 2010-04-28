@@ -1,11 +1,9 @@
 package ru.circumflex.core
 
-import collection.mutable.HashMap
 import java.io.File
 import java.util.{Locale, ResourceBundle}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import javax.activation.MimetypesFileTypeMap
-import org.slf4j.LoggerFactory
 import org.apache.commons.io.FilenameUtils._
 
 class CircumflexContext(val request: HttpServletRequest,
@@ -13,34 +11,95 @@ class CircumflexContext(val request: HttpServletRequest,
                         val filter: AbstractCircumflexFilter)
     extends HashModel {
 
-  private val _params = new HashMap[String, Any]
-  private[core] var _matches: Map[String, Match] = _
+  /**
+   * A helper for getting and setting response headers in a DSL-like way.
+   */
+  object header extends HashModel {
 
-  val stringHeaders = new HashMap[String, String]
-  val dateHeaders = new HashMap[String, Long]
-  var statusCode: Int = 200
+    def get(key: String) = apply(key)
+
+    def apply(name: String): Option[String] = {
+      val value = request.getHeader(name)
+      if (value == null) None
+      else Some(value)
+    }
+
+    def update(name: String, value: String) { response.setHeader(name, value) }
+
+    def update(name: String, value: Long) { response.setDateHeader(name, value) }
+
+    def update(name: String, value: java.util.Date) { update(name, value.getTime) }
+
+  }
+
+  /**
+   * A helper for getting and setting session-scope attributes.
+   */
+  object session extends HashModel {
+
+    def get(key: String) = apply(key)
+
+    def apply(name: String): Option[Any] = {
+      val value = request.getSession.getAttribute(name)
+      if (value == null) None
+      else Some(value)
+    }
+
+    def update(name: String, value: Any) = request.getSession.setAttribute(name, value)
+
+  }
+
+  /**
+   * A helper for setting flashes. Flashes provide a way to pass temporary objects between requests.
+   */
+  object flash extends HashModel {
+
+    private val _key = "cx.flash"
+
+    def get(key: String) = apply(key)
+
+    def apply(key: String): Option[Any] = {
+      val flashMap = session.getOrElse(_key, MutableMap[String, Any]())
+      flashMap.get(key) map { value => {
+        session(_key) = flashMap - key
+        value
+      }}
+    }
+
+    def update(key: String, value: Any) {
+      val flashMap = session.getOrElse(_key, MutableMap[String, Any]())
+      session(_key) = flashMap + (key -> value)
+    }
+
+  }
+
+  // ### Content type
+
   protected var _contentType: String = null
-  
-  // ## Helpers 
-  val header = new HeadersHelper
-  val session = new SessionHelper
-  val flash = new FlashHelper
-
-  _params += ("header" -> header)
-  _params += ("session" -> session)
-  _params += ("flash" -> flash)
 
   def contentType: Option[String] =
     if (_contentType == null) None
     else Some(_contentType)
 
-  def contentType_=(value: String): Unit = {
-    this._contentType = value;
-  }
+  def contentType_=(value: String): Unit =
+    _contentType = value
 
-  def method: String =
-    get("_method").getOrElse(request.getMethod).toString
+  // ### Status code
 
+  var statusCode: Int = 200
+
+  // ### Method
+
+  def method: String = getOrElse('_method, request.getMethod)
+
+  // ### Request parameters
+
+  private val _params = MutableMap[String, Any](
+    "header" -> header,
+    "session" -> session,
+    "flash" -> flash
+  )
+  
   def get(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => Some(value)
     case _ => {
@@ -49,35 +108,56 @@ class CircumflexContext(val request: HttpServletRequest,
       else Some(value)
     }
   }
-
-  def stringParam(key: String): Option[String] = get(key) map { _.toString }
-
-  def matchParam(key: String): Option[Match] = _matches.get(key)
-
-  def getOrElse[A](key: String, default: A): A = get(key) match {
-    case Some(value: A) => value;
-    case _ => default
-  }
-
-  def noCache() = {
-    stringHeaders += "Pragma" -> "no-cache"
-    stringHeaders += "Cache-Control" -> "no-store"
-    dateHeaders += "Expires" -> 0l
-  }
+  
+  def getString(key: String): Option[String] = get(key) map { _.toString }
 
   def apply(key: String): Option[Any] = get(key)
 
   def update(key: String, value: Any) { _params += key -> value }
   def +=(pair: (String, Any)) { _params += pair }
 
+  // ### Request matching
+
+  private[core] var _matches: Map[String, Match] = _
+
+  def getMatch(key: String): Option[Match] = _matches.get(key)
+
+  // ### ???
+
+  def noCache() {
+    header('Pragma) = "no-cache"
+    header("Cache-Control") = "no-store"
+    header('Expires) = 0l
+  }
+
 }
 
+object CircumflexContext {
+  private val threadLocalContext = new ThreadLocal[CircumflexContext]
+
+  def context = threadLocalContext.get
+
+  def isOk = context != null
+
+  def init(req: HttpServletRequest,
+           res: HttpServletResponse,
+           filter: AbstractCircumflexFilter) {
+    threadLocalContext.set(new CircumflexContext(req, res, filter))
+    try {
+      context('msg) = Circumflex.msg(req.getLocale)
+    } catch {
+      case e => cxLog.debug("Could not instantiate context messages.", e)
+    }
+  }
+
+  def destroy() = threadLocalContext.set(null)
+}
 
 object Circumflex { // TODO: move all into package object?
 
   // ## Configuration
 
-  private val _cfg = new HashMap[String, Any]
+  private val _cfg = MutableMap[String, Any]()
   val cfg = new ConfigurationHelper
 
   // should filter process request?
@@ -144,25 +224,6 @@ object Circumflex { // TODO: move all into package object?
     case Some(s: String) => new Messages(s, locale)
     case _ => throw new CircumflexException("'cx.messages' not configured.")
   }
-
-  // ## Context management
-
-  private val threadLocalContext = new ThreadLocal[CircumflexContext]
-
-  def ctx = threadLocalContext.get
-
-  def initContext(req: HttpServletRequest,
-                  res: HttpServletResponse,
-                  filter: AbstractCircumflexFilter) = {
-    threadLocalContext.set(new CircumflexContext(req, res, filter))
-    try {
-      ctx += "msg" -> msg(req.getLocale)
-    } catch {
-      case e => cxLog.debug("Could not instantiate context messages.", e)
-    }
-  }
-
-  def destroyContext() = threadLocalContext.set(null)
 
   // ## Miscellaneous
 

@@ -52,7 +52,7 @@ class ScalaMapWrapper[String,V](val map: scala.collection.Map[String,V], wrapper
 
 class ScalaIterableWrapper[T](val it: Iterable[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(it, wrapper) with TemplateCollectionModel {
-  def iterator = new ScalaIteratorWrapper(it.elements, wrapper)
+  def iterator = new ScalaIteratorWrapper(it.iterator, wrapper)
 }
             
 class ScalaIteratorWrapper[T](val it: Iterator[T], wrapper: ObjectWrapper)

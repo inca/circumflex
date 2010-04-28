@@ -8,9 +8,22 @@ class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
 object CircumflexCoreSpec extends Specification {
 
+  class SubRouterA(prefix: String = "") extends RequestRouter(prefix) {
+    new SubRouterB(prefix + "/sub1")
+    new SubRouterB(prefix + "/sub2")
+    get("/testA") = "preved"
+  }
+  class SubRouterB(prefix: String = "") extends RequestRouter(prefix) {
+    get("/testB") = "preved"
+  }
+
   class MainRouter extends RequestRouter {
+    new SubRouterA("/sub")
+
+    val context = CircumflexContext.context // to hide Specification.context
+    
     get("/") = "preved"
-    get("/ctx") = if (ctx == null) "null" else ctx.toString
+    get("/ctx") = if (!CircumflexContext.isOk) "null" else context.toString
     get("/capture/?"r, accept("+/+") & content_type("+/+")) =
         "Accept$1 is " + matching('Accept)(1) + "; " +
         "Accept$2 is " + matching('Accept)(2) + "; " +
@@ -26,7 +39,7 @@ object CircumflexCoreSpec extends Specification {
     get("/rewrite") = rewrite("/")
     get("/error") = error(503, "preved")
     get("/contentType\\.(.+)"r) = {
-      ctx.contentType = uri(1) match {
+      context.contentType = uri(1) match {
         case "html" => "text/html"
         case "css" => "text/css"
         case _ => "application/octet-stream"
@@ -113,6 +126,11 @@ object CircumflexCoreSpec extends Specification {
     "process HOST extractors" in {
       MockApp.get("/host").execute.getContent must_== "local"
     }
+    "process sub routers" in {
+      MockApp.get("/testA").execute.getStatus must_== 404
+      MockApp.get("/sub/testA").execute.getContent must_== "preved"
+      MockApp.get("/sub/sub1/testB").execute.getContent must_== "preved"
+    }
 
   }
 
@@ -144,7 +162,7 @@ object CircumflexCoreSpec extends Specification {
     }
     "be destroyed after the request processing has finished" in {
       MockApp.get("/").execute
-      Circumflex.ctx mustBe null
+      CircumflexContext.isOk mustBe false
     }
     "contain captured groups from URI" in {
       MockApp.get("/capture/preved").execute().getContent must_== "uri$1 is preved"

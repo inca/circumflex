@@ -1,15 +1,58 @@
 package ru.circumflex.core
 
 import java.io.File
+import collection.mutable.Stack
 
 case class RouteMatchedException(val response: Option[HttpResponse]) extends Exception
 
 // ## Request Router
 
-class RequestRouter {
+class RequestRouter(val uri_prefix: String = "") {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
+
+  /**
+   * ## Route
+   *
+   * Dispatches current request if it passes all matchers.
+   * Common matchers are based on HTTP methods, URI and headers.
+   */
+  class Route(matchingMethods: String*) {
+  
+    protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
+      matchingMethods.find(context.method.equalsIgnoreCase(_)) match {
+        case Some(_) => {
+          var params = Map[String, Match]()
+          matchers.toList.foreach(rm => rm(context.request) match {
+            case None => return
+            case Some(p) => params ++= p
+          })
+          // All matchers succeeded
+          context._matches = params
+          throw RouteMatchedException(Some(response))
+        } case _ =>
+      }
+
+    /**
+     * For syntax "get(...) { case Extractors(...) => ... }"
+     */
+    def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
+      dispatch(ContextualResponse(f), new UriMatcher(uri_prefix, matcher))
+
+    def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
+      dispatch(ContextualResponse(f), new UriMatcher(uri_prefix, matcher), matcher1)
+
+    /**
+     * For syntax "get(...) = response"
+     */
+    def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
+      dispatch(response, new UriMatcher(uri_prefix, matcher))
+
+    def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
+      dispatch(response, new UriMatcher(uri_prefix, matcher), matcher1)
+
+  }
 
   // ### Routes
 
@@ -25,9 +68,9 @@ class RequestRouter {
 
   // ### Context shortcuts
 
-  def header = ctx.header
-  def session = ctx.session
-  def flash = ctx.flash
+  def header = context.header
+  def session = context.session
+  def flash = context.flash
 
   lazy val uri: Match = matching("uri")
 
@@ -49,20 +92,20 @@ class RequestRouter {
    * allow request processing with certain filters.
    */
   def rewrite(target: String): Nothing = {
-    ctx.request.getRequestDispatcher(target).forward(ctx.request, ctx.response)
+    context.request.getRequestDispatcher(target).forward(context.request, context.response)
     throw RouteMatchedException(None)
   }
 
   /**
-   * Retrieves a Match from context.
+   * Retrieves a String from context.
    */
-  def param(key: String): Match = ctx(key).get.asInstanceOf[Match]
+  def param(key: String): Option[String] = context.getString(key)
 
   /**
    * Retrieves a Match from context.
    * Since route matching has success it supposes the key existence.
    */
-  def matching(key: String): Match = ctx.matchParam(key).get
+  def matching(key: String): Match = context.getMatch(key).get
 
   /**
    * Sends error with specified status code and message.
@@ -91,7 +134,7 @@ class RequestRouter {
    * Sends empty response with specified status code.
    */
   def done(statusCode: Int): HttpResponse = {
-    ctx.statusCode = statusCode
+    context.statusCode = statusCode
     new EmptyResponse
   }
 
@@ -139,7 +182,7 @@ class RequestRouter {
    * Sets content type header.
    */
   def contentType(ct: String): this.type = {
-    ctx.contentType = ct
+    context.contentType = ct
     return this
   }
 
@@ -158,7 +201,7 @@ class RequestRouter {
     def apply(matcher: StringMatcher) = new HeaderMatcher(name, matcher)
     
     def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
-      ctx.matchParam(name) match {
+      ctx.getMatch(name) match {
         case Some(m) => m.unapplySeq(ctx)
         case None    => ctx.header(name) map { List(_) }
       }
@@ -194,86 +237,4 @@ class RequestRouter {
   val user_agent = HeaderExtractor("User-Agent")
   val via = HeaderExtractor("Via")
   val war = HeaderExtractor("War")
-}
-
-/**
- * ## Route
- *
- * Dispatches current request if it passes all matchers.
- * Common matchers are based on HTTP methods, URI and headers.
- */
-class Route(val matchingMethods: String*) {
-
-  protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
-    matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
-      case Some(_) => {
-        var params = Map[String, Match]()
-        matchers.toList.foreach(rm => rm(ctx.request) match {
-          case None => return
-          case Some(p) => params ++= p
-        })
-        // All matchers succeeded
-        ctx._matches = params
-        throw RouteMatchedException(Some(response))
-      } case _ =>
-    }
-
-  /**
-   * For syntax "get(...) { case Extractors(...) => ... }"
-   */
-  def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
-    dispatch(ContextualResponse(f), new UriMatcher(matcher))
-
-  def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
-    dispatch(ContextualResponse(f), new UriMatcher(matcher), matcher1)
-
-  /**
-   * For syntax "get(...) = response"
-   */
-  def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, new UriMatcher(matcher))
-
-  def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-    dispatch(response, new UriMatcher(matcher), matcher1)
-
-}
-
-// ## Helpers
-
-/**
- * A helper for getting and setting response headers in a DSL-like way.
- */
-class HeadersHelper extends HashModel {
-
-  def get(key: String) = apply(key)
-
-  def apply(name: String): Option[String] = {
-    val value = ctx.request.getHeader(name)
-    if (value == null) None
-    else Some(value)
-  }
-
-  def update(name: String, value: String) = ctx.stringHeaders += name -> value
-
-  def update(name: String, value: Long) = ctx.dateHeaders += name -> value
-
-  def update(name: String, value: java.util.Date) = ctx.dateHeaders += name -> value.getTime
-
-}
-
-/**
- * A helper for getting and setting session-scope attributes.
- */
-class SessionHelper extends HashModel {
-
-  def get(key: String) = apply(key)
-
-  def apply(name: String): Option[Any] = {
-    val value = ctx.request.getSession.getAttribute(name)
-    if (value == null) None
-    else Some(value)
-  }
-
-  def update(name: String, value: Any) = ctx.request.getSession.setAttribute(name, value)
-
 }
