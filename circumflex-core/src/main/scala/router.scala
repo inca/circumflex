@@ -97,15 +97,15 @@ class RequestRouter(val uri_prefix: String = "") {
   }
 
   /**
-   * Retrieves a Match from context.
+   * Retrieves a String from context.
    */
-  def param(key: String): Match = context(key).get.asInstanceOf[Match]
+  def param(key: String): Option[String] = context.getString(key)
 
   /**
    * Retrieves a Match from context.
    * Since route matching has success it supposes the key existence.
    */
-  def matching(key: String): Match = context.matchParam(key).get
+  def matching(key: String): Match = context.getMatch(key).get
 
   /**
    * Sends error with specified status code and message.
@@ -201,7 +201,7 @@ class RequestRouter(val uri_prefix: String = "") {
     def apply(matcher: StringMatcher) = new HeaderMatcher(name, matcher)
     
     def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
-      ctx.matchParam(name) match {
+      ctx.getMatch(name) match {
         case Some(m) => m.unapplySeq(ctx)
         case None    => ctx.header(name) map { List(_) }
       }
@@ -237,44 +237,4 @@ class RequestRouter(val uri_prefix: String = "") {
   val user_agent = HeaderExtractor("User-Agent")
   val via = HeaderExtractor("Via")
   val war = HeaderExtractor("War")
-}
-
-// ## Helpers
-
-/**
- * A helper for getting and setting response headers in a DSL-like way.
- */
-class HeadersHelper extends HashModel {
-
-  def get(key: String) = apply(key)
-
-  def apply(name: String): Option[String] = {
-    val value = context.request.getHeader(name)
-    if (value == null) None
-    else Some(value)
-  }
-
-  def update(name: String, value: String) = context.stringHeaders += name -> value
-
-  def update(name: String, value: Long) = context.dateHeaders += name -> value
-
-  def update(name: String, value: java.util.Date) = context.dateHeaders += name -> value.getTime
-
-}
-
-/**
- * A helper for getting and setting session-scope attributes.
- */
-class SessionHelper extends HashModel {
-
-  def get(key: String) = apply(key)
-
-  def apply(name: String): Option[Any] = {
-    val value = context.request.getSession.getAttribute(name)
-    if (value == null) None
-    else Some(value)
-  }
-
-  def update(name: String, value: Any) = context.request.getSession.setAttribute(name, value)
-
 }

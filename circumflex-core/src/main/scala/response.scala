@@ -20,8 +20,6 @@ trait HttpResponse {
       response.setCharacterEncoding("UTF-8")
       response.setContentType(context.contentType.getOrElse("text/html"))
       response.setStatus(context.statusCode)
-      context.stringHeaders.foreach(p => { response.setHeader(p._1, p._2) })
-      context.dateHeaders.foreach(p => { response.setDateHeader(p._1, p._2) })
     }
   }
 }

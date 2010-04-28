@@ -5,6 +5,11 @@ package ru.circumflex.core
  */
 trait HashModel {
   def get(key: String): Option[Any]
+
+  def getOrElse[A](key: String, default: =>A): A = get(key) match {
+    case Some(value: A) => value;
+    case _ => default
+  }
 }
 
 /**
