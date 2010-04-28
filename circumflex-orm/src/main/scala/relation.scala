@@ -105,13 +105,6 @@ abstract class Relation[R <: Record[R]] {
   def readOnly_?(): Boolean = false
 
   /**
-   * Is this relation *virtual*? Virtual records do not have primary keys
-   * (therefore they cannot be cached and retrieved by method `get`). The
-   * basic use case is statistical `View` that can return heterogeneous data.
-   */
-  def virtual_?(): Boolean = false
-
-  /**
    * Primary key field of this relation.
    */
   def primaryKey = recordSample.primaryKey
@@ -215,3 +208,8 @@ abstract class Relation[R <: Record[R]] {
 // ## Table
 
 class Table[R <: Record[R]] extends Relation[R]
+    with SchemaObject {
+  def objectName = qualifiedName
+  def sqlDrop = dialect.dropTable(this)
+  def sqlCreate = dialect.createTable(this)
+}

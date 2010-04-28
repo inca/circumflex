@@ -178,6 +178,21 @@ class Dialect {
   def alterTableDropConstraint(constraint: Constraint) =
     alterTable(constraint.relation, "DROP CONSTRAINT " + constraint.constraintName);
 
+  /**
+   * Produce `CREATE TABLE` statement without constraints.
+   */
+  def createTable(table: Table[_]) =
+    "CREATE TABLE " + table.qualifiedName + " (" +
+        table.fields.map(_.toSql).mkString(", ") +
+        ", PRIMARY KEY (" + table.primaryKey.name + ")" + ")"
+
+  /**
+   * Produce `DROP TABLE` statement.
+   */
+  def dropTable(table: Table[_]) =
+    "DROP TABLE " + table.qualifiedName
+
+
 
   /**
    * SQL definition for a column represented by specified `field`
