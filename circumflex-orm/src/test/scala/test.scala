@@ -8,7 +8,7 @@ class Country extends Record[Country] {
 }
 
 object Country extends Table[Country] {
-  INDEX("country_code_idx", "LOWER(code)") USING "btree"
+  INDEX("country_code_idx", "LOWER(code)") USING "btree" UNIQUE
 }
 
 class City extends Record[City] {

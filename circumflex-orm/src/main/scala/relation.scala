@@ -184,17 +184,17 @@ abstract class Relation[R <: Record[R]] {
         localFields.map(_.name).mkString("_") + "_fkey", localFields)
   def FOREIGN_KEY(localFields: Field[_]*): ForeignKeyHelper =
     foreignKey(localFields: _*)
-  
+
   /**
    * Add an index to this relation's definition.
    */
-  def index(indexName: String, expression: String): Index = {
-    val idx = new Index(this, indexName, expression)
+  def index(indexName: String, expressions: String*): Index = {
+    val idx = new Index(this, indexName, expressions: _*)
     addPostAux(idx)
     return idx
   }
-  def INDEX(indexName: String, expression: String): Index =
-      index(indexName, expression)
+  def INDEX(indexName: String, expressions: String*): Index =
+    index(indexName, expressions: _*)
 
   /**
    * Add specified `objects` to this relation's `preAux` queue.
@@ -203,7 +203,7 @@ abstract class Relation[R <: Record[R]] {
     objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
     return this
   }
-  
+
   /**
    * Add specified `objects` to this relaion's `postAux` queue.
    */
@@ -227,9 +227,31 @@ abstract class Relation[R <: Record[R]] {
 
 // ## Table
 
-class Table[R <: Record[R]] extends Relation[R]
+abstract class Table[R <: Record[R]] extends Relation[R]
     with SchemaObject {
   def objectName = qualifiedName
   def sqlDrop = dialect.dropTable(this)
   def sqlCreate = dialect.createTable(this)
+}
+
+// ## View
+
+abstract class View[R <: Record[R]] extends Relation[R]
+    with SchemaObject {
+
+  /**
+   * Views are not updatable by default.
+   */
+  override def readOnly_?() = true
+
+  /**
+   * A `query` that makes up this view definition.
+   */
+  def query: Select[_]
+
+  // ### Miscellaneous
+
+  def objectName = qualifiedName
+  def sqlDrop = dialect.dropView(this)
+  def sqlCreate = dialect.createView(this)
 }

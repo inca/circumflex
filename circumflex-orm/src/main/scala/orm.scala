@@ -301,19 +301,23 @@ class DefaultConnectionProvider extends ConnectionProvider {
       ormLog.info("Using c3p0 connection pooling.")
       val driver = Circumflex.cfg("orm.connection.driver") match {
         case Some(s: String) => s
-        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
+        case _ =>
+          throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
       }
       val url = Circumflex.cfg("orm.connection.url") match {
         case Some(s: String) => s
-        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
+        case _ =>
+          throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
       }
       val username = Circumflex.cfg("orm.connection.username") match {
         case Some(s: String) => s
-        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.username'.")
+        case _ =>
+          throw new ORMException("Missing mandatory configuration parameter 'orm.connection.username'.")
       }
       val password = Circumflex.cfg("orm.connection.password") match {
         case Some(s: String) => s
-        case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.password'.")
+        case _ =>
+          throw new ORMException("Missing mandatory configuration parameter 'orm.connection.password'.")
       }
       val ds = new ComboPooledDataSource()
       ds.setDriverClass(driver)

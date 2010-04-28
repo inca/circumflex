@@ -103,7 +103,7 @@ class Dialect {
   // ### Features compliance
 
   def supportsSchema_?(): Boolean = true
-  def supportDropConstraints_?(): Boolean = true
+  def supportsDropConstraints_?(): Boolean = true
 
   // ### Commons
 
@@ -191,6 +191,20 @@ class Dialect {
    */
   def dropTable(table: Table[_]) =
     "DROP TABLE " + table.qualifiedName
+
+  /**
+   * Produces `CREATE VIEW` statement.
+   */
+  def createView(view: View[_]) =
+    "CREATE VIEW " + view.qualifiedName + " (" +
+        view.fields.map(_.name).mkString(", ") + ") AS " +
+        view.query.toInlineSql
+
+  /**
+   * Produce `DROP VIEW` statement.
+   */
+  def dropView(view: View[_]) =
+    "DROP VIEW " + view.qualifiedName
 
   /**
    * Produce `CREATE INDEX` statement.

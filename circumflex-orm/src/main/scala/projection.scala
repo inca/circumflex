@@ -304,6 +304,3 @@ case class Tuple10Projection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] (
           _6.read(rs), _7.read(rs), _8.read(rs), _9.read(rs), _10.read(rs))
 }
 
-
-
-

@@ -144,8 +144,10 @@ class ForeignKeyHelper(relation: Relation[_], name: String, localFields: Seq[Fie
  */
 class Index(val relation: Relation[_],
             val name: String,
-            val expression: String) 
+            expressions: String*)
     extends SchemaObject {
+
+  def expression = expressions.mkString(", ")
 
   /**
    * DSL for defining `UNIQUE` indexes.
