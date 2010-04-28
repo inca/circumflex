@@ -75,23 +75,23 @@ abstract class Relation[R <: Record[R]] {
    * Unique identifier based on `recordClass` to identify this relation
    * among others.
    */
-  def uuid = recordSample.uuid
+  val uuid = recordSample.uuid
 
   /**
    * Relation name defaults to record's unqualified class name, transformed
    * with `Circumflex.camelCaseToUnderscore`.
    */
-  def relationName = camelCaseToUnderscore(recordClass.getSimpleName)
+  val relationName = camelCaseToUnderscore(recordClass.getSimpleName)
 
   /**
    * Schema is used to produce a qualified name for relation.
    */
-  val schema: String = defaultSchema
+  val schema: Schema = defaultSchema
 
   /**
    * Obtain a qualified name for this relation from dialect.
    */
-  def qualifiedName = dialect.relationQualifiedName(this)
+  val qualifiedName = dialect.relationQualifiedName(this)
 
   /**
    * Are DML statements allowed against this relation?
@@ -229,9 +229,9 @@ abstract class Relation[R <: Record[R]] {
 
 abstract class Table[R <: Record[R]] extends Relation[R]
     with SchemaObject {
-  def objectName = qualifiedName
-  def sqlDrop = dialect.dropTable(this)
-  def sqlCreate = dialect.createTable(this)
+  val objectName = "TABLE " + qualifiedName
+  val sqlDrop = dialect.dropTable(this)
+  val sqlCreate = dialect.createTable(this)
 }
 
 // ## View
@@ -251,7 +251,7 @@ abstract class View[R <: Record[R]] extends Relation[R]
 
   // ### Miscellaneous
 
-  def objectName = qualifiedName
-  def sqlDrop = dialect.dropView(this)
-  def sqlCreate = dialect.createView(this)
+  val objectName = "VIEW " + qualifiedName
+  val sqlDrop = dialect.dropView(this)
+  val sqlCreate = dialect.createView(this)
 }

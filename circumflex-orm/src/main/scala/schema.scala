@@ -4,6 +4,14 @@ import ORM._
 
 // ## Schema Objects for DDL
 
+// ### Schema
+
+class Schema(val name: String) extends SchemaObject {
+  def objectName = "SCHEMA " + name
+  def sqlCreate = dialect.createSchema(this)
+  def sqlDrop = dialect.dropSchema(this)
+}
+
 // ### Constraints
 
 /**
@@ -13,12 +21,10 @@ abstract class Constraint(val relation: Relation[_],
                           val constraintName: String)
     extends SchemaObject with SQLable {
 
-  def objectName = constraintName
-
-  def sqlCreate = dialect.alterTableAddConstraint(this)
-  def sqlDrop = dialect.alterTableDropConstraint(this)
-
-  def toSql = dialect.constraintDefinition(this)
+  val objectName = "CONSTRAINT " + constraintName
+  val sqlCreate = dialect.alterTableAddConstraint(this)
+  val sqlDrop = dialect.alterTableDropConstraint(this)
+  val toSql = dialect.constraintDefinition(this)
 
   def sqlDefinition: String
 
@@ -182,7 +188,7 @@ class Index(val relation: Relation[_],
   }
   def WHERE(predicate: Predicate): this.type = where(predicate)
 
-  def objectName = name
-  def sqlCreate = dialect.createIndex(this)
-  def sqlDrop = dialect.dropIndex(this)
+  val objectName = "INDEX " + name
+  val sqlCreate = dialect.createIndex(this)
+  val sqlDrop = dialect.dropIndex(this)
 }

@@ -79,6 +79,7 @@ class Dialect {
 
   // ### Functions and others
 
+  def NULL = "NULL"
   def distinct = "DISTINCT"
   def count = "COUNT"
   def max = "MAX"
@@ -116,7 +117,7 @@ class Dialect {
    * Qualify relation name with it's schema.
    */
   def relationQualifiedName(relation: Relation[_]) =
-    relation.schema + "." + relation.relationName
+    relation.schema.name + "." + relation.relationName
 
   /**
    * Just prepend specified expression with `DEFAULT` keyword.
@@ -179,6 +180,16 @@ class Dialect {
     alterTable(constraint.relation, "DROP CONSTRAINT " + constraint.constraintName);
 
   /**
+   * Produces `CREATE SCHEMA` statement.
+   */
+  def createSchema(schema: Schema) = "CREATE SCHEMA " + schema.name
+
+  /**
+   * Produce `DROP SCHEMA` statement.
+   */
+  def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name
+
+  /**
    * Produce `CREATE TABLE` statement without constraints.
    */
   def createTable(table: Table[_]) =
@@ -222,7 +233,7 @@ class Dialect {
   /**
    * Produce `DROP INDEX` statement.
    */
-   def dropIndex(idx: Index) = "DROP INDEX " + idx.relation.schema + "." + idx.name
+   def dropIndex(idx: Index) = "DROP INDEX " + idx.relation.schema.name + "." + idx.name
 
   /**
    * SQL definition for a column represented by specified `field`
@@ -245,15 +256,19 @@ class Dialect {
    * (sequences are supported by PostgreSQL, Oracle and DB2 dialects).
    */
   def initializeRelation(relation: Relation[_]): Unit = {
-    val seq = new SchemaObject{
-      def objectName = relation.qualifiedName + "_" + relation.primaryKey.name + "_seq"
-      def sqlDrop = "DROP SEQUENCE " + objectName
-      def sqlCreate = "CREATE SEQUENCE " + objectName
+    val seqName = pkSequenceName(relation) 
+    val seq = new SchemaObject {
+      val objectName = "SEQUENCE " + seqName
+      val sqlDrop = "DROP SEQUENCE " + seqName
+      val sqlCreate = "CREATE SEQUENCE " + seqName
     }
     relation.addPreAux(seq)
     // Add default expression to primary key column.
-    relation.primaryKey.default("nextval('" + seq.objectName + "')")
+    relation.primaryKey.default("NEXTVAL('" + seqName + "')")
   }
+
+  protected def pkSequenceName(relation: Relation[_]) =
+    relation.qualifiedName + "_" + relation.primaryKey.name + "_seq"
 
   /**
    * Produce unique constraint definition (e.g. `UNIQUE (name, value)`).

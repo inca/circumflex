@@ -48,9 +48,19 @@ trait SchemaObject {
 
   /**
    * SQL object name. It is used to uniquely identify this object
-   * during schema creation by `DDLExport` to avoid duplicates.
-   * Object names are case-insensitive (e.g. `MY_TABLE` and `my_table` are
-   * considered equal).
+   * during schema creation by `DDL` to avoid duplicates and to print
+   * nice messages on schema generation.
+   *
+   * We follow default convention to name objects:
+   *
+   *     <TYPE OF OBJECT> <qualified_name>
+   *
+   * where `TYPE OF OBJECT` is `TABLE`, `VIEW`, `SEQUENCE`, `TRIGGER`, 
+   * `FUNCTION`, `PROCEDURE`, `INDEX`, etc. (note the upper case), and
+   * `qualified_name` is object's unique identifier.
+   *
+   * For equality testing, object names are taken in case-insensitive manner
+   * (e.g. `MY_TABLE` and `my_table` are considered equal).
    */
   def objectName: String
 
