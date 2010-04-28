@@ -4,7 +4,7 @@ import ru.circumflex.core.{Messages, CircumflexUtil, CircumflexException}
 
 /**
  * Represents a validation error. It's <code>source</code> describes
- * a context where validation has failed (it can be column name, association, etc.)
+ * a Context where validation has failed (it can be column name, association, etc.)
  * <code>errorKey</code> specifies, what problem has occured.
  */
 case class ValidationError(val source: String,

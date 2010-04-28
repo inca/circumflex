@@ -71,6 +71,26 @@ class CircumflexContext(val request: HttpServletRequest,
 
 }
 
+object CircumflexContext {
+  private val threadLocalContext = new ThreadLocal[CircumflexContext]
+
+  def context = threadLocalContext.get
+
+  def isOk = context != null
+
+  def init(req: HttpServletRequest,
+           res: HttpServletResponse,
+           filter: AbstractCircumflexFilter) {
+    threadLocalContext.set(new CircumflexContext(req, res, filter))
+    try {
+      context('msg) = Circumflex.msg(req.getLocale)
+    } catch {
+      case e => cxLog.debug("Could not instantiate context messages.", e)
+    }
+  }
+
+  def destroy() = threadLocalContext.set(null)
+}
 
 object Circumflex { // TODO: move all into package object?
 
@@ -143,25 +163,6 @@ object Circumflex { // TODO: move all into package object?
     case Some(s: String) => new Messages(s, locale)
     case _ => throw new CircumflexException("'cx.messages' not configured.")
   }
-
-  // ## Context management
-
-  private val threadLocalContext = new ThreadLocal[CircumflexContext]
-
-  def ctx = threadLocalContext.get
-
-  def initContext(req: HttpServletRequest,
-                  res: HttpServletResponse,
-                  filter: AbstractCircumflexFilter) = {
-    threadLocalContext.set(new CircumflexContext(req, res, filter))
-    try {
-      ctx += "msg" -> msg(req.getLocale)
-    } catch {
-      case e => cxLog.debug("Could not instantiate context messages.", e)
-    }
-  }
-
-  def destroyContext() = threadLocalContext.set(null)
 
   // ## Miscellaneous
 

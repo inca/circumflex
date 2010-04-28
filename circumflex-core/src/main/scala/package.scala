@@ -14,5 +14,5 @@ package object core {
 
   val cxLog = LoggerFactory.getLogger("ru.circumflex.core")
 
-  def ctx = Circumflex.ctx
+  def context = CircumflexContext.context
 }

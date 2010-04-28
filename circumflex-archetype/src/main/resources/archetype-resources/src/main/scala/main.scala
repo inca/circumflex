@@ -3,7 +3,7 @@
 #set( $symbol_escape = '\' )
 package ${package}
 
-import _root_.ru.circumflex.core.RequestRouter
+import _root_.ru.circumflex.core._
 import _root_.ru.circumflex.freemarker.FreemarkerHelper
 import _root_.java.text.SimpleDateFormat
 import _root_.java.util.Date
@@ -14,8 +14,8 @@ class Main extends RequestRouter
 
   val log = LoggerFactory.getLogger("${package}")
 
-  ctx += "currentYear" -> new SimpleDateFormat("yyyy").format(new Date)
-  ctx += "host" -> header("Host").getOrElse("localhost")
+  context('currentYear) = new SimpleDateFormat("yyyy").format(new Date)
+  context('host) = header('Host).getOrElse("localhost")
 
   get("/") = ftl("index.ftl")
 

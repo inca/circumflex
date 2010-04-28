@@ -21,15 +21,15 @@ class RequestRouter(val uri_prefix: String = "") {
   class Route(matchingMethods: String*) {
   
     protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
-      matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
+      matchingMethods.find(context.method.equalsIgnoreCase(_)) match {
         case Some(_) => {
           var params = Map[String, Match]()
-          matchers.toList.foreach(rm => rm(ctx.request) match {
+          matchers.toList.foreach(rm => rm(context.request) match {
             case None => return
             case Some(p) => params ++= p
           })
           // All matchers succeeded
-          ctx._matches = params
+          context._matches = params
           throw RouteMatchedException(Some(response))
         } case _ =>
       }
@@ -68,9 +68,9 @@ class RequestRouter(val uri_prefix: String = "") {
 
   // ### Context shortcuts
 
-  def header = ctx.header
-  def session = ctx.session
-  def flash = ctx.flash
+  def header = context.header
+  def session = context.session
+  def flash = context.flash
 
   lazy val uri: Match = matching("uri")
 
@@ -92,20 +92,20 @@ class RequestRouter(val uri_prefix: String = "") {
    * allow request processing with certain filters.
    */
   def rewrite(target: String): Nothing = {
-    ctx.request.getRequestDispatcher(target).forward(ctx.request, ctx.response)
+    context.request.getRequestDispatcher(target).forward(context.request, context.response)
     throw RouteMatchedException(None)
   }
 
   /**
    * Retrieves a Match from context.
    */
-  def param(key: String): Match = ctx(key).get.asInstanceOf[Match]
+  def param(key: String): Match = context(key).get.asInstanceOf[Match]
 
   /**
    * Retrieves a Match from context.
    * Since route matching has success it supposes the key existence.
    */
-  def matching(key: String): Match = ctx.matchParam(key).get
+  def matching(key: String): Match = context.matchParam(key).get
 
   /**
    * Sends error with specified status code and message.
@@ -134,7 +134,7 @@ class RequestRouter(val uri_prefix: String = "") {
    * Sends empty response with specified status code.
    */
   def done(statusCode: Int): HttpResponse = {
-    ctx.statusCode = statusCode
+    context.statusCode = statusCode
     new EmptyResponse
   }
 
@@ -182,7 +182,7 @@ class RequestRouter(val uri_prefix: String = "") {
    * Sets content type header.
    */
   def contentType(ct: String): this.type = {
-    ctx.contentType = ct
+    context.contentType = ct
     return this
   }
 
@@ -249,16 +249,16 @@ class HeadersHelper extends HashModel {
   def get(key: String) = apply(key)
 
   def apply(name: String): Option[String] = {
-    val value = ctx.request.getHeader(name)
+    val value = context.request.getHeader(name)
     if (value == null) None
     else Some(value)
   }
 
-  def update(name: String, value: String) = ctx.stringHeaders += name -> value
+  def update(name: String, value: String) = context.stringHeaders += name -> value
 
-  def update(name: String, value: Long) = ctx.dateHeaders += name -> value
+  def update(name: String, value: Long) = context.dateHeaders += name -> value
 
-  def update(name: String, value: java.util.Date) = ctx.dateHeaders += name -> value.getTime
+  def update(name: String, value: java.util.Date) = context.dateHeaders += name -> value.getTime
 
 }
 
@@ -270,11 +270,11 @@ class SessionHelper extends HashModel {
   def get(key: String) = apply(key)
 
   def apply(name: String): Option[Any] = {
-    val value = ctx.request.getSession.getAttribute(name)
+    val value = context.request.getSession.getAttribute(name)
     if (value == null) None
     else Some(value)
   }
 
-  def update(name: String, value: Any) = ctx.request.getSession.setAttribute(name, value)
+  def update(name: String, value: Any) = context.request.getSession.setAttribute(name, value)
 
 }
