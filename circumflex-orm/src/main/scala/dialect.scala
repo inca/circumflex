@@ -221,6 +221,8 @@ class Dialect {
       def sqlCreate = "CREATE SEQUENCE " + objectName
     }
     relation.addPreAux(seq)
+    // Add default expression to primary key column.
+    relation.primaryKey.default("nextval('" + seq.objectName + "')")
   }
 
   /**
