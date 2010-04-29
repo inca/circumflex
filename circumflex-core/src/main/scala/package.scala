@@ -10,11 +10,13 @@ package object core {
    * Converters
    */
 
-  implicit def regex2RichRegex(regex: Regex): RichRegex = new RichRegex(regex)
-  implicit def symbol2String(sym: Symbol): String = sym.name
+  implicit def regexToRichRegex(regex: Regex): RichRegex = new RichRegex(regex)
+  implicit def symbolToString(sym: Symbol): String = sym.name
   
-  implicit def string2StringMatcher(str: String): StringMatcher = new SimpleMatcher(str)
-  implicit def regex2StringMatcher(regex: Regex): StringMatcher = new RegexMatcher(regex)
+  implicit def stringToStringMatcher(str: String): StringMatcher = new SimpleMatcher(str)
+  implicit def regexToStringMatcher(regex: Regex): StringMatcher = new RegexMatcher(regex)
+
+  @inline implicit def anyToOption[A](a: A): Option[A] = if (a == null) None else Some(a)
 
   /*
    * Types useful

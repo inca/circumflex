@@ -18,11 +18,7 @@ class CircumflexContext(val request: HttpServletRequest,
 
     def get(key: String) = apply(key)
 
-    def apply(name: String): Option[String] = {
-      val value = request.getHeader(name)
-      if (value == null) None
-      else Some(value)
-    }
+    def apply(name: String): Option[String] = request.getHeader(name)
 
     def update(name: String, value: String) { response.setHeader(name, value) }
 
@@ -39,11 +35,7 @@ class CircumflexContext(val request: HttpServletRequest,
 
     def get(key: String) = apply(key)
 
-    def apply(name: String): Option[Any] = {
-      val value = request.getSession.getAttribute(name)
-      if (value == null) None
-      else Some(value)
-    }
+    def apply(name: String): Option[Any] = request.getSession.getAttribute(name)
 
     def update(name: String, value: Any) = request.getSession.setAttribute(name, value)
 
@@ -77,12 +69,9 @@ class CircumflexContext(val request: HttpServletRequest,
 
   protected var _contentType: String = null
 
-  def contentType: Option[String] =
-    if (_contentType == null) None
-    else Some(_contentType)
+  def contentType: Option[String] = _contentType
 
-  def contentType_=(value: String): Unit =
-    _contentType = value
+  def contentType_=(value: String) { _contentType = value }
 
   // ### Status code
 
@@ -101,12 +90,8 @@ class CircumflexContext(val request: HttpServletRequest,
   )
   
   def get(key: String): Option[Any] = _params.get(key) match {
-    case Some(value) if (value != null) => Some(value)
-    case _ => {
-      val value = request.getParameter(key)
-      if (value == null) None
-      else Some(value)
-    }
+    case Some(value) if (value != null) => value
+    case _ => request.getParameter(key)
   }
   
   def getString(key: String): Option[String] = get(key) map { _.toString }
