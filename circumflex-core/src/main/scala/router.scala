@@ -163,7 +163,7 @@ class RequestRouter(val uriPrefix: String = "") {
    * Sends a file with the help of Web server using X-SendFile feature.
    */
   def xSendFile(file: File): HttpResponse = {
-    val xsf = Circumflex.XSendFileHeader
+    val xsf = Circumflex.newObject("cx.XSendFileHeader", DefaultXSendFileHeader)
     header(xsf.name) = xsf.value(file)
     done
   }
@@ -245,4 +245,5 @@ class RequestRouter(val uriPrefix: String = "") {
   val user_agent = HeaderExtractor("User-Agent")
   val via = HeaderExtractor("Via")
   val war = HeaderExtractor("War")
+  
 }

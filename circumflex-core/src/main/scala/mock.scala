@@ -15,7 +15,7 @@ trait MockServer extends StandaloneServer {
   def initTester() = {
     _tester = new ServletTester()
     _tester.setContextPath("/")
-    _tester.setResourceBase(Circumflex.cfg("cx.root") match {
+    _tester.setResourceBase(Circumflex("cx.root") match {
       case Some(s: String) => s
       case _ => "src/main/webapp"
     })

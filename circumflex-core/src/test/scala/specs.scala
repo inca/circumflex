@@ -72,7 +72,7 @@ object CircumflexCoreSpec extends Specification {
   }
 
   doBeforeSpec{
-    Circumflex.cfg("cx.router") = classOf[MainRouter]
+    Circumflex("cx.router") = classOf[MainRouter]
     MockApp.start
   }
 

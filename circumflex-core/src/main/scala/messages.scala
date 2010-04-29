@@ -26,7 +26,7 @@ class Messages(val baseName: String, val locale: Locale) extends HashModel {
       }
     }
 
-  def get(key: String): Option[String] = apply(key) match {
+  override def get(key: String): Option[String] = apply(key) match {
     case None =>
       cxLog.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)
       ""

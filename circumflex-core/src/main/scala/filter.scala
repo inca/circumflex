@@ -37,12 +37,12 @@ abstract class AbstractCircumflexFilter extends Filter {
    *  the filter processes request depending on the result of function invocation.
    * </ul>
    */
-  def isProcessed(req: HttpServletRequest): Boolean = Circumflex.cfg("cx.process_?") match {
+  def isProcessed(req: HttpServletRequest): Boolean = Circumflex("cx.process_?") match {
     case Some(s: String) => !req.getRequestURI.toLowerCase.matches(s)
     case Some(r: Regex) => !req.getRequestURI.toLowerCase.matches(r.toString)
     case Some(p: Pattern) => !p.matcher(req.getRequestURI.toLowerCase).matches()
-    case Some(func: Function0[Boolean]) => func.apply()
-    case Some(func: Function1[HttpServletRequest, Boolean]) => func.apply(req)
+    case Some(func: (() => Boolean)) => func.apply()
+    case Some(func: (HttpServletRequest => Boolean)) => func.apply(req)
     case _ => true
   }
 
@@ -60,7 +60,7 @@ abstract class AbstractCircumflexFilter extends Filter {
         if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
           val resource = new File(Circumflex.publicRoot, separatorsToSystem(req.getRequestURI))
           if (resource.isFile) {
-            val publicUri = Circumflex.cfg("cx.public") match {
+            val publicUri = Circumflex("cx.public") match {
               case Some(s: String) => "/" + s.replaceAll("^/?(.*?)/?$", "$1")
               case _ => "/public"
             }
@@ -95,7 +95,7 @@ abstract class AbstractCircumflexFilter extends Filter {
  */
 class CircumflexFilter extends AbstractCircumflexFilter {
 
-  val routerClass: Class[RequestRouter] = Circumflex.cfg("cx.router") match {
+  val routerClass: Class[RequestRouter] = Circumflex("cx.router") match {
     case Some(s: String) => Circumflex.loadClass[RequestRouter](s)
     case Some(c: Class[RequestRouter]) => c
     case _ => throw new CircumflexException("Could not initialize Request Router; " +
