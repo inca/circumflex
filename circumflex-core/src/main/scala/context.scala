@@ -5,6 +5,7 @@ import java.util.{Locale, ResourceBundle}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import javax.activation.MimetypesFileTypeMap
 import org.apache.commons.io.FilenameUtils._
+import org.codehaus.classworlds.ClassWorld
 
 class CircumflexContext(val request: HttpServletRequest,
                         val response: HttpServletResponse,
@@ -162,13 +163,12 @@ object Circumflex { // TODO: move all into package object?
   // resource bundle for messages
   _cfg += "cx.messages" -> "Messages"
 
-  val classLoader: ClassLoader = cfg("cx.classLoader") match {
-    case Some(cld: ClassLoader) => cld
-    case _ => Thread.currentThread.getContextClassLoader
-  }
+  val classRealm = CircumflexClassWorld
+      .newRealm("ru.circumflex", Thread.currentThread.getContextClassLoader)
 
-  def loadClass[C](name: String): Class[C] =
-    Class.forName(name, true, classLoader).asInstanceOf[Class[C]]
+  def classLoader = classRealm.getClassLoader
+
+  def loadClass[C](name: String): Class[C] = classRealm.loadClass(name).asInstanceOf[Class[C]]
 
   val webappRoot: File = cfg("cx.root") match {
     case Some(s: String) => new File(separatorsToSystem(s))
@@ -188,7 +188,7 @@ object Circumflex { // TODO: move all into package object?
     case _ => DefaultXSendFileHeader
   }
 
-  // Read configuration from `cx.properties` file by default
+  // Read configuration from `cx.properties` file by default.
   try {
     val bundle = ResourceBundle.getBundle("cx", Locale.getDefault, classLoader)
     val keys = bundle.getKeys
@@ -228,3 +228,7 @@ class CircumflexException(msg: String, cause: Throwable)
   def this(msg: String) = this(msg, null)
   def this(cause: Throwable) = this(null, cause)
 }
+
+// ## Classloading
+
+object CircumflexClassWorld extends ClassWorld
