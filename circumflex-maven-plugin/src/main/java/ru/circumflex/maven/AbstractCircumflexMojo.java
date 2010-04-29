@@ -31,8 +31,7 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
             if (f.isDirectory()) path += "/";
             urls.add(new URL("file", "localhost", path));
         }
-        return URLClassLoader.newInstance(
-                urls.toArray(new URL[urls.size()]),
+        return URLClassLoader.newInstance(urls.toArray(new URL[urls.size()]),
                 Thread.currentThread().getContextClassLoader());
     }
 

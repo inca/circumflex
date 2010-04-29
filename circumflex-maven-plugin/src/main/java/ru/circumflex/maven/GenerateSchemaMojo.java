@@ -4,6 +4,7 @@ import ru.circumflex.orm.DDLUnit;
 import ru.circumflex.orm.SchemaObject;
 import org.apache.maven.plugin.MojoExecutionException;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -40,8 +41,9 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
     }
 
     private void processSchema() {
-        for (String pkg : packages)
-            processPackage(pkg);
+        if (packages != null)
+            for (String pkg : packages)
+                processPackage(pkg);
         if (ddl.schemata().size() > 0) {
             if (drop) ddl.drop();
             ddl.create();
@@ -69,15 +71,23 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
                     if (f.getName().endsWith(".class")) {
                         String className = pkg + "." +
                                 f.getName().substring(0, f.getName().length() - ".class".length());
-                        // Let's ensure that anonymous objects are not processed separately
+                        // Let's ensure that anonymous objects are not processed separately.
                         if (!className.matches("[^\\$]+(?:\\$$)?")) continue;
                         Class c = Thread.currentThread()
                                 .getContextClassLoader()
                                 .loadClass(className);
-                        if (SchemaObject.class.isAssignableFrom(c)
-                                && !Modifier.isAbstract(c.getModifiers())
-                                && !Modifier.isInterface(c.getModifiers())) {
-                            SchemaObject so = (SchemaObject)c.newInstance();
+                        SchemaObject so = null;
+                        try {
+                            // Try to process it as a singleton.
+                            Field module = c.getField("MODULE$");
+                            if (isSchemaObjectType(module.getType()))
+                                so = (SchemaObject)module.get(null);
+                        } catch (NoSuchFieldException e) {
+                            // Try to instantiate it as a POJO.
+                            if (isSchemaObjectType(c))
+                                so = (SchemaObject)c.newInstance();
+                        }
+                        if (so != null) {   // Found appropriate object.
                             ddl.addObject(so);
                             getLog().debug("Found schema object: " + c.getName());
                         }
@@ -90,4 +100,11 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
             getLog().warn("Package processing failed: " + pkgPath, e);
         }
     }
+
+    private boolean isSchemaObjectType(Class c) {
+        return SchemaObject.class.isAssignableFrom(c)
+                && !Modifier.isAbstract(c.getModifiers())
+                && !Modifier.isInterface(c.getModifiers());
+    }
+
 }

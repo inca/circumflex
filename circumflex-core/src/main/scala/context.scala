@@ -162,7 +162,7 @@ object Circumflex { // TODO: move all into package object?
   // resource bundle for messages
   _cfg += "cx.messages" -> "Messages"
 
-  val classLoader: ClassLoader = cfg("cx.classLoader") match {
+  def classLoader: ClassLoader = cfg("cx.classLoader") match {
     case Some(cld: ClassLoader) => cld
     case _ => Thread.currentThread.getContextClassLoader
   }
