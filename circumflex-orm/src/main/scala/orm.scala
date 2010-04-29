@@ -111,8 +111,8 @@ object ORM {
    * Can be overriden with `orm.defaultSchema` configuration parameter.
    */
   val defaultSchema = Circumflex.cfg("orm.defaultSchema") match {
-    case Some(s: String) => s
-    case _ => "public"
+    case Some(s: String) => new Schema(s)
+    case _ => new Schema("public")
   }
 
   /**
