@@ -69,12 +69,6 @@
       <artifactId>commons-io</artifactId>
       <version>1.4</version>
     </dependency>
-    <!-- ClassWorlds -->
-    <dependency>
-      <groupId>classworlds</groupId>
-      <artifactId>classworlds</artifactId>
-      <version>1.1</version>
-    </dependency>
     <!-- Testing -->
     <dependency>
       <groupId>junit</groupId>
