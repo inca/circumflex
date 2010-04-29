@@ -226,22 +226,67 @@ abstract class Relation[R <: Record[R]] {
     (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).apply(), ix + 1))
 
   /**
+   * Skips the validation and performs `INSERT` statement for specified `record`
+   * using specified `fields`.
+   */
+  def insert_!(record: R, fields: Seq[Field[_]]): Int = if (readOnly_?)
+    throw new ORMException("The relation " + qualifiedName + " is read-only.")
+  else transactionManager.dml(conn => {
+    val sql = dialect.insertRecord(record, fields)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      setParams(record, st, fields)
+      st.executeUpdate
+    })
+  })
+  def INSERT_!(record: R, fields: Seq[Field[_]]) = insert_!(record, fields)
+
+  /**
    * Skips the validation and performs `INSERT` statement for specified `record`.
    * All empty fields with `DEFAULT` expressions are omitted.
    */
-  def insert_!(record: R): Int = {
-    if (readOnly_?)
-      throw new ORMException("The relation " + qualifiedName + " is read-only.")
-    transactionManager.dml(conn => {
-      val fields = record.getFields.filter(f => !(f.empty_? && f.default != None))
-      val sql = dialect.insertRecord(record, fields)
-      sqlLog.debug(sql)
-      auto(conn.prepareStatement(sql))(st => {
-        setParams(record, st, fields)
-        st.executeUpdate
-      })
+  def insert_!(record: R): Int =
+    insert_!(record, record.getFields.filter(f => !(f.empty_? && f.default != None)))
+  def INSERT_!(record: R) = insert_!(record)
+
+  /**
+   * Skips the validation and performs `UPDATE` statement for specified `record`.
+   * All empty fields with `DEFAULT` expressions are omitted.
+   */
+  def update_!(record: R, fields: Seq[Field[_]]): Int = if (readOnly_?)
+    throw new ORMException("The relation " + qualifiedName + " is read-only.")
+  else transactionManager.dml(conn => {
+    val sql = dialect.updateRecord(record, fields)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      setParams(record, st, fields)
+      typeConverter.write(st, record.id(), fields.size + 1)
+      st.executeUpdate
     })
-  }
+  })
+  def UPDATE_!(record: R, fields: Seq[Field[_]]) = update_!(record, fields)
+
+  /**
+   * Skips the validation and performs `UPDATE` statement. All fields are affected
+   * except primary key, which is used as an update criteria.
+   */
+  def update_!(record: R): Int = update_!(record, fields.filter(f => f != primaryKey))
+  def UPDATE_!(record: R) = update_!(record)
+
+  /**
+   * Executes the `DELETE` statement for specified `record` using it's primary key
+   * as delete criteria.
+   */
+  def delete_!(record: R): Int = if (readOnly_?)
+    throw new ORMException("The relation " + qualifiedName + " is read-only.")
+  else transactionManager.dml(conn => {
+    val sql = dialect.deleteRecord(record)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      typeConverter.write(st, record.id(), 1)
+      st.executeUpdate
+    })
+  })
 
   // ### Equality and others
 

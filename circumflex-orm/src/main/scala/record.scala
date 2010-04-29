@@ -60,6 +60,37 @@ abstract class Record[R <: Record[R]] { this: R =>
   def field[T](name: String, sqlType: String) =
     new NotNullField[T](name, uuid + "." + name, sqlType)
 
+  // ### Insert, Update, Save and Delete
+
+  /**
+   * Skips the validation and performs `INSERT` statement for this record.
+   * If no `fields` specified, performs full insert (except empty fields
+   * with default values), otherwise only specified `fields` participate
+   * in the statement.
+   */
+  def insert_!(fields: Field[_]*): Int =
+    if (fields.size == 0)
+      relation.insert_!(this)
+    else relation.insert_!(this, fields)
+  def INSERT_!(fields: Field[_]*): Int = insert_!(fields: _*)
+
+  /**
+   * Skips the validation and performs `UPDATE` statement for this record.
+   * If no `fields` specified, performs full update, otherwise only specified
+   * `fields` participate in the statement.
+   */
+  def update_!(fields: Field[_]*): Int =
+    if (fields.size == 0)
+      relation.update_!(this)
+    else relation.update_!(this, fields)
+  def UPDATE_!(fields: Field[_]*): Int = update_!(fields: _*)
+
+  /**
+   * Executes the `DELETE` statement for this record using primary key
+   * as delete criteria.
+   */
+  def delete_!(): Int = relation.delete_!(this)
+
   // ### Miscellaneous
 
   /**

@@ -99,7 +99,11 @@ class DDLUnit {
   /**
    * Execute a DROP script for added objects.
    */
-  def drop(): Unit = auto(tx.connection)(conn => {
+  def drop(): Unit = {
+    resetMsgs()
+    _drop()
+  }
+  protected def _drop(): Unit = auto(tx.connection)(conn => {
     // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
@@ -119,7 +123,11 @@ class DDLUnit {
   /**
    * Execute a CREATE script for added objects.
    */
-  def create(): Unit = auto(tx.connection)(conn => {
+  def create(): Unit = {
+    resetMsgs()
+    _create()
+  }
+  protected def _create(): Unit = auto(tx.connection)(conn => {
     // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
@@ -139,8 +147,27 @@ class DDLUnit {
    * Execute a DROP script and then a CREATE script.
    */
   def dropCreate(): Unit = {
-    drop()
-    create()
+    resetMsgs()
+    _drop()
+    _create()
+  }
+
+  override def toString: String = {
+    var result = "Circumflex DDL Unit: "
+    if (messages.size == 0) {
+        val objectsCount = (schemata.size +
+            tables.size +
+            constraints.size +
+            views.size +
+            preAux.size +
+            postAux.size)
+         result += objectsCount + " objects in queue."
+    } else {
+      val errorsCount = messages.filter(m => m.isInstanceOf[DDLUnit.ErrorMsg]).size
+      val infoCount = messages.filter(m => m.isInstanceOf[DDLUnit.InfoMsg]).size
+      result += infoCount + " successful statements, " + errorsCount + " errors."
+    }
+    return result
   }
 }
 

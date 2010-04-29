@@ -367,6 +367,22 @@ class Dialect {
         " (" + fields.map(_.name).mkString(", ") +
         ") VALUES (" + fields.map(f => "?").mkString(", ") + ")"
 
+  /**
+   * Produce `UPDATE` statement with primary key criteria for specified `record` using specified
+   * `fields` in the `SET` clause.
+   */
+  def updateRecord(record: Record[_], fields: Seq[Field[_]]): String =
+    "UPDATE " + record.relation.qualifiedName +
+        " SET " + fields.map(_.name + " = ?").mkString(", ") +
+        " WHERE " + record.id.name + " = ?"
+
+  /**
+   * Produce `DELETE` statement for specified `record`.
+   */
+  def deleteRecord(record: Record[_]): String =
+    "DELETE FROM " + record.relation.qualifiedName +
+        " WHERE " + record.id.name + " = ?"
+
 
 
 }
