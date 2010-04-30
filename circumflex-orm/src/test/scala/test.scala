@@ -39,7 +39,8 @@ class Capital extends Record[Capital] {
 }
 
 object Capital extends Table[Capital] {
-  CONSTRAINT("capital_uniq") UNIQUE (this.country, this.city)
+  UNIQUE (this.country)
+  UNIQUE (this.city)
 }
 
 object Init {
