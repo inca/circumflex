@@ -69,7 +69,7 @@ abstract class Relation[R <: Record[R]] {
    * This sample is used to introspect record for fields, constraints and,
    * possibly, other stuff.
    */
-  protected[orm] val recordSample: R = recordClass.newInstance
+  val recordSample: R = recordClass.newInstance
   def r: R = recordSample
   def >() = r
 

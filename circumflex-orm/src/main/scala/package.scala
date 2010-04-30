@@ -24,6 +24,18 @@ package object orm {
     association.field
   implicit def relation2recordSample[R <: Record[R]](relation: Relation[R]): R =
     relation.r
+  // The most magical ones.
+  implicit def node2record[R <: Record[R]](node: RelationNode[R]): R = {
+    lastAlias(node.alias)
+    return node.relation.recordSample
+  }
+  implicit def field2helper(field: Field[_]): SimpleExpressionHelper = {
+    val expr = lastAlias match {
+      case Some(alias) => alias + "." + field.name
+      case None => field.name
+    }
+    return new SimpleExpressionHelper(expr)
+  }
 
   implicit def tuple2proj[T1, T2](
       t: Tuple2[Projection[T1],Projection[T2]]) =

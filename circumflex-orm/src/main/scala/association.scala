@@ -23,7 +23,7 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
   val field = new InternalField()
 
   override def setValue(newValue: F): this.type = if (newValue == null) {
-    field.setValue(null)
+    field.setValue(null.asInstanceOf[Long])
     super.setValue(null.asInstanceOf[F])
   } else newValue.id() match {
     case None => throw new ORMException("Cannot assign transient record to association.")

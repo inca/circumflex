@@ -8,6 +8,7 @@ import javax.naming.InitialContext
 import javax.sql.DataSource
 import ORM._
 import org.slf4j.LoggerFactory
+import collection.mutable.Queue
 
 // ## Configuration
 
@@ -73,6 +74,20 @@ object ORM {
     case Some(s: String) => Circumflex.loadClass[TransactionManager](s).newInstance
     case _ => DefaultTransactionManager
   }
+
+  /**
+   * Thread local to hold temporary aliases.
+   *
+   * This is necessary to propagate an alias from `RelationNode` to `Field` with
+   * the help of implicits.
+   */
+  private val _lastAlias = new ThreadLocal[String]
+
+  def lastAlias: Option[String] =
+    if (_lastAlias.get == null) None
+    else (Some(_lastAlias.get))
+  def lastAlias(alias: String): Unit = _lastAlias.set(alias)
+
 }
 
 // ### Connection provider
