@@ -270,7 +270,7 @@ abstract class Relation[R <: Record[R]] {
    * Skips the validation and performs `UPDATE` statement. All fields are affected
    * except primary key, which is used as an update criteria.
    */
-  def update_!(record: R): Int = update_!(record, fields.filter(f => f != primaryKey))
+  def update_!(record: R): Int = update_!(record, record.getFields.filter(f => f != primaryKey))
   def UPDATE_!(record: R) = update_!(record)
 
   /**

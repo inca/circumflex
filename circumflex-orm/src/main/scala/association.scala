@@ -22,14 +22,14 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
 
   val field = new InternalField()
 
-  override def setValue(newValue: F): this.type = {
-    newValue.id() match {
-      case Some(id) =>
-        field.setValue(id)
-        super.setValue(newValue)
-        return this
-      case _ => throw new ORMException("Cannot assign transient record to association.")
-    }
+  override def setValue(newValue: F): this.type = if (newValue == null) {
+    field.setValue(null)
+    super.setValue(null.asInstanceOf[F])
+  } else newValue.id() match {
+    case Some(id) =>
+      field.setValue(id)
+      super.setValue(newValue)
+    case _ => throw new ORMException("Cannot assign transient record to association.")
   }
 
   // ### Cascading actions for DDL

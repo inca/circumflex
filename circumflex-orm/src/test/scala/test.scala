@@ -1,10 +1,9 @@
 package ru.circumflex.orm
 
-import ORM._
-
 class Country extends Record[Country] {
   val code = "code" VARCHAR(2) DEFAULT("'ch'")
   val name = "name" TEXT
+  override def toString = name()
 }
 
 object Country extends Table[Country] {
@@ -14,6 +13,7 @@ object Country extends Table[Country] {
 class City extends Record[City] {
   val name = "name" TEXT
   val country = "country_id" REFERENCES(Country) ON_DELETE CASCADE ON_UPDATE CASCADE
+  override def toString = name()
 }
 
 object City extends Table[City] {

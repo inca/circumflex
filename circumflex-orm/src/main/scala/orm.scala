@@ -7,6 +7,7 @@ import java.util.Date
 import javax.naming.InitialContext
 import javax.sql.DataSource
 import ORM._
+import org.slf4j.LoggerFactory
 
 // ## Configuration
 
@@ -15,6 +16,8 @@ import ORM._
  * configuration object.
  */
 object ORM {
+
+  protected[orm] val ormLog = LoggerFactory.getLogger("ru.circumflex.orm")
 
   // ### Global Configuration Objects
 

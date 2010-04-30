@@ -2,14 +2,11 @@ package ru.circumflex
 
 import _root_.ru.circumflex.orm._
 import ORM._
-import org.slf4j.LoggerFactory
 import java.util.regex.Pattern
 
 // ## ORM package object
 
 package object orm {
-
-  protected[orm] val ormLog = LoggerFactory.getLogger("ru.circumflex.orm")
 
   // ### Implicits
 

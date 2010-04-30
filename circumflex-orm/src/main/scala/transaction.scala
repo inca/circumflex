@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 import java.sql.{PreparedStatement, Connection}
 import collection.mutable.HashMap
+import ORM._
 
 // ## Transaction management
 

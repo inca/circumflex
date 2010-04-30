@@ -99,6 +99,10 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   def :=(newValue: T): this.type = setValue(newValue)
   def update(newValue: T): this.type = setValue(newValue)
 
+  def setNull(): this.type = setValue(null.asInstanceOf[T])
+  def null_!() = setNull()
+  def NULL_!() = null_!()
+
   // Equality methods.
 
   override def equals(that: Any) = that match {

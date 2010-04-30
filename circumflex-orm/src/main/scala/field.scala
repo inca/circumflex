@@ -55,13 +55,12 @@ class NullableField[T](name: String, uuid: String, sqlType: String)
   // `None` is default value instead of `null`
   setValue(None)
 
-  override def empty_?() = getValue == None
+  override def empty_?() = getValue == null || getValue == None || getValue == Some(null)
 
   def get(): T = _value.get
   def getOrElse(default: T): T = apply().getOrElse(default)
 
-  def null_!() = setValue(None)
-  def NULL_!() = null_!
+  override def setNull() = setValue(None)
 
   def nullable: NullableField[T] = this
   def NULLABLE = nullable
@@ -72,7 +71,6 @@ class NullableField[T](name: String, uuid: String, sqlType: String)
     return c
   }
   def NOT_NULL = notNull
-
 
   override def toString(default: String) = apply() match {
     case Some(value) if value != null => value.toString
