@@ -57,8 +57,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Non-DSL field creation.
    */
-  def field[T](name: String, sqlType: String) =
-    new NotNullField[T](name, uuid + "." + name, sqlType)
+  def field[T](name: String, sqlType: String) = new Field[T](name, uuid + "." + name, sqlType)
 
   // ### Insert, Update, Save and Delete
 
@@ -110,8 +109,7 @@ abstract class Record[R <: Record[R]] { this: R =>
     case Some(value) => setValue(vh, value)
     case None => setValue(vh, null)
     case _ => vh match {
-      case f: NullableField[Any] => f.setValue(Some(value))
-      case f: NotNullField[Any] => f.setValue(value)
+      case f: Field[Any] => f.setValue(value)
       case a: Association[_, _] => value match {
         case id: Long => setValue(a.field, id)
         case rec: Record[_] => setValue(a.field, rec.id())
@@ -137,21 +135,21 @@ class DefinitionHelper[R <: Record[R]](record: R, name: String) {
 
   def uuid = record.uuid + "." + name
 
-  def integer = new NotNullField[Int](name, uuid, dialect.integerType)
-  def bigint = new NotNullField[Long](name, uuid, dialect.longType)
+  def integer = new Field[Int](name, uuid, dialect.integerType)
+  def bigint = new Field[Long](name, uuid, dialect.longType)
   def numeric(precision: Int = -1, scale: Int = 0) = {
     val p = if (precision == -1) "" else "(" + precision + "," + scale + ")"
-    new NotNullField[Long](name, uuid, dialect.numericType + p)
+    new Field[Long](name, uuid, dialect.numericType + p)
   }
-  def text = new NotNullField[String](name, uuid, dialect.stringType)
+  def text = new Field[String](name, uuid, dialect.stringType)
   def varchar(length: Int = -1) = {
     val l = if (length == -1) "" else "(" + length + ")"
-    new NotNullField[String](name, uuid, dialect.varcharType + l)
+    new Field[String](name, uuid, dialect.varcharType + l)
   }
-  def boolean = new NotNullField[Boolean](name, uuid, dialect.booleanType)
-  def date = new NotNullField[Date](name, uuid, dialect.dateType)
-  def time = new NotNullField[Date](name, uuid, dialect.timeType)
-  def timestamp = new NotNullField[Date](name, uuid, dialect.timestampType)
+  def boolean = new Field[Boolean](name, uuid, dialect.booleanType)
+  def date = new Field[Date](name, uuid, dialect.dateType)
+  def time = new Field[Date](name, uuid, dialect.timeType)
+  def timestamp = new Field[Date](name, uuid, dialect.timestampType)
 
   def INTEGER = integer
   def BIGINT = bigint

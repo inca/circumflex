@@ -6,11 +6,10 @@ import ORM._
 
 /**
  * Each field of persistent class correspond to a field of record in a relation.
- * We strongly distinguish `NULLABLE` and `NOT_NULL` fields.
  */
-abstract class Field[T](name: String,
-                        uuid: String,
-                        val sqlType: String)
+class Field[T](name: String,
+               uuid: String,
+               val sqlType: String)
     extends ValueHolder[T](name, uuid) with SQLable {
 
   // Should the `UNIQUE` constraint be generated for this field?
@@ -34,51 +33,7 @@ abstract class Field[T](name: String,
   def toSql = dialect.columnDefinition(this)
 }
 
-class NotNullField[T](name: String, uuid: String, sqlType: String)
-    extends Field[T](name, uuid, sqlType) {
-
-  def nullable: NullableField[T] = {
-    val c = new NullableField[T](this.name, this.uuid, this.sqlType)
-    c._defaultExpr = this.default
-    return c
-  }
-  def NULLABLE = nullable
-
-  def notNull: NotNullField[T] = this
-  def NOT_NULL = notNull
-
-}
-
-class NullableField[T](name: String, uuid: String, sqlType: String)
-    extends Field[Option[T]](name, uuid, sqlType) {
-
-  // `None` is default value instead of `null`
-  setValue(None)
-
-  override def empty_?() = getValue == null || getValue == None || getValue == Some(null)
-
-  def get(): T = _value.get
-  def getOrElse(default: T): T = apply().getOrElse(default)
-
-  override def setNull() = setValue(None)
-
-  def nullable: NullableField[T] = this
-  def NULLABLE = nullable
-
-  def notNull: NotNullField[T] = {
-    val c = new NotNullField[T](this.name, this.uuid, this.sqlType)
-    c._defaultExpr = this.default
-    return c
-  }
-  def NOT_NULL = notNull
-
-  override def toString(default: String) = apply() match {
-    case Some(value) if value != null => value.toString
-    case _ => default
-  }
-}
-
 class PrimaryKeyField(val record: Record[_])
-    extends NullableField[Long]("id", record.uuid + "." + "id", dialect.longType) {
+    extends Field[Long]("id", record.uuid + "." + "id", dialect.longType) {
   override def default = Some(dialect.primaryKeyExpression(record))
 }

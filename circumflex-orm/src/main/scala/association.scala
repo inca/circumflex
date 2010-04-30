@@ -12,7 +12,7 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
 
   // ### Commons
 
-  class InternalField extends NotNullField[Long](name, uuid, dialect.longType) {
+  class InternalField extends Field[Long](name, uuid, dialect.longType) {
     override def setValue(newValue: Long): this.type = {
       super.setValue(newValue)
       assoc._value = null.asInstanceOf[F]
@@ -26,10 +26,10 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
     field.setValue(null)
     super.setValue(null.asInstanceOf[F])
   } else newValue.id() match {
-    case Some(id) =>
+    case None => throw new ORMException("Cannot assign transient record to association.")
+    case Some(id: Long) =>
       field.setValue(id)
       super.setValue(newValue)
-    case _ => throw new ORMException("Cannot assign transient record to association.")
   }
 
   // ### Cascading actions for DDL

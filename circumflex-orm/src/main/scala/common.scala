@@ -86,11 +86,35 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   // This way the value will be unwrapped by FTL engine.
   def item = getValue
 
-  // Accessors and mutators.
+  // Should the `NOT NULL` constraint be applied to this value holder?
+  protected var _notNull: Boolean = false
+  def nullable_?(): Boolean = !_notNull
+  def notNull: this.type = {
+    _notNull = true
+    return this
+  }
+  def NOT_NULL: this.type = notNull
+  def nullable: this.type = {
+    _notNull = false
+    return this
+  }
+  def NULLABLE: this.type = nullable
+
+  // Getters.
 
   def getValue(): T = _value
-  def apply(): T = getValue
+  def get(): T = getValue
+  def getOrElse(default: T) = apply().getOrElse(default)
+  def apply(): Option[T] =
+    if (getValue == null)
+      return None
+    else return Some(getValue)
+
   def empty_?(): Boolean = getValue() == null
+  def null_?(): Boolean = empty_?
+  def NULL_?(): Boolean = empty_?
+
+  // Setters.
 
   def setValue(newValue: T): this.type = {
     _value = newValue
