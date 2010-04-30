@@ -164,7 +164,7 @@ class DefinitionHelper[R <: Record[R]](record: R, name: String) {
   def TIMESTAMP = timestamp
 
   def references[F <: Record[F]](relation: Relation[F]): Association[R, F] =
-    new NotNullAssociation[R, F](name, uuid, record, relation)
+    new Association[R, F](name, uuid, record, relation)
   def REFERENCES[F <: Record[F]](relation: Relation[F]): Association[R, F] =
     references(relation)
 }
