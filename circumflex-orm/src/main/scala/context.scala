@@ -45,7 +45,7 @@ trait ConnectionProvider {
 class DefaultConnectionProvider extends ConnectionProvider {
   protected val log = LoggerFactory.getLogger("ru.circumflex.orm")
 
-  protected val isolation: Int = Circumflex.cfg("orm.connection.isolation") match {
+  protected val isolation: Int = Circumflex("orm.connection.isolation") match {
     case Some("none") => Connection.TRANSACTION_NONE
     case Some("read_uncommitted") => Connection.TRANSACTION_READ_UNCOMMITTED
     case Some("read_committed") => Connection.TRANSACTION_READ_COMMITTED
@@ -57,7 +57,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
     }
   }
 
-  protected val ds: DataSource = Circumflex.cfg("orm.connection.datasource") match {
+  protected val ds: DataSource = Circumflex("orm.connection.datasource") match {
     case Some(jndiName: String) => {
       val ctx = new InitialContext
       val ds = ctx.lookup(jndiName).asInstanceOf[DataSource]
@@ -66,19 +66,19 @@ class DefaultConnectionProvider extends ConnectionProvider {
     }
     case _ => {
       log.info("Using c3p0 connection pooling.")
-      val driver = Circumflex.cfg("orm.connection.driver") match {
+      val driver = Circumflex("orm.connection.driver") match {
         case Some(s: String) => s
         case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
       }
-      val url = Circumflex.cfg("orm.connection.url") match {
+      val url = Circumflex("orm.connection.url") match {
         case Some(s: String) => s
         case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
       }
-      val username = Circumflex.cfg("orm.connection.username") match {
+      val username = Circumflex("orm.connection.username") match {
         case Some(s: String) => s
         case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.username'.")
       }
-      val password = Circumflex.cfg("orm.connection.password") match {
+      val password = Circumflex("orm.connection.password") match {
         case Some(s: String) => s
         case _ => throw new ORMException("Missing mandatory configuration parameter 'orm.connection.password'.")
       }

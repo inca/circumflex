@@ -19,8 +19,6 @@ object CircumflexCoreSpec extends Specification {
 
   class MainRouter extends RequestRouter {
     new SubRouterA("/sub")
-
-    val context = CircumflexContext.context // to hide Specification.context
     
     get("/") = "preved"
     get("/ctx") = if (!CircumflexContext.isOk) "null" else context.toString
@@ -131,7 +129,6 @@ object CircumflexCoreSpec extends Specification {
       MockApp.get("/sub/testA").execute.getContent must_== "preved"
       MockApp.get("/sub/sub1/testB").execute.getContent must_== "preved"
     }
-
   }
 
   "UriMatcher" should {
@@ -180,8 +177,6 @@ object CircumflexCoreSpec extends Specification {
       MockApp.get("/contentType.css").execute()
           .getHeader("Content-Type") must beMatching("text/css(\\s*;\\s*charset=.*)?")
     }
-
-
   }
 
 }

@@ -15,7 +15,7 @@ object ORM extends QueryHelper {
    * Returns connection provider.
    * Can be overriden with "orm.connectionProvider" configuration parameter.
    */
-  val connectionProvider: ConnectionProvider = Circumflex.cfg("orm.connectionProvider") match {
+  val connectionProvider: ConnectionProvider = Circumflex("orm.connectionProvider") match {
     case Some(p: ConnectionProvider) => p
     case Some(c: Class[ConnectionProvider]) => c.newInstance
     case Some(s: String) => Class
@@ -29,7 +29,7 @@ object ORM extends QueryHelper {
    * Returns SQL dialect.
    * Can be overriden with "orm.dialect" configuration parameter.
    */
-  val dialect: Dialect = Circumflex.cfg("orm.dialect") match {
+  val dialect: Dialect = Circumflex("orm.dialect") match {
     case Some(d: Dialect) => d
     case Some(c: Class[Dialect]) => c.newInstance
     case Some(s: String) => {
@@ -46,7 +46,7 @@ object ORM extends QueryHelper {
    * Returns SQL type converter.
    * Can be overriden with "orm.typeConverter" configuration parameter.
    */
-  val typeConverter: TypeConverter = Circumflex.cfg("orm.typeConverter") match {
+  val typeConverter: TypeConverter = Circumflex("orm.typeConverter") match {
     case Some(tc: TypeConverter) => tc
     case Some(c: Class[TypeConverter]) => c.newInstance
     case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)
@@ -55,12 +55,12 @@ object ORM extends QueryHelper {
     case _ => DefaultTypeConverter
   }
 
-  val defaultSchemaName = Circumflex.cfg("orm.defaultSchema") match {
+  val defaultSchemaName = Circumflex("orm.defaultSchema") match {
     case Some(s: String) => s
     case _ => "public"
   }
 
-  val transactionManager: TransactionManager = Circumflex.cfg("orm.transactionManager") match {
+  val transactionManager: TransactionManager = Circumflex("orm.transactionManager") match {
     case Some(tm: TransactionManager) => tm
     case Some(c: Class[TransactionManager]) => c.newInstance
     case Some(s: String) => Class.forName(s, true, Circumflex.classLoader)

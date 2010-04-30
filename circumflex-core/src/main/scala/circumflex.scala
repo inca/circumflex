@@ -57,7 +57,7 @@ object Circumflex extends HashModel {
 
   // ### Loaders
 
-  val classLoader: ClassLoader = this("cx.classLoader") match {
+  def classLoader: ClassLoader = this("cx.classLoader") match {
     case Some(cld: ClassLoader) => cld
     case _ => Thread.currentThread.getContextClassLoader
   }

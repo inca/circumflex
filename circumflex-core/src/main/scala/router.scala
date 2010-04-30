@@ -67,6 +67,7 @@ class RequestRouter(val uriPrefix: String = "") {
 
   // ### Context shortcuts
 
+  def context = CircumflexContext.context
   def header = context.header
   def session = context.session
   def flash = context.flash
