@@ -9,7 +9,7 @@ object & {
 
 object Int {
  def unapply(s: String): Option[Int] =
-   try { Some(Integer.parseInt(s)) }
+   try { Integer.parseInt(s) }
    catch { case _: NumberFormatException => None }
 }
 

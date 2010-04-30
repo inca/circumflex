@@ -12,7 +12,7 @@ class Match(val value: String, params: Array[(String, String)]) {
   def apply(index: Int): String = params(index - 1)._2
   def apply(name: String): String = params.find(_._1 == name).get._2
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
-  def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] = Some(params.map(_._2).toSeq)
+  def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] = params.map(_._2).toSeq
   override def toString = value
   
 }
@@ -77,7 +77,7 @@ trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]]) 
         case Some(m) => res += matcher.name -> m
         case None    => return None
       }
-    Some(res)
+    res
   }
 
   val name: String

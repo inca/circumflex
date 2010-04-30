@@ -3,6 +3,7 @@ package ru.circumflex.core
 import javax.servlet.http.HttpServletResponse
 import org.apache.commons.io.IOUtils
 import java.io.{FileInputStream, File, OutputStream}
+import javax.activation.MimetypesFileTypeMap
 
 /**
  * Represents an `HttpServletResponse` wrapper for committing responses.
@@ -55,7 +56,7 @@ case class FileResponse(val file: File) extends HttpResponse {
   override def apply(response: HttpServletResponse) {
     // determine mime type by extension
     if (context.contentType.isEmpty)
-      context.contentType = Circumflex.mimeTypesMap.getContentType(file)
+      context.contentType = (new MimetypesFileTypeMap).getContentType(file)
 
     super.apply(response)
     // transfer a file
