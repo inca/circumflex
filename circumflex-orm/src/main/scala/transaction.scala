@@ -40,14 +40,14 @@ trait TransactionManager {
   /**
    * Does transaction manager has live current transaction?
    */
-  def hasLiveTransaction: Boolean =
+  def hasLiveTransaction_?(): Boolean =
     threadLocalContext.get != null && threadLocalContext.get.live_?
 
   /**
    * Retrieve a contextual transaction.
    */
   def getTransaction: StatefulTransaction = {
-    if (!hasLiveTransaction) threadLocalContext.set(openTransaction)
+    if (!hasLiveTransaction_?) threadLocalContext.set(openTransaction)
     return threadLocalContext.get
   }
 
@@ -67,6 +67,32 @@ trait TransactionManager {
    */
   def dml[A](actions: Connection => A) =
     getTransaction.dml(actions)
+
+  /**
+   * Execute specified `block` in specified `transaction` context and
+   * commits the `transaction` afterwards.
+   *
+   * If any exception occur, rollback the transaction and rethrow an
+   * exception.
+   */
+  def executeInContext(transaction: StatefulTransaction)(block: => Unit) = try {
+    block
+    if (transaction.live_?) {
+      transaction.commit
+      ormLog.debug("Committed current transaction.")
+    }
+  } catch {
+    case e =>
+      if (transaction.live_?) {
+        transaction.rollback
+        ormLog.error("Rolled back current transaction.")
+      }
+      throw e
+  } finally if (transaction.live_?) {
+    transaction.close
+    ormLog.debug("Closed current connection.")
+  }
+
 }
 
 object DefaultTransactionManager extends TransactionManager

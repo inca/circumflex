@@ -20,27 +20,8 @@ import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
  * The filter implementation of transaction-per-request lifecycle.
  */
 class TransactionManagementFilter extends AbstractCircumflexFilter {
-
-  /**
-   * Commit current transaction at the end of request processing cycle and close
-   * current connection.
-   */
-  def doFilter(ctx: CircumflexContext, chain: FilterChain) = {
-    chain.doFilter(ctx.request, ctx.response)
-    if (transactionManager.hasLiveTransaction ) try {
-      tx.commit
-      ormLog.debug("Committed current transaction.")
-    } catch {
-      case e => {
-        ormLog.error("An error has occured while trying to commit current transaction.", e)
-        tx.rollback
-        ormLog.debug("Rolled back current transaction.")
-      }
-    } finally {
-      tx.close
-      ormLog.debug("Closed current connection.")
-    }
-  }
+  def doFilter(ctx: CircumflexContext, chain: FilterChain) =
+    transactionManager.executeInContext(tx) { chain.doFilter(ctx.request, ctx.response) }
 }
 
 /**
@@ -48,23 +29,5 @@ class TransactionManagementFilter extends AbstractCircumflexFilter {
  */
 class TransactionManagementListener extends ServletRequestListener {
   def requestInitialized(sre: ServletRequestEvent) = {}
-
-  /**
-   * Ensure that current transaction is committed and that contextual connection is closed
-   * at the end of request processing cycle.
-   */
-  def requestDestroyed(sre: ServletRequestEvent) =
-    if (transactionManager.hasLiveTransaction) try {
-      tx.commit
-      ormLog.debug("Committed current transaction.")
-    } catch {
-      case e => {
-        ormLog.error("An error has occured while trying to commit current transaction.", e)
-        tx.rollback
-        ormLog.debug("Rolled back current transaction.")
-      }
-    } finally {
-      tx.close
-      ormLog.debug("Closed current connection.")
-    }
+  def requestDestroyed(sre: ServletRequestEvent) = transactionManager.executeInContext(tx){}
 }

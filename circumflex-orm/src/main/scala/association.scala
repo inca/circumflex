@@ -40,8 +40,23 @@ class NotNullAssociation[R <: Record[R], F <: Record[F]](name: String,
                                                          uuid: String,
                                                          record: R,
                                                          foreignRelation: Relation[F])
-    extends Association[R, F](name, uuid, record, foreignRelation) {
+    extends Association[R, F](name, uuid, record, foreignRelation) { assoc =>
+  class InternalField extends NotNullField[Long](name, uuid, dialect.longType) {
+    override def setValue(newValue: Long): this.type = {
+      super.setValue(newValue)
+      assoc._value = null.asInstanceOf[F]
+      return this
+    }
+  }
+  val field = new InternalField()
 
-  val field = new DefinitionHelper(record, name).BIGINT
-
+  override def setValue(newValue: F): this.type = {
+    newValue.id() match {
+      case Some(id) =>
+        field.setValue(id)
+        super.setValue(newValue)
+        return this
+      case _ => throw new ORMException("Cannot assign transient record to association.")
+    }
+  }
 }
