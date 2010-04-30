@@ -87,7 +87,7 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   def item = getValue
 
   // Should the `NOT NULL` constraint be applied to this value holder?
-  protected var _notNull: Boolean = false
+  protected var _notNull: Boolean = true
   def nullable_?(): Boolean = !_notNull
   def notNull: this.type = {
     _notNull = true

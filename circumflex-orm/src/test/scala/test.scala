@@ -1,8 +1,8 @@
 package ru.circumflex.orm
 
 class Country extends Record[Country] {
-  val code = "code".VARCHAR(2).NOT_NULL.DEFAULT("'ch'")
-  val name = "name".TEXT.NOT_NULL
+  val code = "code" VARCHAR(2) DEFAULT("'ch'")
+  val name = "name" TEXT
   override def toString = name.getOrElse("Unknown")
 }
 
@@ -11,11 +11,18 @@ object Country extends Table[Country] {
 }
 
 class City extends Record[City] {
-  val name = "name".TEXT.NOT_NULL
-  val country = "country_id".REFERENCES(Country).ON_DELETE(CASCADE).ON_UPDATE(CASCADE)
+  val name = "name" TEXT
+  val country = "country_id" REFERENCES(Country) ON_DELETE CASCADE ON_UPDATE CASCADE
   override def toString = name.getOrElse("Unknown")
 }
 
-object City extends Table[City] {
-  CONSTRAINT("city_name_country_id_key").UNIQUE(this.name, this.country)
+object City extends Table[City]
+
+class Capital extends Record[Capital] {
+  val country = "country_id" REFERENCES(Country) ON_DELETE CASCADE
+  val city = "city_id" REFERENCES(City) ON_DELETE RESTRICT
+}
+
+object Capital extends Table[Capital] {
+  CONSTRAINT "capital_uniq" UNIQUE (this.country, this.city)
 }

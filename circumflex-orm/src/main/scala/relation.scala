@@ -243,10 +243,9 @@ abstract class Relation[R <: Record[R]] {
 
   /**
    * Skips the validation and performs `INSERT` statement for specified `record`.
-   * All empty fields with `DEFAULT` expressions are omitted.
+   * All empty fields are omitted.
    */
-  def insert_!(record: R): Int =
-    insert_!(record, record.getFields.filter(f => !(f.empty_? && f.default != None)))
+  def insert_!(record: R): Int = insert_!(record, record.getFields.filter(f => !f.empty_?))
   def INSERT_!(record: R) = insert_!(record)
 
   /**
