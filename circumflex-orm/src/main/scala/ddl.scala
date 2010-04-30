@@ -31,6 +31,11 @@ class DDLUnit {
   def messages = _msgs
   def msgsArray: Array[Msg] = messages.toArray
 
+  def this(objects: SchemaObject*) = {
+    this()
+    add(objects: _*)
+  }
+
   def resetMsgs(): this.type = {
     _msgs = Nil
     return this
@@ -99,11 +104,11 @@ class DDLUnit {
   /**
    * Execute a DROP script for added objects.
    */
-  def drop(): Unit = {
+  def drop(): this.type = {
     resetMsgs()
     _drop()
   }
-  protected def _drop(): Unit = auto(tx.connection)(conn => {
+  protected def _drop(): this.type = auto(tx.connection)(conn => {
     // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
@@ -118,16 +123,17 @@ class DDLUnit {
       dropObjects(schemata, conn)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
+    return this
   })
 
   /**
    * Execute a CREATE script for added objects.
    */
-  def create(): Unit = {
+  def create(): this.type = {
     resetMsgs()
     _create()
   }
-  protected def _create(): Unit = auto(tx.connection)(conn => {
+  protected def _create(): this.type = auto(tx.connection)(conn => {
     // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
@@ -141,12 +147,13 @@ class DDLUnit {
     createObjects(postAux, conn)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
+    return this
   })
 
   /**
    * Execute a DROP script and then a CREATE script.
    */
-  def dropCreate(): Unit = {
+  def dropCreate(): this.type = {
     resetMsgs()
     _drop()
     _create()

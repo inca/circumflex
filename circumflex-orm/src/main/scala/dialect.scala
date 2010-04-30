@@ -299,6 +299,9 @@ class Dialect {
 
   // ### SQL
 
+  def lastIdExpression(node: RelationNode[_]) =
+    node.alias + "." + node.relation.primaryKey.name + " = LASTVAL()"
+
   /**
    * Produce SQL representation of joined tree of relations (`JoinNode` instance).
    */

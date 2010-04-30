@@ -74,6 +74,15 @@ abstract class Record[R <: Record[R]] { this: R =>
   def INSERT_!(fields: Field[_]*): Int = insert_!(fields: _*)
 
   /**
+   * Validates record and executes `insert_!` on success.
+   */
+  def insert(fields: Field[_]*): Int = {
+    // TODO validate
+    insert_!(fields: _*)
+  }
+  def INSERT(fields: Field[_]*) = insert(fields: _*)
+
+  /**
    * Skips the validation and performs `UPDATE` statement for this record.
    * If no `fields` specified, performs full update, otherwise only specified
    * `fields` participate in the statement.
@@ -85,17 +94,41 @@ abstract class Record[R <: Record[R]] { this: R =>
   def UPDATE_!(fields: Field[_]*): Int = update_!(fields: _*)
 
   /**
+   * Validates record and executes `update_!` on success.
+   */
+  def update(fields: Field[_]*): Int = {
+    // TODO validate
+    update_!(fields: _*)
+  }
+  def UPDATE(fields: Field[_]*) = update(fields: _*)
+
+  /**
    * Executes the `DELETE` statement for this record using primary key
    * as delete criteria.
    */
   def delete_!(): Int = relation.delete_!(this)
+  def DELETE_!(): Int = delete_!()
+
+  /**
+   * If record's `id` field is not `NULL` perform `update`, otherwise perform `insert`
+   * and then refetch record using last generated identity.
+   */
+  def save_!(): Int = relation.save_!(this)
+
+  /**
+   * Validates record and executes `save_!` on success.
+   */
+  def save(): Int = {
+    // TODO validate
+    save_!()
+  }
 
   // ### Miscellaneous
 
   /**
-   * Get all fields of current record (involves some reflection).
+   * Get all fields of current record (involves some reflection). 
    */
-  def getFields(): Seq[Field[_]] = relation.fields
+  protected[orm] lazy val _fields: Seq[Field[_]] = relation.fields
       .map(f => relation.methodsMap(f).invoke(this) match {
     case f: Field[_] => f
     case a: Association[_, _] => a.field

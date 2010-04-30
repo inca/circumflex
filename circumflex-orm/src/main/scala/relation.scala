@@ -125,7 +125,14 @@ abstract class Relation[R <: Record[R]] {
   private def findMembers(cl: Class[_]): Unit = {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
     cl.getDeclaredFields
-        .map(f => cl.getMethod(f.getName))
+        .filter(f => classOf[ValueHolder[_]].isAssignableFrom(f.getType))
+        .flatMap(f =>
+      try {
+        val m = cl.getMethod(f.getName)
+        if (classOf[ValueHolder[_]].isAssignableFrom(m.getReturnType))
+          Some(m)
+        else None
+      } catch { case e => None })
         .foreach(m => processMember(m))
   }
 
@@ -245,7 +252,7 @@ abstract class Relation[R <: Record[R]] {
    * Skips the validation and performs `INSERT` statement for specified `record`.
    * All empty fields are omitted.
    */
-  def insert_!(record: R): Int = insert_!(record, record.getFields.filter(f => !f.empty_?))
+  def insert_!(record: R): Int = insert_!(record, record._fields.filter(f => !f.empty_?))
   def INSERT_!(record: R) = insert_!(record)
 
   /**
@@ -269,7 +276,7 @@ abstract class Relation[R <: Record[R]] {
    * Skips the validation and performs `UPDATE` statement. All fields are affected
    * except primary key, which is used as an update criteria.
    */
-  def update_!(record: R): Int = update_!(record, record.getFields.filter(f => f != primaryKey))
+  def update_!(record: R): Int = update_!(record, record._fields.filter(f => f != primaryKey))
   def UPDATE_!(record: R) = update_!(record)
 
   /**
@@ -286,6 +293,34 @@ abstract class Relation[R <: Record[R]] {
       st.executeUpdate
     })
   })
+
+  /**
+   * If `id` field of specified `record` is not `NULL` perform `update`,
+   * otherwise perform `insert` and then refetch record using last generated identity.
+   *
+   * The validation is skipped.
+   */
+  def save_!(record: R): Int = if (record.transient_?) {
+    val rows = insert_!(record)
+    refetchLast(record)
+    return rows
+  } else update_!(record)
+
+  /**
+   * Uses last generated identity to refetch specified `record`.
+   *
+   * This method must be called immediately after `insert_!`.
+   */
+  def refetchLast(record: R): Unit = {
+    val root = as("root")
+    SELECT (root.*) FROM root WHERE (dialect.lastIdExpression(root)) unique match {
+      case Some(r: R) => r._fields.foreach(f => record._fields.find(_ == f) match {
+        case Some(field: Field[Any]) => field.setValue(f.getValue)
+        case _ =>
+      })
+      case _ => throw new ORMException("Could not locate the last inserted row.")
+    }
+  }
 
   // ### Equality and others
 
