@@ -123,10 +123,18 @@ abstract class Record[R <: Record[R]] { this: R =>
     save_!()
   }
 
+  /**
+   * Invalidates transaction-scoped cache for this record and refetches it from database.
+   */
+  def refresh(): this.type = {
+    relation.refresh(this)
+    return this
+  }
+
   // ### Miscellaneous
 
   /**
-   * Get all fields of current record (involves some reflection). 
+   * Get all fields of current record (involves some reflection).
    */
   protected[orm] lazy val _fields: Seq[Field[_]] = relation.fields
       .map(f => relation.methodsMap(f).invoke(this) match {

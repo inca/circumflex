@@ -135,11 +135,11 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
   def read(rs: ResultSet): R =
     _fieldProjections.find(_.field == node.relation.primaryKey) match {
       case Some(pkProjection) => pkProjection.read(rs) match {
-        case null => nope
-        case id => tx.getCachedRecord(node.relation, id) match {
+        case id: Long => tx.getCachedRecord(node.relation, id) match {
           case Some(record: R) => record
           case _ => readRecord(rs)
         }
+        case _ => nope
       } case _ => nope
     }
 

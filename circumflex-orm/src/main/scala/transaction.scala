@@ -198,7 +198,7 @@ class StatefulTransaction {
 
   // ### Cache
 
-  protected[orm] def key(relation: Relation[_], id: Any) = relation.uuid + "@" + id
+  protected[orm] def key(relation: Relation[_], id: Long) = relation.uuid + "@" + id
 
   protected[orm] var recordCache = new HashMap[String, Any]
   protected[orm] var mtoCache = new HashMap[String, Any]
@@ -210,12 +210,17 @@ class StatefulTransaction {
     otmCache = new HashMap[String, Seq[Any]]
   }
 
-  def getCachedRecord[R <: Record[R]](relation: Relation[R], id: Any): Option[R] =
+  def getCachedRecord[R <: Record[R]](relation: Relation[R], id: Long): Option[R] =
     recordCache.get(key(relation, id)).asInstanceOf[Option[R]]
 
-  def updateRecordCache[R <: Record[R]](record: R): Unit = {
-    if (record.transient_?) throw new ORMException("Transient records cannot be cached.")
-    recordCache += key(record.relation, record.id()) -> record
-  }
+  def updateRecordCache[R <: Record[R]](record: R): Unit =
+    if (record.transient_?)
+      throw new ORMException("Transient records cannot be cached.")
+    else
+      recordCache += key(record.relation, record.id.get()) -> record
+
+  def evictRecordCache[R <: Record[R]](record: R): Unit =
+    if (!record.transient_?)
+      recordCache -= key(record.relation, record.id.get())
 
 }

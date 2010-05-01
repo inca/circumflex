@@ -314,13 +314,33 @@ abstract class Relation[R <: Record[R]] {
   def refetchLast(record: R): Unit = {
     val root = as("root")
     SELECT (root.*) FROM root WHERE (dialect.lastIdExpression(root)) unique match {
-      case Some(r: R) => r._fields.foreach(f => record._fields.find(_ == f) match {
-        case Some(field: Field[Any]) => field.setValue(f.getValue)
-        case _ =>
-      })
+      case Some(r: R) => copyFields(r, record)
       case _ => throw new ORMException("Could not locate the last inserted row.")
     }
   }
+
+  /**
+   * Invalidates transaction-scoped cache for specified `record` and refetches it from database.
+   */
+  def refresh(record: R): Unit =
+    if (record.transient_?)
+      throw new ORMException("Could not refresh transient record.")
+    else {
+      tx.evictRecordCache(record)
+      val root = as("root")
+      val id = record.id.get()
+      SELECT (root.*) FROM root WHERE (root.id EQ id) unique match {
+        case Some(r: R) => copyFields(r, record)
+        case _ =>
+          throw new ORMException("Could not locate record with id = " + id + " in database.")
+      }
+    }
+
+  protected def copyFields(from: R, to: R): Unit =
+    from._fields.foreach(f => to._fields.find(_ == f) match {
+      case Some(field: Field[Any]) => field.setValue(f.getValue)
+      case _ =>
+    })
 
   // ### Equality and others
 
