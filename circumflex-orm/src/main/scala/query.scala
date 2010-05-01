@@ -47,6 +47,14 @@ trait Query extends SQLable with ParameterizedExpression {
 abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   /**
+   * The `SELECT` clause of query. In normal circumstances this list should
+   * only consist of single `projection` element; but if `GROUP_BY` clause
+   * specifies projections that are not part of `projection`, than, they
+   * are added here explicitly.
+   */
+  def projections: Seq[Projection[_]] = List(projection)
+
+  /**
    * Make sure that projections with alias `this` are assigned query-unique alias.
    */
   protected def ensureProjectionAlias[T](projection: Projection[T]): Unit =
@@ -121,6 +129,7 @@ class Subselect[T](projection: Projection[T])
 
   // ### Commons
 
+  protected var _auxProjections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_]] = Nil
   protected var _where: Predicate = EmptyPredicate
   protected var _having: Predicate = EmptyPredicate
@@ -139,6 +148,11 @@ class Subselect[T](projection: Projection[T])
    * (in pair, `SetOperation -> Subselect`),
    */
   def setOps = _setOps
+
+  /**
+   * The `SELECT` clause of query.
+   */
+  override def projections = List(projection) ++ _auxProjections
 
   // ### FROM clause
 
@@ -213,13 +227,14 @@ class Subselect[T](projection: Projection[T])
   }
   def GROUP_BY(proj: Projection[_]*): this.type = groupBy(proj: _*)
 
-  protected def addGroupByProjection(proj: Projection[_]): Unit = {
+  protected def addGroupByProjection(proj: Projection[_]): Unit =
     findProjection(projection, p => p.equals(proj)) match {
-      case None => ensureProjectionAlias(proj)
-      case _ =>
+      case None =>
+        ensureProjectionAlias(proj)
+        this._auxProjections ++= List(proj)
+        this._groupBy ++= List(proj)
+      case Some(p) => this._groupBy ++= List(p)
     }
-    this._groupBy ++= List[Projection[_]](proj)
-  }
 
   /**
    * Search deeply for a projection that matches specified `predicate` function.

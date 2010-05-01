@@ -28,6 +28,16 @@ trait ParameterizedExpression extends SQLable {
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
     sql.replaceFirst("\\?", typeConverter.toString(p)))
 
+  // Equality and others.
+
+  override def equals(that: Any) = that match {
+    case e: ParameterizedExpression =>
+      e.toSql == this.toSql && (e.parameters.toList -- this.parameters.toList) == Nil
+    case _ => false
+  }
+
+  override def hashCode = 0
+
   override def toString = toSql
 }
 

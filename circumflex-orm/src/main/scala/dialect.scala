@@ -329,7 +329,7 @@ class Dialect {
    * clauses).
    */
   def subselect(q: Subselect[_]): String = {
-    var result = "SELECT " + q.projection.toSql
+    var result = "SELECT " + q.projections.map(_.toSql).mkString(", ")
     if (q.from.size > 0)
       result += " FROM " + q.from.map(_.toSql).mkString(", ")
     if (q.where != EmptyPredicate)
