@@ -29,13 +29,11 @@ package object orm {
     lastAlias(node.alias)
     return node.relation.recordSample
   }
-  implicit def field2helper(field: Field[_]): SimpleExpressionHelper = {
-    val expr = lastAlias match {
-      case Some(alias) => alias + "." + field.name
-      case None => field.name
-    }
-    return new SimpleExpressionHelper(expr)
+  implicit def field2str(field: Field[_]): String = lastAlias match {
+    case Some(alias) => alias + "." + field.name
+    case None => field.name
   }
+  implicit def field2helper(field: Field[_]) = new SimpleExpressionHelper(field2str(field))
 
   implicit def tuple2proj[T1, T2](
       t: Tuple2[Projection[T1],Projection[T2]]) =
