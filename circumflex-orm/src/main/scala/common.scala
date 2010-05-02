@@ -65,7 +65,7 @@ trait SchemaObject {
    *
    *     <TYPE OF OBJECT> <qualified_name>
    *
-   * where `TYPE OF OBJECT` is `TABLE`, `VIEW`, `SEQUENCE`, `TRIGGER`, 
+   * where `TYPE OF OBJECT` is `TABLE`, `VIEW`, `SEQUENCE`, `TRIGGER`,
    * `FUNCTION`, `PROCEDURE`, `INDEX`, etc. (note the upper case), and
    * `qualified_name` is object's unique identifier.
    *
@@ -115,10 +115,10 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   def getValue(): T = _value
   def get(): T = getValue
   def getOrElse(default: T) = apply().getOrElse(default)
-  def apply(): Option[T] =
-    if (getValue == null)
-      return None
-    else return Some(getValue)
+  def apply(): Option[T] = getValue match {
+    case null => None
+    case value => Some(value)
+  }
 
   def empty_?(): Boolean = getValue() == null
   def null_?(): Boolean = empty_?
@@ -234,7 +234,7 @@ object JDBC {
 // ## Exceptions
 
 /**
- * The most generic exception class. 
+ * The most generic exception class.
  */
 class ORMException(msg: String, cause: Throwable) extends Exception(msg, cause) {
   def this(msg: String) = this(msg, null)

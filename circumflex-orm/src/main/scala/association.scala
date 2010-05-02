@@ -10,25 +10,47 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
                                                   val foreignRelation: Relation[F])
     extends ValueHolder[F](name, uuid) { assoc =>
 
+  protected var _initialized: Boolean = false
+
   // ### Commons
 
   class InternalField extends Field[Long](name, uuid, dialect.longType) {
     override def setValue(newValue: Long): this.type = {
       super.setValue(newValue)
       assoc._value = null.asInstanceOf[F]
+      assoc._initialized = false
       return this
     }
   }
 
   val field = new InternalField()
 
+  override def getValue(): F = super.getValue() match {
+    case null if (!_initialized && field() != None) =>
+      _initialized = true
+      // try to get from record cache
+      val id = field.get
+      tx.getCachedRecord(foreignRelation, id) match {
+        case Some(record) => return record
+        case None =>    // try to fetch lazily
+          val r = foreignRelation.as("root")
+          _value = (SELECT (r.*) FROM (r) WHERE (r.id EQ id))
+              .unique
+              .getOrElse(null.asInstanceOf[F])
+          return _value
+      }
+    case value => return value
+  }
+
   override def setValue(newValue: F): this.type = if (newValue == null) {
     field.setValue(null.asInstanceOf[Long])
+    assoc._initialized = false
     super.setValue(null.asInstanceOf[F])
   } else newValue.id() match {
     case None => throw new ORMException("Cannot assign transient record to association.")
     case Some(id: Long) =>
       field.setValue(id)
+      _initialized = true
       super.setValue(newValue)
   }
 

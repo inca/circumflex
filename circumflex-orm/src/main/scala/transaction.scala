@@ -201,12 +201,10 @@ class StatefulTransaction {
   protected[orm] def key(relation: Relation[_], id: Long) = relation.uuid + "@" + id
 
   protected[orm] var recordCache = new HashMap[String, Any]
-  protected[orm] var mtoCache = new HashMap[String, Any]
   protected[orm] var otmCache = new HashMap[String, Seq[Any]]
 
   def invalidateCaches: Unit = {
     recordCache = new HashMap[String, Any]
-    mtoCache = new HashMap[String, Any]
     otmCache = new HashMap[String, Seq[Any]]
   }
 
