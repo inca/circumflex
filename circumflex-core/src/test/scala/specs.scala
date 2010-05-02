@@ -42,11 +42,11 @@ object CircumflexCoreSpec extends Specification {
         case "css" => "text/css"
         case _ => "application/octet-stream"
       }
-      done(200)
+      done()
     }
     get("/flash-set") = {
       flash('notice) = "preved"
-      done(200)
+      done()
     }
     get("/flash-get") = flash('notice) match {
       case Some(s: String) => s

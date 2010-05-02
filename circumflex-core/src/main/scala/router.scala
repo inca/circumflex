@@ -81,10 +81,7 @@ class RequestRouter {
   /**
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
    */
-  def isXhr = header("X-Requested-With") match {
-    case Some("XMLHttpRequest") => true
-    case _ => false
-  }
+  def isXhr = header("X-Requested-With").getOrElse("") == "XMLHttpRequest"
 
   /**
    * Retrieves a String from context.
@@ -100,12 +97,8 @@ class RequestRouter {
   /**
    * Sends error with specified status code and message.
    */
-  def error(errorCode: Int, message: String) = ErrorResponse(errorCode, message)
-
-  /**
-   * Sends error with specified status code.
-   */
-  def error(errorCode: Int) = ErrorResponse(errorCode, "no message available")
+  def error(errorCode: Int, message: String = "no message available") =
+    ErrorResponse(errorCode, message)
 
   /**
    * Rewrites request URI. Normally it causes the request to travel all the way through
@@ -129,14 +122,9 @@ class RequestRouter {
   }
 
   /**
-   * Sends empty `200 OK` response.
+   * Sends empty response with specified status code (default is `200 OK`).
    */
-  def done: HttpResponse = done(200)
-
-  /**
-   * Sends empty response with specified status code.
-   */
-  def done(statusCode: Int): HttpResponse = {
+  def done(statusCode: Int = 200): HttpResponse = {
     context.statusCode = statusCode
     new EmptyResponse
   }
@@ -145,40 +133,27 @@ class RequestRouter {
    * Immediately stops processing with `400 Bad Request` if one of specified
    * parameters is not provided.
    */
-  def requireParams(names: String*) = names.toList.foreach(name => {
-    if (param(name) == None)
-      throw new RouteMatchedException(Some(error(400, "Missing " + name + " parameter.")))
-  })
-
-  /**
-   * Sends a file.
-   */
-  def sendFile(file: File): FileResponse = FileResponse(file)
+  def requireParams(names: String*) =
+    for (name <- names if param(name).isEmpty)
+      throw new RouteMatchedException(error(400, "Missing " + name + " parameter."))
 
   /**
    * Sends a file with Content-Disposition: attachment with specified UTF-8 filename.
    */
-  def sendFile(file: File, filename: String): FileResponse = {
-    attachment(filename)
-    sendFile(file)
-  }
-
-  /**
-   * Sends a file with the help of Web server using X-SendFile feature.
-   */
-  def xSendFile(file: File): HttpResponse = {
-    val xsf = Circumflex.newObject("cx.XSendFileHeader", DefaultXSendFileHeader)
-    header(xsf.name) = xsf.value(file)
-    done
+  def sendFile(file: File, filename: String = null): FileResponse = {
+    if (filename != null) attachment(filename)
+    FileResponse(file)
   }
 
   /**
    * Sends a file with the help of Web server using X-SendFile feature, also setting
    * Content-Disposition: attachment with specified UTF-8 filename.
    */
-  def xSendFile(file: File, filename: String): HttpResponse = {
-    attachment(filename)
-    xSendFile(file)
+  def xSendFile(file: File, filename: String = null): HttpResponse = {
+    if (filename != null) attachment(filename)
+    val xsf = Circumflex.newObject("cx.XSendFileHeader", DefaultXSendFileHeader)
+    header(xsf.name) = xsf.value(file)
+    done()
   }
 
   /**
