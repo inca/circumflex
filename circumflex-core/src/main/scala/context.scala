@@ -110,6 +110,12 @@ class CircumflexContext(val request: HttpServletRequest,
       if (uriMatch.value == uri) {
         uriPrefix += uriMatch.prefix
         uri = uriMatch.suffix
+        
+        // "/prefix/", "path" => "/prefix", "/path"
+        if (uriPrefix.endsWith("/")) {
+          uriPrefix = uriPrefix.take(uriPrefix.length - 1)
+          uri = "/" + uri
+        }
       }
     }
 
