@@ -8,17 +8,17 @@ class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
 object CircumflexCoreSpec extends Specification {
 
-  class SubRouterA(prefix: String = "") extends RequestRouter(prefix) {
-    new SubRouterB(prefix + "/sub1")
-    new SubRouterB(prefix + "/sub2")
-    get("/testA") = "preved"
+  class SubRouterA extends RequestRouter {
+    any("/sub1*") = new SubRouterB
+    any("/sub2*") = new SubRouterB
+    get("/testA") = rewrite("/sub2/testB")
   }
-  class SubRouterB(prefix: String = "") extends RequestRouter(prefix) {
+  class SubRouterB extends RequestRouter {
     get("/testB") = "preved"
   }
 
   class MainRouter extends RequestRouter {
-    new SubRouterA("/sub")
+    any("/sub*") = new SubRouterA
     
     get("/") = "preved"
     get("/ctx") = if (!CircumflexContext.isOk) "null" else context.toString

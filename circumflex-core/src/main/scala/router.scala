@@ -6,7 +6,9 @@ case class RouteMatchedException(val response: Option[HttpResponse]) extends Exc
 
 // ## Request Router
 
-class RequestRouter(val uriPrefix: String = "") {
+class RequestRouter {
+
+  context.updateUri // to support router forwards
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
@@ -18,7 +20,7 @@ class RequestRouter(val uriPrefix: String = "") {
    * Common matchers are based on HTTP methods, URI and headers.
    */
   class Route(matchingMethods: String*) {
-  
+
     protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
       matchingMethods.find(context.method.equalsIgnoreCase(_)) match {
         case Some(_) => {
@@ -37,19 +39,19 @@ class RequestRouter(val uriPrefix: String = "") {
      * For syntax "get(...) { case Extractors(...) => ... }"
      */
     def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
-      dispatch(ContextualResponse(f), new UriMatcher(uriPrefix, matcher))
+      dispatch(ContextualResponse(f), new UriMatcher(matcher))
 
     def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
-      dispatch(ContextualResponse(f), new UriMatcher(uriPrefix, matcher), matcher1)
+      dispatch(ContextualResponse(f), new UriMatcher(matcher), matcher1)
 
     /**
      * For syntax "get(...) = response"
      */
     def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
-      dispatch(response, new UriMatcher(uriPrefix, matcher))
+      dispatch(response, new UriMatcher(matcher))
 
     def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-      dispatch(response, new UriMatcher(uriPrefix, matcher), matcher1)
+      dispatch(response, new UriMatcher(matcher), matcher1)
 
   }
 
@@ -85,18 +87,6 @@ class RequestRouter(val uriPrefix: String = "") {
   }
 
   /**
-   * Rewrites request URI. Normally it causes the request to travel all the way through
-   * the filters and `RequestRouter` once again but with different URI.
-   * You must use this method with caution to prevent infinite loops.
-   * You must also add `<dispatcher>FORWARD</dispatcher>` to filter mapping to
-   * allow request processing with certain filters.
-   */
-  def rewrite(target: String): Nothing = {
-    context.request.getRequestDispatcher(target).forward(context.request, context.response)
-    throw RouteMatchedException(None)
-  }
-
-  /**
    * Retrieves a String from context.
    */
   def param(key: String): Option[String] = context.getString(key)
@@ -118,11 +108,24 @@ class RequestRouter(val uriPrefix: String = "") {
   def error(errorCode: Int) = ErrorResponse(errorCode, "no message available")
 
   /**
+   * Rewrites request URI. Normally it causes the request to travel all the way through
+   * the filters and `RequestRouter` once again but with different URI.
+   * You must use this method with caution to prevent infinite loops.
+   * You must also add `<dispatcher>FORWARD</dispatcher>` to filter mapping to
+   * allow request processing with certain filters.
+   */
+  def rewrite(target: String): Nothing = {
+    context.request.getRequestDispatcher(context.getAbsoluteUri(target))
+                   .forward(context.request, context.response)
+    throw RouteMatchedException(None)
+  }
+
+  /**
    * Sends a `302 Moved Temporarily` redirect (with optional flashes).
    */
   def redirect(location: String, flashes: (String, Any)*) = {
     for ((key, value) <- flashes) flash(key) = value
-    RedirectResponse(location)
+    RedirectResponse(context.getAbsoluteUri(location))
   }
 
   /**

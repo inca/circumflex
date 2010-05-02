@@ -1,13 +1,15 @@
 package ru.circumflex.core
 
-import java.net.URLDecoder
 import javax.servlet.http.HttpServletRequest
 import util.matching.Regex
 import collection.mutable.ListBuffer
 
 /* ## Matching result */
 
-class Match(val value: String, params: Array[(String, String)]) {
+class Match(val value: String,
+            val prefix: String, // prefix constant of value
+            val suffix: String, // all the rest
+            params: (String, String)*) {
 
   def apply(index: Int): String = params(index - 1)._2
   def apply(name: String): String = params.find(_._1 == name).get._2
@@ -29,7 +31,9 @@ class RegexMatcher(val regex: Regex = null) extends StringMatcher {
     val m = regex.pattern.matcher(value)
     if (m.matches) {
       val matches = for (i <- 1 to m.groupCount) yield groupName(i) -> m.group(i)
-      Some(new Match(value, Array(matches: _*)))
+      val prefix = if (m.groupCount > 0) value.substring(0, m.start(1)) else value
+      val suffix = if (m.groupCount > 0) value.substring(m.start(1)) else ""
+      new Match(value, prefix, suffix, matches: _*)
     } else None
   }
 
@@ -84,22 +88,11 @@ trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]]) 
   def run(request: HttpServletRequest): Option[Match]
 }
 
-class UriMatcher(prefix: String, matcher: StringMatcher) extends RequestMatcher {
-
+class UriMatcher(matcher: StringMatcher) extends RequestMatcher {
   val name = "uri"
-  def run(request: HttpServletRequest) = {
-    val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
-    if (uri.startsWith(prefix))
-      matcher(uri.substring(prefix.length))
-    else
-      None
-  }
-
+  def run(request: HttpServletRequest) = matcher(context.uri)
 }
 
 class HeaderMatcher(val name: String, matcher: StringMatcher) extends RequestMatcher {
-  
-  def run(request: HttpServletRequest) =
-    matcher(request.getHeader(name))
-
+  def run(request: HttpServletRequest) = matcher(request.getHeader(name))
 }
