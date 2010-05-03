@@ -170,7 +170,7 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
 
 // ## Projections for tuples
 
-class AnyTupleProjection(val subProjections: Projection[_]*)
+class UntypedTupleProjection(val subProjections: Projection[_]*)
     extends CompositeProjection[Array[Any]] {
   def read(rs: ResultSet): Array[Any] = subProjections.map(_.read(rs)).toArray
 }

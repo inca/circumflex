@@ -35,12 +35,13 @@ class SimpleExpression(val expression: String,
  * Aggregation of multiple `predicates` with specified `operator`.
  */
 class AggregatePredicate(val operator: String,
-                         val predicates: Seq[Predicate])
+                         protected var predicates: Seq[Predicate])
     extends Predicate {
-  private var params: Seq[Any] = predicates.flatMap(_.parameters)
-
-  def parameters = params
-
+  def parameters = predicates.flatMap(_.parameters)
+  def add(predicate: Predicate*): this.type = {
+    predicates ++= predicate.toList
+    return this
+  }
   def toSql: String =
     if (predicates.size == 0) EmptyPredicate.toSql
     else "(" + predicates.map(_.toSql).mkString(" " + operator + " ") + ")"
