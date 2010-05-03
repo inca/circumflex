@@ -150,4 +150,11 @@ object CircumflexContext {
   }
 
   def destroy() = threadLocalContext.set(null)
+
+  def apply(key: String): Any = context.apply(key)
+  def update(key: String, value: Any): Unit = context.update(key, value)
+}
+
+class ParamHelper(val key: String) {
+  def :=(value: Any): Unit = CircumflexContext.update(key, value)
 }
