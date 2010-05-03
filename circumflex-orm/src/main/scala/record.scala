@@ -57,7 +57,14 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Non-DSL field creation.
    */
-  def field[T](name: String, sqlType: String) = new Field[T](name, uuid + "." + name, sqlType)
+  def field[T](name: String, sqlType: String) =
+    new Field[T](name, uuid + "." + name, sqlType)
+
+  /**
+   * Inverse associations.
+   */
+  def inverse[C <: Record[C]](association: Association[C, R]): InverseAssociation[R, C] =
+    new InverseAssociation(this, association)
 
   // ### Insert, Update, Save and Delete
 

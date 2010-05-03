@@ -80,6 +80,19 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
 
 class InverseAssociation[P <: Record[P], C <: Record[C]](val record: P,
                                                          val association: Association[C, P]) {
-  protected[orm] var _value: Seq[C] = _
+  def getValue(): Seq[C] =
+    if (record.transient_?) Nil
+    else tx.getCachedInverse(this) match {  // lookup in cache
+      case Nil => // lazy fetch
+        val root = association.record.relation as "root"
+        lastAlias(root.alias)
+        val v = (SELECT (root.*) FROM (root) WHERE (association.field EQ record.id.get)).list
+        tx.updateInverseCache(this, v)
+        return v
+      case l: Seq[C] =>
+        return l
+    }
+
+  def apply(): Seq[C] = getValue()
 
 }

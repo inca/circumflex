@@ -84,7 +84,11 @@ object ORM {
 
   def lastAlias: Option[String] =
     if (_lastAlias.get == null) None
-    else (Some(_lastAlias.get))
+    else {
+      val a = _lastAlias.get
+      _lastAlias.set(null)
+      Some(a)
+    }
   def lastAlias(alias: String): Unit = _lastAlias.set(alias)
 
 }

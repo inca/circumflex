@@ -8,6 +8,7 @@ class Country extends Record[Country] {
   }
   val code = "code" VARCHAR(2) DEFAULT("'ch'")
   val name = "name" TEXT
+  def cities = inverse(City.country)
   override def toString = name.getOrElse("Unknown")
 }
 
