@@ -16,6 +16,8 @@ package object orm {
     new SimpleExpressionHelper(expression)
   implicit def string2predicate(expression: String): Predicate =
     new SimpleExpression(expression, Nil)
+  implicit def string2order(expression: String): Order =
+    new Order(expression, Nil)
   implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
     new SimpleExpression(expression.toSql, expression.parameters)
   implicit def string2projection(expression: String): Projection[Any] =
@@ -34,6 +36,7 @@ package object orm {
     case None => field.name
   }
   implicit def field2helper(field: Field[_]) = new SimpleExpressionHelper(field2str(field))
+  implicit def field2order(field: Field[_]): Order = new Order(field2str(field), Nil)
 
   implicit def tuple2proj[T1, T2](
       t: Tuple2[Projection[T1],Projection[T2]]) =

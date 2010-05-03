@@ -75,6 +75,6 @@ object Sample {
     // Select countries and count their cities:
     val s2 = SELECT (co.*, COUNT(ci.id)) FROM (co JOIN ci) GROUP_BY (co.*) list // Seq[(Country, Int)]
     // Select all russian cities:
-    val s3 = SELECT (ci.*) FROM (ci JOIN co) WHERE (co.code LIKE "ru") list  // Seq[City]
+    val s3 = SELECT (ci.*) FROM (ci JOIN co) WHERE (co.code LIKE "ru") ORDER_BY (ci.name ASC) list  // Seq[City]
   }
 }

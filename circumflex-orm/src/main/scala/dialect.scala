@@ -386,6 +386,29 @@ class Dialect {
     "DELETE FROM " + record.relation.qualifiedName +
         " WHERE " + record.id.name + " = ?"
 
+  /**
+   * Produce `INSERT .. SELECT` statement.
+   */
+  def insertSelect(dml: InsertSelect[_]) = "INSERT INTO " + dml.relation.qualifiedName + " (" +
+      dml.relation.fields.map(_.name).mkString(", ") + ") " + dml.query.toSql
 
+  /**
+   * Produce `UPDATE` statement.
+   */
+  def update(dml: Update[_]): String = {
+    var result = "UPDATE " + dml.relation.qualifiedName + " SET " +
+        dml.setClause.map(_._1.name + " = ?").mkString(", ")
+    if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
+    return result
+  }
+
+  /**
+   * Produce `DELETE` statement.
+   */
+  def delete(dml: Delete[_]): String = {
+    var result = "DELETE FROM " + dml.relation.qualifiedName
+    if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
+    return result
+  }
 
 }
