@@ -75,3 +75,11 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
   def ON_UPDATE(action: ForeignKeyAction): this.type = onUpdate(action)
 
 }
+
+// ## Inverse Associations
+
+class InverseAssociation[P <: Record[P], C <: Record[C]](val record: P,
+                                                         val association: Association[C, P]) {
+  protected[orm] var _value: Seq[C] = _
+
+}
