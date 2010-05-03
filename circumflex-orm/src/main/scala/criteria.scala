@@ -27,12 +27,45 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   protected var _limit = -1
   protected var _offset = 0
 
+  // ### Internal stuff
+
   def toSql = prepareQuery.toSql
 
-  def prepareQuery: SQLQuery[Array[Any]] =
+  /**
+   * Prepare an actual query.
+   */
+  protected def prepareQuery: SQLQuery[Array[Any]] =
     SELECT(new UntypedTupleProjection(_projections: _*))
-        .FROM(rootNode)         // TODO replace with full-blown query plan
-        .WHERE(EmptyPredicate)  // TODO replace with evaluated predicate
+        .FROM(prepareQueryPlan)         // TODO replace with full-blown query plan
+        .WHERE(preparePredicate)
         .ORDER_BY(_orders: _*)
+
+  /**
+   * Compose an actual predicate from restrictions.
+   */
+  protected def preparePredicate: Predicate =
+    if (_restrictions.size > 0)
+      AND(_restrictions: _*)
+    else EmptyPredicate
+
+  /**
+   * Merge the *join tree* with *prefetch tree* to form an actual `FROM` clause.
+   */
+  protected def prepareQueryPlan: RelationNode[R] = _joinTree match {
+    case j: JoinNode[R, _] => replaceLeft(j.clone, _rootTree)
+    case r: RelationNode[R] => _rootTree
+  }
+
+  /**
+   * Replace left-most node of specified `join` with specified `node`.
+   */
+  protected def replaceLeft(join: JoinNode[R, _],
+                            node: RelationNode[R]): RelationNode[R] =
+    join.left match {
+      case j: JoinNode[R, _] => replaceLeft(j, node)
+      case r: RelationNode[R] => join.replaceLeft(node)
+    }
+
+
 
 }
