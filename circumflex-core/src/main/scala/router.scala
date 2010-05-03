@@ -6,7 +6,9 @@ case class RouteMatchedException(val response: Option[HttpResponse]) extends Exc
 
 // ## Request Router
 
-class RequestRouter(val uriPrefix: String = "") {
+class RequestRouter {
+
+  context.updateUri // to support router forwards
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
@@ -18,7 +20,7 @@ class RequestRouter(val uriPrefix: String = "") {
    * Common matchers are based on HTTP methods, URI and headers.
    */
   class Route(matchingMethods: String*) {
-  
+
     protected def dispatch(response: =>HttpResponse, matchers: RequestMatcher*): Unit =
       matchingMethods.find(context.method.equalsIgnoreCase(_)) match {
         case Some(_) => {
@@ -37,19 +39,19 @@ class RequestRouter(val uriPrefix: String = "") {
      * For syntax "get(...) { case Extractors(...) => ... }"
      */
     def apply(matcher: StringMatcher)(f: CircumflexContext => HttpResponse): Unit =
-      dispatch(ContextualResponse(f), new UriMatcher(uriPrefix, matcher))
+      dispatch(ContextualResponse(f), new UriMatcher(matcher))
 
     def apply(matcher: StringMatcher, matcher1: RequestMatcher)(f: CircumflexContext => HttpResponse): Unit =
-      dispatch(ContextualResponse(f), new UriMatcher(uriPrefix, matcher), matcher1)
+      dispatch(ContextualResponse(f), new UriMatcher(matcher), matcher1)
 
     /**
      * For syntax "get(...) = response"
      */
     def update(matcher: StringMatcher, response: =>HttpResponse): Unit =
-      dispatch(response, new UriMatcher(uriPrefix, matcher))
+      dispatch(response, new UriMatcher(matcher))
 
     def update(matcher: StringMatcher, matcher1: RequestMatcher, response: =>HttpResponse): Unit =
-      dispatch(response, new UriMatcher(uriPrefix, matcher), matcher1)
+      dispatch(response, new UriMatcher(matcher), matcher1)
 
   }
 
@@ -79,22 +81,7 @@ class RequestRouter(val uriPrefix: String = "") {
   /**
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
    */
-  def isXhr = header("X-Requested-With") match {
-    case Some("XMLHttpRequest") => true
-    case _ => false
-  }
-
-  /**
-   * Rewrites request URI. Normally it causes the request to travel all the way through
-   * the filters and `RequestRouter` once again but with different URI.
-   * You must use this method with caution to prevent infinite loops.
-   * You must also add `<dispatcher>FORWARD</dispatcher>` to filter mapping to
-   * allow request processing with certain filters.
-   */
-  def rewrite(target: String): Nothing = {
-    context.request.getRequestDispatcher(target).forward(context.request, context.response)
-    throw RouteMatchedException(None)
-  }
+  def isXhr = header("X-Requested-With").getOrElse("") == "XMLHttpRequest"
 
   /**
    * Retrieves a String from context.
@@ -110,30 +97,34 @@ class RequestRouter(val uriPrefix: String = "") {
   /**
    * Sends error with specified status code and message.
    */
-  def error(errorCode: Int, message: String) = ErrorResponse(errorCode, message)
+  def error(errorCode: Int, message: String = "no message available") =
+    ErrorResponse(errorCode, message)
 
   /**
-   * Sends error with specified status code.
+   * Rewrites request URI. Normally it causes the request to travel all the way through
+   * the filters and `RequestRouter` once again but with different URI.
+   * You must use this method with caution to prevent infinite loops.
+   * You must also add `<dispatcher>FORWARD</dispatcher>` to filter mapping to
+   * allow request processing with certain filters.
    */
-  def error(errorCode: Int) = ErrorResponse(errorCode, "no message available")
+  def rewrite(target: String): Nothing = {
+    context.request.getRequestDispatcher(context.getAbsoluteUri(target))
+                   .forward(context.request, context.response)
+    throw RouteMatchedException(None)
+  }
 
   /**
    * Sends a `302 Moved Temporarily` redirect (with optional flashes).
    */
   def redirect(location: String, flashes: (String, Any)*) = {
     for ((key, value) <- flashes) flash(key) = value
-    RedirectResponse(location)
+    RedirectResponse(context.getAbsoluteUri(location))
   }
 
   /**
-   * Sends empty `200 OK` response.
+   * Sends empty response with specified status code (default is `200 OK`).
    */
-  def done: HttpResponse = done(200)
-
-  /**
-   * Sends empty response with specified status code.
-   */
-  def done(statusCode: Int): HttpResponse = {
+  def done(statusCode: Int = 200): HttpResponse = {
     context.statusCode = statusCode
     new EmptyResponse
   }
@@ -142,40 +133,27 @@ class RequestRouter(val uriPrefix: String = "") {
    * Immediately stops processing with `400 Bad Request` if one of specified
    * parameters is not provided.
    */
-  def requireParams(names: String*) = names.toList.foreach(name => {
-    if (param(name) == None)
-      throw new RouteMatchedException(Some(error(400, "Missing " + name + " parameter.")))
-  })
-
-  /**
-   * Sends a file.
-   */
-  def sendFile(file: File): FileResponse = FileResponse(file)
+  def requireParams(names: String*) =
+    for (name <- names if param(name).isEmpty)
+      throw new RouteMatchedException(error(400, "Missing " + name + " parameter."))
 
   /**
    * Sends a file with Content-Disposition: attachment with specified UTF-8 filename.
    */
-  def sendFile(file: File, filename: String): FileResponse = {
-    attachment(filename)
-    sendFile(file)
-  }
-
-  /**
-   * Sends a file with the help of Web server using X-SendFile feature.
-   */
-  def xSendFile(file: File): HttpResponse = {
-    val xsf = Circumflex.newObject("cx.XSendFileHeader", DefaultXSendFileHeader)
-    header(xsf.name) = xsf.value(file)
-    done
+  def sendFile(file: File, filename: String = null): FileResponse = {
+    if (filename != null) attachment(filename)
+    FileResponse(file)
   }
 
   /**
    * Sends a file with the help of Web server using X-SendFile feature, also setting
    * Content-Disposition: attachment with specified UTF-8 filename.
    */
-  def xSendFile(file: File, filename: String): HttpResponse = {
-    attachment(filename)
-    xSendFile(file)
+  def xSendFile(file: File, filename: String = null): HttpResponse = {
+    if (filename != null) attachment(filename)
+    val xsf = Circumflex.newObject("cx.XSendFileHeader", DefaultXSendFileHeader)
+    header(xsf.name) = xsf.value(file)
+    done()
   }
 
   /**
