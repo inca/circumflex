@@ -36,7 +36,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
    */
   protected def prepareQuery: SQLQuery[Array[Any]] =
     SELECT(new UntypedTupleProjection(_projections: _*))
-        .FROM(prepareQueryPlan)         // TODO replace with full-blown query plan
+        .FROM(prepareQueryPlan)
         .WHERE(preparePredicate)
         .ORDER_BY(_orders: _*)
 
@@ -66,6 +66,21 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
       case r: RelationNode[R] => join.replaceLeft(node)
     }
 
+  // ## Public Stuff
 
+  /**
+   * Add specified `predicates` to restrictions list.
+   */
+  def add(predicates: Predicate*): this.type = {
+    _restrictions ++= predicates.toList
+    return this
+  }
+  def add(expression: String, params: Pair[String, Any]*): this.type =
+    add(prepareExpr(expression, params: _*))
+
+  def addOrder(orders: Order*): this.type = {
+    _orders ++= orders.toList
+    return this
+  }
 
 }
