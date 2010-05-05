@@ -134,7 +134,10 @@ class StatefulTransaction {
   def commit(): Unit = try {
     if (!live_?) return
     connection.commit
-  } finally if (autoClose) connection.close
+  } finally {
+    cleanup()
+    if (autoClose) close()
+  }
 
   /**
    * Rollback the transaction (and close underlying connection if `autoClose` is set to `true`).
@@ -142,7 +145,10 @@ class StatefulTransaction {
   def rollback(): Unit = try {
     if (!live_?) return
     connection.rollback
-  } finally if (autoClose) connection.close
+  } finally {
+    cleanup()
+    if (autoClose) connection.close
+  }
 
   /**
    * Invalidate all caches and clears all state associated with this transaction.
@@ -158,10 +164,7 @@ class StatefulTransaction {
    */
   def close(): Unit =
     if (!live_?) return
-    else {
-      cleanup()
-      connection.close
-    }
+    else connection.close()
 
   // ### Database communication methods
 

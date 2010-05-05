@@ -43,6 +43,10 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
    */
   def projections: Seq[Projection[_]] = List(*)
 
+  // ### Criteria and simple queries
+
+  def criteria = new Criteria(this)
+
   // ### Joins
 
   def findAssociation[F <: Record[F]](node: RelationNode[F]): Option[Association[R, F]] =
