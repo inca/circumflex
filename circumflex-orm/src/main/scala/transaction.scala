@@ -231,7 +231,7 @@ class StatefulTransaction {
     if (record.transient_?)
       throw new ORMException("Could not retrieve inverse association for transient record.")
     else inverseCache.get(key(record.relation, record.id.get, association))
-        .getOrElse(Nil)
+        .getOrElse(null)
         .asInstanceOf[Seq[C]]
 
   def getCachedInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C]): Seq[C] =

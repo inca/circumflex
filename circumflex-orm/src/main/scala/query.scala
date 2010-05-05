@@ -81,12 +81,17 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
   // ### Executors
 
   /**
+   * Use the query projection to read 
+   */
+  def read(rs: ResultSet): T = projection.read(rs)
+
+  /**
    * Execute a query and return `Seq[T]`, where `T` is designated by query projection.
    */
   def list(): Seq[T] = resultSet(rs => {
     val result = new ListBuffer[T]()
     while (rs.next)
-      result += projection.read(rs)
+      result += read(rs)
     return result
   })
 
@@ -97,7 +102,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
    */
   def unique(): Option[T] = resultSet(rs => {
     if (!rs.next) return None
-    else if (rs.isLast) return Some(projection.read(rs))
+    else if (rs.isLast) return Some(read(rs))
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
 

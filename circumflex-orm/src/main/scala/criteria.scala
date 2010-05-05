@@ -42,7 +42,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
    * Replace left-most node of specified `join` with specified `node`.
    */
   protected def replaceLeft(join: JoinNode[R, _],
-                  node: RelationNode[R]): RelationNode[R] =
+                            node: RelationNode[R]): RelationNode[R] =
     join.left match {
       case j: JoinNode[R, _] => replaceLeft(j, node)
       case r: RelationNode[R] => join.replaceLeft(node)
@@ -74,7 +74,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
    * Prepare specified `node` and `association` to participate in prefetching.
    */
   protected def preparePf[N <: Record[N]](relation: Relation[N],
-                                association: Association[_, _]): RelationNode[N] = {
+                                          association: Association[_, _]): RelationNode[N] = {
     val node = relation.as("pf_" + nextCounter)
     _projections ++= List(node.*)
     _prefetchSeq ++= List[Association[_,_]](association)
@@ -85,7 +85,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
    * Perform a depth-search and add specified `node` to specified `tree` of joins.
    */
   protected def updateJoinTree[N <: Record[N]](node: RelationNode[N],
-                                     tree: RelationNode[R]): RelationNode[R] =
+                                               tree: RelationNode[R]): RelationNode[R] =
     tree match {
       case j: JoinNode[R, R] => try {   // try the left side
         j.replaceLeft(updateJoinTree(node, j.left))
@@ -94,6 +94,38 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
           j.replaceRight(updateJoinTree(node, j.right))
       }
       case rel: RelationNode[R] => rel.join(node)
+    }
+
+  /**
+   * Extract the information for inverse associations from specified `tuple` using
+   * specified `tree`, which should appear to be a subtree of query plan.
+   */
+  protected def processTupleTree[N <: Record[N], P <: Record[P], C <: Record[C]](
+      tuple: Array[_], tree: RelationNode[N]): Unit =
+    tree match {
+      case j: OneToManyJoin[P, C] =>
+        val pNode = j.left
+        val cNode = j.right
+        val a = j.association
+        val pIndex = _projections.findIndexOf(p => p.node.alias == pNode.alias)
+        val cIndex = _projections.findIndexOf(p => p.node.alias == cNode.alias)
+        if (pIndex == -1 || cIndex == -1) return
+        val parent = tuple(pIndex).asInstanceOf[P]
+        val child = tuple(cIndex).asInstanceOf[C]
+        if (parent != null) {
+          val children = tx.getCachedInverse(parent, a) match {
+            case null => Nil
+            case l: Seq[C] => l
+          }
+          if (child != null && !children.contains(child))
+            tx.updateInverseCache(parent, a, children ++ List(child))
+        }
+        processTupleTree(tuple, j.left)
+        processTupleTree(tuple, j.right)
+      case j: JoinNode[_, _] =>
+        processTupleTree(tuple, j.left)
+        processTupleTree(tuple, j.right)
+      case _ =>
     }
 
   // ## Public Stuff
@@ -136,8 +168,6 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
     return this
   }
 
-  // ### Miscellaneous
-
   /**
    * Make an actual query from criteria.
    */
@@ -170,6 +200,26 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
     case j: JoinNode[R, _] => replaceLeft(j.clone, _rootTree)
     case r: RelationNode[R] => _rootTree
   }
+
+  /**
+   * Execute a query, process prefetches and retrieve the list of records.
+   */
+  def list: Seq[R] = {
+    val q = mkSelect
+    q.resultSet(rs => {
+      var result: Seq[R] = Nil
+      while (rs.next) {
+        val tuple = q.read(rs)
+        processTupleTree(tuple, _rootTree)
+        val root = tuple(0).asInstanceOf[R]
+        if (!result.contains(root))
+          result ++= List(root)
+      }
+      return result
+    })
+  }
+
+  // ### Miscellaneous
 
   def toSql = mkSelect.toSql
 
