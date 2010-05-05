@@ -169,13 +169,25 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   }
 
   /**
-   * Make an actual query from criteria.
+   * Make an SQL SELECT query from this criteria.
    */
   def mkSelect: SQLQuery[Array[Any]] =
     SELECT(new UntypedTupleProjection(projections: _*))
         .FROM(queryPlan)
         .WHERE(predicate)
         .ORDER_BY(_orders: _*)
+
+  /**
+   * Make a DML `UPDATE` query from this criteria. Only `WHERE` clause is used, all the
+   * other stuff is ignored.
+   */
+  def mkUpdate: Update[R] = UPDATE(rootNode.relation).WHERE(predicate)
+
+  /**
+   * Make a DML `DELETE` query from this criteria. Only `WHERE` clause is used, all the
+   * other stuff is ignored.
+   */
+  def mkDelete: Delete[R] = DELETE(rootNode).WHERE(predicate)
 
   /**
    * Renumber the aliases of all projections so that no confusions happen.
@@ -216,6 +228,32 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
           result ++= List(root)
       }
       return result
+    })
+  }
+
+  /**
+   * Execute a query, process prefetches and retrieve unique root record. If result set
+   * yields multiple root records, an exception is thrown.
+   */
+  def unique: Option[R] = {
+    val q = mkSelect
+    q.resultSet(rs => {
+      if (!rs.next) return None     // none records found
+      // Okay, let's grab the first one. This would be the result eventually.
+      val firstTuple = q.read(rs)
+      processTupleTree(firstTuple, _rootTree)
+      val result = firstTuple(0).asInstanceOf[R]
+      if (result == null) return None
+      // We don't want to screw prefetches up so let's walk till the end,
+      // but make sure that no other root records appear in result set.
+      while (rs.next) {
+        val tuple = q.read(rs)
+        processTupleTree(tuple, _rootTree)
+        val root = tuple.apply(0)
+        if (root != result)   // Wow, this thingy shouldn't be here, call the police!
+          throw new ORMException("Unique result expected, but multiple records found.")
+      }
+      return Some(result)
     })
   }
 

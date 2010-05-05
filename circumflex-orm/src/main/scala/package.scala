@@ -177,5 +177,9 @@ package object orm {
 
   def select[T](projection: Projection[T]) = new Select(projection)
   def SELECT[T](projection: Projection[T]) = select(projection)
+  def update[R <: Record[R]](relation: Relation[R]) = new Update(relation)
+  def UPDATE[R <: Record[R]](relation: Relation[R]) = update(relation)
+  def delete[R <: Record[R]](node: RelationNode[R]) = new Delete(node)
+  def DELETE[R <: Record[R]](node: RelationNode[R]) = delete(node)
 
 }
