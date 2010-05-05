@@ -101,6 +101,21 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
     return node
   }
 
+  /**
+   * Perform a depth-search and add specified `node` to specified `tree` of joins.
+   */
+  protected def updateJoinTree[N <: Record[N]](node: RelationNode[N],
+                                               tree: RelationNode[R]): RelationNode[R] =
+    tree match {
+      case j: JoinNode[R, R] => try {   // try the left side
+        j.replaceLeft(updateJoinTree(node, j.left))
+      } catch {
+        case e: ORMException =>         // try the right side
+          j.replaceRight(updateJoinTree(node, j.right))
+      }
+      case rel: RelationNode[R] => rel.join(node)
+    }
+
   // ## Public Stuff
 
   /**
@@ -113,8 +128,31 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   def add(expression: String, params: Pair[String, Any]*): this.type =
     add(prepareExpr(expression, params: _*))
 
+  /**
+   * Add specified `orders` to order specificators list.
+   */
   def addOrder(orders: Order*): this.type = {
     _orders ++= orders.toList
+    return this
+  }
+
+  /**
+   * Add specified `association` to prefetch list.
+   */
+  def prefetch[P <: Record[P], C <: Record[C]](association: Association[C, P]): this.type = {
+    if (!_prefetchSeq.contains(association)) {
+      // The depth-search is used to update query plan if possible.
+      _rootTree = updateRootTree(_rootTree, association)
+      // TODO also process prefetch list of both sides of association.
+    }
+    return this
+  }
+
+  /**
+   * Add specified `node` to join tree so that you can build queries with transitive criteria.
+   */
+  def addJoin[N <: Record[N]](node: RelationNode[N]): this.type = {
+    _joinTree = updateJoinTree(node, _joinTree)
     return this
   }
 
