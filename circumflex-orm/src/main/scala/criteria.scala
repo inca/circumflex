@@ -15,7 +15,7 @@ import ORM._
 class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
     extends SQLable with Cloneable {
 
-  private var _country = 0
+  private var _counter = 0
 
   protected var _rootTree: RelationNode[R] = rootNode
   protected var _joinTree: RelationNode[R] = rootNode
@@ -65,6 +65,41 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
       case j: JoinNode[R, _] => replaceLeft(j, node)
       case r: RelationNode[R] => join.replaceLeft(node)
     }
+
+  /**
+   * Attempt to search the root tree of query plan for relations of specified `association`
+   * and correspondingly update it if necessary.
+   */
+  protected def updateRootTree[N <: Record[N], P <: Record[P], C <: Record[C]](
+      node: RelationNode[N],
+      association: Association[C, P]): RelationNode[N] =
+    node match {
+      case j: JoinNode[C, P] => j.replaceLeft(updateRootTree(j.left, association))
+          .replaceRight(updateRootTree(j.right, association))
+      case j: JoinNode[P, C] => j.replaceLeft(updateRootTree(j.left, association))
+          .replaceRight(updateRootTree(j.right, association))
+      case node: RelationNode[C] if (node.relation == association.record.relation) =>
+        // N == C
+        val a = association.asInstanceOf[Association[N, P]]
+        new ManyToOneJoin(node, preparePf(a.foreignRelation, a), a, LEFT_JOIN)
+      case node: RelationNode[P] if (node.relation == association.foreignRelation) =>
+        // N == P
+        val a = association.asInstanceOf[Association[C, N]]
+        new OneToManyJoin(node, preparePf(a.record.relation, a), a, LEFT_JOIN)
+      case node => node
+    }
+
+  /**
+   * Prepare specified `node` and `association` to participate in prefetching.
+   */
+  protected def preparePf[N <: Record[N]](relation: Relation[N],
+                                          association: Association[_, _]): RelationNode[N] = {
+    _counter += 1
+    val node = relation.as("pf_" + _counter)
+    _projections ++= List(node.*)
+    _prefetchSeq ++= List[Association[_,_]](association)
+    return node
+  }
 
   // ## Public Stuff
 
