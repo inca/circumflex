@@ -39,30 +39,6 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   }
 
   /**
-   * Renumber the aliases of all projections so that no confusions happen.
-   */
-  protected def prepareProjections: Seq[Projection[_]] = {
-    _projections.foreach(p => resetProjection(p))
-    return _projections
-  }
-
-  /**
-   * Compose an actual predicate from restrictions.
-   */
-  protected def preparePredicate: Predicate =
-    if (_restrictions.size > 0)
-      AND(_restrictions: _*)
-    else EmptyPredicate
-
-  /**
-   * Merge the *join tree* with *prefetch tree* to form an actual `FROM` clause.
-   */
-  protected def prepareQueryPlan: RelationNode[R] = _joinTree match {
-    case j: JoinNode[R, _] => replaceLeft(j.clone, _rootTree)
-    case r: RelationNode[R] => _rootTree
-  }
-
-  /**
    * Replace left-most node of specified `join` with specified `node`.
    */
   protected def replaceLeft(join: JoinNode[R, _],
@@ -165,12 +141,38 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   /**
    * Make an actual query from criteria.
    */
-  def mkQuery: SQLQuery[Array[Any]] =
-    SELECT(new UntypedTupleProjection(prepareProjections: _*))
-        .FROM(prepareQueryPlan)
-        .WHERE(preparePredicate)
+  def mkSelect: SQLQuery[Array[Any]] =
+    SELECT(new UntypedTupleProjection(projections: _*))
+        .FROM(queryPlan)
+        .WHERE(predicate)
         .ORDER_BY(_orders: _*)
 
-  def toSql = mkQuery.toSql
+  /**
+   * Renumber the aliases of all projections so that no confusions happen.
+   */
+  def projections: Seq[Projection[_]] = {
+    _projections.foreach(p => resetProjection(p))
+    return _projections
+  }
+
+  /**
+   * Compose an actual predicate from restrictions.
+   */
+  def predicate: Predicate =
+    if (_restrictions.size > 0)
+      AND(_restrictions: _*)
+    else EmptyPredicate
+
+  /**
+   * Merge the *join tree* with *prefetch tree* to form an actual `FROM` clause.
+   */
+  def queryPlan: RelationNode[R] = _joinTree match {
+    case j: JoinNode[R, _] => replaceLeft(j.clone, _rootTree)
+    case r: RelationNode[R] => _rootTree
+  }
+
+  def toSql = mkSelect.toSql
+
+  override def toString = queryPlan.toString
 
 }

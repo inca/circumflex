@@ -193,6 +193,8 @@ abstract class JoinNode[L <: Record[L], R <: Record[R]](
   override def clone(): this.type = super.clone()
           .replaceLeft(this.left.clone)
           .replaceRight(this.right.clone)
+
+  override def toString = "(" + left + " -> " + right + ")"
 }
 
 /**
