@@ -385,6 +385,14 @@ class InsertSelect[R <: Record[R]](val relation: Relation[R],
   def toSql: String = dialect.insertSelect(this)
 }
 
+/**
+ * A lil helper to keep stuff DSL'ly.
+ */
+class InsertSelectHelper[R <: Record[R]](val relation: Relation[R]) {
+  def select[T](projection: Projection[T]) = new InsertSelect(relation, new Select(projection))
+  def SELECT[T](projection: Projection[T]) = select(projection)
+}
+
 // ## DELETE query
 
 /**
