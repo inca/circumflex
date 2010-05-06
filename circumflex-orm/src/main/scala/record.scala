@@ -183,21 +183,15 @@ class DefinitionHelper[R <: Record[R]](record: R, name: String) {
 
   def uuid = record.uuid + "." + name
 
-  def integer = new Field[Int](name, uuid, dialect.integerType)
-  def bigint = new Field[Long](name, uuid, dialect.longType)
-  def numeric(precision: Int = -1, scale: Int = 0) = {
-    val p = if (precision == -1) "" else "(" + precision + "," + scale + ")"
-    new Field[Long](name, uuid, dialect.numericType + p)
-  }
-  def text = new Field[String](name, uuid, dialect.stringType)
-  def varchar(length: Int = -1) = {
-    val l = if (length == -1) "" else "(" + length + ")"
-    new Field[String](name, uuid, dialect.varcharType + l)
-  }
-  def boolean = new Field[Boolean](name, uuid, dialect.booleanType)
-  def date = new Field[Date](name, uuid, dialect.dateType)
-  def time = new Field[Date](name, uuid, dialect.timeType)
-  def timestamp = new Field[Date](name, uuid, dialect.timestampType)
+  def integer = new IntField(name, uuid)
+  def bigint = new LongField(name, uuid)
+  def numeric(precision: Int = -1, scale: Int = 0) = new NumericField(name, uuid, precision, scale)
+  def text = new TextField(name, uuid)
+  def varchar(length: Int = -1) = new VarcharField(name, uuid, length)
+  def boolean = new BooleanField(name, uuid)
+  def date = new DateField(name, uuid)
+  def time = new TimeField(name, uuid)
+  def timestamp = new TimestampField(name, uuid)
 
   def INTEGER = integer
   def BIGINT = bigint

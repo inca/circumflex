@@ -25,7 +25,7 @@ class Dialect {
   def longType = "BIGINT"
   def integerType = "INTEGER"
   def numericType = "NUMERIC"
-  def stringType = "TEXT"
+  def textType = "TEXT"
   def varcharType = "VARCHAR"
   def booleanType = "BOOLEAN"
   def dateType = "DATE"

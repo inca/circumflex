@@ -3,7 +3,7 @@ package ru.circumflex.orm
 class PostgreSQLDialect extends Dialect
 
 class MySQLDialect extends Dialect {
-  override def stringType = "VARCHAR(4096)"
+  override def textType = "VARCHAR(4096)"
   override def timestampType = "TIMESTAMP"
   override def supportsSchema_?(): Boolean = false
   override def supportsDropConstraints_?(): Boolean = false
@@ -15,7 +15,7 @@ class MySQLDialect extends Dialect {
 }
 
 class OracleDialect extends Dialect {
-  override def stringType = "VARCHAR2(4096)"
+  override def textType = "VARCHAR2(4096)"
   override def timestampType = "TIMESTAMP WITH TIMEZONE"
   override def primaryKeyExpression(record: Record[_]) = ""
   override def initializeRelation(relation: Relation[_]) = {

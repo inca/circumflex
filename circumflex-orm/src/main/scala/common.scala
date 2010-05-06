@@ -26,7 +26,7 @@ trait ParameterizedExpression extends SQLable {
    * Render this query by replacing parameter placeholders with actual values.
    */
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
-    sql.replaceFirst("\\?", typeConverter.toString(p)))
+    sql.replaceFirst("\\?", typeConverter.escape(p)))
 
   // Equality and others.
 

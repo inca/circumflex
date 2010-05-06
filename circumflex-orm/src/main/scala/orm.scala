@@ -240,9 +240,9 @@ trait TypeConverter {
   }
 
   /**
-   * Convert a value and return it literally (with quoting strings).
+   * Convert a value to string and return it with SQL-compliant escaping.
    */
-  def toString(value: Any): String = convert(value) match {
+  def escape(value: Any): String = convert(value) match {
     case None | null => "null"
     case s: String => dialect.quoteLiteral(s)
     case d: Timestamp => dialect.quoteLiteral(d.toString)
