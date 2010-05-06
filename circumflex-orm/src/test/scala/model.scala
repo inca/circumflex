@@ -1,5 +1,7 @@
 package ru.circumflex.orm
 
+import xml._
+
 class Country extends Record[Country] {
   def this(code: String, name: String) = {
     this()
@@ -78,4 +80,7 @@ object Sample {
     // Select all russian cities:
     val s3 = SELECT (ci.*) FROM (ci JOIN co) WHERE (co.code LIKE "ru") ORDER_BY (ci.name ASC) list  // Seq[City]
   }
+  def deps = Deployment
+      .readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
+      .foreach(_.process)
 }
