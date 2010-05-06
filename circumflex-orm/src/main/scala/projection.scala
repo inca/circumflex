@@ -150,10 +150,10 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
       case _ => throw new ORMException("Could not set a field " + p.field +
           " on record " + record.uuid + ".")
     })
-    // if record remains unidentified, do not return it
+    // If record remains unidentified, do not return it.
     if (record.transient_?) return nope
     else {
-      // otherwise cache it and return
+      // Otherwise cache it and return.
       tx.updateRecordCache(record)
       return record
     }

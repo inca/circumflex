@@ -351,7 +351,7 @@ trait DMLQuery extends Query {
   /**
    * Execute a query and return the number of affected rows.
    */
-  def execute: Int = transactionManager.dml(conn => {
+  def execute(): Int = transactionManager.dml(conn => {
     val sql = toSql
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {

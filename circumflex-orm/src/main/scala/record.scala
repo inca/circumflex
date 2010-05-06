@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 import ORM._
 import java.util.Date
+import java.lang.reflect.Method
 
 // ## Record
 
@@ -167,6 +168,14 @@ abstract class Record[R <: Record[R]] { this: R =>
       case _ => throw new ORMException("Could not set value " + value +
           " to specified value holder " + vh + ".")
     }
+  }
+
+  /**
+   * Search for specified `field` among this record methods and set it's `value`.
+   */
+  def setField[T](field: Field[T], value: T): Unit = _fields.find(f => f == field) match {
+    case Some(f: Field[T]) => f.setValue(value)
+    case _ =>
   }
 
   override def toString = getClass.getSimpleName + "@" + id.toString("TRANSIENT")
