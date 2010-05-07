@@ -49,27 +49,6 @@ object Capital extends Table[Capital] {
 object Sample {
   def schema = new DDLUnit(City, Capital, Country).dropCreate
       .messages.foreach(msg => println(msg.body))
-  def data = {
-    val ru = new Country("ru", "Russia")
-    ru.save()
-    val ch = new Country("ch", "Switzerland")
-    ch.save()
-    val msk = new City(ru, "Moscow")
-    msk.save()
-    val spb = new City(ru, "St. Petersburg")
-    spb.save()
-    val qrsk = new City(ru, "Kursk")
-    qrsk.save()
-    new Capital(ru, msk).save()
-    val zurich = new City(ch, "Zurich")
-    zurich.save()
-    val bern = new City(ch, "Bern")
-    bern.save()
-    val lausanne = new City(ch, "Lausanne")
-    lausanne.save()
-    new Capital(ch, bern).save()
-    COMMIT
-  }
   def selects = {
     val ci = City as "ci"
     val co = Country as "co"
@@ -80,7 +59,7 @@ object Sample {
     // Select all russian cities:
     val s3 = SELECT (ci.*) FROM (ci JOIN co) WHERE (co.code LIKE "ru") ORDER_BY (ci.name ASC) list  // Seq[City]
   }
-  def deps = Deployment
+  def data = Deployment
       .readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
       .foreach(_.process)
 }

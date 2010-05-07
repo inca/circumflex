@@ -1,13 +1,16 @@
 package ru.circumflex.maven;
 
+import org.apache.commons.io.FilenameUtils;
 import ru.circumflex.orm.DDLUnit;
 import ru.circumflex.orm.SchemaObject;
+import ru.circumflex.orm.FileDeploymentHelper;
 import org.apache.maven.plugin.MojoExecutionException;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,6 +28,16 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
      */
     private boolean drop;
 
+    /**
+     * @parameter
+     */
+    private List<String> deployments;
+
+    /**
+     * @parameter expression="${deploymentsSuffix}" default-value=".cxd.xml"
+     */
+    private String deploymentsSuffix;
+
     private DDLUnit ddl = new DDLUnit();
 
     public void execute() throws MojoExecutionException {
@@ -33,6 +46,7 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
             URLClassLoader cld = prepareClassLoader();
             Thread.currentThread().setContextClassLoader(cld);
             processSchema();
+            processDeployments();
         } catch (Exception e) {
             throw new MojoExecutionException("DDL export failed.", e);
         } finally {
@@ -105,6 +119,45 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
         return SchemaObject.class.isAssignableFrom(c)
                 && !Modifier.isAbstract(c.getModifiers())
                 && !Modifier.isInterface(c.getModifiers());
+    }
+
+    private void processDeployments() {
+        if (deployments == null) deployments = new ArrayList<String>();
+        deployments.add("default.cxd.xml");
+        for (String pkg : packages)
+            findDeployments(pkg.replaceAll("\\.", "/"));
+        findDeployments("");
+        for (String d : deployments)
+            processDeployment(d);
+    }
+
+    private void findDeployments(String relPath) {
+        try {
+            String path = project.getBuild().getOutputDirectory() + "/" + relPath;
+            File dir = new File(FilenameUtils.separatorsToSystem(path));
+            for (File f : dir.listFiles())
+                if (f.getName().endsWith(deploymentsSuffix)) {
+                    String d = relPath.equals("") ? f.getName() : relPath + "/" + f.getName();
+                    if (!deployments.contains(d)) deployments.add(d);
+                }
+        } catch (Exception e) {
+            getLog().warn("Could not process deployments for package " + relPath + ".");
+        }
+    }
+
+    private void processDeployment(String deployment) {
+        String path = project.getBuild().getOutputDirectory() + "/" + deployment;
+        File f = new File(FilenameUtils.separatorsToSystem(path));
+        if (!f.isFile()) {
+            getLog().warn("Omitting non-existent deployment " + deployment + ".");
+            return;
+        }
+        try {
+            new FileDeploymentHelper(f).process();
+            getLog().info("Deployment " + deployment + " processed successfully.");
+        } catch (Exception e) {
+            getLog().error("Could not process deployment " + deployment + ".", e);
+        }
     }
 
 }
