@@ -1,6 +1,7 @@
 package ru.circumflex.orm
 
 import ORM._
+import JDBC._
 import java.util.Date
 import java.lang.reflect.Method
 
@@ -75,10 +76,17 @@ abstract class Record[R <: Record[R]] { this: R =>
    * with default values), otherwise only specified `fields` participate
    * in the statement.
    */
-  def insert_!(fields: Field[_]*): Int =
-    if (fields.size == 0)
-      relation.insert_!(this)
-    else relation.insert_!(this, fields)
+  def insert_!(fields: Field[_]*): Int = if (relation.readOnly_?)
+    throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+  else transactionManager.dml(conn => {
+    var f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => !f.empty_?) else fields
+    val sql = dialect.insertRecord(this, f)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      relation.setParams(this, st, f)
+      st.executeUpdate
+    })
+  })
   def INSERT_!(fields: Field[_]*): Int = insert_!(fields: _*)
 
   /**
@@ -95,10 +103,18 @@ abstract class Record[R <: Record[R]] { this: R =>
    * If no `fields` specified, performs full update, otherwise only specified
    * `fields` participate in the statement.
    */
-  def update_!(fields: Field[_]*): Int =
-    if (fields.size == 0)
-      relation.update_!(this)
-    else relation.update_!(this, fields)
+  def update_!(fields: Field[_]*): Int = if (relation.readOnly_?)
+    throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+  else transactionManager.dml(conn => {
+    val f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => f != id) else fields
+    val sql = dialect.updateRecord(this, f)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      relation.setParams(this, st, f)
+      typeConverter.write(st, id(), f.size + 1)
+      st.executeUpdate
+    })
+  })
   def UPDATE_!(fields: Field[_]*): Int = update_!(fields: _*)
 
   /**
@@ -114,14 +130,27 @@ abstract class Record[R <: Record[R]] { this: R =>
    * Executes the `DELETE` statement for this record using primary key
    * as delete criteria.
    */
-  def delete_!(): Int = relation.delete_!(this)
+  def delete_!(): Int = if (relation.readOnly_?)
+    throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+  else transactionManager.dml(conn => {
+    val sql = dialect.deleteRecord(this)
+    sqlLog.debug(sql)
+    auto(conn.prepareStatement(sql))(st => {
+      typeConverter.write(st, id(), 1)
+      st.executeUpdate
+    })
+  })
   def DELETE_!(): Int = delete_!()
 
   /**
    * If record's `id` field is not `NULL` perform `update`, otherwise perform `insert`
    * and then refetch record using last generated identity.
    */
-  def save_!(): Int = relation.save_!(this)
+  def save_!(): Int = if (transient_?) {
+    val rows = insert_!()
+    relation.refetchLast(this)
+    return rows
+  } else update_!()
 
   /**
    * Validates record and executes `save_!` on success.
@@ -134,8 +163,17 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Invalidates transaction-scoped cache for this record and refetches it from database.
    */
-  def refresh(): this.type = {
-    relation.refresh(this)
+  def refresh(): this.type = if (transient_?)
+    throw new ORMException("Could not refresh transient record.")
+  else {
+    tx.evictRecordCache(this)
+    val root = relation.as("root")
+    val id = this.id.get()
+    SELECT (root.*) FROM root WHERE (root.id EQ id) unique match {
+      case Some(r: R) => relation.copyFields(r, this)
+      case _ =>
+        throw new ORMException("Could not locate record with id = " + id + " in database.")
+    }
     return this
   }
 
@@ -195,8 +233,8 @@ class DefinitionHelper[R <: Record[R]](record: R, name: String) {
   def integer = new IntField(name, uuid)
   def bigint = new LongField(name, uuid)
   def numeric(precision: Int = -1, scale: Int = 0) = new NumericField(name, uuid, precision, scale)
-  def text = new TextField(name, uuid)
-  def varchar(length: Int = -1) = new VarcharField(name, uuid, length)
+  def text = new TextField(name, uuid, dialect.textType)
+  def varchar(length: Int = -1) = new TextField(name, uuid, length)
   def boolean = new BooleanField(name, uuid)
   def date = new DateField(name, uuid)
   def time = new TimeField(name, uuid)

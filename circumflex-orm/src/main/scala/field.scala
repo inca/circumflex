@@ -63,16 +63,10 @@ class NumericField(name: String, uuid: String, precision: Int = -1, scale: Int =
   def from(string: String) = string.toDouble
 }
 
-class TextField(name: String, uuid: String)
-    extends XmlSerializableField[String](name, uuid, dialect.textType) {
-  def from(string: String) = string
-}
-
-class VarcharField(name: String, uuid: String, length: Int = -1)
-    extends XmlSerializableField[String](
-      name,
-      uuid,
-      dialect.varcharType + (if (length == -1) "" else "(" + length + ")")) {
+class TextField(name: String, uuid: String, sqlType: String)
+    extends XmlSerializableField[String](name, uuid, sqlType) {
+  def this(name: String, uuid: String, length: Int = -1) =
+    this(name, uuid, dialect.varcharType + (if (length == -1) "" else "(" + length + ")"))
   def from(string: String) = string
 }
 

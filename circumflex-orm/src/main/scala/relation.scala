@@ -233,80 +233,6 @@ abstract class Relation[R <: Record[R]] {
     (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).apply(), ix + 1))
 
   /**
-   * Skips the validation and performs `INSERT` statement for specified `record`
-   * using specified `fields`.
-   */
-  def insert_!(record: R, fields: Seq[Field[_]]): Int = if (readOnly_?)
-    throw new ORMException("The relation " + qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
-    val sql = dialect.insertRecord(record, fields)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(record, st, fields)
-      st.executeUpdate
-    })
-  })
-  def INSERT_!(record: R, fields: Seq[Field[_]]) = insert_!(record, fields)
-
-  /**
-   * Skips the validation and performs `INSERT` statement for specified `record`.
-   * All empty fields are omitted.
-   */
-  def insert_!(record: R): Int = insert_!(record, record._fields.filter(f => !f.empty_?))
-  def INSERT_!(record: R) = insert_!(record)
-
-  /**
-   * Skips the validation and performs `UPDATE` statement for specified `record`.
-   * All empty fields with `DEFAULT` expressions are omitted.
-   */
-  def update_!(record: R, fields: Seq[Field[_]]): Int = if (readOnly_?)
-    throw new ORMException("The relation " + qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
-    val sql = dialect.updateRecord(record, fields)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(record, st, fields)
-      typeConverter.write(st, record.id(), fields.size + 1)
-      st.executeUpdate
-    })
-  })
-  def UPDATE_!(record: R, fields: Seq[Field[_]]) = update_!(record, fields)
-
-  /**
-   * Skips the validation and performs `UPDATE` statement. All fields are affected
-   * except primary key, which is used as an update criteria.
-   */
-  def update_!(record: R): Int = update_!(record, record._fields.filter(f => f != primaryKey))
-  def UPDATE_!(record: R) = update_!(record)
-
-  /**
-   * Executes the `DELETE` statement for specified `record` using it's primary key
-   * as delete criteria.
-   */
-  def delete_!(record: R): Int = if (readOnly_?)
-    throw new ORMException("The relation " + qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
-    val sql = dialect.deleteRecord(record)
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      typeConverter.write(st, record.id(), 1)
-      st.executeUpdate
-    })
-  })
-
-  /**
-   * If `id` field of specified `record` is not `NULL` perform `update`,
-   * otherwise perform `insert` and then refetch record using last generated identity.
-   *
-   * The validation is skipped.
-   */
-  def save_!(record: R): Int = if (record.transient_?) {
-    val rows = insert_!(record)
-    refetchLast(record)
-    return rows
-  } else update_!(record)
-
-  /**
    * Uses last generated identity to refetch specified `record`.
    *
    * This method must be called immediately after `insert_!`.
@@ -319,24 +245,7 @@ abstract class Relation[R <: Record[R]] {
     }
   }
 
-  /**
-   * Invalidates transaction-scoped cache for specified `record` and refetches it from database.
-   */
-  def refresh(record: R): Unit =
-    if (record.transient_?)
-      throw new ORMException("Could not refresh transient record.")
-    else {
-      tx.evictRecordCache(record)
-      val root = as("root")
-      val id = record.id.get()
-      SELECT (root.*) FROM root WHERE (root.id EQ id) unique match {
-        case Some(r: R) => copyFields(r, record)
-        case _ =>
-          throw new ORMException("Could not locate record with id = " + id + " in database.")
-      }
-    }
-
-  protected def copyFields(from: R, to: R): Unit =
+  protected[orm] def copyFields(from: R, to: R): Unit =
     from._fields.foreach(f => to._fields.find(_ == f) match {
       case Some(field: Field[Any]) => field.setValue(f.getValue)
       case _ =>
