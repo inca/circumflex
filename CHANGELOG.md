@@ -1,5 +1,12 @@
 # Circumflex change log
 
+## Version 1.1
+
+### Circumflex Markdown
+
+* Added some smarty-pants extensions and some ideas from
+[PHP Markdown Extra](http://michelf.com/projects/php-markdown/extra).
+
 ## Version 1.0
 
 ### Circumflex Web Framework:

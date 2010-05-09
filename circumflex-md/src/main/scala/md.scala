@@ -60,9 +60,9 @@ object Markdown {
       "(?:" + htmlNameTokenExpr + "\\s*=\\s*[a-z0-9_:.\\-]+)" +
       ")\\s*)*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE)
   // Headers
-  val rH1 = Pattern.compile("^ {0,3}(\\S.*)\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
-  val rH2 = Pattern.compile("^ {0,3}(\\S.*)\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
-  val rHeaders = Pattern.compile("^(#{1,6}) *(\\S.*?) *#*?$", Pattern.MULTILINE)
+  val rH1 = Pattern.compile("^ {0,3}(\\S.*?)( *\\{#(.*?)\\})?\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rH2 = Pattern.compile("^ {0,3}(\\S.*?)( *\\{#(.*?)\\})?\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rHeaders = Pattern.compile("^(#{1,6}) *(\\S.*?)(?: *#*)?( *\\{#(.*?)\\})?$", Pattern.MULTILINE)
   // Horizontal rulers
   val rHr = Pattern.compile("^ {0,3}(?:" +
       "(?:(?:\\* *){3,})|" +
@@ -286,12 +286,20 @@ class MarkdownText(source: CharSequence) {
    * Process both types of headers.
    */
   protected def doHeaders(text: StringEx): StringEx = text
-      .replaceAll(rH1, m => "<h1>" + m.group(1) + "</h1>")
-      .replaceAll(rH2, m => "<h2>" + m.group(1) + "</h2>")
-      .replaceAll(rHeaders, m => {
+      .replaceAll(rH1, m => {
+    val id = m.group(3)
+    val idAttr = if (id == null) "" else " id = \"" + id + "\""
+    "<h1" + idAttr + ">" + m.group(1) + "</h1>"
+  }).replaceAll(rH2, m => {
+    val id = m.group(3)
+    val idAttr = if (id == null) "" else " id = \"" + id + "\""
+    "<h2" + idAttr + ">" + m.group(1) + "</h2>"
+  }).replaceAll(rHeaders, m => {
     val marker = m.group(1)
     val body = m.group(2)
-    "<h" + marker.length + ">" + body + "</h" + marker.length + ">"
+    val id = m.group(4)
+    val idAttr = if (id == null) "" else " id = \"" + id + "\""
+    "<h" + marker.length + idAttr + ">" + body + "</h" + marker.length + ">"
   })
 
   /**
