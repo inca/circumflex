@@ -2,8 +2,6 @@ package ru.circumflex.orm
 
 import ORM._
 import JDBC._
-import java.util.Date
-import java.lang.reflect.Method
 
 // ## Record
 
@@ -52,6 +50,11 @@ abstract class Record[R <: Record[R]] { this: R =>
   val id = new PrimaryKeyField(this)
 
   /**
+   * Validator for this record.
+   */
+  val validation = new RecordValidator(this)
+
+  /**
    * Yield `true` if `primaryKey` field is empty (contains `None`).
    */
   def transient_?(): Boolean = id() == None
@@ -68,7 +71,16 @@ abstract class Record[R <: Record[R]] { this: R =>
   def inverse[C <: Record[C]](association: Association[C, R]): InverseAssociation[R, C] =
     new InverseAssociation(this, association)
 
-  // ### Insert, Update, Save and Delete
+  // ### Validate, Insert, Update, Save and Delete
+
+  /**
+   * Performs record validation.
+   */
+  def validate(): Option[Seq[ValidationError]] = {
+    val errors = validation.validate()
+    if (errors.size == 0) None
+    else Some(errors)
+  }
 
   /**
    * Skips the validation and performs `INSERT` statement for this record.
@@ -92,9 +104,9 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Validates record and executes `insert_!` on success.
    */
-  def insert(fields: Field[_]*): Int = {
-    // TODO validate
-    insert_!(fields: _*)
+  def insert(fields: Field[_]*): Int = validate match {
+    case None => insert_!(fields: _*)
+    case Some(errors) => throw new ValidationException(errors: _*)
   }
   def INSERT(fields: Field[_]*) = insert(fields: _*)
 
@@ -120,9 +132,9 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Validates record and executes `update_!` on success.
    */
-  def update(fields: Field[_]*): Int = {
-    // TODO validate
-    update_!(fields: _*)
+  def update(fields: Field[_]*): Int = validate match {
+    case None => update_!(fields: _*)
+    case Some(errors) => throw new ValidationException(errors: _*)
   }
   def UPDATE(fields: Field[_]*) = update(fields: _*)
 
@@ -155,9 +167,9 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Validates record and executes `save_!` on success.
    */
-  def save(): Int = {
-    // TODO validate
-    save_!()
+  def save(): Int = validate match {
+    case None => save_!()
+    case Some(errors) => throw new ValidationException(errors: _*)
   }
 
   /**
