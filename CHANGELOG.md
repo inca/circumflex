@@ -4,7 +4,8 @@
 
 ### Circumflex ORM
 
-* Added methods for simplified queries.
+* Added methods for simplified queries (`get(id: Long)`, `all(limit: Int, offset: Int)`).
+* Added `limit` and `offset` methods to Criteria API.
 
 ### Circumflex Markdown
 
