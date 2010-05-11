@@ -10,17 +10,15 @@ import javax.servlet.http.HttpServletRequest
  * Circumflex configuration
  */
 object Circumflex extends HashModel {
-
   private val _params = MutableMap[String, Any]()
 
   def apply(key: String): Option[Any] = _params.get(key)
-
   def update(key: String, value: Any) { _params(key) = value }
 
   // ### Defalts
 
   // should filter process request?
-  this("cx.process_?") = { (r: HttpServletRequest) => !r.getRequestURI.toLowerCase.matches("/public/.*") }
+  this("cx.process_?") = (r: HttpServletRequest) => !r.getRequestURI.toLowerCase.matches("/public/.*")
   this("cx.root") = "src/main/webapp" // webapp root
   this("cx.public") = "public" // static files directory (relative to webapp root)
   this("cx.messages") = "Messages" // resource bundle for messages

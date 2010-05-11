@@ -42,12 +42,15 @@ class ScalaSeqWrapper[T](val seq: Seq[T], wrapper: ObjectWrapper)
 }
 
 class ScalaMapWrapper[String,V](val map: scala.collection.Map[String,V], wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(map, wrapper) {
+    extends ScalaBaseWrapper(map, wrapper) with TemplateHashModelEx {
   override def get(key: java.lang.String) = wrapper.wrap(
     map.get(key.asInstanceOf[String])
         orElse map.get(key.replaceAll("\\$","_").asInstanceOf[String])
         orElse Some(super.get(key)))
   override def isEmpty = map.isEmpty
+  def values = new ScalaIterableWrapper(map.values, wrapper)
+  val keys = new ScalaIterableWrapper(map.keys, wrapper)
+  def size = map.size
 }
 
 class ScalaIterableWrapper[T](val it: Iterable[T], wrapper: ObjectWrapper)
