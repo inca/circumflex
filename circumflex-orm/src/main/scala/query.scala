@@ -106,12 +106,6 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
 
-  // ### Miscellaneous
-
-  def sqlSelect: String
-
-  def toSql = sqlSelect
-
 }
 
 // ## Native SQL
@@ -120,19 +114,17 @@ class NativeSQLQuery[T](projection: Projection[T],
                         expression: ParameterizedExpression)
     extends SQLQuery[T](projection) {
   def parameters = expression.parameters
-  def sqlSelect = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
+  def toSql = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
 }
 
-// ## Subselect
+// ## Full Select
 
 /**
- * A subset of `SELECT` query -- the one that can participate in subqueries,
- * it does not support `ORDER BY`, `LIMIT` and `OFFSET` clauses.
+ * A full-fledged `SELECT` query.
  */
-class Subselect[T](projection: Projection[T])
-    extends SQLQuery[T](projection) {
+class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
 
-  // ### Commons
+    // ### Commons
 
   protected var _auxProjections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_]] = Nil
@@ -140,13 +132,17 @@ class Subselect[T](projection: Projection[T])
   protected var _having: Predicate = EmptyPredicate
   protected var _groupBy: Seq[Projection[_]] = Nil
   protected var _setOps: Seq[Pair[SetOperation, SQLQuery[T]]] = Nil
+  protected var _orders: Seq[Order] = Nil
+  protected var _limit: Int = -1
+  protected var _offset: Int = 0
 
   /**
    * Query parameters.
    */
   def parameters: Seq[Any] = _where.parameters ++
       _having.parameters ++
-      _setOps.flatMap(p => p._2.parameters)
+      _setOps.flatMap(p => p._2.parameters) ++
+      _orders.flatMap(_.parameters)
 
   /**
    * Queries combined with this subselect using specific set operation
@@ -289,26 +285,6 @@ class Subselect[T](projection: Projection[T])
   def INTERSECT_ALL(sql: SQLQuery[T]): this.type =
     intersectAll(sql)
 
-  // ### Miscellaneous
-
-  override def sqlSelect = dialect.subselect(this)
-
-}
-
-// ## Full Select
-
-/**
- * A full-fledged `SELECT` query.
- */
-class Select[T](projection: Projection[T]) extends Subselect[T](projection) {
-
-  protected var _orders: Seq[Order] = Nil
-  protected var _limit: Int = -1
-  protected var _offset: Int = 0
-
-  override def parameters: Seq[Any] =
-    super.parameters ++ _orders.flatMap(_.parameters)
-
   // ### ORDER BY clause
 
   def orderBy = _orders
@@ -337,7 +313,7 @@ class Select[T](projection: Projection[T]) extends Subselect[T](projection) {
 
   // ### Miscellaneous
 
-  override def toSql = dialect.select(this)
+  def toSql = dialect.select(this)
 
 }
 

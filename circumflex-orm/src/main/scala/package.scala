@@ -26,6 +26,8 @@ package object orm {
     association.field
   implicit def relation2recordSample[R <: Record[R]](relation: Relation[R]): R =
     relation.r
+  implicit def field2projection[T](field: Field[T]): Projection[T] =
+    new ExpressionProjection[T](field2str(field))
   // The most magical ones.
   implicit def node2record[R <: Record[R]](node: RelationNode[R]): R = {
     lastAlias(node.alias)

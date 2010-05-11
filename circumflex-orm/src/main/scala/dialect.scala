@@ -150,7 +150,7 @@ class Dialect {
    * specified `expression`.
    */
   def subquery(expression: String, subquery: SQLQuery[_]) =
-    expression + " ( " + subquery.sqlSelect + " )"
+    expression + " ( " + subquery.toSql + " )"
 
   // ### DDL
 
@@ -328,7 +328,7 @@ class Dialect {
    * Produces `SELECT` statement (without `LIMIT`, `OFFSET` and `ORDER BY`
    * clauses).
    */
-  def subselect(q: Subselect[_]): String = {
+  def select(q: Select[_]): String = {
     var result = "SELECT " + q.projections.map(_.toSql).mkString(", ")
     if (q.from.size > 0)
       result += " FROM " + q.from.map(_.toSql).mkString(", ")
@@ -340,17 +340,9 @@ class Dialect {
       result += " HAVING " + q.having.toSql
     q.setOps.foreach {
       case (op: SetOperation, subq: SQLQuery[_]) =>
-        result += " " + op.toSql + " ( " + subq.sqlSelect + " )"
+        result += " " + op.toSql + " ( " + subq.toSql + " )"
       case _ =>
     }
-    return result
-  }
-
-  /**
-   * Produce `SELECT` statement with `?` parameters.
-   */
-  def select(q: Select[_]): String = {
-    var result = subselect(q)
     if (q.orderBy.size > 0)
       result += " ORDER BY " + q.orderBy.map(_.toSql).mkString(", ")
     if (q.limit > -1)
