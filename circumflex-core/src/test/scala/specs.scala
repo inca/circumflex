@@ -21,7 +21,7 @@ object CircumflexCoreSpec extends Specification {
     any("/sub/*") = new SubRouterA
     
     get("/") = "preved"
-    get("/ctx") = if (!CircumflexContext.isOk) "null" else context.toString
+    get("/ctx") = if (!CircumflexContext.live_?) "null" else context.toString
     get("/capture/?"r, accept("+/+") & content_type("+/+")) =
         "Accept$1 is " + matching('Accept)(1) + "; " +
         "Accept$2 is " + matching('Accept)(2) + "; " +
@@ -159,7 +159,7 @@ object CircumflexCoreSpec extends Specification {
     }
     "be destroyed after the request processing has finished" in {
       MockApp.get("/").execute
-      CircumflexContext.isOk mustBe false
+      CircumflexContext.live_? mustBe false
     }
     "contain captured groups from URI" in {
       MockApp.get("/capture/preved").execute().getContent must_== "uri$1 is preved"
