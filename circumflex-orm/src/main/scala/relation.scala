@@ -117,6 +117,22 @@ abstract class Relation[R <: Record[R]] {
     associations.find(_.foreignRelation == relation)
         .asInstanceOf[Option[Association[R, F]]]
 
+  // ### Simple queries
+
+  /**
+   * Retrieve the record by specified `id` from transaction-scoped cache,
+   * or fetch it from database.
+   */
+  def get(id: Long): Option[R] = tx.getCachedRecord(this, id) match {
+    case Some(record: R) => Some(record)
+    case None => as("root").criteria.add("root.id" EQ id).unique
+  }
+
+  /**
+   * Fetch all records.
+   */
+  def all(): Seq[R] = as("root").criteria.list
+
   // ### Introspection and Initialization
 
   /**

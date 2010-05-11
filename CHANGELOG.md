@@ -2,6 +2,10 @@
 
 ## Version 1.1
 
+### Circumflex ORM
+
+* Added methods for simplified queries.
+
 ### Circumflex Markdown
 
 * Added some smarty-pants extensions and some ideas from
