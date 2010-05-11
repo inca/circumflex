@@ -142,17 +142,17 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   /**
    * Add specified `predicates` to restrictions list.
    */
-  def add(predicates: Predicate*): this.type = {
+  def add(predicates: Predicate*): Criteria[R] = {
     _restrictions ++= predicates.toList
     return this
   }
-  def add(expression: String, params: Pair[String, Any]*): this.type =
+  def add(expression: String, params: Pair[String, Any]*): Criteria[R] =
     add(prepareExpr(expression, params: _*))
 
   /**
    * Add specified `orders` to order specificators list.
    */
-  def addOrder(orders: Order*): this.type = {
+  def addOrder(orders: Order*): Criteria[R] = {
     _orders ++= orders.toList
     return this
   }
@@ -160,7 +160,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   /**
    * Set the maximum amount of root records that will be returned by the query.
    */
-  def limit(value: Int): this.type = {
+  def limit(value: Int): Criteria[R] = {
     this._limit = value
     return this
   }
@@ -168,7 +168,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   /**
    * Set the offset for root records that will be returned by the query.
    */
-  def offset(value: Int): this.type = {
+  def offset(value: Int): Criteria[R] = {
     this._offset = value
     return this
   }
@@ -176,7 +176,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   /**
    * Add specified `association` to prefetch list.
    */
-  def prefetch[P <: Record[P], C <: Record[C]](association: Association[C, P]): this.type = {
+  def prefetch[P <: Record[P], C <: Record[C]](association: Association[C, P]): Criteria[R] = {
     if (!_prefetchSeq.contains(association)) {
       // The depth-search is used to update query plan if possible.
       _rootTree = updateRootTree(_rootTree, association)
@@ -188,7 +188,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   /**
    * Add specified `node` to join tree so that you can build queries with transitive criteria.
    */
-  def addJoin[N <: Record[N]](node: RelationNode[N]): this.type = {
+  def addJoin[N <: Record[N]](node: RelationNode[N]): Criteria[R] = {
     _joinTree = updateJoinTree(node, _joinTree)
     return this
   }

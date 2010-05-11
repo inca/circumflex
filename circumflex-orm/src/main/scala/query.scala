@@ -163,12 +163,12 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
    * Applies specified `nodes` as this query's `FROM` clause.
    * All nodes with `this` alias are assigned query-unique alias.
    */
-  def from(nodes: RelationNode[_]*): this.type = {
+  def from(nodes: RelationNode[_]*): Select[T] = {
     this._relations = nodes.toList
     from.foreach(ensureNodeAlias(_))
     return this
   }
-  def FROM(nodes: RelationNode[_]*): this.type = from(nodes: _*)
+  def FROM(nodes: RelationNode[_]*): Select[T] = from(nodes: _*)
 
   protected def ensureNodeAlias(node: RelationNode[_]): RelationNode[_] =
     node match {
@@ -184,49 +184,49 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
 
   def where: Predicate = this._where
 
-  def where(predicate: Predicate): this.type = {
+  def where(predicate: Predicate): Select[T] = {
     this._where = predicate
     return this
   }
-  def WHERE(predicate: Predicate): this.type = where(predicate)
+  def WHERE(predicate: Predicate): Select[T] = where(predicate)
 
   /**
    * Use specified `expression` as the `WHERE` clause of this query
    * with specified named `params`.
    */
-  def where(expression: String, params: Pair[String,Any]*): this.type =
+  def where(expression: String, params: Pair[String,Any]*): Select[T] =
     where(prepareExpr(expression, params: _*))
-  def WHERE(expression: String, params: Pair[String,Any]*): this.type =
+  def WHERE(expression: String, params: Pair[String,Any]*): Select[T] =
     where(expression, params: _*)
 
   // ### HAVING clause
 
   def having: Predicate = this._having
 
-  def having(predicate: Predicate): this.type = {
+  def having(predicate: Predicate): Select[T] = {
     this._having = predicate
     return this
   }
-  def HAVING(predicate: Predicate): this.type = having(predicate)
+  def HAVING(predicate: Predicate): Select[T] = having(predicate)
 
   /**
    * Use specified `expression` as the `HAVING` clause of this query
    * with specified named `params`.
    */
-  def having(expression: String, params: Pair[String,Any]*): this.type =
+  def having(expression: String, params: Pair[String,Any]*): Select[T] =
     having(prepareExpr(expression, params: _*))
-  def HAVING(expression: String, params: Pair[String,Any]*): this.type =
+  def HAVING(expression: String, params: Pair[String,Any]*): Select[T] =
     having(expression, params: _*)
 
   // ### GROUP BY clause
 
   def groupBy: Seq[Projection[_]] = _groupBy
 
-  def groupBy(proj: Projection[_]*): this.type = {
+  def groupBy(proj: Projection[_]*): Select[T] = {
     proj.toList.foreach(p => addGroupByProjection(p))
     return this
   }
-  def GROUP_BY(proj: Projection[_]*): this.type = groupBy(proj: _*)
+  def GROUP_BY(proj: Projection[_]*) = groupBy(proj: _*)
 
   protected def addGroupByProjection(proj: Projection[_]): Unit =
     findProjection(projection, p => p.equals(proj)) match {
@@ -251,65 +251,65 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
 
   // ### Set Operations
 
-  protected def addSetOp(op: SetOperation, sql: SQLQuery[T]): this.type = {
+  protected def addSetOp(op: SetOperation, sql: SQLQuery[T]): Select[T] = {
     _setOps ++= List(op -> sql)
     return this
   }
 
-  def union(sql: SQLQuery[T]): this.type =
+  def union(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_UNION, sql)
-  def UNION(sql: SQLQuery[T]): this.type = union(sql)
+  def UNION(sql: SQLQuery[T]) = union(sql)
 
-  def unionAll(sql: SQLQuery[T]): this.type =
+  def unionAll(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_UNION_ALL, sql)
-  def UNION_ALL(sql: SQLQuery[T]): this.type =
+  def UNION_ALL(sql: SQLQuery[T]) =
     unionAll(sql)
 
-  def except(sql: SQLQuery[T]): this.type =
+  def except(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_EXCEPT, sql)
-  def EXCEPT(sql: SQLQuery[T]): this.type =
+  def EXCEPT(sql: SQLQuery[T]) =
     except(sql)
 
-  def exceptAll(sql: SQLQuery[T]): this.type =
+  def exceptAll(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_EXCEPT_ALL, sql)
-  def EXCEPT_ALL(sql: SQLQuery[T]): this.type =
+  def EXCEPT_ALL(sql: SQLQuery[T]) =
     exceptAll(sql)
 
-  def intersect(sql: SQLQuery[T]): this.type =
+  def intersect(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_INTERSECT, sql)
-  def INTERSECT(sql: SQLQuery[T]): this.type =
+  def INTERSECT(sql: SQLQuery[T]) =
     intersect(sql)
 
-  def intersectAll(sql: SQLQuery[T]): this.type =
+  def intersectAll(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_INTERSECT_ALL, sql)
-  def INTERSECT_ALL(sql: SQLQuery[T]): this.type =
+  def INTERSECT_ALL(sql: SQLQuery[T]) =
     intersectAll(sql)
 
   // ### ORDER BY clause
 
   def orderBy = _orders
-  def orderBy(order: Order*): this.type = {
+  def orderBy(order: Order*): Select[T] = {
     this._orders ++= order.toList
     return this
   }
-  def ORDER_BY(order: Order*): this.type =
+  def ORDER_BY(order: Order*) =
     orderBy(order: _*)
 
   // ### LIMIT and OFFSET clauses
 
   def limit = this._limit
-  def limit(value: Int): this.type = {
+  def limit(value: Int): Select[T] = {
     _limit = value
     return this
   }
-  def LIMIT(value: Int): this.type = limit(value)
+  def LIMIT(value: Int) = limit(value)
 
   def offset = this._offset
-  def offset(value: Int): this.type = {
+  def offset(value: Int): Select[T] = {
     _offset = value
     return this
   }
-  def OFFSET(value: Int): this.type = offset(value)
+  def OFFSET(value: Int) = offset(value)
 
   // ### Miscellaneous
 
@@ -384,11 +384,11 @@ class Delete[R <: Record[R]](val node: RelationNode[R])
 
   protected var _where: Predicate = EmptyPredicate
   def where: Predicate = this._where
-  def where(predicate: Predicate): this.type = {
+  def where(predicate: Predicate): Delete[R] = {
     this._where = predicate
     return this
   }
-  def WHERE(predicate: Predicate): this.type = where(predicate)
+  def WHERE(predicate: Predicate) = where(predicate)
 
   // ### Miscellaneous
   def parameters = _where.parameters
@@ -409,31 +409,31 @@ class Update[R <: Record[R]](val relation: Relation[R])
 
   private var _setClause: Seq[Pair[Field[_], Any]] = Nil
   def setClause = _setClause
-  def set[T](field: Field[T], value: T): this.type = {
+  def set[T](field: Field[T], value: T): Update[R] = {
     _setClause ++= List(field -> value)
     return this
   }
-  def SET[T](field: Field[T], value: T): this.type = set(field, value)
-  def set[P <: Record[P]](association: Association[R, P], value: P): this.type =
+  def SET[T](field: Field[T], value: T): Update[R] = set(field, value)
+  def set[P <: Record[P]](association: Association[R, P], value: P): Update[R]=
     set(association.field, value.id.get)
-  def SET[P <: Record[P]](association: Association[R, P], value: P): this.type =
+  def SET[P <: Record[P]](association: Association[R, P], value: P): Update[R] =
     set(association, value)
-  def setNull[T](field: Field[T]): this.type = set(field, null.asInstanceOf[T])
-  def SET_NULL[T](field: Field[T]): this.type = setNull(field)
-  def setNull[P <: Record[P]](association: Association[R, P]): this.type =
+  def setNull[T](field: Field[T]): Update[R] = set(field, null.asInstanceOf[T])
+  def SET_NULL[T](field: Field[T]): Update[R] = setNull(field)
+  def setNull[P <: Record[P]](association: Association[R, P]): Update[R] =
     setNull(association.field)
-  def SET_NULL[P <: Record[P]](association: Association[R, P]): this.type =
+  def SET_NULL[P <: Record[P]](association: Association[R, P]): Update[R] =
     setNull(association)
 
   // ### WHERE clause
 
   protected var _where: Predicate = EmptyPredicate
   def where: Predicate = this._where
-  def where(predicate: Predicate): this.type = {
+  def where(predicate: Predicate): Update[R] = {
     this._where = predicate
     return this
   }
-  def WHERE(predicate: Predicate): this.type = where(predicate)
+  def WHERE(predicate: Predicate) = where(predicate)
 
   // ### Miscellaneous
 
