@@ -4,19 +4,46 @@ import javax.servlet.http.HttpServletRequest
 import util.matching.Regex
 import collection.mutable.ListBuffer
 
-/* ## Matching result */
+// ## Matching result
 
 class Match(val value: String,
-            val prefix: String, // prefix constant of value
-            val suffix: String, // all the rest
             params: (String, String)*) {
-
   def apply(index: Int): String = params(index - 1)._2
   def apply(name: String): String = params.find(_._1 == name).get._2
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
   def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] = params.map(_._2).toSeq
   override def toString = value
-  
+}
+
+// ## Matchers
+
+trait Matcher {
+  def apply(): Option[Seq[Match]]
+  def add(matcher: Matcher): CompositeMatcher
+  def &(matcher: Matcher) = add(matcher)
+}
+
+abstract class AtomicMatcher extends Matcher {
+  def add(matcher: Matcher) = new CompositeMatcher().add(matcher)
+}
+
+class CompositeMatcher extends Matcher {
+  private var _matchers: Seq[Matcher] = Nil
+  def matchers = _matchers
+  def add(matcher: Matcher): CompositeMatcher = {
+    _matchers ++= List(matcher)
+    return this
+  }
+  def apply() = try {
+    val matches = _matchers.flatMap(m => m.apply match {
+      case Some(matches: Seq[Match]) => matches
+      case _ => throw new MatchError
+    })
+    if (matches.size > 0) Some(matches)
+    else None
+  } catch {
+    case e: MatchError => None
+  }
 }
 
 /* ## Basics matchers */
@@ -31,9 +58,7 @@ class RegexMatcher(val regex: Regex = null) extends StringMatcher {
     val m = regex.pattern.matcher(value)
     if (m.matches) {
       val matches = for (i <- 1 to m.groupCount) yield groupName(i) -> m.group(i)
-      val prefix = if (m.groupCount > 0) value.substring(0, m.start(1)) else value
-      val suffix = if (m.groupCount > 0) value.substring(m.start(1)) else ""
-      new Match(value, prefix, suffix, matches: _*)
+      new Match(value, matches: _*)
     } else None
   }
 
@@ -42,7 +67,7 @@ class RegexMatcher(val regex: Regex = null) extends StringMatcher {
 class SimpleMatcher(path: String) extends RegexMatcher {
 
   val keys = ListBuffer[String]()
-  
+
   override val regex = (""":\w+|[\*.+()]""".r.replaceAllInS(path) { s =>
     s match {
       case "*" | "+" =>

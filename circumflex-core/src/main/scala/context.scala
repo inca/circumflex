@@ -58,7 +58,7 @@ class CircumflexContext(val request: HttpServletRequest,
     "header" -> header,
     "session" -> session,
     "flash" -> flash
-  )
+    )
   def getString(key: String): Option[String] = get(key).map(_.toString)
   def apply(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => value
@@ -67,35 +67,7 @@ class CircumflexContext(val request: HttpServletRequest,
   def update(key: String, value: Any) { _params += key -> value }
   def +=(pair: (String, Any)) { _params += pair }
 
-  // ### Request URI
-
-  /*
-   * To manage "RouterResponse", for example on
-   *
-   *     any("/sub*") = new SubRouter
-   *
-   * the main router deletes the `/sub` prefix from the uri
-   * before to forward the request to the sub router.
-   * At sub router level redirect and rewrites are relatives.
-   */
-
-  var uri = ""       // relative uri
-  var uriPrefix = "" // prefix of relative uri
-
-  def getAbsoluteUri(relUri: String) = uriPrefix + relUri
-
-  private[core] def updateUri =
-    getMatch('uri) foreach { uriMatch =>
-      if (uriMatch.value == uri) {
-        uriPrefix += uriMatch.prefix
-        uri = uriMatch.suffix
-        // "/prefix/", "path" => "/prefix", "/path"
-        if (uriPrefix.endsWith("/")) {
-          uriPrefix = uriPrefix.take(uriPrefix.length - 1)
-          uri = "/" + uri
-        }
-      }
-    }
+  def uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
 
   // ### Request matching
 
@@ -110,16 +82,13 @@ object CircumflexContext {
   def live_?() = context != null
   def init(req: HttpServletRequest,
            res: HttpServletResponse,
-           filter: AbstractCircumflexFilter) {
-    if (!live_?) {
-      threadLocalContext.set(new CircumflexContext(req, res, filter))
-      Circumflex.messages(req.getLocale) match {
-        case Some(msg) => context('msg) = msg
-        case None =>
-          cxLog.debug("Could not instantiate context messages: 'cx.messages' not configured.")
-      }
+           filter: AbstractCircumflexFilter) = if (!live_?) {
+    threadLocalContext.set(new CircumflexContext(req, res, filter))
+    Circumflex.messages(req.getLocale) match {
+      case Some(msg) => context('msg) = msg
+      case None =>
+        cxLog.debug("Could not instantiate context messages: 'cx.messages' not configured.")
     }
-    context.uri = URLDecoder.decode(req.getRequestURI, "UTF-8")
   }
   def destroy() = threadLocalContext.set(null)
   def apply(key: String): Any = context.apply(key)

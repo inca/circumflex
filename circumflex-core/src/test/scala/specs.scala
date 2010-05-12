@@ -8,25 +8,9 @@ class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
 object CircumflexCoreSpec extends Specification {
 
-  class SubRouterA extends RequestRouter {
-    any("/sub1/*") = new SubRouterB
-    any("/sub2/*") = new SubRouterB
-    get("/testA") = rewrite("/sub2/testB")
-  }
-  class SubRouterB extends RequestRouter {
-    get("/testB") = "preved"
-  }
-
   class MainRouter extends RequestRouter {
-    any("/sub/*") = new SubRouterA
-    
     get("/") = "preved"
     get("/ctx") = if (!CircumflexContext.live_?) "null" else context.toString
-    get("/capture/?"r, accept("+/+") & content_type("+/+")) =
-        "Accept$1 is " + matching('Accept)(1) + "; " +
-        "Accept$2 is " + matching('Accept)(2) + "; " +
-        "Content$1 is " + matching("Content-Type")(1) + "; " +
-        "Content$2 is " + matching("Content-Type")(2)
     get("/capture/(.*)"r) = "uri$1 is " + uri(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
@@ -52,21 +36,10 @@ object CircumflexCoreSpec extends Specification {
       case Some(s: String) => s
       case None => ""
     }
-
     // Simple urls
     get("/filename/:name.:ext") = uri('name) + uri('ext)
     get("*/one/:two/+.:three") =
       uri(1) + uri('two) + uri(3) + uri('three)
-
-    // Extractors
-    get("/self/:name/:id", accept("+/+")) {
-      case uri(name, Int(id)) & accept("text", what) =>
-        "Name is " + name + "; 2*ID is " + (2 * id) + "; what is " + what
-    }
-    get("/host") {
-      case host("localhost") => "local"
-      case _                 => "remote"
-    }
   }
 
   doBeforeSpec{
@@ -116,19 +89,6 @@ object CircumflexCoreSpec extends Specification {
     "process errors" in {
       MockApp.get("/error").execute().getStatus must_== 503
     }
-    "process URI extractors" in {
-      MockApp.get("/self/abc/12")
-             .setHeader("Accept", "text/plain")
-             .execute.getContent must_== "Name is abc; 2*ID is 24; what is plain"
-    }
-    "process HOST extractors" in {
-      MockApp.get("/host").execute.getContent must_== "local"
-    }
-    "process sub routers" in {
-      MockApp.get("/testA").execute.getStatus must_== 404
-      MockApp.get("/sub/testA").execute.getContent must_== "preved"
-      MockApp.get("/sub/sub1/testB").execute.getContent must_== "preved"
-    }
   }
 
   "UriMatcher" should {
@@ -163,13 +123,6 @@ object CircumflexCoreSpec extends Specification {
     }
     "contain captured groups from URI" in {
       MockApp.get("/capture/preved").execute().getContent must_== "uri$1 is preved"
-    }
-    "contain captured groups from headers" in {
-      MockApp.get("/capture")
-          .setHeader("Accept", "text/plain")
-          .setHeader("Content-Type", "text/html")
-          .execute()
-          .getContent must_== "Accept$1 is text; Accept$2 is plain; Content$1 is text; Content$2 is html"
     }
     "set response content type" in {
       MockApp.get("/contentType.html").execute()

@@ -8,8 +8,6 @@ case class RouteMatchedException(val response: Option[HttpResponse]) extends Exc
 
 class RequestRouter {
 
-  context.updateUri // to support router forwards
-
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
 
@@ -108,8 +106,7 @@ class RequestRouter {
    * allow request processing with certain filters.
    */
   def rewrite(target: String): Nothing = {
-    context.request.getRequestDispatcher(context.getAbsoluteUri(target))
-                   .forward(context.request, context.response)
+    context.request.getRequestDispatcher(target).forward(context.request, context.response)
     throw RouteMatchedException(None)
   }
 
@@ -118,7 +115,7 @@ class RequestRouter {
    */
   def redirect(location: String, flashes: (String, Any)*) = {
     for ((key, value) <- flashes) flash(key) = value
-    RedirectResponse(context.getAbsoluteUri(location))
+    RedirectResponse(location)
   }
 
   /**
@@ -186,7 +183,7 @@ class RequestRouter {
 
   case class HeaderExtractor(name: String) {
     def apply(matcher: StringMatcher) = new HeaderMatcher(name, matcher)
-    
+
     def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] =
       ctx.getMatch(name) match {
         case Some(m) => m.unapplySeq(ctx)
@@ -224,5 +221,5 @@ class RequestRouter {
   val user_agent = HeaderExtractor("User-Agent")
   val via = HeaderExtractor("Via")
   val war = HeaderExtractor("War")
-  
+
 }
