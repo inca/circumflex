@@ -51,6 +51,7 @@ class CircumflexContext(val request: HttpServletRequest,
   def contentType_=(value: String) = { _contentType = value }
   var statusCode: Int = 200
   def method: String = getOrElse('_method, request.getMethod)
+  def uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
 
   // ### Request parameters
 
@@ -66,13 +67,6 @@ class CircumflexContext(val request: HttpServletRequest,
   }
   def update(key: String, value: Any) { _params += key -> value }
   def +=(pair: (String, Any)) { _params += pair }
-
-  def uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
-
-  // ### Request matching
-
-  private[core] var _matches = Map[String, Match]()
-  def getMatch(key: String): Option[Match] = _matches.get(key)
 
 }
 

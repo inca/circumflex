@@ -22,8 +22,8 @@ object CircumflexCoreSpec extends Specification {
     get("/error") = error(503, "preved")
     get("/contentType\\.(.+)"r) = {
       context.contentType = uri(1) match {
-        case "html" => "text/html"
-        case "css" => "text/css"
+        case Some("html") => "text/html"
+        case Some("css") => "text/css"
         case _ => "application/octet-stream"
       }
       done()
@@ -37,9 +37,9 @@ object CircumflexCoreSpec extends Specification {
       case None => ""
     }
     // Simple urls
-    get("/filename/:name.:ext") = uri('name) + uri('ext)
+    get("/filename/:name.:ext") = uri.get('name) + uri.get('ext)
     get("*/one/:two/+.:three") =
-      uri(1) + uri('two) + uri(3) + uri('three)
+      uri.get(1) + uri.get('two) + uri.get(3) + uri.get('three)
   }
 
   doBeforeSpec{

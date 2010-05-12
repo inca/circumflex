@@ -25,7 +25,7 @@ trait HttpResponse {
   }
 }
 
-class EmptyResponse extends HttpResponse
+object EmptyResponse extends HttpResponse
 
 case class ErrorResponse(val errorCode: Int, val msg: String) extends HttpResponse {
   override def apply(response: HttpServletResponse) {

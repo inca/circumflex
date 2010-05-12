@@ -1,18 +1,22 @@
 package ru.circumflex.core
 
-import javax.servlet.http.HttpServletRequest
 import util.matching.Regex
-import collection.mutable.ListBuffer
 
 // ## Matching result
 
-class Match(val value: String,
-            params: (String, String)*) {
-  def apply(index: Int): String = params(index - 1)._2
-  def apply(name: String): String = params.find(_._1 == name).get._2
+class Match(val name: String,
+            params: (String, String)*) extends HashModel {
+  def apply(index: Int): Option[String] =
+    if (params.indices.contains(index)) Some(params(index - 1)._2)
+    else None
+  def apply(name: String): Option[String] = params.find(_._1 == name) match {
+    case Some(param: Pair[String, String]) => Some(param._2)
+    case _ => None
+  }
+  def get(index: Int): String = apply(index).getOrElse("")
+  override def get(name: String): String = apply(name).getOrElse("")
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
-  def unapplySeq(ctx: CircumflexContext): Option[Seq[String]] = params.map(_._2).toSeq
-  override def toString = value
+  override def toString = name
 }
 
 // ## Matchers
@@ -23,7 +27,8 @@ trait Matcher {
   def &(matcher: Matcher) = add(matcher)
 }
 
-abstract class AtomicMatcher extends Matcher {
+trait AtomicMatcher extends Matcher {
+  def name: String
   def add(matcher: Matcher) = new CompositeMatcher().add(matcher)
 }
 
@@ -46,78 +51,87 @@ class CompositeMatcher extends Matcher {
   }
 }
 
-/* ## Basics matchers */
+/* ## Basics matcher */
 
-trait StringMatcher extends (String => Option[Match])
-
-class RegexMatcher(val regex: Regex = null) extends StringMatcher {
-
-  def groupName(index: Int): String = "splat"
-
-  def apply(value: String) = {
+class RegexMatcher(val name: String,
+                   val value: String,
+                   protected var regex: Regex,
+                   protected var groupNames: Seq[String] = Nil) extends AtomicMatcher {
+  def this(name: String, value: String, pattern: String) = {
+    this(name, value, null, Nil)
+    processPattern(pattern)
+  }
+  protected def processPattern(pattern: String): Unit = {
+    this.groupNames = Nil
+    this.regex = (""":\w+|[\*.+()]""".r.replaceAllIn(pattern, m => m.group(0) match {
+      case "*" | "+" =>
+        groupNames ++= List("splat")
+        "(." + m.group(0) + "?)"
+      case "." | "(" | ")" =>
+        "\\\\" + m.group(0)
+      case _ =>
+        groupNames ++= List(m.group(0).substring(1))
+        "([^/?&#.]+)"
+    })).r
+  }
+  def groupName(index: Int): String =
+    if (groupNames.indices.contains(index)) groupName(index)
+    else "splat"
+  def apply(): Option[Seq[Match]] = {
     val m = regex.pattern.matcher(value)
     if (m.matches) {
-      val matches = for (i <- 1 to m.groupCount) yield groupName(i) -> m.group(i)
-      new Match(value, matches: _*)
+      val matches = for (i <- 0 to m.groupCount) yield groupName(i) -> m.group(i)
+      Some(List(new Match(name, matches: _*)))
     } else None
   }
-
 }
 
-class SimpleMatcher(path: String) extends RegexMatcher {
-
-  val keys = ListBuffer[String]()
-
-  override val regex = (""":\w+|[\*.+()]""".r.replaceAllInS(path) { s =>
-    s match {
-      case "*" | "+" =>
-        keys += "splat"
-        "(." + s + "?)"
-
-      case "." | "(" | ")" =>
-        "\\\\" + s
-
-      case _ =>
-        keys += s.substring(1)
-        "([^/?&#]+)"
-    }
-  }).r
-
-  override def groupName(index: Int): String = keys(index - 1)
-
-}
-
-/* ## Request matchers */
-
-trait RequestMatcher extends (HttpServletRequest => Option[Map[String, Match]]) {
-  private val _matchers = ListBuffer[RequestMatcher]()
-  _matchers += this
-
-  /* Composite pattern */
-  def &(matcher: RequestMatcher): RequestMatcher = {
-    _matchers += matcher
-    this
+class HeaderMatcher(name: String,
+                    regex: Regex,
+                    groupNames: Seq[String] = Nil)
+    extends RegexMatcher(name, context.header(name).getOrElse(""), regex, groupNames) {
+  def this(name: String, pattern: String) = {
+    this(name, null, Nil)
+    processPattern(pattern)
   }
-
-  def apply(request: HttpServletRequest): Option[Map[String, Match]] = {
-    var res = Map[String, Match]()
-    for (matcher <- _matchers)
-      matcher.run(request) match {
-        case Some(m) => res += matcher.name -> m
-        case None    => return None
-      }
-    res
-  }
-
-  val name: String
-  def run(request: HttpServletRequest): Option[Match]
 }
 
-class UriMatcher(matcher: StringMatcher) extends RequestMatcher {
-  val name = "uri"
-  def run(request: HttpServletRequest) = matcher(context.uri)
+class HeaderMatcherHelper(name: String) {
+  def apply(regex: Regex, groupNames: Seq[String] = Nil) = 
+    new HeaderMatcher(name, regex, groupNames)
+  def apply(pattern: String) =
+    new HeaderMatcher(name, pattern)
 }
 
-class HeaderMatcher(val name: String, matcher: StringMatcher) extends RequestMatcher {
-  def run(request: HttpServletRequest) = matcher(request.getHeader(name))
+object HeaderMatchers {
+  val accept = new HeaderMatcherHelper("Accept")
+  val acceptCharset = new HeaderMatcherHelper("Accept-Charset")
+  val acceptEncoding = new HeaderMatcherHelper("Accept-Encoding")
+  val acceptLanguage = new HeaderMatcherHelper("Accept-Language")
+  val acceptRanges = new HeaderMatcherHelper("Accept-Ranges")
+  val authorization = new HeaderMatcherHelper("Authorization")
+  val cacheControl = new HeaderMatcherHelper("Cache-Control")
+  val connection = new HeaderMatcherHelper("Connection")
+  val cookie = new HeaderMatcherHelper("Cookie")
+  val contentLength = new HeaderMatcherHelper("Content-Length")
+  val contentType = new HeaderMatcherHelper("Content-Type")
+  val headerDate = new HeaderMatcherHelper("Date")
+  val expect = new HeaderMatcherHelper("Expect")
+  val from = new HeaderMatcherHelper("From")
+  val host = new HeaderMatcherHelper("Host")
+  val ifMatch = new HeaderMatcherHelper("If-Match")
+  val ifModifiedSince = new HeaderMatcherHelper("If-Modified-Since")
+  val ifNoneMatch = new HeaderMatcherHelper("If-None-Match")
+  val ifRange = new HeaderMatcherHelper("If-Range")
+  val ifUnmodifiedSince = new HeaderMatcherHelper("If-Unmodified-Since")
+  val maxForwards = new HeaderMatcherHelper("Max-Forwards")
+  val pragma = new HeaderMatcherHelper("Pragma")
+  val proxyAuthorization = new HeaderMatcherHelper("Proxy-Authorization")
+  val range = new HeaderMatcherHelper("Range")
+  val referer = new HeaderMatcherHelper("Referer")
+  val te = new HeaderMatcherHelper("TE")
+  val upgrade = new HeaderMatcherHelper("Upgrade")
+  val userAgent = new HeaderMatcherHelper("User-Agent")
+  val via = new HeaderMatcherHelper("Via")
+  val war = new HeaderMatcherHelper("War")
 }
