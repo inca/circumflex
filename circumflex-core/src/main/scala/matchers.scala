@@ -7,7 +7,7 @@ import util.matching.Regex
 class Match(val name: String,
             params: (String, String)*) extends HashModel {
   def apply(index: Int): Option[String] =
-    if (params.indices.contains(index)) Some(params(index - 1)._2)
+    if (params.indices.contains(index)) Some(params(index)._2)
     else None
   def apply(name: String): Option[String] = params.find(_._1 == name) match {
     case Some(param: Pair[String, String]) => Some(param._2)
@@ -62,7 +62,7 @@ class RegexMatcher(val name: String,
     processPattern(pattern)
   }
   protected def processPattern(pattern: String): Unit = {
-    this.groupNames = Nil
+    this.groupNames = List("splat")    // for `group(0)`
     this.regex = (""":\w+|[\*.+()]""".r.replaceAllIn(pattern, m => m.group(0) match {
       case "*" | "+" =>
         groupNames ++= List("splat")
@@ -74,8 +74,8 @@ class RegexMatcher(val name: String,
         "([^/?&#.]+)"
     })).r
   }
-  def groupName(index: Int): String =
-    if (groupNames.indices.contains(index)) groupName(index)
+  def groupName(index: Int): String=
+    if (groupNames.indices.contains(index)) groupNames(index)
     else "splat"
   def apply(): Option[Seq[Match]] = {
     val m = regex.pattern.matcher(value)

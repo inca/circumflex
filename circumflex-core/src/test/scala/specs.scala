@@ -11,7 +11,7 @@ object CircumflexCoreSpec extends Specification {
   class MainRouter extends RequestRouter {
     get("/") = "preved"
     get("/ctx") = if (!CircumflexContext.live_?) "null" else context.toString
-    get("/capture/(.*)"r) = "uri$1 is " + uri(1)
+    get("/capture/(.*)"r) = "uri$1 is " + uri.get(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
     put("/put") = "preved"
@@ -96,19 +96,8 @@ object CircumflexCoreSpec extends Specification {
       MockApp.get("/filename/file.txt").execute.getContent must_== "filetxt"
     }
     "match simplified request 2" in {
-      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00ccddd.e"
-      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00ccddd.e"
-      MockApp.get("/one/bbb00/.ddde").execute.getStatus must_== 404
-    }
-  }
-
-  "UriMatcher" should {
-    "match simplified request 1" in {
-      MockApp.get("/filename/file.txt").execute.getContent must_== "filetxt"
-    }
-    "match simplified request 2" in {
-      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00ccddd.e"
-      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00ccddd.e"
+      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00cc.ddde"
+      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00cc.ddde"
       MockApp.get("/one/bbb00/.ddde").execute.getStatus must_== 404
     }
   }
