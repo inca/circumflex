@@ -13,10 +13,10 @@ class RequestRouter(val prefix: String = "") {
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
 
   implicit def string2uriMatcher(str: String): RegexMatcher =
-    new RegexMatcher("uri", prefix + context.uri, str)
+    new RegexMatcher("uri", prefix + ctx.uri, str)
 
   implicit def regex2uriMatcher(regex: Regex): RegexMatcher =
-    new RegexMatcher("uri", prefix + context.uri, regex)
+    new RegexMatcher("uri", prefix + ctx.uri, regex)
 
   /**
    * ## Route
@@ -27,12 +27,12 @@ class RequestRouter(val prefix: String = "") {
   class Route(matchingMethods: String*) {
 
     protected def dispatch(matcher: Matcher, response: =>HttpResponse): Unit =
-      matchingMethods.find(context.method.equalsIgnoreCase(_)) match {
+      matchingMethods.find(ctx.method.equalsIgnoreCase(_)) match {
         case Some(_) =>
           matcher.apply() match {
             case None => return
             case Some(matches: Seq[Matcher]) =>
-              matches.foreach(m => context += m.name -> m)
+              matches.foreach(m => ctx += m.name -> m)
               throw new RouteMatchedException(response)
           }
         case _ =>
@@ -60,14 +60,14 @@ class RequestRouter(val prefix: String = "") {
 
   // ### Context shortcuts
 
-  def context = CircumflexContext.context
-  def header = context.header
-  def session = context.session
-  def flash = context.flash
+  def header = ctx.header
+  def session = ctx.session
+  def flash = ctx.flash
+  def param = ctx.param
 
-  def uri: Match = context.apply("uri") match {
+  def uri: Match = ctx.apply("uri") match {
     case Some(m: Match) => m
-    case None => new Match("uri", "splat" -> context.uri)
+    case None => new Match("uri", "splat" -> ctx.uri)
   }
 
   // ### Helpers
@@ -76,11 +76,6 @@ class RequestRouter(val prefix: String = "") {
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
    */
   def isXhr = header("X-Requested-With").getOrElse("") == "XMLHttpRequest"
-
-  /**
-   * Retrieves a String from context.
-   */
-  def param(key: String): Option[String] = context.getString(key)
 
   /**
    * Sends error with specified status code and message.
@@ -96,7 +91,7 @@ class RequestRouter(val prefix: String = "") {
    * allow request processing with certain filters.
    */
   def rewrite(target: String): Nothing = {
-    context.request.getRequestDispatcher(target).forward(context.request, context.response)
+    ctx.request.getRequestDispatcher(target).forward(ctx.request, ctx.response)
     throw new RouteMatchedException(EmptyResponse)
   }
 
@@ -112,7 +107,7 @@ class RequestRouter(val prefix: String = "") {
    * Sends empty response with specified status code (default is `200 OK`).
    */
   def done(statusCode: Int = 200): Nothing = {
-    context.statusCode = statusCode
+    ctx.statusCode = statusCode
     throw new RouteMatchedException(EmptyResponse)
   }
 
@@ -156,7 +151,7 @@ class RequestRouter(val prefix: String = "") {
    * Sets content type header.
    */
   def contentType(ct: String): this.type = {
-    context.contentType = ct
+    ctx.contentType = ct
     return this
   }
 

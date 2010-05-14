@@ -39,8 +39,9 @@ class Messages(val baseName: String, val locale: Locale) extends HashModel {
 
 object Messages {
   def apply(): Messages = {
-    if (!CircumflexContext.live_?) throw new CircumflexException("CircumflexContext is not available.")
-    context('msg) match {
+    if (!CircumflexContext.live_?)
+      throw new CircumflexException("CircumflexContext is not available.")
+    ctx('msg) match {
       case Some(m: Messages) => m
       case _ => throw new CircumflexException("Messages instance not found in CircumflexContext.")
     }

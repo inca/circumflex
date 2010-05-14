@@ -5,7 +5,7 @@ import util.matching.Regex
 // ## Matching result
 
 class Match(val name: String,
-            params: (String, String)*) extends HashModel {
+            val params: (String, String)*) extends HashModel {
   def apply(index: Int): Option[String] =
     if (params.indices.contains(index)) Some(params(index)._2)
     else None
@@ -29,7 +29,9 @@ trait Matcher {
 
 trait AtomicMatcher extends Matcher {
   def name: String
-  def add(matcher: Matcher) = new CompositeMatcher().add(matcher)
+  def add(matcher: Matcher) = new CompositeMatcher()
+      .add(this)
+      .add(matcher)
 }
 
 class CompositeMatcher extends Matcher {
@@ -89,7 +91,7 @@ class RegexMatcher(val name: String,
 class HeaderMatcher(name: String,
                     regex: Regex,
                     groupNames: Seq[String] = Nil)
-    extends RegexMatcher(name, context.header(name).getOrElse(""), regex, groupNames) {
+    extends RegexMatcher(name, ctx.header(name).getOrElse(""), regex, groupNames) {
   def this(name: String, pattern: String) = {
     this(name, null, Nil)
     processPattern(pattern)
@@ -101,37 +103,4 @@ class HeaderMatcherHelper(name: String) {
     new HeaderMatcher(name, regex, groupNames)
   def apply(pattern: String) =
     new HeaderMatcher(name, pattern)
-}
-
-object HeaderMatchers {
-  val accept = new HeaderMatcherHelper("Accept")
-  val acceptCharset = new HeaderMatcherHelper("Accept-Charset")
-  val acceptEncoding = new HeaderMatcherHelper("Accept-Encoding")
-  val acceptLanguage = new HeaderMatcherHelper("Accept-Language")
-  val acceptRanges = new HeaderMatcherHelper("Accept-Ranges")
-  val authorization = new HeaderMatcherHelper("Authorization")
-  val cacheControl = new HeaderMatcherHelper("Cache-Control")
-  val connection = new HeaderMatcherHelper("Connection")
-  val cookie = new HeaderMatcherHelper("Cookie")
-  val contentLength = new HeaderMatcherHelper("Content-Length")
-  val contentType = new HeaderMatcherHelper("Content-Type")
-  val headerDate = new HeaderMatcherHelper("Date")
-  val expect = new HeaderMatcherHelper("Expect")
-  val from = new HeaderMatcherHelper("From")
-  val host = new HeaderMatcherHelper("Host")
-  val ifMatch = new HeaderMatcherHelper("If-Match")
-  val ifModifiedSince = new HeaderMatcherHelper("If-Modified-Since")
-  val ifNoneMatch = new HeaderMatcherHelper("If-None-Match")
-  val ifRange = new HeaderMatcherHelper("If-Range")
-  val ifUnmodifiedSince = new HeaderMatcherHelper("If-Unmodified-Since")
-  val maxForwards = new HeaderMatcherHelper("Max-Forwards")
-  val pragma = new HeaderMatcherHelper("Pragma")
-  val proxyAuthorization = new HeaderMatcherHelper("Proxy-Authorization")
-  val range = new HeaderMatcherHelper("Range")
-  val referer = new HeaderMatcherHelper("Referer")
-  val te = new HeaderMatcherHelper("TE")
-  val upgrade = new HeaderMatcherHelper("Upgrade")
-  val userAgent = new HeaderMatcherHelper("User-Agent")
-  val via = new HeaderMatcherHelper("Via")
-  val war = new HeaderMatcherHelper("War")
 }

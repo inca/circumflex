@@ -73,7 +73,7 @@ abstract class AbstractCircumflexFilter extends Filter {
           CircumflexContext.init(req, res, this)
           // chain a call and make sure the context is destroyed afterwards
           try {
-            doFilter(context, chain)
+            doFilter(CircumflexContext.get, chain)
           } finally {
             CircumflexContext.destroy()
           }

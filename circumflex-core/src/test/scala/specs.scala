@@ -9,8 +9,9 @@ class SpecsTest extends JUnit4(CircumflexCoreSpec)
 object CircumflexCoreSpec extends Specification {
 
   class MainRouter extends RequestRouter {
+    // Common stuff
     get("/") = "preved"
-    get("/ctx") = if (!CircumflexContext.live_?) "null" else context.toString
+    get("/ctx") = if (!CircumflexContext.live_?) "null" else ctx.toString
     get("/capture/(.*)"r) = "uri$1 is " + uri.get(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
@@ -21,13 +22,20 @@ object CircumflexCoreSpec extends Specification {
     get("/rewrite") = rewrite("/")
     get("/error") = error(503, "preved")
     get("/contentType\\.(.+)"r) = {
-      context.contentType = uri(1) match {
+      ctx.contentType = uri(1) match {
         case Some("html") => "text/html"
         case Some("css") => "text/css"
         case _ => "application/octet-stream"
       }
       done()
     }
+    // Composite matchers
+    get("/composite" & Accept("text/:format") & Pragma("No-Cache")) =
+        "3 conditions met (" + param.get("format") + ")" 
+    get("/composite" & Accept("text/:format")) =
+        "2 conditions met (" + param.get("format") + ")"
+    get("/composite") = "1 condition met"
+    // Flashes
     get("/flash-set") = {
       flash('notice) = "preved"
       done()
@@ -70,6 +78,19 @@ object CircumflexCoreSpec extends Specification {
     }
     "match OPTIONS requests" in {
       MockApp.options("/options").execute().getContent must_== "preved"
+    }
+    "match composite routes" in {
+      MockApp.get("/composite")
+          .setHeader("Accept","text/html")
+          .setHeader("Pragma","No-Cache")
+          .execute().getContent must_== "3 conditions met (html)"
+      MockApp.get("/composite")
+          .setHeader("Accept","text/plain")
+          .execute().getContent must_== "2 conditions met (plain)"
+      MockApp.get("/composite")
+          .setHeader("Accept","application/xml")
+          .setHeader("Pragma","No-Cache")
+          .execute().getContent must_== "1 condition met"
     }
     "interpret '_method' parameter as HTTP method" in {
       MockApp.get("/put?_method=PUT").execute().getContent must_== "preved"
