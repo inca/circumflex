@@ -40,6 +40,9 @@ package object orm {
   implicit def field2helper(field: Field[_]) = new SimpleExpressionHelper(field2str(field))
   implicit def field2order(field: Field[_]): Order = new Order(field2str(field), Nil)
 
+  implicit def predicate2aggregateHelper(predicate: Predicate) =
+    new AggregatePredicateHelper(predicate) 
+
   implicit def tuple2proj[T1, T2](
       t: Tuple2[Projection[T1],Projection[T2]]) =
     new Tuple2Projection(t._1, t._2)
@@ -110,11 +113,11 @@ package object orm {
   // Predicates.
 
   def and(predicates: Predicate*) =
-    new AggregatePredicate(dialect.and, predicates.toList)
+    new AggregatePredicateHelper(predicates.head).and(predicates.tail: _*)
   def AND(predicates: Predicate*) = and(predicates: _*)
 
   def or(predicates: Predicate*) =
-    new AggregatePredicate(dialect.or, predicates.toList)
+    new AggregatePredicateHelper(predicates.head).or(predicates.tail: _*)
   def OR(predicates: Predicate*) = or(predicates: _*)
 
   def not(predicate: Predicate) =

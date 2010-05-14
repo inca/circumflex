@@ -151,3 +151,18 @@ class SimpleExpressionHelper(val expr: String) {
   def LE_SOME(query: SQLQuery[_]) = leSome(query)
 
 }
+
+// ## Helper
+
+/**
+ * A helper to construct aggregate predicates in a DSL-like way.
+ */
+class AggregatePredicateHelper(predicate: Predicate) {
+  def and(predicates: Predicate*) =
+    new AggregatePredicate(dialect.and, predicate::predicates.toList)
+  def AND(predicates: Predicate*) = and(predicates: _*)
+
+  def or(predicates: Predicate*) =
+    new AggregatePredicate(dialect.or, predicate::predicates.toList)
+  def OR(predicates: Predicate*) = or(predicates: _*)
+}
