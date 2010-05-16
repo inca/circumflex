@@ -30,7 +30,7 @@ object CircumflexCoreSpec extends Specification {
       done()
     }
     // Composite matchers
-    get("/composite" & Accept("text/:format") & Pragma("No-Cache")) =
+    get("/composite" & Accept("text/:format") & Referer("localhost")) =
         "3 conditions met (" + param.get("format") + ")" 
     get("/composite" & Accept("text/:format")) =
         "2 conditions met (" + param.get("format") + ")"
@@ -82,14 +82,14 @@ object CircumflexCoreSpec extends Specification {
     "match composite routes" in {
       MockApp.get("/composite")
           .setHeader("Accept","text/html")
-          .setHeader("Pragma","No-Cache")
+          .setHeader("Referer","localhost")
           .execute().getContent must_== "3 conditions met (html)"
       MockApp.get("/composite")
           .setHeader("Accept","text/plain")
           .execute().getContent must_== "2 conditions met (plain)"
       MockApp.get("/composite")
           .setHeader("Accept","application/xml")
-          .setHeader("Pragma","No-Cache")
+          .setHeader("Referer","localhost")
           .execute().getContent must_== "1 condition met"
     }
     "interpret '_method' parameter as HTTP method" in {
