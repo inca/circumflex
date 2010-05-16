@@ -6,7 +6,24 @@ import java.net.URLDecoder
 class CircumflexContext(val request: HttpServletRequest,
                         val response: HttpServletResponse,
                         val filter: AbstractCircumflexFilter)
-    extends HashModel {
+    extends HashModel { c =>
+
+  /**
+   * A helper for looking up the parameters that come from matching.
+   */
+  object param extends HashModel {
+    def apply(key: String): Option[String] = c.apply(key) match {
+      case Some(value: String) => Some(value)
+      case _ => _params.values.flatMap(o => o match {
+        case m: Match => m.params
+        case _ => Nil
+      }).find(p => p._1 == key) match {
+        case Some(pair: (String, String)) => Some(pair._2)
+        case _ => None
+      }
+    }
+    override def get(key: String): String = apply(key).getOrElse("")
+  }
 
   /**
    * A helper for getting and setting response headers in a DSL-like way.
@@ -51,15 +68,15 @@ class CircumflexContext(val request: HttpServletRequest,
   def contentType_=(value: String) = { _contentType = value }
   var statusCode: Int = 200
   def method: String = getOrElse('_method, request.getMethod)
+  def uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
 
-  // ### Request parameters
+  // ### Parameters
 
   private val _params = MutableMap[String, Any](
     "header" -> header,
     "session" -> session,
     "flash" -> flash
-  )
-  def getString(key: String): Option[String] = get(key).map(_.toString)
+    )
   def apply(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => value
     case _ => request.getParameter(key)
@@ -67,65 +84,25 @@ class CircumflexContext(val request: HttpServletRequest,
   def update(key: String, value: Any) { _params += key -> value }
   def +=(pair: (String, Any)) { _params += pair }
 
-  // ### Request URI
-
-  /*
-   * To manage "RouterResponse", for example on
-   *
-   *     any("/sub*") = new SubRouter
-   *
-   * the main router deletes the `/sub` prefix from the uri
-   * before to forward the request to the sub router.
-   * At sub router level redirect and rewrites are relatives.
-   */
-
-  var uri = ""       // relative uri
-  var uriPrefix = "" // prefix of relative uri
-
-  def getAbsoluteUri(relUri: String) = uriPrefix + relUri
-
-  private[core] def updateUri =
-    getMatch('uri) foreach { uriMatch =>
-      if (uriMatch.value == uri) {
-        uriPrefix += uriMatch.prefix
-        uri = uriMatch.suffix
-        // "/prefix/", "path" => "/prefix", "/path"
-        if (uriPrefix.endsWith("/")) {
-          uriPrefix = uriPrefix.take(uriPrefix.length - 1)
-          uri = "/" + uri
-        }
-      }
-    }
-
-  // ### Request matching
-
-  private[core] var _matches = Map[String, Match]()
-  def getMatch(key: String): Option[Match] = _matches.get(key)
-
 }
 
 object CircumflexContext {
   private val threadLocalContext = new ThreadLocal[CircumflexContext]
-  def context = threadLocalContext.get
-  def live_?() = context != null
+  def get = threadLocalContext.get
+  def live_?() = get != null
   def init(req: HttpServletRequest,
            res: HttpServletResponse,
-           filter: AbstractCircumflexFilter) {
-    if (!live_?) {
-      threadLocalContext.set(new CircumflexContext(req, res, filter))
-      Circumflex.messages(req.getLocale) match {
-        case Some(msg) => context('msg) = msg
-        case None =>
-          cxLog.debug("Could not instantiate context messages: 'cx.messages' not configured.")
-      }
+           filter: AbstractCircumflexFilter) = if (!live_?) {
+    threadLocalContext.set(new CircumflexContext(req, res, filter))
+    Circumflex.messages(req.getLocale) match {
+      case Some(msg) => get('msg) = msg
+      case None =>
+        cxLog.debug("Could not instantiate context messages: 'cx.messages' not configured.")
     }
-    context.uri = URLDecoder.decode(req.getRequestURI, "UTF-8")
   }
   def destroy() = threadLocalContext.set(null)
-  def apply(key: String): Any = context.apply(key)
-  def update(key: String, value: Any): Unit = context.update(key, value)
 }
 
 class ParamHelper(val key: String) {
-  def :=(value: Any): Unit = CircumflexContext.update(key, value)
+  def :=(value: Any): Unit = { CircumflexContext.get(key) = value }
 }

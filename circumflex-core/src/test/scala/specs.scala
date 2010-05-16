@@ -8,26 +8,11 @@ class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
 object CircumflexCoreSpec extends Specification {
 
-  class SubRouterA extends RequestRouter {
-    any("/sub1/*") = new SubRouterB
-    any("/sub2/*") = new SubRouterB
-    get("/testA") = rewrite("/sub2/testB")
-  }
-  class SubRouterB extends RequestRouter {
-    get("/testB") = "preved"
-  }
-
   class MainRouter extends RequestRouter {
-    any("/sub/*") = new SubRouterA
-    
+    // Common stuff
     get("/") = "preved"
-    get("/ctx") = if (!CircumflexContext.live_?) "null" else context.toString
-    get("/capture/?"r, accept("+/+") & content_type("+/+")) =
-        "Accept$1 is " + matching('Accept)(1) + "; " +
-        "Accept$2 is " + matching('Accept)(2) + "; " +
-        "Content$1 is " + matching("Content-Type")(1) + "; " +
-        "Content$2 is " + matching("Content-Type")(2)
-    get("/capture/(.*)"r) = "uri$1 is " + uri(1)
+    get("/ctx") = if (!CircumflexContext.live_?) "null" else ctx.toString
+    get("/capture/(.*)"r) = "uri$1 is " + uri.get(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
     put("/put") = "preved"
@@ -37,13 +22,20 @@ object CircumflexCoreSpec extends Specification {
     get("/rewrite") = rewrite("/")
     get("/error") = error(503, "preved")
     get("/contentType\\.(.+)"r) = {
-      context.contentType = uri(1) match {
-        case "html" => "text/html"
-        case "css" => "text/css"
+      ctx.contentType = uri(1) match {
+        case Some("html") => "text/html"
+        case Some("css") => "text/css"
         case _ => "application/octet-stream"
       }
       done()
     }
+    // Composite matchers
+    get("/composite" & Accept("text/:format") & Pragma("No-Cache")) =
+        "3 conditions met (" + param.get("format") + ")" 
+    get("/composite" & Accept("text/:format")) =
+        "2 conditions met (" + param.get("format") + ")"
+    get("/composite") = "1 condition met"
+    // Flashes
     get("/flash-set") = {
       flash('notice) = "preved"
       done()
@@ -52,21 +44,10 @@ object CircumflexCoreSpec extends Specification {
       case Some(s: String) => s
       case None => ""
     }
-
     // Simple urls
-    get("/filename/:name.:ext") = uri('name) + uri('ext)
+    get("/filename/:name.:ext") = uri.get('name) + uri.get('ext)
     get("*/one/:two/+.:three") =
-      uri(1) + uri('two) + uri(3) + uri('three)
-
-    // Extractors
-    get("/self/:name/:id", accept("+/+")) {
-      case uri(name, Int(id)) & accept("text", what) =>
-        "Name is " + name + "; 2*ID is " + (2 * id) + "; what is " + what
-    }
-    get("/host") {
-      case host("localhost") => "local"
-      case _                 => "remote"
-    }
+      uri.get(1) + uri.get('two) + uri.get(3) + uri.get('three)
   }
 
   doBeforeSpec{
@@ -98,6 +79,19 @@ object CircumflexCoreSpec extends Specification {
     "match OPTIONS requests" in {
       MockApp.options("/options").execute().getContent must_== "preved"
     }
+    "match composite routes" in {
+      MockApp.get("/composite")
+          .setHeader("Accept","text/html")
+          .setHeader("Pragma","No-Cache")
+          .execute().getContent must_== "3 conditions met (html)"
+      MockApp.get("/composite")
+          .setHeader("Accept","text/plain")
+          .execute().getContent must_== "2 conditions met (plain)"
+      MockApp.get("/composite")
+          .setHeader("Accept","application/xml")
+          .setHeader("Pragma","No-Cache")
+          .execute().getContent must_== "1 condition met"
+    }
     "interpret '_method' parameter as HTTP method" in {
       MockApp.get("/put?_method=PUT").execute().getContent must_== "preved"
       MockApp.post("/put")
@@ -116,19 +110,6 @@ object CircumflexCoreSpec extends Specification {
     "process errors" in {
       MockApp.get("/error").execute().getStatus must_== 503
     }
-    "process URI extractors" in {
-      MockApp.get("/self/abc/12")
-             .setHeader("Accept", "text/plain")
-             .execute.getContent must_== "Name is abc; 2*ID is 24; what is plain"
-    }
-    "process HOST extractors" in {
-      MockApp.get("/host").execute.getContent must_== "local"
-    }
-    "process sub routers" in {
-      MockApp.get("/testA").execute.getStatus must_== 404
-      MockApp.get("/sub/testA").execute.getContent must_== "preved"
-      MockApp.get("/sub/sub1/testB").execute.getContent must_== "preved"
-    }
   }
 
   "UriMatcher" should {
@@ -136,19 +117,8 @@ object CircumflexCoreSpec extends Specification {
       MockApp.get("/filename/file.txt").execute.getContent must_== "filetxt"
     }
     "match simplified request 2" in {
-      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00ccddd.e"
-      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00ccddd.e"
-      MockApp.get("/one/bbb00/.ddde").execute.getStatus must_== 404
-    }
-  }
-
-  "UriMatcher" should {
-    "match simplified request 1" in {
-      MockApp.get("/filename/file.txt").execute.getContent must_== "filetxt"
-    }
-    "match simplified request 2" in {
-      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00ccddd.e"
-      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00ccddd.e"
+      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00cc.ddde"
+      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00cc.ddde"
       MockApp.get("/one/bbb00/.ddde").execute.getStatus must_== 404
     }
   }
@@ -163,13 +133,6 @@ object CircumflexCoreSpec extends Specification {
     }
     "contain captured groups from URI" in {
       MockApp.get("/capture/preved").execute().getContent must_== "uri$1 is preved"
-    }
-    "contain captured groups from headers" in {
-      MockApp.get("/capture")
-          .setHeader("Accept", "text/plain")
-          .setHeader("Content-Type", "text/html")
-          .execute()
-          .getContent must_== "Accept$1 is text; Accept$2 is plain; Content$1 is text; Content$2 is html"
     }
     "set response content type" in {
       MockApp.get("/contentType.html").execute()

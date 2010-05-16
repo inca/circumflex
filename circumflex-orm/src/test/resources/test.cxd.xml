@@ -19,6 +19,14 @@
         <City name="Kursk"/>
       </cities>
     </Country>
+    <City>
+      <name>London</name>
+      <country>
+        <Country code="uk">
+          <name>United Kingdom of Great Britain and Northern Ireland</name>
+        </Country>
+      </country>
+    </City>
   </deployment>
   <deployment id="test2"
               prefix="ru.circumflex.orm"

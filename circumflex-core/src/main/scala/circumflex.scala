@@ -45,7 +45,7 @@ object Circumflex extends HashModel {
   }
   def messages(locale: Locale): Option[Messages] = this("cx.messages") match {
     case Some(s: String) => Some(new Messages(s, locale))
-    case _ => None
+    case _ => Some(new Messages("Messages", locale))
   }
 
   // ### Classloading

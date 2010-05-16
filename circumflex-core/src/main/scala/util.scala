@@ -63,11 +63,3 @@ object DefaultXSendFileHeader extends XSendFileHeader {
 trait NginxXSendFileHeader extends XSendFileHeader {
   def name = "X-Accel-Redirect"
 }
-
-/**
- * Rich wrapper for class Regex
- */
-class RichRegex(regex: Regex) {
-  def replaceAllInS(source: String)(replacer: String => String): String =
-    regex.replaceAllIn(source, m => replacer(m.group(0)))
-}

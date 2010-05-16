@@ -6,25 +6,21 @@ import ru.circumflex.core._
 import javax.servlet.http.HttpServletResponse
 
 trait FreemarkerHelper {
-
   def freemarkerConf: Configuration = DefaultConfiguration
-
   def ftl(template: String): HttpResponse =
     new FreemarkerResponse(freemarkerConf.getTemplate(template))
-
   def ftl(template: String, statusCode: Int): HttpResponse = {
-    context.statusCode = statusCode
+    ctx.statusCode = statusCode
     ftl(template)
   }
-
 }
 
 object FTL extends FreemarkerHelper
 
 case class FreemarkerResponse(val template:Template) extends HttpResponse {
   override def apply(response: HttpServletResponse) = {
-    var ftlCtx = context;
-    ftlCtx('context) = context;
+    var ftlCtx = ctx;
+    ftlCtx('context) = ctx;
     super.apply(response)
     template.process(ftlCtx, response.getWriter)
   }
@@ -44,7 +40,7 @@ object DefaultConfiguration extends Configuration {
   var loaders: Seq[TemplateLoader] = Nil
   try {
     loaders ++= List(new WebappTemplateLoader(
-    context.request.getSession.getServletContext, "/templates"))
+    ctx.request.getSession.getServletContext, "/templates"))
   } catch {
     case e => cxLog.debug("Not running in Servlet Context.", e)
   }

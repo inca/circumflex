@@ -33,15 +33,10 @@ trait MockServer extends StandaloneServer {
   // ## HTTP Methods
 
   def get(uri: String) = new MockRequest(this, "GET", uri)
-
   def post(uri: String) = new MockRequest(this, "POST", uri)
-
   def put(uri: String) = new MockRequest(this, "PUT", uri)
-
   def delete(uri: String) = new MockRequest(this, "DELETE", uri)
-
   def head(uri: String) = new MockRequest(this, "HEAD", uri)
-
   def options(uri: String) = new MockRequest(this, "OPTIONS", uri)
 
 }

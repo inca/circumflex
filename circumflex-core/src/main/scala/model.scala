@@ -6,8 +6,8 @@ package ru.circumflex.core
 trait HashModel {
   def apply(key: String): Option[Any]
   def apply[A](key: String, default: =>A): A = getOrElse(key, default)
-  def get(key: String) = apply(key)
-  def getOrElse[A](key: String, default: =>A): A = get(key) match {
+  def get(key: String): Any = apply(key).get
+  def getOrElse[A](key: String, default: =>A): A = apply(key) match {
     case Some(value: A) => value;
     case _ => default
   }

@@ -73,7 +73,7 @@ abstract class AbstractCircumflexFilter extends Filter {
           CircumflexContext.init(req, res, this)
           // chain a call and make sure the context is destroyed afterwards
           try {
-            doFilter(context, chain)
+            doFilter(CircumflexContext.get, chain)
           } finally {
             CircumflexContext.destroy()
           }
@@ -145,10 +145,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
     } catch {
       case e: InvocationTargetException if e.getCause.isInstanceOf[RouteMatchedException] =>
         // Request matched
-        e.getCause.asInstanceOf[RouteMatchedException].response match {
-          case Some(response) => response(ctx.response)
-          case _ =>
-        }
+        e.getCause.asInstanceOf[RouteMatchedException].response.apply(ctx.response)
       case e: InvocationTargetException if e.getCause.isInstanceOf[FileNotFoundException] =>
         onNotFound(e, ctx, chain)
       case e =>
