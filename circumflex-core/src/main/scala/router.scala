@@ -65,7 +65,7 @@ class RequestRouter(val prefix: String = "") {
   def flash = ctx.flash
   def param = ctx.param
 
-  def uri: Match = ctx.apply("uri") match {
+  def uri: Match = ctx.get("uri") match {
     case Some(m: Match) => m
     case None => new Match("uri", "splat" -> ctx.uri)
   }
@@ -75,7 +75,7 @@ class RequestRouter(val prefix: String = "") {
   /**
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
    */
-  def isXhr = header("X-Requested-With").getOrElse("") == "XMLHttpRequest"
+  def isXhr = header.get("X-Requested-With").getOrElse("") == "XMLHttpRequest"
 
   /**
    * Sends error with specified status code and message.
@@ -133,7 +133,7 @@ class RequestRouter(val prefix: String = "") {
    */
   def xSendFile(file: File, filename: String = null): Nothing = {
     if (filename != null) attachment(filename)
-    val xsf = Circumflex.newObject("cx.XSendFileHeader", DefaultXSendFileHeader)
+    val xsf = Circumflex.xSendFile
     header(xsf.name) = xsf.value(file)
     done()
   }

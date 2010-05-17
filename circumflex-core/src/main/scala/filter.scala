@@ -95,7 +95,7 @@ abstract class AbstractCircumflexFilter extends Filter {
  */
 class CircumflexFilter extends AbstractCircumflexFilter {
 
-  val routerClass: Class[RequestRouter] = Circumflex("cx.router") match {
+  val routerClass: Class[RequestRouter] = Circumflex.get("cx.router") match {
     case Some(s: String) => Circumflex.loadClass[RequestRouter](s)
     case Some(c: Class[RequestRouter]) => c
     case _ => throw new CircumflexException("Could not initialize Request Router; " +

@@ -12,7 +12,7 @@ object CircumflexCoreSpec extends Specification {
     // Common stuff
     get("/") = "preved"
     get("/ctx") = if (!CircumflexContext.live_?) "null" else ctx.toString
-    get("/capture/(.*)"r) = "uri$1 is " + uri.get(1)
+    get("/capture/(.*)"r) = "uri$1 is " + uri(1)
     get("/decode me") = "preved"
     post("/post") = "preved"
     put("/put") = "preved"
@@ -22,7 +22,7 @@ object CircumflexCoreSpec extends Specification {
     get("/rewrite") = rewrite("/")
     get("/error") = error(503, "preved")
     get("/contentType\\.(.+)"r) = {
-      ctx.contentType = uri(1) match {
+      ctx.contentType = uri.get(1) match {
         case Some("html") => "text/html"
         case Some("css") => "text/css"
         case _ => "application/octet-stream"
@@ -31,23 +31,23 @@ object CircumflexCoreSpec extends Specification {
     }
     // Composite matchers
     get("/composite" & Accept("text/:format") & Referer("localhost")) =
-        "3 conditions met (" + param.get("format") + ")" 
+        "3 conditions met (" + param("format") + ")"
     get("/composite" & Accept("text/:format")) =
-        "2 conditions met (" + param.get("format") + ")"
+        "2 conditions met (" + param("format") + ")"
     get("/composite") = "1 condition met"
     // Flashes
     get("/flash-set") = {
       flash('notice) = "preved"
       done()
     }
-    get("/flash-get") = flash('notice) match {
+    get("/flash-get") = flash.get('notice) match {
       case Some(s: String) => s
       case None => ""
     }
     // Simple urls
-    get("/filename/:name.:ext") = uri.get('name) + uri.get('ext)
+    get("/filename/:name.:ext") = uri('name) + uri('ext)
     get("*/one/:two/+.:three") =
-      uri.get(1) + uri.get('two) + uri.get(3) + uri.get('three)
+      uri(1) + uri('two) + uri(3) + uri('three)
   }
 
   doBeforeSpec{

@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletRequest
 object Circumflex extends HashModel {
   private val _params = MutableMap[String, Any]()
 
-  def apply(key: String): Option[Any] = _params.get(key)
+  def get(key: String): Option[Any] = _params.get(key)
   def update(key: String, value: Any) = { _params(key) = value }
 
   // ### Defaults
@@ -35,28 +35,29 @@ object Circumflex extends HashModel {
 
   // ### Parameters
 
-  val webappRoot: File = this("cx.root") match {
+  val webappRoot: File = this.get("cx.root") match {
     case Some(s: String) => new File(separatorsToSystem(s))
     case _ => new File(separatorsToSystem("src/main/webapp"))
   }
-  val publicRoot: File = this("cx.public") match {
+  val publicRoot: File = this.get("cx.public") match {
     case Some(s: String) => new File(webappRoot, separatorsToSystem(s))
     case _ => new File(webappRoot, "public")
   }
-  def messages(locale: Locale): Option[Messages] = this("cx.messages") match {
+  def messages(locale: Locale): Option[Messages] = this.get("cx.messages") match {
     case Some(s: String) => Some(new Messages(s, locale))
     case _ => Some(new Messages("Messages", locale))
   }
+  val xSendFile: XSendFileHeader = newObject("cx.XSendFileHeader", DefaultXSendFileHeader)
 
   // ### Classloading
 
-  def classLoader: ClassLoader = this("cx.classLoader") match {
+  def classLoader: ClassLoader = this.get("cx.classLoader") match {
     case Some(cld: ClassLoader) => cld
     case _ => Thread.currentThread.getContextClassLoader
   }
   def loadClass[C](name: String): Class[C] =
     Class.forName(name, true, classLoader).asInstanceOf[Class[C]]
-  def newObject[C](name: String, default: =>C): C = this(name) match {
+  def newObject[C](name: String, default: =>C): C = this.get(name) match {
     case Some(h: C) => h
     case Some(c: Class[C]) => c.newInstance
     case Some(s: String) => loadClass[C](s).newInstance

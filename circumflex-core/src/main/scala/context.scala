@@ -12,7 +12,7 @@ class CircumflexContext(val request: HttpServletRequest,
    * A helper for looking up the parameters that come from matching.
    */
   object param extends HashModel {
-    def apply(key: String): Option[String] = c.apply(key) match {
+    def get(key: String): Option[String] = c.get(key) match {
       case Some(value: String) => Some(value)
       case _ => _params.values.flatMap(o => o match {
         case m: Match => m.params
@@ -22,14 +22,14 @@ class CircumflexContext(val request: HttpServletRequest,
         case _ => None
       }
     }
-    override def get(key: String): String = apply(key).getOrElse("")
+    override def apply(key: String): String = getOrElse(key, "")
   }
 
   /**
    * A helper for getting and setting response headers in a DSL-like way.
    */
   object header extends HashModel {
-    def apply(name: String): Option[String] = request.getHeader(name)
+    def get(name: String): Option[String] = request.getHeader(name)
     def update(name: String, value: String): Unit = response.setHeader(name, value)
     def update(name: String, value: Long): Unit = response.setDateHeader(name, value)
     def update(name: String, value: java.util.Date): Unit = update(name, value.getTime)
@@ -39,7 +39,7 @@ class CircumflexContext(val request: HttpServletRequest,
    * A helper for getting and setting session-scope attributes.
    */
   object session extends HashModel {
-    def apply(name: String): Option[Any] = request.getSession.getAttribute(name)
+    def get(name: String): Option[Any] = request.getSession.getAttribute(name)
     def update(name: String, value: Any) = request.getSession.setAttribute(name, value)
   }
 
@@ -48,7 +48,7 @@ class CircumflexContext(val request: HttpServletRequest,
    */
   object flash extends HashModel {
     val SESSION_KEY = "cx.flash"
-    def apply(key: String): Option[Any] = {
+    def get(key: String): Option[Any] = {
       val flashMap = session.getOrElse(SESSION_KEY, MutableMap[String, Any]())
       flashMap.get(key) map { value => {
         session(SESSION_KEY) = flashMap - key
@@ -77,7 +77,7 @@ class CircumflexContext(val request: HttpServletRequest,
     "session" -> session,
     "flash" -> flash
     )
-  def apply(key: String): Option[Any] = _params.get(key) match {
+  def get(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => value
     case _ => request.getParameter(key)
   }

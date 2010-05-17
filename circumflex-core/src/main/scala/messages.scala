@@ -11,24 +11,24 @@ class Messages(val baseName: String, val locale: Locale) extends HashModel {
       null
     }
   }
-  def apply(key: String): Option[String] = try {
+  def get(key: String): Option[String] = try {
     msgBundle.getString(key)
   } catch {
     case e => None
   }
-  def apply(key: String, params: Map[String, String]): Option[String] =
+  def get(key: String, params: Map[String, String]): Option[String] =
     apply(key) map {
       params.foldLeft(_) {
         case (m, (name, value)) => m.replaceAll("\\{" + name + "\\}", value)
       }
     }
-  override def get(key: String): Option[String] = apply(key) match {
+  override def apply(key: String): Option[String] = apply(key) match {
     case None =>
       cxLog.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)
       ""
     case v => v
   }
-  def get(key: String, params: Map[String, String]): Option[String] =
+  def apply(key: String, params: Map[String, String]): Option[String] =
     apply(key, params) match {
       case None =>
         cxLog.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)

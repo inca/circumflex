@@ -1,7 +1,5 @@
 package ru.circumflex.freemarker
 
-import _root_.freemarker.core.Environment
-import java.io.StringWriter
 import _root_.freemarker.template._
 import java.util.Date
 import org.apache.commons.beanutils.{MethodUtils, PropertyUtils}
@@ -117,6 +115,6 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
 
 class CircumflexHashWrapper(val hash: HashModel, wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(hash, wrapper) with TemplateHashModel {
-  override def get(key: String) = wrapper.wrap(hash(key))
+  override def get(key: String) = wrapper.wrap(hash.get(key))
   override def isEmpty = false
 }

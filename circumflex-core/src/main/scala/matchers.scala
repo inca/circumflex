@@ -6,15 +6,15 @@ import util.matching.Regex
 
 class Match(val name: String,
             val params: (String, String)*) extends HashModel {
-  def apply(index: Int): Option[String] =
+  def get(index: Int): Option[String] =
     if (params.indices.contains(index)) Some(params(index)._2)
     else None
-  def apply(name: String): Option[String] = params.find(_._1 == name) match {
+  def get(name: String): Option[String] = params.find(_._1 == name) match {
     case Some(param: Pair[String, String]) => Some(param._2)
     case _ => None
   }
-  def get(index: Int): String = apply(index).getOrElse("")
-  override def get(name: String): String = apply(name).getOrElse("")
+  def apply(index: Int): String = get(index).getOrElse("")
+  override def apply(name: String): String = get(name).getOrElse("")
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
   override def toString = name
 }
@@ -91,7 +91,7 @@ class RegexMatcher(val name: String,
 class HeaderMatcher(name: String,
                     regex: Regex,
                     groupNames: Seq[String] = Nil)
-    extends RegexMatcher(name, ctx.header(name).getOrElse(""), regex, groupNames) {
+    extends RegexMatcher(name, ctx.header.getOrElse(name,""), regex, groupNames) {
   def this(name: String, pattern: String) = {
     this(name, null, Nil)
     processPattern(pattern)
