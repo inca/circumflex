@@ -13,6 +13,7 @@ class Match(val name: String,
     case Some(param: Pair[String, String]) => Some(param._2)
     case _ => None
   }
+  def apply(): String = apply(0)
   def apply(index: Int): String = get(index).getOrElse("")
   override def apply(name: String): String = get(name).getOrElse("")
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq

@@ -60,11 +60,7 @@ abstract class AbstractCircumflexFilter extends Filter {
         if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
           val resource = new File(Circumflex.publicRoot, separatorsToSystem(req.getRequestURI))
           if (resource.isFile) {
-            val publicUri = Circumflex("cx.public") match {
-              case Some(s: String) => "/" + s.replaceAll("^/?(.*?)/?$", "$1")
-              case _ => "/public"
-            }
-            req.getRequestDispatcher(publicUri + req.getRequestURI).forward(req, res)
+            req.getRequestDispatcher(Circumflex.publicUri + req.getRequestURI).forward(req, res)
             return
           }
         }
