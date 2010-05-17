@@ -80,5 +80,8 @@ object MarkdownSpec extends Specification {
     "Tidyness" in {
       "Tidyness" must beFine
     }
+    "SmartyPants" in {
+      "SmartyPants" must beFine
+    }
   }
 }

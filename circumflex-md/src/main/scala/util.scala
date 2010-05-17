@@ -37,6 +37,11 @@ class Protector {
    */
   def decode(key: String): Option[CharSequence] = protectHash.get(key)
 
+  /**
+   * Hash keys that are currently in use.
+   */
+  def keys = protectHash.keys
+
   override def toString = protectHash.toString
 }
 
@@ -54,7 +59,7 @@ class StringEx(protected var text: StringBuilder) {
    * (without interpreting $1, $2, etc.) by calling specified `replacementFunction`
    * on each match.
    */
-  def replaceAll(pattern: Pattern, replacementFunction: Matcher => String): this.type = {
+  def replaceAll(pattern: Pattern, replacementFunction: Matcher => CharSequence): this.type = {
     var lastIndex = 0;
     val m = pattern.matcher(text);
     val sb = new StringBuilder();
@@ -68,8 +73,29 @@ class StringEx(protected var text: StringBuilder) {
     return this
   }
 
-  def replaceAll(pattern: Pattern, replacement: String): this.type =
+  def replaceAll(pattern: Pattern, replacement: CharSequence): this.type =
     replaceAll(pattern, m => replacement)
+
+  /**
+   * Replaces all occurences of specified `string` with specified `replacement`
+   * without using regular expressions.
+   */
+  def replaceAll(string: String, replacement: CharSequence): this.type = {
+    val result = new StringBuilder
+    var startIdx = 0
+    var oldIdx = 0
+    oldIdx = text.indexOf(string, startIdx)
+    while (oldIdx >= 0) {
+      result.append(text.substring(startIdx, oldIdx))
+      result.append(replacement)
+      startIdx = oldIdx + string.length
+      oldIdx = text.indexOf(string, startIdx)
+    }
+    result.append(text.substring(startIdx))
+    text = result
+    return this
+  }
+
 
   /**
    * Appends the specified character sequence.

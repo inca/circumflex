@@ -1,5 +1,6 @@
 package ru.circumflex.md
 
+import ru.circumflex.core._
 import java.util.regex._
 import java.util.Random
 
@@ -14,6 +15,37 @@ import java.util.Random
  *  [1]: http://daringfireball.net/projects/markdown/syntax "Markdown Syntax"
  */
 object Markdown {
+
+  // ## SmartyPants chars
+
+  val leftQuote = Circumflex.get("md.leftQuote") match {
+    case Some(s: String) => s
+    case _ => "&ldquo;"
+  }
+  val rightQuote = Circumflex.get("md.rightQuote") match {
+    case Some(s: String) => s
+    case _ => "&rdquo;"
+  }
+  val dash = Circumflex.get("md.dash") match {
+    case Some(s: String) => s
+    case _ => "&mdash;"
+  }
+  val copy = Circumflex.get("md.copy") match {
+    case Some(s: String) => s
+    case _ => "&copy;"
+  }
+  val reg = Circumflex.get("md.reg") match {
+    case Some(s: String) => s
+    case _ => "&reg;"
+  }
+  val trademark = Circumflex.get("md.trademark") match {
+    case Some(s: String) => s
+    case _ => "&trade;"
+  }
+  val ellipsis = Circumflex.get("md.ellipsis") match {
+    case Some(s: String) => s
+    case _ => "&hellip;"
+  }
 
   // ## Commons
 
@@ -54,7 +86,7 @@ object Markdown {
   // Character escaping
   val rEscAmp = Pattern.compile("&(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
   val rEscLt = Pattern.compile("<(?![a-z/?\\$!])")
-  val rInsideTags = Pattern.compile("<(" + htmlNameTokenExpr + "(?:\\s+(?:" +
+  val rInsideTags = Pattern.compile("<(/?" + htmlNameTokenExpr + "(?:\\s+(?:" +
       "(?:" + htmlNameTokenExpr + "\\s*=\\s*\"[^\"]*\")|" +
       "(?:" + htmlNameTokenExpr + "\\s*=\\s*'[^']*')|" +
       "(?:" + htmlNameTokenExpr + "\\s*=\\s*[a-z0-9_:.\\-]+)" +
@@ -124,6 +156,16 @@ object Markdown {
   val rEm = Pattern.compile("(\\*|_)(?=\\S)(.+?)(?<=\\S)\\1")
   // Manual linebreaks
   val rBrs = Pattern.compile(" {2,}\n")
+  // SmartyPants
+  val smartyPants = (Pattern.compile("(?<=\\s|\\A)(?:\"|&quot;)(?=\\S)") -> leftQuote) ::
+      (Pattern.compile("(?<=\\S)(?:\"|&quot;)(?!\\w)") -> rightQuote) ::
+      (Pattern.compile("--") -> dash) ::
+      (Pattern.compile("\\(r\\)", Pattern.CASE_INSENSITIVE) -> reg) ::
+      (Pattern.compile("\\(c\\)", Pattern.CASE_INSENSITIVE) -> copy) ::
+      (Pattern.compile("\\(tm\\)", Pattern.CASE_INSENSITIVE) -> trademark) ::
+      (Pattern.compile("\\.{3}") -> ellipsis) :: Nil
+
+
 
   /**
    * Convert the `source` from Markdown to HTML.
@@ -390,16 +432,27 @@ class MarkdownText(source: CharSequence) {
    * Span elements are processed within specified `text`.
    */
   protected def runSpanGamut(text: StringEx): StringEx = {
+    val protector = new Protector
     var result = doCodeSpans(text)
     result = encodeBackslashEscapes(text)
     result = doImages(text)
     result = doRefLinks(text)
     result = doInlineLinks(text)
     result = doAutoLinks(text)
-    result = doEmphasis(text)
     result = doLineBreaks(text)
+    result = protectHtmlTags(protector, text)
+    result = doSmartyPants(text)
+    result = doAmpSpans(text)
+    result = unprotectHtmlTags(protector, text)
+    result = doEmphasis(text)
     return result
   }
+
+  protected def protectHtmlTags(protector: Protector, text: StringEx): StringEx =
+    text.replaceAll(rInsideTags, m => protector.addToken(m.group(0)))
+
+  protected def unprotectHtmlTags(protector: Protector, text: StringEx): StringEx =
+    protector.keys.foldLeft(text)((t, k) => t.replaceAll(k, protector.decode(k).getOrElse("")))
 
   /**
    * Process code spans.
@@ -495,6 +548,18 @@ class MarkdownText(source: CharSequence) {
    */
   protected def doLineBreaks(text: StringEx): StringEx = text
       .replaceAll(rBrs, " <br/>\n")
+
+  /**
+   * Process SmartyPants stuff.
+   */
+  protected def doSmartyPants(text: StringEx): StringEx =
+    smartyPants.foldLeft(text)((t,p) => t.replaceAll(p._1, p._2))
+
+  /**
+   * Wrap ampersands with `<span class="amp">`.
+   */
+  protected def doAmpSpans(text: StringEx): StringEx =
+    text.replaceAll("&amp;", "<span class=\"amp\">&amp;</span>")
 
   /**
    * Transform the Markdown source into HTML.
