@@ -37,7 +37,7 @@ abstract class AbstractCircumflexFilter extends Filter {
    *  the filter processes request depending on the result of function invocation.
    * </ul>
    */
-  def isProcessed(req: HttpServletRequest): Boolean = Circumflex("cx.process_?") match {
+  def isProcessed(req: HttpServletRequest): Boolean = Circumflex.get("cx.process_?") match {
     case Some(s: String) => !req.getRequestURI.toLowerCase.matches(s)
     case Some(r: Regex) => !req.getRequestURI.toLowerCase.matches(r.toString)
     case Some(p: Pattern) => !p.matcher(req.getRequestURI.toLowerCase).matches()

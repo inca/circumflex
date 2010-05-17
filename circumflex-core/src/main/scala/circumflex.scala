@@ -39,11 +39,11 @@ object Circumflex extends HashModel {
     case Some(s: String) => new File(separatorsToSystem(s))
     case _ => new File(separatorsToSystem("src/main/webapp"))
   }
-  val publicRoot: File = new File(webappRoot, separatorsToSystem(publicUri.replaceAll("^/","")))
   val publicUri: String = this.get("cx.public") match {
     case Some(s: String) => "/" + s.replaceAll("^/?(.*?)/?$", "$1")
     case _ => "/public"
   }
+  val publicRoot: File = new File(webappRoot, separatorsToSystem(publicUri.replaceAll("^/","")))
   def messages(locale: Locale): Option[Messages] = this.get("cx.messages") match {
     case Some(s: String) => Some(new Messages(s, locale))
     case _ => Some(new Messages("Messages", locale))

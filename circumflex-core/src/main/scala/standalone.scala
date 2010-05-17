@@ -16,11 +16,11 @@ class StandaloneServer {
   protected var context: Context = null
 
   def init() = {
-    val webappRoot = Circumflex("cx.root") match {
+    val webappRoot = Circumflex.get("cx.root") match {
       case Some(s: String) => s
       case _ => "src/main/webapp"
     }
-    jetty = new Server(Circumflex("cx.port") match {
+    jetty = new Server(Circumflex.get("cx.port") match {
       case Some(p: Int) => p
       case Some(s: String) => try { s.toInt } catch { case _ => 8180 }
       case _ => 8180
