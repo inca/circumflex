@@ -415,7 +415,7 @@ class Update[R <: Record[R]](val relation: Relation[R])
   }
   def SET[T](field: Field[T], value: T): Update[R] = set(field, value)
   def set[P <: Record[P]](association: Association[R, P], value: P): Update[R]=
-    set(association.field, value.id.get)
+    set(association.field, value.id.getValue)
   def SET[P <: Record[P]](association: Association[R, P], value: P): Update[R] =
     set(association, value)
   def setNull[T](field: Field[T]): Update[R] = set(field, null.asInstanceOf[T])

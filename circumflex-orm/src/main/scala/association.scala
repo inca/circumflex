@@ -26,10 +26,10 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
   val field = new InternalField()
 
   override def getValue(): F = super.getValue() match {
-    case null if (!_initialized && field() != None) =>
+    case null if (!_initialized && field.get != None) =>
       _initialized = true
       // try to get from record cache
-      val id = field.get
+      val id = field.getValue
       _value = tx.getCachedRecord(foreignRelation, id) match {
         case Some(record) => record
         case None =>    // try to fetch lazily
@@ -46,7 +46,7 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
     field.setValue(null.asInstanceOf[Long])
     assoc._initialized = false
     super.setValue(null.asInstanceOf[F])
-  } else newValue.id() match {
+  } else newValue.id.get() match {
     case None => throw new ORMException("Cannot assign transient record to association.")
     case Some(id: Long) =>
       field.setValue(id)
@@ -86,7 +86,7 @@ class InverseAssociation[P <: Record[P], C <: Record[C]](val record: P,
       case null =>                          // lazy fetch
         val root = association.record.relation as "root"
         lastAlias(root.alias)
-        val v = (SELECT (root.*) FROM (root) WHERE (association.field EQ record.id.get)).list
+        val v = (SELECT (root.*) FROM (root) WHERE (association.field EQ record.id.getValue)).list
         tx.updateInverseCache(this, v)
         return v
       case l: Seq[C] =>

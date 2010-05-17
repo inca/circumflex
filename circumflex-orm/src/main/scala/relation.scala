@@ -249,7 +249,7 @@ abstract class Relation[R <: Record[R]] {
    * A helper to set parameters to `PreparedStatement`.
    */
   protected[orm] def setParams(record: R, st: PreparedStatement, fields: Seq[Field[_]]) =
-    (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).apply(), ix + 1))
+    (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).getValue, ix + 1))
 
   /**
    * Uses last generated identity to refetch specified `record`.

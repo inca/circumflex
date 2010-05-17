@@ -57,7 +57,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Yield `true` if `primaryKey` field is empty (contains `None`).
    */
-  def transient_?(): Boolean = id() == None
+  def transient_?(): Boolean = id.get() == None
 
   /**
    * Non-DSL field creation.
@@ -123,7 +123,7 @@ abstract class Record[R <: Record[R]] { this: R =>
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
       relation.setParams(this, st, f)
-      typeConverter.write(st, id(), f.size + 1)
+      typeConverter.write(st, id.getValue, f.size + 1)
       st.executeUpdate
     })
   })
@@ -148,7 +148,7 @@ abstract class Record[R <: Record[R]] { this: R =>
     val sql = dialect.deleteRecord(this)
     sqlLog.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
-      typeConverter.write(st, id(), 1)
+      typeConverter.write(st, id.getValue, 1)
       st.executeUpdate
     })
   })
@@ -180,7 +180,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   else {
     tx.evictRecordCache(this)
     val root = relation.as("root")
-    val id = this.id.get()
+    val id = this.id()
     SELECT (root.*) FROM root WHERE (root.id EQ id) unique match {
       case Some(r: R) => relation.copyFields(r, this)
       case _ =>
@@ -211,7 +211,7 @@ abstract class Record[R <: Record[R]] { this: R =>
       case f: Field[Any] => f.setValue(value)
       case a: Association[_, _] => value match {
         case id: Long => setValue(a.field, id)
-        case rec: Record[_] => setValue(a.field, rec.id())
+        case rec: Record[_] => setValue(a.field, rec.id.getValue)
         case _ => throw new ORMException("Could not set value " + value +
             " to association " + a + ".")
       }

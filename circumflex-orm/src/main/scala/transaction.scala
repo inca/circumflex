@@ -220,17 +220,17 @@ class StatefulTransaction {
     if (record.transient_?)
       throw new ORMException("Transient records cannot be cached.")
     else
-      recordCache += key(record.relation, record.id.get) -> record
+      recordCache += key(record.relation, record.id.getValue) -> record
 
   def evictRecordCache[R <: Record[R]](record: R): Unit =
     if (!record.transient_?)
-      recordCache -= key(record.relation, record.id.get)
+      recordCache -= key(record.relation, record.id.getValue)
 
   def getCachedInverse[P <: Record[P], C <: Record[C]](record: P,
                                                        association: Association[C, P]): Seq[C] =
     if (record.transient_?)
       throw new ORMException("Could not retrieve inverse association for transient record.")
-    else inverseCache.get(key(record.relation, record.id.get, association))
+    else inverseCache.get(key(record.relation, record.id.getValue, association))
         .getOrElse(null)
         .asInstanceOf[Seq[C]]
 
@@ -242,7 +242,7 @@ class StatefulTransaction {
                                                          children: Seq[C]): Unit =
     if (record.transient_?)
       throw new ORMException("Could not update inverse association cache for transient record.")
-    else inverseCache += key(record.relation, record.id.get, association) -> children
+    else inverseCache += key(record.relation, record.id.getValue, association) -> children
 
   def updateInverseCache[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C],
                                                          children: Seq[C]): Unit =
@@ -252,7 +252,7 @@ class StatefulTransaction {
                                                         association: Association[C, P]): Unit =
     if (record.transient_?)
       throw new ORMException("Could not evict inverse association cache for transient record.")
-    else inverseCache -= key(record.relation, record.id.get, association)
+    else inverseCache -= key(record.relation, record.id.getValue, association)
 
   def evictInverseCache[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C]): Unit =
     evictInverseCache(inverse.record, inverse.association)

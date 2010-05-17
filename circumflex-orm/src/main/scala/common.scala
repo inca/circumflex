@@ -113,9 +113,9 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   // Getters.
 
   def getValue(): T = _value
-  def get(): T = getValue
-  def getOrElse(default: T) = apply().getOrElse(default)
-  def apply(): Option[T] = getValue match {
+  def apply(): T = getValue
+  def getOrElse(default: T) = get().getOrElse(default)
+  def get(): Option[T] = getValue match {
     case null => None
     case value => Some(value)
   }
