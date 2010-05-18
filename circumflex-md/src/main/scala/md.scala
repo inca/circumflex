@@ -160,6 +160,8 @@ object Markdown {
   val rEm = Pattern.compile("(\\*|_)(?=\\S)(.+?)(?<=\\S)\\1")
   // Manual linebreaks
   val rBrs = Pattern.compile(" {2,}\n")
+  // Ampersand wrapping
+  val rAmp = "&amp;(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)"
   // SmartyPants
   val smartyPants = (Pattern.compile("(?<=\\s|\\A)(?:\"|&quot;)(?=\\S)") -> leftQuote) ::
       (Pattern.compile("(?<=\\S)(?:\"|&quot;)(?!\\w)") -> rightQuote) ::
@@ -572,7 +574,7 @@ class MarkdownText(source: CharSequence) {
    * Wrap ampersands with `<span class="amp">`.
    */
   protected def doAmpSpans(text: StringEx): StringEx =
-    text.replaceAll("&amp;", "<span class=\"amp\">&amp;</span>")
+    text.replaceAll(rAmp, "<span class=\"amp\">&amp;</span>")
 
   /**
    * Transform the Markdown source into HTML.

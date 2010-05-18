@@ -6,7 +6,7 @@ import org.apache.commons.io.FilenameUtils._
 import javax.servlet.http.HttpServletRequest
 
 /**
- * Circumflex configuration
+ * A singleton for application-wide configuration.
  */
 object Circumflex extends HashModel {
   private val _params = MutableMap[String, Any]()
