@@ -55,7 +55,10 @@ object Markdown {
   val rnd = new Random
   val blockTags = "p" :: "div" :: "h1" :: "h2" :: "h3" :: "h4" :: "h5" :: "h6" ::
       "blockquote" :: "pre" :: "table" :: "dl" :: "ol" :: "ul" :: "script" ::
-      "noscript" :: "form" :: "fieldset" :: "iframe" :: "math" :: "ins" :: "del" :: Nil
+      "noscript" :: "form" :: "fieldset" :: "iframe" :: "math" :: "ins" :: "del" ::
+      "article" :: "aside" :: "footer" :: "header" :: "hgroup" :: "nav" :: "section" ::
+      "figure" :: "video" :: "audio" :: "embed" :: "canvas" :: "address" :: "details" ::
+      "object" ::  Nil
   val htmlNameTokenExpr = "[a-z_:][a-z0-9\\-_:.]*"
 
   // ## Regex patterns
