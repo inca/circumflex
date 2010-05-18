@@ -161,7 +161,7 @@ object Markdown {
   // Manual linebreaks
   val rBrs = Pattern.compile(" {2,}\n")
   // Ampersand wrapping
-  val rAmp = "&amp;(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)"
+  val rAmp = Pattern.compile("&amp;(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
   // SmartyPants
   val smartyPants = (Pattern.compile("(?<=\\s|\\A)(?:\"|&quot;)(?=\\S)") -> leftQuote) ::
       (Pattern.compile("(?<=\\S)(?:\"|&quot;)(?!\\w)") -> rightQuote) ::
@@ -207,13 +207,13 @@ class MarkdownText(source: CharSequence) {
   /**
    * All unsafe chars are encoded to SGML entities.
    */
-  protected def encodeUnsafeChars(code: String): String = code
+  protected def encodeUnsafeChars(code: StringEx): StringEx = code
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
-      .replaceAll("\\*", "&#42;")
+      .replaceAll("*", "&#42;")
       .replaceAll("`", "&#96;")
       .replaceAll("_", "&#95;")
-      .replaceAll("\\\\", "&#92;")
+      .replaceAll("\\", "&#92;")
 
   /**
    * All characters escaped with backslash are encoded to corresponding
@@ -226,8 +226,8 @@ class MarkdownText(source: CharSequence) {
   /**
    * All unsafe chars are encoded to SGML entities inside code blocks.
    */
-  protected def encodeCode(code: String): String =
-    encodeUnsafeChars(code.replaceAll("&", "&amp;"))
+  protected def encodeCode(code: StringEx): StringEx =
+    encodeUnsafeChars(code).replaceAll(rEscAmp, "&amp;")
 
   /**
    * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
@@ -240,13 +240,10 @@ class MarkdownText(source: CharSequence) {
    * Encodes specially-treated characters inside the HTML tags.
    */
   protected def encodeCharsInsideTags(text: StringEx) =
-    text.replaceAll(rInsideTags, m => {
-      var content = m.group(1)
-      content = encodeUnsafeChars(content)
-      var result = new StringEx(content)
+    text.replaceAll(rInsideTags, m =>
+      "<" + encodeUnsafeChars(new StringEx(m.group(1)))
           .replaceAll(rEscAmp, "&amp;")
-      "<" + result.toString + ">"
-    })
+          .toString + ">")
 
   // ## Processing methods
 
@@ -293,10 +290,10 @@ class MarkdownText(source: CharSequence) {
       // Hashify block
       val key = htmlProtector.addToken(inlineHtml.toString)
       val sb = new StringBuilder(text.subSequence(0, startIdx))
-        .append("\n")
-        .append(key)
-        .append("\n")
-        .append(text.subSequence(endIdx, text.length))
+          .append("\n")
+          .append(key)
+          .append("\n")
+          .append(text.subSequence(endIdx, text.length))
       // Continue recursively until all blocks are processes
       hashHtmlBlocks(new StringEx(sb))
     } else text
@@ -409,7 +406,7 @@ class MarkdownText(source: CharSequence) {
   protected def doCodeBlocks(text: StringEx): StringEx =
     text.replaceAll(rCodeBlock, m => {
       var langExpr = ""
-      val code = new StringEx(encodeCode(m.group(1)))
+      val code = encodeCode(new StringEx(m.group(1)))
           .outdent
           .replaceAll(rTrailingWS, "")
           .replaceAll(rCodeLangId, m => {
@@ -473,7 +470,7 @@ class MarkdownText(source: CharSequence) {
    * Process code spans.
    */
   protected def doCodeSpans(text: StringEx): StringEx = text.replaceAll(rCodeSpan, m =>
-    "<code>" + encodeCode(m.group(2).trim) + "</code>")
+    "<code>" + encodeCode(new StringEx(m.group(2).trim)) + "</code>")
 
   /**
    * Process images.
