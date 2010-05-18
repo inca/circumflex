@@ -163,7 +163,7 @@ object Markdown {
   // Ampersand wrapping
   val rAmp = Pattern.compile("&amp;(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
   // SmartyPants
-  val smartyPants = (Pattern.compile("(?<=\\s|\\A)(?:\"|&quot;)(?=\\S)") -> leftQuote) ::
+  val smartyPants = (Pattern.compile("(?<!\\w)(?:\"|&quot;)(?=\\S)") -> leftQuote) ::
       (Pattern.compile("(?<=\\S)(?:\"|&quot;)(?!\\w)") -> rightQuote) ::
       (Pattern.compile("--") -> dash) ::
       (Pattern.compile("\\(r\\)", Pattern.CASE_INSENSITIVE) -> reg) ::
