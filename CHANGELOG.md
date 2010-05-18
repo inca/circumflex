@@ -1,4 +1,4 @@
-# Circumflex change log
+# Circumflex Change Log
 
 ## Version 1.1
 
@@ -7,19 +7,38 @@
 * Changed `apply` and `get` methods in `HashModel` to follow Scala convention
   for data structures.
 * Refactored matchers, `&` method is used to make up composite matchers.
+* Removed prefix matching for subrouters.
+* The following methods:
+
+  * `error`
+  * `redirect`
+  * `rewrite`
+  * `done`
+  * `sendFile`
+  * `xSendFile`
+
+  now throw `RouteMatchedException` immediately.
+
 
 ### Circumflex ORM
 
 * Added methods for simplified queries (`get(id: Long)`, `all(limit: Int, offset: Int)`).
-* Added `limit` and `offset` methods to Criteria API.
+* Added `limit` and `offset` methods to Criteria API via auxiliary predicate.
 * Changed `apply` and `get` methods in `ValueHolder` to follow Scala convention
   for data structures.
 * Added infix-style `AND` and `OR` composite predicates.
+* Removed `Subselect` class, all subqueries-related stuff now accept `SQLQuery`.
 
 ### Circumflex Markdown
 
-* Added some smarty-pants extensions and some ideas from
-[PHP Markdown Extra](http://michelf.com/projects/php-markdown/extra).
+* Added some SmartyPants extensions.
+* Added id attribute support for headers.
+* Span elements are now processed inside headers.
+* Defined a syntax to process markdown inside inline HTML.
+
+### Circumflex Freemarker
+
+* Hashes are now wrapped with `TemplateHashModelEx` which provides useful built-ins.
 
 ## Version 1.0
 
@@ -30,6 +49,10 @@
 ### Circumflex Freemarker Views
 
 * Changed default resolution priority for templating model (now webapp first, classpath second)
+
+### Circumflex ORM
+
+* Revisited the concepts and ideology and rewritten 95% of code.
 
 ## Version 0.3
 
