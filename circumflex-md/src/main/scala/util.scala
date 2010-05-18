@@ -114,21 +114,6 @@ class StringEx(protected var text: StringBuilder) {
   }
 
   /**
-   * Adds the subsequence between `startIdx` and `endIdx` to specified `protector` and
-   * applies a replacement to the `text`.
-   */
-  def protectSubseq(protector: Protector, startIdx: Int, endIdx: Int): String = {
-    val subseq = text.subSequence(startIdx, endIdx)
-    val key = protector.addToken(subseq)
-    text = new StringBuilder(text.subSequence(0, startIdx))
-        .append("\n")
-        .append(key)
-        .append("\n")
-        .append(text.subSequence(endIdx, text.length))
-    return key
-  }
-
-  /**
    * Removes at most 4 leading spaces at the beginning of every line.
    */
   def outdent(): this.type = replaceAll(rOutdent, "")

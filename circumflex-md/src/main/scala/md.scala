@@ -3,6 +3,7 @@ package ru.circumflex.md
 import ru.circumflex.core._
 import java.util.regex._
 import java.util.Random
+import java.lang.StringBuilder
 
 // # The Markdown Processor
 
@@ -164,8 +165,8 @@ object Markdown {
       (Pattern.compile("\\(c\\)", Pattern.CASE_INSENSITIVE) -> copy) ::
       (Pattern.compile("\\(tm\\)", Pattern.CASE_INSENSITIVE) -> trademark) ::
       (Pattern.compile("\\.{3}") -> ellipsis) :: Nil
-
-
+  // Markdown inside inline HTML
+  val rInlineMd = Pattern.compile("<!--#md-->(.*)<!--~+-->", Pattern.DOTALL)
 
   /**
    * Convert the `source` from Markdown to HTML.
@@ -281,9 +282,18 @@ class MarkdownText(source: CharSequence) {
       // Having inline HTML subsequence
       val endIdx = idx
       val startIdx = m.start
-      text.protectSubseq(htmlProtector, startIdx, endIdx)
+      val inlineHtml = new StringEx(text.subSequence(startIdx, endIdx))
+      // Process markdown inside
+      inlineHtml.replaceAll(rInlineMd, m => new MarkdownText(m.group(1)).toHtml)
+      // Hashify block
+      val key = htmlProtector.addToken(inlineHtml.toString)
+      val sb = new StringBuilder(text.subSequence(0, startIdx))
+        .append("\n")
+        .append(key)
+        .append("\n")
+        .append(text.subSequence(endIdx, text.length))
       // Continue recursively until all blocks are processes
-      hashHtmlBlocks(text)
+      hashHtmlBlocks(new StringEx(sb))
     } else text
   }
 

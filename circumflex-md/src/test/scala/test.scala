@@ -83,5 +83,11 @@ object MarkdownSpec extends Specification {
     "SmartyPants" in {
       "SmartyPants" must beFine
     }
+    "Markdown inside inline HTML" in {
+      "Markdown inside inline HTML" must beFine
+    }
+    "Spans inside headers" in {
+      "Spans inside headers" must beFine
+    }
   }
 }
