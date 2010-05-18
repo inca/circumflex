@@ -226,8 +226,10 @@ class MarkdownText(source: CharSequence) {
   /**
    * All unsafe chars are encoded to SGML entities inside code blocks.
    */
-  protected def encodeCode(code: StringEx): StringEx =
-    encodeUnsafeChars(code).replaceAll(rEscAmp, "&amp;")
+  protected def encodeCode(code: StringEx): StringEx = code
+      .replaceAll(rEscAmp, "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
 
   /**
    * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
