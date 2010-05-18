@@ -331,14 +331,14 @@ class MarkdownText(source: CharSequence) {
       .replaceAll(rH1, m => {
     val id = m.group(3)
     val idAttr = if (id == null) "" else " id = \"" + id + "\""
-    "<h1" + idAttr + ">" + m.group(1) + "</h1>"
+    "<h1" + idAttr + ">" + runSpanGamut(new StringEx(m.group(1))) + "</h1>"
   }).replaceAll(rH2, m => {
     val id = m.group(3)
     val idAttr = if (id == null) "" else " id = \"" + id + "\""
-    "<h2" + idAttr + ">" + m.group(1) + "</h2>"
+    "<h2" + idAttr + ">" + runSpanGamut(new StringEx(m.group(1))) + "</h2>"
   }).replaceAll(rHeaders, m => {
     val marker = m.group(1)
-    val body = m.group(2)
+    val body = runSpanGamut(new StringEx(m.group(2)))
     val id = m.group(4)
     val idAttr = if (id == null) "" else " id = \"" + id + "\""
     "<h" + marker.length + idAttr + ">" + body + "</h" + marker.length + ">"
