@@ -66,7 +66,7 @@ class RegexMatcher(val name: String,
   }
   protected def processPattern(pattern: String): Unit = {
     this.groupNames = List("splat")    // for `group(0)`
-    this.regex = (""":\w+|[\*.+()]""".r.replaceAllIn(pattern, m => m.group(0) match {
+    this.regex = (""":\w+|[\*+.()]""".r.replaceAllIn(pattern, m => m.group(0) match {
       case "*" | "+" =>
         groupNames ++= List("splat")
         "(." + m.group(0) + "?)"
