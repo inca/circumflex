@@ -40,6 +40,10 @@
 
 * Hashes are now wrapped with `TemplateHashModelEx` which provides useful built-ins.
 
+### Circumflex Docco
+
+* Scaladocs are now left in code sections.
+
 ## Version 1.0
 
 ### Circumflex Web Framework

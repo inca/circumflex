@@ -77,7 +77,7 @@ class Docco(val file: File) {
   var pageTemplate: String = DEFAULT_SINGLE_PAGE_TEMPLATE
 
   /* Scala comments regex */
-  val commentBegin = "^\\s*/\\*\\*? ?(.*)".r
+  val commentBegin = "^\\s*/\\* ?([^*].*)".r
   val commentEnd = "^(.*?)\\*/\\s*".r
   val commentSingleLine = "^\\s*// ?(.*)".r
   val commentSingleBlock = "^\\s*/\\* ?(.*?)\\*/\\s*".r
