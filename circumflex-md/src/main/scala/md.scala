@@ -445,7 +445,7 @@ class MarkdownText(source: CharSequence) {
    */
   protected def runSpanGamut(text: StringEx): StringEx = {
     val protector = new Protector
-    var result = doCodeSpans(text)
+    var result = doCodeSpans(protector, text)
     result = encodeBackslashEscapes(text)
     result = doImages(text)
     result = doRefLinks(text)
@@ -455,7 +455,7 @@ class MarkdownText(source: CharSequence) {
     result = protectHtmlTags(protector, text)
     result = doSmartyPants(text)
     result = doAmpSpans(text)
-    result = unprotectHtmlTags(protector, text)
+    result = unprotect(protector, text)
     result = doEmphasis(text)
     return result
   }
@@ -463,14 +463,14 @@ class MarkdownText(source: CharSequence) {
   protected def protectHtmlTags(protector: Protector, text: StringEx): StringEx =
     text.replaceAll(rInsideTags, m => protector.addToken(m.group(0)))
 
-  protected def unprotectHtmlTags(protector: Protector, text: StringEx): StringEx =
+  protected def unprotect(protector: Protector, text: StringEx): StringEx =
     protector.keys.foldLeft(text)((t, k) => t.replaceAll(k, protector.decode(k).getOrElse("")))
 
   /**
    * Process code spans.
    */
-  protected def doCodeSpans(text: StringEx): StringEx = text.replaceAll(rCodeSpan, m =>
-    "<code>" + encodeCode(new StringEx(m.group(2).trim)) + "</code>")
+  protected def doCodeSpans(protector: Protector, text: StringEx): StringEx = text.replaceAll(rCodeSpan, m =>
+    protector.addToken("<code>" + encodeCode(new StringEx(m.group(2).trim)) + "</code>"))
 
   /**
    * Process images.
