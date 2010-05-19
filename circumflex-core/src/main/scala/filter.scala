@@ -66,7 +66,7 @@ abstract class AbstractCircumflexFilter extends Filter {
         }
         if (isProcessed(req)) {
           // Instantiate a context if it does not yet exist and bind it thread-locally.
-          CircumflexContext.init(req, res, this)
+          CircumflexContext.init(req, res)
           // chain a call and make sure the context is destroyed afterwards
           try {
             doFilter(CircumflexContext.get, chain)

@@ -4,8 +4,7 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import java.net.URLDecoder
 
 class CircumflexContext(val request: HttpServletRequest,
-                        val response: HttpServletResponse,
-                        val filter: AbstractCircumflexFilter)
+                        val response: HttpServletResponse)
     extends HashModel { c =>
 
   /**
@@ -91,9 +90,8 @@ object CircumflexContext {
   def get = threadLocalContext.get
   def live_?() = get != null
   def init(req: HttpServletRequest,
-           res: HttpServletResponse,
-           filter: AbstractCircumflexFilter) = if (!live_?) {
-    threadLocalContext.set(new CircumflexContext(req, res, filter))
+           res: HttpServletResponse) = if (!live_?) {
+    threadLocalContext.set(new CircumflexContext(req, res))
     Circumflex.messages(req.getLocale) match {
       case Some(msg) => get('msg) = msg
       case None =>
