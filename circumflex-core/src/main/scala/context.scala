@@ -102,5 +102,5 @@ object CircumflexContext {
 }
 
 class ParamHelper(val key: String) {
-  def :=(value: Any): Unit = { CircumflexContext.get(key) = value }
+  def :=(value: Any): Unit = { ctx(key) = value }
 }

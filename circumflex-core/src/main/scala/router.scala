@@ -2,6 +2,7 @@ package ru.circumflex.core
 
 import java.io.File
 import util.matching.Regex
+import xml.Node
 
 class RouteMatchedException(val response: HttpResponse) extends Exception
 
@@ -10,6 +11,7 @@ class RouteMatchedException(val response: HttpResponse) extends Exception
 class RequestRouter(val prefix: String = "") {
 
   implicit def textToResponse(text: String): HttpResponse = TextResponse(text)
+  implicit def xmlToResponse(xml: Node): HttpResponse = TextResponse(xml.toString)
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
 
   implicit def string2uriMatcher(str: String): RegexMatcher =
