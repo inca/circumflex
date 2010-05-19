@@ -78,6 +78,7 @@ class RequestRouter(val prefix: String = "") {
    * Determines, if the request is XMLHttpRequest (for AJAX applications).
    */
   def isXhr = header.get("X-Requested-With").getOrElse("") == "XMLHttpRequest"
+  def xhr_?() = isXhr
 
   /**
    * Sends error with specified status code and message.
