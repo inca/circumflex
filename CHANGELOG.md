@@ -18,6 +18,7 @@
   * `xSendFile`
 
   now throw `RouteMatchedException` immediately.
+* Added `xhr_?` method.
 
 
 ### Circumflex ORM
