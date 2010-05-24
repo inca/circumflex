@@ -53,6 +53,11 @@ trait TransactionManager {
   }
 
   /**
+   * Sets a contextual transaction to specified `tx`.
+   */
+  def setTransaction(tx: StatefulTransaction): Unit =threadLocalContext.set(tx)
+
+  /**
    * Open new stateful transaction.
    */
   def openTransaction(): StatefulTransaction = new StatefulTransaction()
@@ -75,25 +80,32 @@ trait TransactionManager {
    *
    * If any exception occur, rollback the transaction and rethrow an
    * exception.
+   *
+   * The contextual transaction is replaced with specified `transaction` and
+   * is restored after the execution of `block`.
    */
-  def executeInContext(transaction: StatefulTransaction)(block: => Unit) = try {
-    block
-    if (transaction.live_?) {
-      transaction.commit
-      ormLog.debug("Committed current transaction.")
-    }
-  } catch {
-    case e =>
+  def executeInContext(transaction: StatefulTransaction)(block: => Unit) = {
+    val prevTx: StatefulTransaction = if (hasLiveTransaction_?) getTransaction else null
+    try {
+      setTransaction(transaction)
+      block
       if (transaction.live_?) {
-        transaction.rollback
-        ormLog.error("Rolled back current transaction.")
+        transaction.commit
+        ormLog.debug("Committed current transaction.")
       }
-      throw e
-  } finally if (transaction.live_?) {
-    transaction.close
-    ormLog.debug("Closed current connection.")
+    } catch {
+      case e =>
+        if (transaction.live_?) {
+          transaction.rollback
+          ormLog.error("Rolled back current transaction.")
+        }
+        throw e
+    } finally if (transaction.live_?) {
+      transaction.close
+      ormLog.debug("Closed current connection.")
+      setTransaction(prevTx)
+    }
   }
-
 }
 
 object DefaultTransactionManager extends TransactionManager

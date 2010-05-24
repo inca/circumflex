@@ -29,6 +29,8 @@
   for data structures.
 * Added infix-style `AND` and `OR` composite predicates.
 * Removed `Subselect` class, all subqueries-related stuff now accept `SQLQuery`.
+* Improved contextual transaction demarcation pattern by implementing proper transaction
+dispatching within `TransactionManager.executeInContext` method.
 
 ### Circumflex Markdown
 
