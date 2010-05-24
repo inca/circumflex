@@ -1,7 +1,7 @@
 The Circumflex License
 ======================
 
-Copyright (C) 2009-2010 <http://circumflex.ru>
+Copyright (C) 2009-2010 Boris Okunskiy and The Circumflex Team <http://circumflex.ru>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
