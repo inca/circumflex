@@ -19,7 +19,7 @@
 
   now throw `RouteMatchedException` immediately.
 * Added `xhr_?` method.
-
+* Fixed bugs in `Messages`, added some tests.
 
 ### Circumflex ORM
 

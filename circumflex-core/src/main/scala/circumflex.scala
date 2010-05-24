@@ -44,9 +44,9 @@ object Circumflex extends HashModel {
     case _ => "/public"
   }
   val publicRoot: File = new File(webappRoot, separatorsToSystem(publicUri.replaceAll("^/","")))
-  def messages(locale: Locale): Option[Messages] = this.get("cx.messages") match {
-    case Some(s: String) => Some(new Messages(s, locale))
-    case _ => Some(new Messages("Messages", locale))
+  val msgBundle: String = this.get("cx.messages") match {
+    case Some(s: String) => s
+    case _ => "Messages"
   }
   val xSendFile: XSendFileHeader = newObject("cx.XSendFileHeader", DefaultXSendFileHeader)
 

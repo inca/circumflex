@@ -48,6 +48,9 @@ object CircumflexCoreSpec extends Specification {
     get("/filename/:name.:ext") = uri('name) + uri('ext)
     get("*/one/:two/+.:three") =
       uri(1) + uri('two) + uri(3) + uri('three)
+    // Messages
+    get("/msg") = msg("hello")
+    get("/msg/:name") = msg("parameterizedHello", "name" -> uri('name))
   }
 
   doBeforeSpec{
@@ -109,6 +112,18 @@ object CircumflexCoreSpec extends Specification {
     }
     "process errors" in {
       MockApp.get("/error").execute().getStatus must_== 503
+    }
+    "process messages" in {
+      MockApp.get("/msg").execute().getContent must_== "Hello!"
+      MockApp.get("/msg")
+          .setHeader("Accept-Language", "ru,en;q=0.8,en-us;q=0.2")
+          .execute().getContent must_== "Hello!"
+      MockApp.get("/msg")
+          .setHeader("Accept-Language", "pt,br;q=0.8,en-us;q=0.2")
+          .execute().getContent must_== "Hola!"
+      MockApp.get("/msg/world")
+          .setHeader("Accept-Language", "pt,br;q=0.8,en-us;q=0.2")
+          .execute().getContent must_== "Hello, world!"
     }
   }
 

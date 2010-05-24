@@ -2,6 +2,7 @@ package ru.circumflex.core
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import java.net.URLDecoder
+import java.util.ResourceBundle
 
 class CircumflexContext(val request: HttpServletRequest,
                         val response: HttpServletResponse)
@@ -60,6 +61,11 @@ class CircumflexContext(val request: HttpServletRequest,
     }
   }
 
+  /**
+   * A helper for retrieving messages from `Messages.properties` resource bundle.
+   */
+  object messages extends Messages(Circumflex.msgBundle, locale)
+
   // ### Request commons
 
   protected var _contentType: String = null
@@ -68,13 +74,15 @@ class CircumflexContext(val request: HttpServletRequest,
   var statusCode: Int = 200
   def method: String = getOrElse('_method, request.getMethod)
   def uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
+  def locale = request.getLocale
 
   // ### Parameters
 
   private val _params = MutableMap[String, Any](
     "header" -> header,
     "session" -> session,
-    "flash" -> flash
+    "flash" -> flash,
+    "msg" -> messages
     )
   def get(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => value
@@ -89,15 +97,8 @@ object CircumflexContext {
   private val threadLocalContext = new ThreadLocal[CircumflexContext]
   def get = threadLocalContext.get
   def live_?() = get != null
-  def init(req: HttpServletRequest,
-           res: HttpServletResponse) = if (!live_?) {
-    threadLocalContext.set(new CircumflexContext(req, res))
-    Circumflex.messages(req.getLocale) match {
-      case Some(msg) => get('msg) = msg
-      case None =>
-        cxLog.debug("Could not instantiate context messages: 'cx.messages' not configured.")
-    }
-  }
+  def init(req: HttpServletRequest, res: HttpServletResponse) =
+    if (!live_?) threadLocalContext.set(new CircumflexContext(req, res))
   def destroy() = threadLocalContext.set(null)
 }
 

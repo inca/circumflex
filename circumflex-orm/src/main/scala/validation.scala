@@ -1,6 +1,6 @@
 package ru.circumflex.orm
 
-import ru.circumflex.core.{CircumflexUtil, CircumflexException, Messages}
+import _root_.ru.circumflex.core._
 import util.matching.Regex
 
 // ## Validation
@@ -14,14 +14,14 @@ case class ValidationError(val source: String,
   params += "src" -> source
 
   def toMsg(messages: Messages): String =
-    messages.apply(source + "." + errorKey, params) match {
+    messages.get(source + "." + errorKey, params) match {
       case Some(m) => m
-      case None => messages.apply(errorKey, params) match {
+      case None => messages.get(errorKey, params) match {
         case Some(m) => m
         case None => errorKey
       }
     }
-  def toMsg(): String = toMsg(Messages())
+  def toMsg(): String = toMsg(CircumflexContext.get.messages)
 
   override def hashCode = source.hashCode * 31 + errorKey.hashCode
   override def equals(that: Any) = that match {
