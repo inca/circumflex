@@ -362,7 +362,7 @@ class MarkdownText(source: CharSequence) {
    * Process horizontal rulers.
    */
   protected def doHorizontalRulers(text: StringEx): StringEx =
-    text.replaceAll(rHr, "<hr/>")
+    text.replaceAll(rHr, "\n<hr/>\n")
 
   /**
    * Process ordered and unordered lists and list items..
