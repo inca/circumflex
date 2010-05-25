@@ -203,12 +203,12 @@ class MarkdownText(source: CharSequence) {
     val regex: Pattern = {
       var f = 0;
       if (flags != null) flags.toList.foreach {
-        case "i" => f = f | Pattern.CASE_INSENSITIVE
-        case "d" => f = f | Pattern.UNIX_LINES
-        case "m" => f = f | Pattern.MULTILINE
-        case "s" => f = f | Pattern.DOTALL
-        case "u" => f = f | Pattern.UNICODE_CASE
-        case "x" => f = f | Pattern.COMMENTS
+        case 'i' => f = f | Pattern.CASE_INSENSITIVE
+        case 'd' => f = f | Pattern.UNIX_LINES
+        case 'm' => f = f | Pattern.MULTILINE
+        case 's' => f = f | Pattern.DOTALL
+        case 'u' => f = f | Pattern.UNICODE_CASE
+        case 'x' => f = f | Pattern.COMMENTS
         case _ =>
       }
       Pattern.compile(pattern, f)
