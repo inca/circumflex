@@ -48,32 +48,21 @@ class RecordValidator[R <: Record[R]](record: R) {
     return this
   }
   def notNull(field: Field[_]): this.type =
-    add(r => r._fields.find(f => f == field) match {
-      case Some(f: Field[_]) =>
-        if (f.null_?) Some(new ValidationError(f.uuid, "null"))
-        else None
-      case None =>
-        throw new ORMException("Field " + field + " does not correspond to record " + record.uuid)
-    })
+    add(r => if (field.null_?)
+      Some(new ValidationError(field.uuid, "null"))
+    else None)
   def notEmpty(field: TextField): this.type =
-    add(r => r._fields.find(f => f == field) match {
-      case Some(f: TextField) =>
-        if (f.getValue == null) Some(new ValidationError(f.uuid, "null"))
-        else if (f.getValue.trim == "") Some(new ValidationError(f.uuid, "empty"))
-        else None
-      case None =>
-        throw new ORMException("Field " + field + " does not correspond to record " + record.uuid)
-    })
+    add(r => if (field.null_?)
+      Some(new ValidationError(field.uuid, "null"))
+    else if (field.getValue.trim == "")
+      Some(new ValidationError(field.uuid, "empty"))
+    else None)
   def pattern(field: TextField, regex: String, key: String = "pattern"): this.type =
-    add(r => r._fields.find(f => f == field) match {
-      case Some(f: TextField) =>
-        if (f.getValue == null) Some(new ValidationError(f.uuid, "null"))
-        else if (!f.getValue.matches(regex))
-          Some(new ValidationError(f.uuid, key, "regex" -> regex, "value" -> f.getValue))
-        else None
-      case None =>
-        throw new ORMException("Field " + field + " does not correspond to record " + record.uuid)
-    })
+    add(r => if (field.null_?)
+      Some(new ValidationError(field.uuid, "null"))
+    else if (!field.getValue.matches(regex))
+      Some(new ValidationError(field.uuid, key, "regex" -> regex, "value" -> field.getValue))
+    else None)
 }
 
 
