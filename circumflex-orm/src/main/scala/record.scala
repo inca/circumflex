@@ -83,6 +83,15 @@ abstract class Record[R <: Record[R]] { this: R =>
   }
 
   /**
+   * Perfoms record validation and throws `ValidationException` instead of peacefully returning
+   * `ValidationError`s.
+   */
+  def validate_!(): Unit = validate match {
+    case Some(errors) => throw new ValidationException(errors: _*)
+    case _ =>
+  }
+
+  /**
    * Skips the validation and performs `INSERT` statement for this record.
    * If no `fields` specified, performs full insert (except empty fields
    * with default values), otherwise only specified `fields` participate
@@ -104,9 +113,9 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Validates record and executes `insert_!` on success.
    */
-  def insert(fields: Field[_]*): Int = validate match {
-    case None => insert_!(fields: _*)
-    case Some(errors) => throw new ValidationException(errors: _*)
+  def insert(fields: Field[_]*): Int = {
+    validate_!()
+    insert_!(fields: _*)
   }
   def INSERT(fields: Field[_]*) = insert(fields: _*)
 
@@ -132,9 +141,9 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Validates record and executes `update_!` on success.
    */
-  def update(fields: Field[_]*): Int = validate match {
-    case None => update_!(fields: _*)
-    case Some(errors) => throw new ValidationException(errors: _*)
+  def update(fields: Field[_]*): Int = {
+    validate_!()
+    update_!(fields: _*)
   }
   def UPDATE(fields: Field[_]*) = update(fields: _*)
 
@@ -167,9 +176,9 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Validates record and executes `save_!` on success.
    */
-  def save(): Int = validate match {
-    case None => save_!()
-    case Some(errors) => throw new ValidationException(errors: _*)
+  def save(): Int = {
+    validate_!()
+    save_!()
   }
 
   /**
