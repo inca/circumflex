@@ -38,6 +38,7 @@ dispatching within `TransactionManager.executeInContext` method.
 * Added id attribute support for headers.
 * Span elements are now processed inside headers.
 * Defined a syntax to process markdown inside inline HTML.
+* Added macro support.
 
 ### Circumflex Freemarker
 

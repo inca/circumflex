@@ -172,6 +172,8 @@ object Markdown {
       (Pattern.compile("\\.{3}") -> ellipsis) :: Nil
   // Markdown inside inline HTML
   val rInlineMd = Pattern.compile("<!--#md-->(.*)<!--~+-->", Pattern.DOTALL)
+  // Macro definitions
+  val rMacroDefs = Pattern.compile("<!--#md *\"{3}(.*?)\"{3}(\\?[idmsux]+)? +\"{3}(.*?)\"{3} *-->")
 
   /**
    * Convert the `source` from Markdown to HTML.
@@ -197,7 +199,25 @@ class MarkdownText(source: CharSequence) {
     override def toString = url + " (" + title + ")"
   }
 
+  case class MacroDefinition(val pattern: String, val flags: String, val replacement: String) {
+    val regex: Pattern = {
+      var f = 0;
+      if (flags != null) flags.toList.foreach {
+        case "i" => f = f | Pattern.CASE_INSENSITIVE
+        case "d" => f = f | Pattern.UNIX_LINES
+        case "m" => f = f | Pattern.MULTILINE
+        case "s" => f = f | Pattern.DOTALL
+        case "u" => f = f | Pattern.UNICODE_CASE
+        case "x" => f = f | Pattern.COMMENTS
+        case _ =>
+      }
+      Pattern.compile(pattern, f)
+    }
+    override def toString = regex.toString
+  }
+
   protected var links: Map[String, LinkDefinition] = Map()
+  protected var macros: Seq[MacroDefinition] = Nil
 
   // Protector for HTML blocks
   val htmlProtector = new Protector
@@ -324,10 +344,20 @@ class MarkdownText(source: CharSequence) {
     })
 
   /**
+   * Macro definitions are stripped from the document.
+   */
+  protected def stripMacroDefinitions(text: StringEx) =
+    text.replaceAll(rMacroDefs, m => {
+      macros ++= List(MacroDefinition(m.group(1), m.group(2), m.group(3)))
+      ""
+    })
+
+  /**
    * Block elements are processed within specified `text`.
    */
   protected def runBlockGamut(text: StringEx): StringEx = {
     var result = text
+    result = doMacros(result)
     result = doHeaders(result)
     result = doHorizontalRulers(result)
     result = doLists(result)
@@ -576,6 +606,12 @@ class MarkdownText(source: CharSequence) {
     text.replaceAll(rAmp, "<span class=\"amp\">&amp;</span>")
 
   /**
+   * Process user-defined macros.
+   */
+  protected def doMacros(text: StringEx): StringEx =
+    macros.foldLeft(text)((t, m) => t.replaceAll(m.regex, m.replacement, false))
+
+  /**
    * Transform the Markdown source into HTML.
    */
   def toHtml(): String = {
@@ -583,6 +619,7 @@ class MarkdownText(source: CharSequence) {
     result = normalize(result)
     result = encodeCharsInsideTags(result)
     result = hashHtmlBlocks(result)
+    result = stripMacroDefinitions(result)
     result = hashHtmlComments(result)
     result = encodeAmpsAndLts(result)
     result = stripLinkDefinitions(result)

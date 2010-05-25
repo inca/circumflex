@@ -73,9 +73,6 @@ class StringEx(protected var text: StringBuilder) {
     return this
   }
 
-  def replaceAll(pattern: Pattern, replacement: CharSequence): this.type =
-    replaceAll(pattern, m => replacement)
-
   /**
    * Replaces all occurences of specified `string` with specified `replacement`
    * without using regular expressions.
@@ -96,6 +93,12 @@ class StringEx(protected var text: StringBuilder) {
     return this
   }
 
+  def replaceAll(pattern: Pattern, replacement: CharSequence, literally: Boolean = true): this.type =
+    if (literally) replaceAll(pattern, m => replacement)
+    else {
+      text = new StringBuilder(pattern.matcher(text).replaceAll(replacement.toString))
+      return this
+    }
 
   /**
    * Appends the specified character sequence.
