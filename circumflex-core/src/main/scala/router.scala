@@ -55,10 +55,11 @@ class RequestRouter(val prefix: String = "") {
   val getOrHead = new Route("get", "head")
   val post = new Route("post")
   val put = new Route("put")
+  val patch = new Route("patch")
   val delete = new Route("delete")
   val head = new Route("head")
   val options = new Route("options")
-  val any = new Route("get", "post", "put", "delete", "head", "options")
+  val any = new Route("get", "post", "put", "patch" , "delete", "head", "options")
 
   // ### Context shortcuts
 

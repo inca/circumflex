@@ -20,6 +20,7 @@
   now throw `RouteMatchedException` immediately.
 * Added `xhr_?` method.
 * Fixed bugs in `Messages`, added some tests.
+* Added support for HTTP `PATCH` method.
 
 ### Circumflex ORM
 
