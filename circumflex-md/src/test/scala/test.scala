@@ -89,5 +89,8 @@ object MarkdownSpec extends Specification {
     "Spans inside headers" in {
       "Spans inside headers" must beFine
     }
+    "Macros" in {
+      "Macros" must beFine
+    }
   }
 }
