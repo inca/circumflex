@@ -127,6 +127,7 @@ object Markdown {
   val rParaSplit = Pattern.compile("\\n{2,}")
   // Code spans
   val rCodeSpan = Pattern.compile("(?<!\\\\)(`+)(.+?)(?<!`)\\1(?!`)")
+  val rCode = Pattern.compile("<code( .*?)?>(.*?)</code>", Pattern.DOTALL)
   // Images
   val rImage = Pattern.compile("!\\[(.*?)\\]\\((.*?)( \"(.*?)\")?\\)")
   // Backslash escapes
@@ -477,7 +478,8 @@ class MarkdownText(source: CharSequence) {
    */
   protected def runSpanGamut(text: StringEx): StringEx = {
     val protector = new Protector
-    var result = doCodeSpans(protector, text)
+    var result = protectCodeSpans(protector, text)
+    result = doCodeSpans(protector, text)
     result = encodeBackslashEscapes(text)
     result = doImages(text)
     result = doRefLinks(text)
@@ -494,6 +496,9 @@ class MarkdownText(source: CharSequence) {
 
   protected def protectHtmlTags(protector: Protector, text: StringEx): StringEx =
     text.replaceAll(rInsideTags, m => protector.addToken(m.group(0)))
+
+  protected def protectCodeSpans(protector: Protector, text: StringEx): StringEx =
+    text.replaceAll(rCode, m => protector.addToken(m.group(0)))
 
   protected def unprotect(protector: Protector, text: StringEx): StringEx =
     protector.keys.foldLeft(text)((t, k) => t.replaceAll(k, protector.decode(k).getOrElse("")))
