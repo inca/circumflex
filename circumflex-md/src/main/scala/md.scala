@@ -487,8 +487,8 @@ class MarkdownText(source: CharSequence) {
     result = protectHtmlTags(protector, text)
     result = doSmartyPants(text)
     result = doAmpSpans(text)
-    result = unprotect(protector, text)
     result = doEmphasis(text)
+    result = unprotect(protector, text)
     return result
   }
 
