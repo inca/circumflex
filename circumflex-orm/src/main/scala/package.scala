@@ -41,7 +41,7 @@ package object orm {
   implicit def field2order(field: Field[_]): Order = new Order(field2str(field), Nil)
 
   implicit def predicate2aggregateHelper(predicate: Predicate) =
-    new AggregatePredicateHelper(predicate) 
+    new AggregatePredicateHelper(predicate)
 
   implicit def tuple2proj[T1, T2](
       t: Tuple2[Projection[T1],Projection[T2]]) =
@@ -131,7 +131,7 @@ package object orm {
     var sqlText = expression
     var parameters: Seq[Any] = Nil
     val paramsMap = Map[String, Any](params: _*)
-    val pattern = Pattern.compile(":([a-zA-Z_]+)\\b")
+    val pattern = Pattern.compile(":(\\w+)\\b")
     val matcher = pattern.matcher(expression)
     while(matcher.find) paramsMap.get(matcher.group(1)) match {
       case Some(param) => parameters ++= List(param)

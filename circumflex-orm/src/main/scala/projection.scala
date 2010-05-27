@@ -39,6 +39,7 @@ trait AtomicProjection[T] extends Projection[T] {
     this.alias = alias
     return this
   }
+  def AS(alias: String): this.type = as(alias)
 
   def sqlAliases = List(alias)
 }

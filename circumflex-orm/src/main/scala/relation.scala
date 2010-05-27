@@ -109,6 +109,7 @@ abstract class Relation[R <: Record[R]] {
    * Create new `RelationNode` with specified `alias`.
    */
   def as(alias: String) = new RelationNode[R](this).as(alias)
+  def AS(alias: String) = as(alias)
 
   /**
    * Try to find an association to specified `relation`.
