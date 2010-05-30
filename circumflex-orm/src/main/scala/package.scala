@@ -20,6 +20,9 @@ package object orm {
     new Order(expression, Nil)
   implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
     new SimpleExpression(expression.toSql, expression.parameters)
+  implicit def predicate2aggregateHelper(predicate: Predicate) =
+    new AggregatePredicateHelper(predicate)
+  implicit def predicate2string(predicate: Predicate): String = predicate.toInlineSql
   implicit def string2projection(expression: String): Projection[Any] =
     new ExpressionProjection[Any](expression)
   implicit def association2field(association: Association[_, _]): Field[Long] =
@@ -39,9 +42,6 @@ package object orm {
   }
   implicit def field2helper(field: Field[_]) = new SimpleExpressionHelper(field2str(field))
   implicit def field2order(field: Field[_]): Order = new Order(field2str(field), Nil)
-
-  implicit def predicate2aggregateHelper(predicate: Predicate) =
-    new AggregatePredicateHelper(predicate)
 
   implicit def tuple2proj[T1, T2](
       t: Tuple2[Projection[T1],Projection[T2]]) =
@@ -96,10 +96,10 @@ package object orm {
   val SET_NULL = ForeignKeyAction(dialect.fkSetNull)
   val SET_DEFAULT = ForeignKeyAction(dialect.fkSetDefault)
 
-  val INNER_JOIN = JoinType(dialect.innerJoin)
-  val LEFT_JOIN = JoinType(dialect.leftJoin)
-  val RIGHT_JOIN = JoinType(dialect.rightJoin)
-  val FULL_JOIN = JoinType(dialect.fullJoin)
+  val INNER = JoinType(dialect.innerJoin)
+  val LEFT = JoinType(dialect.leftJoin)
+  val RIGHT = JoinType(dialect.rightJoin)
+  val FULL = JoinType(dialect.fullJoin)
 
   val OP_UNION = SetOperation(dialect.union)
   val OP_UNION_ALL = SetOperation(dialect.unionAll)

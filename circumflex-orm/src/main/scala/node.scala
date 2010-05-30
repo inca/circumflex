@@ -59,7 +59,6 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
                            on: String,
                            joinType: JoinType): JoinNode[R, J] =
     new ExplicitJoin(this, node, on, joinType)
-
   def JOIN[J <: Record[J]](node: RelationNode[J],
                            on: String,
                            joinType: JoinType): JoinNode[R, J] =
@@ -69,7 +68,7 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
    * Auto-join (the `ON` subclause is evaluated by searching matching association).
    */
   def join[J <: Record[J]](node: RelationNode[J],
-                           joinType: JoinType = LEFT_JOIN): JoinNode[R, J] =
+                           joinType: JoinType = LEFT): JoinNode[R, J] =
     findAssociation(node) match {
       case Some(a: Association[R, J]) =>  // many-to-one join
         new ManyToOneJoin[R, J](this, node, a, joinType)
@@ -81,10 +80,55 @@ class RelationNode[R <: Record[R]](val relation: Relation[R])
                   ": no associations found.")
       }
     }
-
   def JOIN[J <: Record[J]](node: RelationNode[J],
-                           joinType: JoinType = LEFT_JOIN): JoinNode[R, J] =
+                           joinType: JoinType = LEFT): JoinNode[R, J] =
     join(node, joinType)
+
+  // Join shortcuts for different types
+
+  def innerJoin[J <: Record[J]](node: RelationNode[J],
+                                on: String): JoinNode[R, J] =
+    join(node, on, INNER)
+  def INNER_JOIN[J <: Record[J]](node: RelationNode[J],
+                                 on: String): JoinNode[R, J] =
+    innerJoin(node, on)
+  def innerJoin[J <: Record[J]](node: RelationNode[J]): JoinNode[R, J] =
+    join(node, INNER)
+  def INNER_JOIN[J <: Record[J]](node: RelationNode[J]): JoinNode[R, J] =
+    innerJoin(node)
+
+  def leftJoin[J <: Record[J]](node: RelationNode[J],
+                                on: String): JoinNode[R, J] =
+    join(node, on, LEFT)
+  def LEFT_JOIN[J <: Record[J]](node: RelationNode[J],
+                                 on: String): JoinNode[R, J] =
+    leftJoin(node, on)
+  def leftJoin[J <: Record[J]](node: RelationNode[J]): JoinNode[R, J] =
+    join(node, LEFT)
+  def LEFT_JOIN[J <: Record[J]](node: RelationNode[J]): JoinNode[R, J] =
+    leftJoin(node)
+
+  def rightJoin[J <: Record[J]](node: RelationNode[J],
+                                on: String): JoinNode[R, J] =
+    join(node, on, RIGHT)
+  def RIGHT_JOIN[J <: Record[J]](node: RelationNode[J],
+                                 on: String): JoinNode[R, J] =
+    rightJoin(node, on)
+  def rightJoin[J <: Record[J]](node: RelationNode[J]): JoinNode[R, J] =
+    join(node, RIGHT)
+  def RIGHT_JOIN[J <: Record[J]](node: RelationNode[J]): JoinNode[R, J] =
+    rightJoin(node)
+
+  def fullJoin[J <: Record[J]](node: RelationNode[J],
+                                on: String): JoinNode[R, J] =
+    join(node, on, FULL)
+  def FULL_JOIN[J <: Record[J]](node: RelationNode[J],
+                                 on: String): JoinNode[R, J] =
+    fullJoin(node, on)
+  def fullJoin[J <: Record[J]](node: RelationNode[J]): JoinNode[R, J] =
+    join(node, FULL)
+  def FULL_JOIN[J <: Record[J]](node: RelationNode[J]): JoinNode[R, J] =
+    fullJoin(node)
 
   // ### Equality and others
 

@@ -32,6 +32,7 @@
 * Removed `Subselect` class, all subqueries-related stuff now accept `SQLQuery`.
 * Improved contextual transaction demarcation pattern by implementing proper transaction
 dispatching within `TransactionManager.executeInContext` method.
+* Added convenient method shortcuts for joins. `JoinType` predefines are renamed.
 
 ### Circumflex Markdown
 

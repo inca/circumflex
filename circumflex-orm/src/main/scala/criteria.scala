@@ -66,10 +66,10 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
       case node: RelationNode[N] =>
         if (node.relation == association.record.relation) {   // N == C
           val a = association.asInstanceOf[Association[N, P]]
-          new ManyToOneJoin(node, preparePf(a.foreignRelation, a), a, LEFT_JOIN)
+          new ManyToOneJoin(node, preparePf(a.foreignRelation, a), a, LEFT)
         } else if (node.relation == association.foreignRelation) {  // N == P
           val a = association.asInstanceOf[Association[C, N]]
-          new OneToManyJoin(node, preparePf(a.record.relation, a), a, LEFT_JOIN)
+          new OneToManyJoin(node, preparePf(a.record.relation, a), a, LEFT)
         } else node
     }
 
