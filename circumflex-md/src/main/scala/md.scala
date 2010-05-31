@@ -47,6 +47,14 @@ object Markdown {
     case Some(s: String) => s
     case _ => "&hellip;"
   }
+  val leftArrow = Circumflex.get("md.leftArrow") match {
+    case Some(s: String) => s
+    case _ => "&larr;"
+  }
+  val rightArrow = Circumflex.get("md.rightArrow") match {
+    case Some(s: String) => s
+    case _ => "&rarr;"
+  }
 
   // ## Commons
 
@@ -170,7 +178,9 @@ object Markdown {
       (Pattern.compile("\\(r\\)", Pattern.CASE_INSENSITIVE) -> reg) ::
       (Pattern.compile("\\(c\\)", Pattern.CASE_INSENSITIVE) -> copy) ::
       (Pattern.compile("\\(tm\\)", Pattern.CASE_INSENSITIVE) -> trademark) ::
-      (Pattern.compile("\\.{3}") -> ellipsis) :: Nil
+      (Pattern.compile("\\.{3}") -> ellipsis) :: 
+      (Pattern.compile("&lt;-|<-") -> leftArrow) :: 
+      (Pattern.compile("-&gt;|->") -> rightArrow) :: Nil
   // Markdown inside inline HTML
   val rInlineMd = Pattern.compile("<!--#md-->(.*)<!--~+-->", Pattern.DOTALL)
   // Macro definitions
