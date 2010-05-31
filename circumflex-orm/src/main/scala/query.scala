@@ -111,7 +111,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
   // ### Executors
 
   /**
-   * Use the query projection to read 
+   * Use the query projection to read
    */
   def read(rs: ResultSet): T = projection.read(rs)
 
