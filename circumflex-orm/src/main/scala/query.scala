@@ -10,7 +10,7 @@ import collection.mutable.ListBuffer
 /**
  * The most common contract for queries.
  */
-trait Query extends SQLable with ParameterizedExpression {
+trait Query extends SQLable with ParameterizedExpression with Cloneable {
 
   protected var aliasCounter = 0;
 
@@ -64,6 +64,10 @@ trait Query extends SQLable with ParameterizedExpression {
       case Some(p) => p
       case _ => name
     }
+
+  // Miscellaneous
+
+  override def clone(): this.type = super.clone.asInstanceOf[this.type]
 
   override def toString = toSql
 }
@@ -176,7 +180,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
 
   /**
    * Queries combined with this subselect using specific set operation
-   * (in pair, `SetOperation -> Subselect`),
+   * (pairs, `SetOperation -> Subselect`),
    */
   def setOps = _setOps
 
@@ -282,8 +286,9 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
   // ### Set Operations
 
   protected def addSetOp(op: SetOperation, sql: SQLQuery[T]): Select[T] = {
-    _setOps ++= List(op -> sql)
-    return this
+    val q = clone()
+    q._setOps ++= List(op -> sql)
+    return q
   }
 
   def union(sql: SQLQuery[T]): Select[T] =
