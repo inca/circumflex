@@ -33,6 +33,7 @@
 * Improved contextual transaction demarcation pattern by implementing proper transaction
 dispatching within `TransactionManager.executeInContext` method.
 * Added convenient method shortcuts for joins. `JoinType` predefines are renamed.
+* Added named parameters feature to `Query` to allow reusing same queries.
 
 ### Circumflex Markdown
 

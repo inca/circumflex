@@ -11,6 +11,7 @@ import collection.mutable.ListBuffer
  * The most common contract for queries.
  */
 trait Query extends SQLable with ParameterizedExpression {
+
   protected var aliasCounter = 0;
 
   /**
@@ -29,11 +30,40 @@ trait Query extends SQLable with ParameterizedExpression {
   def setParams(st: PreparedStatement, startIndex: Int): Int = {
     var paramsCounter = startIndex;
     parameters.foreach(p => {
-      typeConverter.write(st, p, paramsCounter)
+      typeConverter.write(st, convertNamedParam(p), paramsCounter)
       paramsCounter += 1
     })
     return paramsCounter
   }
+
+  // Named parameters
+
+  protected var _namedParams: Map[String, Any] = Map()
+
+  def renderParams: Seq[Any] = parameters.map(p => convertNamedParam(p))
+
+  /**
+   * Sets a named parameter value for this query.
+   */
+  def set(name: String, value: Any): this.type = {
+    _namedParams += name -> value
+    return this
+  }
+  def set(sym: Symbol, value: Any): this.type = set(sym.name, value)
+  def update(name: String, value: Any): Unit = set(name, value)
+  def update(sym: Symbol, value: Any): Unit = set(sym, value)
+
+  protected def convertNamedParam(param: Any): Any = param match {
+    case s: Symbol => lookupNamedParam(s.name)
+    case s: String if (s.startsWith(":")) => lookupNamedParam(s)
+    case _ => param
+  }
+
+  protected def lookupNamedParam(name: String): Any =
+    _namedParams.get(name.replaceAll("^:", "")) match {
+      case Some(p) => p
+      case _ => name
+    }
 
   override def toString = toSql
 }

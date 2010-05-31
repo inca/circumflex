@@ -89,11 +89,11 @@ class SimpleExpressionHelper(val expr: String) {
   def isNotNull = new SimpleExpression(expr + " " + dialect.isNotNull, Nil)
   def IS_NOT_NULL = isNotNull
 
-  def like(value: String) = new SimpleExpression(expr + " " + dialect.like, List(value))
-  def LIKE(value: String) = like(value)
+  def like(value: Any) = new SimpleExpression(expr + " " + dialect.like, List(value))
+  def LIKE(value: Any) = like(value)
 
-  def ilike(value: String) = new SimpleExpression(expr + " " + dialect.ilike, List(value))
-  def ILIKE(value: String) = ilike(value)
+  def ilike(value: Any) = new SimpleExpression(expr + " " + dialect.ilike, List(value))
+  def ILIKE(value: Any) = ilike(value)
 
   def in(params: Any*) =
     new SimpleExpression(expr + " " + dialect.parameterizedIn(params), params.toList)
