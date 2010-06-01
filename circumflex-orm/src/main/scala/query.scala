@@ -435,8 +435,9 @@ class Delete[R <: Record[R]](val node: RelationNode[R])
 /**
  * Functionality for UPDATE query.
  */
-class Update[R <: Record[R]](val relation: Relation[R])
+class Update[R <: Record[R]](val node: RelationNode[R])
     extends DMLQuery {
+  val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 

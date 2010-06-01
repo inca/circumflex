@@ -12,6 +12,8 @@ package object orm {
 
   implicit def relation2node[R <: Record[R]](relation: Relation[R]): RelationNode[R] =
     relation.as("this")
+  implicit def node2relation[R <: Record[R]](node: RelationNode[R]): Relation[R] =
+    node.relation
   implicit def string2helper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
   implicit def string2predicate(expression: String): Predicate =
@@ -184,8 +186,8 @@ package object orm {
   def SELECT[T](projection: Projection[T]) = select(projection)
   def insertInto[R <: Record[R]](relation: Relation[R]) = new InsertSelectHelper(relation)
   def INSERT_INTO[R <: Record[R]](relation: Relation[R]) = insertInto(relation)
-  def update[R <: Record[R]](relation: Relation[R]) = new Update(relation)
-  def UPDATE[R <: Record[R]](relation: Relation[R]) = update(relation)
+  def update[R <: Record[R]](node: RelationNode[R]) = new Update(node)
+  def UPDATE[R <: Record[R]](node: RelationNode[R]) = update(node)
   def delete[R <: Record[R]](node: RelationNode[R]) = new Delete(node)
   def DELETE[R <: Record[R]](node: RelationNode[R]) = delete(node)
 
