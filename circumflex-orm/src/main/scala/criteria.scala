@@ -116,12 +116,13 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
         val parent = tuple(pIndex).asInstanceOf[P]
         val child = tuple(cIndex).asInstanceOf[C]
         if (parent != null) {
-          val children = tx.getCachedInverse(parent, a) match {
+          var children = tx.getCachedInverse(parent, a) match {
             case null => Nil
             case l: Seq[C] => l
           }
           if (child != null && !children.contains(child))
-            tx.updateInverseCache(parent, a, children ++ List(child))
+            children ++= List(child)
+          tx.updateInverseCache(parent, a, children)
         }
         processTupleTree(tuple, j.left)
         processTupleTree(tuple, j.right)
