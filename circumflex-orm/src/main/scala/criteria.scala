@@ -133,7 +133,7 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   
   protected def prepareLimitOffsetPredicate: Predicate = {
     val n = rootNode.clone.as("__lo")
-    val q = SELECT (n.id) FROM (n) LIMIT (_limit) OFFSET (_offset)
+    val q = SELECT (n.id) FROM (n) LIMIT (_limit) OFFSET (_offset) ORDER_BY (_orders: _*)
     return rootNode.id IN (q)  
   }
 
