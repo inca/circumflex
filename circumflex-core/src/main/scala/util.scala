@@ -34,6 +34,15 @@ object CircumflexUtil {
    */
   def camelCaseToUnderscore(arg: String) = arg.replaceAll("(?<!^)([A-Z])","_$1").toLowerCase
 
+  /**
+   * Executes specified `block` and reports the time taken.
+   */
+  def time(block: => Unit): Long = {
+    val startTime = System.currentTimeMillis
+    block
+    System.currentTimeMillis - startTime
+  }
+
 }
 
 /**
