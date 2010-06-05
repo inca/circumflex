@@ -79,4 +79,35 @@ object Sample {
   def data = Deployment
       .readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
       .foreach(_.process)
+  def clean = {
+    Country.criteria.mkDelete.execute
+    City.criteria.mkDelete.execute
+    Capital.criteria.mkDelete.execute
+    COMMIT
+  }
+  def randomData(cardinality: Int): (Long, Int) = {
+    val startTime = System.currentTimeMillis
+    var count = 0
+    val rnd = new java.util.Random()
+    val chars = "abcdefghijklmnopqrstuvwxyz"
+    def randomName(size: Int = 6) = (0 until size)
+        .map(i => chars.charAt(rnd.nextInt(chars.length)))
+        .mkString
+    for (i <- 0 to cardinality) {
+      val co = new Country(randomName(2), randomName())
+      co.save
+      count += 1
+      for (j <- 0 to rnd.nextInt(6)) {
+        val ci = new City(co, randomName())
+        ci.save
+        count += 1
+        if (j == 3) {
+          new Capital(co, ci).insert()
+          count += 1
+        }
+      }
+    }
+    COMMIT
+    return (System.currentTimeMillis - startTime, count)
+  }
 }
