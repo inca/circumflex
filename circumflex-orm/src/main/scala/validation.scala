@@ -59,7 +59,7 @@ class RecordValidator[R <: Record[R]](record: R) {
     else None)
   def pattern(field: TextField, regex: String, key: String = "pattern"): this.type =
     add(r => if (field.null_?)
-      Some(new ValidationError(field.uuid, "null"))
+      None
     else if (!field.getValue.matches(regex))
       Some(new ValidationError(field.uuid, key, "regex" -> regex, "value" -> field.getValue))
     else None)
