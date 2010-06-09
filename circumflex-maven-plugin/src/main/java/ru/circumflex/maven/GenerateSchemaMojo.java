@@ -59,8 +59,8 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
             for (String pkg : packages)
                 processPackage(pkg);
         if (ddl.schemata().size() > 0) {
-            if (drop) ddl.drop();
-            ddl.create();
+            if (drop) ddl._drop();
+            ddl._create();
             for (DDLUnit.Msg msg : ddl.msgsArray()) {
                 if (msg instanceof DDLUnit.InfoMsg)
                     getLog().info(msg.body());
