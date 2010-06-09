@@ -34,6 +34,7 @@
 dispatching within `TransactionManager.executeInContext` method.
 * Added convenient method shortcuts for joins. `JoinType` predefines are renamed.
 * Added named parameters feature to `Query` to allow reusing same queries.
+* Added setters to `ValueHolder`.
 
 ### Circumflex Markdown
 

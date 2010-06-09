@@ -138,7 +138,7 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   // Setters.
 
   def setValue(newValue: T): this.type = {
-    _value = _setter(newValue)
+    _value = if (newValue != null) _setter(newValue) else newValue
     return this
   }
   def :=(newValue: T): this.type = setValue(newValue)
