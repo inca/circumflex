@@ -93,22 +93,33 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   // An internally stored value.
   protected var _value: T = _
 
+  protected var _setter: T => T = t => t
+
   // This way the value will be unwrapped by FTL engine.
   def item = getValue
 
   // Should the `NOT NULL` constraint be applied to this value holder?
   protected var _notNull: Boolean = true
   def nullable_?(): Boolean = !_notNull
+
   def notNull: this.type = {
     _notNull = true
     return this
   }
   def NOT_NULL: this.type = notNull
+
   def nullable: this.type = {
     _notNull = false
     return this
   }
   def NULLABLE: this.type = nullable
+
+  def setter = _setter
+  def setter(sf: T => T): this.type = {
+    _setter = sf
+    return this
+  }
+  def SETTER(sf: T => T): this.type = setter(sf)
 
   // Getters.
 
@@ -127,7 +138,7 @@ abstract class ValueHolder[T](val name: String, val uuid: String) extends Wrappe
   // Setters.
 
   def setValue(newValue: T): this.type = {
-    _value = newValue
+    _value = _setter(newValue)
     return this
   }
   def :=(newValue: T): this.type = setValue(newValue)
