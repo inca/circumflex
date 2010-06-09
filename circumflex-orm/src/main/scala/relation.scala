@@ -121,6 +121,11 @@ abstract class Relation[R <: Record[R]] {
   // ### Simple queries
 
   /**
+   * Create `Criteria` for this relation, assigning default `root` alias to it's root node.
+   */
+  def criteria = as("root").criteria
+
+  /**
    * Retrieve the record by specified `id` from transaction-scoped cache,
    * or fetch it from database.
    */
