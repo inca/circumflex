@@ -15,10 +15,10 @@ class RequestRouter(val prefix: String = "") {
   implicit def requestRouterToResponse(router: RequestRouter): HttpResponse = error(404)
 
   implicit def string2uriMatcher(str: String): RegexMatcher =
-    new RegexMatcher("uri", prefix + ctx.uri, str)
+    new RegexMatcher("uri", ctx.uri, prefix + str)
 
   implicit def regex2uriMatcher(regex: Regex): RegexMatcher =
-    new RegexMatcher("uri", prefix + ctx.uri, regex)
+    new RegexMatcher("uri", ctx.uri, new Regex(prefix + regex.toString))
 
   /**
    * ## Route
