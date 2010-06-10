@@ -1,6 +1,6 @@
 package ru.circumflex.orm
 
-import ru.circumflex.core.{CircumflexContext, AbstractCircumflexFilter}
+import _root_.ru.circumflex.core.{Circumflex, CircumflexContext, AbstractCircumflexFilter}
 import ORM._
 import javax.servlet.{ServletRequestEvent, ServletRequestListener, FilterChain}
 

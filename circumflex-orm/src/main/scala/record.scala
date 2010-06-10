@@ -87,7 +87,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    * `ValidationError`s.
    */
   def validate_!(): Unit = validate match {
-    case Some(errors) => throw new ValidationException(errors: _*)
+    case Some(errors) => throw new ValidationException(errors)
     case _ =>
   }
 

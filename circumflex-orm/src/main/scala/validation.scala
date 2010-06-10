@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
 import _root_.ru.circumflex.core._
-import util.matching.Regex
+import java.lang.String
 
 // ## Validation
 
@@ -13,15 +13,25 @@ case class ValidationError(val source: String,
 
   params += "src" -> source
 
-  def toMsg(messages: Messages): String =
-    messages.get(source + "." + errorKey, params) match {
-      case Some(m) => m
-      case None => messages.get(errorKey, params) match {
-        case Some(m) => m
-        case None => errorKey
-      }
-    }
+  protected def toMsg(key: String, messages: Messages): String = messages.get(key, params) match {
+    case Some(msg) => msg
+    case _ =>
+      val i = key.indexOf(".")
+      if (i == -1) key
+      else toMsg(key.substring(i + 1), messages)
+  }
+  def toMsg(messages: Messages): String = toMsg(source + "." + errorKey, messages)
   def toMsg(): String = toMsg(CircumflexContext.get.messages)
+
+  protected def matches(thisKey: String, key: String): Boolean =
+    if (thisKey == key || thisKey + "." + errorKey == key) true
+    else {
+      val i = thisKey.indexOf(".")
+      if (i == -1) false
+      else matches(thisKey.substring(i + 1), key)
+    }
+
+  def matches(key: String): Boolean = matches(source, key)
 
   override def hashCode = source.hashCode * 31 + errorKey.hashCode
   override def equals(that: Any) = that match {
@@ -30,12 +40,9 @@ case class ValidationError(val source: String,
   }
 }
 
-class ValidationException(val errors: ValidationError *)
-    extends CircumflexException("Validation failed.") {
-  val bySource = CircumflexUtil
-      .groupBy[String, ValidationError](errors, e => e.source)
-  val byKey = CircumflexUtil
-      .groupBy[String, ValidationError](errors, e => e.errorKey)
+class ValidationException(val errors: Seq[ValidationError])
+    extends CircumflexException("Validation failed.") with HashModel {
+  def get(key: String): Option[Seq[ValidationError]] = Some(errors.filter(e => e.matches(key)))
 }
 
 class RecordValidator[R <: Record[R]](record: R) {
