@@ -40,10 +40,17 @@ case class ValidationError(val source: String,
   }
 }
 
-class ValidationException(val errors: Seq[ValidationError])
-    extends CircumflexException("Validation failed.") with HashModel {
+trait ValidationErrorGroup extends HashModel {
+  def errors: Seq[ValidationError]
   def get(key: String): Option[Seq[ValidationError]] = Some(errors.filter(e => e.matches(key)))
 }
+
+class ValidationErrors(val errors: Seq[ValidationError]) extends ValidationErrorGroup {
+  def toException = new ValidationException(errors)
+}
+
+class ValidationException(val errors: Seq[ValidationError])
+    extends CircumflexException("Validation failed.") with ValidationErrorGroup
 
 class RecordValidator[R <: Record[R]](record: R) {
   protected var _validators: Seq[R => Option[ValidationError]] = Nil

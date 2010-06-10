@@ -76,10 +76,10 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Performs record validation.
    */
-  def validate(): Option[Seq[ValidationError]] = {
+  def validate(): Option[ValidationErrors] = {
     val errors = validation.validate()
     if (errors.size == 0) None
-    else Some(errors)
+    else Some(new ValidationErrors(errors))
   }
 
   /**
@@ -87,7 +87,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    * `ValidationError`s.
    */
   def validate_!(): Unit = validate match {
-    case Some(errors) => throw new ValidationException(errors)
+    case Some(errors) => throw errors.toException
     case _ =>
   }
 
