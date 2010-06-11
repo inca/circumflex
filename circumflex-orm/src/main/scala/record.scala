@@ -74,7 +74,7 @@ abstract class Record[R <: Record[R]] { this: R =>
   def validate(): Option[ValidationErrors] = {
     val errors = relation.validation.validate(this)
     if (errors.size == 0) None
-    else Some(new ValidationErrors(errors))
+    else Some(new ValidationErrors(errors: _*))
   }
 
   /**

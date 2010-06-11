@@ -49,15 +49,11 @@ trait ValidationErrorGroup extends HashModel {
   override def toString = errors.map(_.toString).mkString(", ")
 }
 
-class ValidationErrors(var errors: Seq[ValidationError]) extends ValidationErrorGroup {
-  def toException = new ValidationException(errors)
-  def add(e: ValidationError): this.type = {
-    errors ++= List(e)
-    return this
-  }
+class ValidationErrors(var errors: ValidationError*) extends ValidationErrorGroup {
+  def toException = new ValidationException(errors: _*)
 }
 
-class ValidationException(val errors: Seq[ValidationError])
+class ValidationException(val errors: ValidationError*)
     extends CircumflexException("Validation failed.") with ValidationErrorGroup
 
 class RecordValidator[R <: Record[R]] {
