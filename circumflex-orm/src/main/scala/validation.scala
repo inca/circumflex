@@ -11,6 +11,7 @@ case class ValidationError(val source: String,
   def this(source: String, errorKey: String, params: Pair[String, String]*) =
     this(source, errorKey, Map(params: _*))
 
+  val fullKey = source + "." + errorKey
   params += "src" -> source
 
   protected def toMsg(key: String, messages: Messages): String = messages.get(key, params) match {
@@ -20,8 +21,8 @@ case class ValidationError(val source: String,
       if (i == -1) key
       else toMsg(key.substring(i + 1), messages)
   }
-  def toMsg(messages: Messages): String = toMsg(source + "." + errorKey, messages)
-  def toMsg(): String = toMsg(CircumflexContext.get.messages)
+  def toMsg(messages: Messages): String = toMsg(fullKey, messages)
+  def toMsg: String = toMsg(CircumflexContext.get.messages)
 
   protected def matches(thisKey: String, key: String): Boolean =
     if (thisKey == key || thisKey + "." + errorKey == key) true
@@ -38,11 +39,14 @@ case class ValidationError(val source: String,
     case e: ValidationError => e.source == this.source && e.errorKey == this.errorKey
     case _ => false
   }
+
+  override def toString = fullKey
 }
 
 trait ValidationErrorGroup extends HashModel {
   def errors: Seq[ValidationError]
   def get(key: String): Option[Seq[ValidationError]] = Some(errors.filter(e => e.matches(key)))
+  override def toString = errors.map(_.toString).mkString(", ")
 }
 
 class ValidationErrors(val errors: Seq[ValidationError]) extends ValidationErrorGroup {
@@ -52,31 +56,38 @@ class ValidationErrors(val errors: Seq[ValidationError]) extends ValidationError
 class ValidationException(val errors: Seq[ValidationError])
     extends CircumflexException("Validation failed.") with ValidationErrorGroup
 
-class RecordValidator[R <: Record[R]](record: R) {
+class RecordValidator[R <: Record[R]] {
   protected var _validators: Seq[R => Option[ValidationError]] = Nil
   def validators = _validators
-  def validate(): Seq[ValidationError] =
+  def validate(record: R): Seq[ValidationError] =
     _validators.flatMap(_.apply(record)).toList.removeDuplicates
   def add(validator: R => Option[ValidationError]): this.type = {
     _validators ++= List(validator)
     return this
   }
-  def notNull(field: Field[_]): this.type =
-    add(r => if (field.null_?)
-      Some(new ValidationError(field.uuid, "null"))
-    else None)
-  def notEmpty(field: TextField): this.type =
-    add(r => if (field.null_?)
-      Some(new ValidationError(field.uuid, "null"))
-    else if (field.getValue.trim == "")
-      Some(new ValidationError(field.uuid, "empty"))
-    else None)
-  def pattern(field: TextField, regex: String, key: String = "pattern"): this.type =
-    add(r => if (field.null_?)
-      None
-    else if (!field.getValue.matches(regex))
-      Some(new ValidationError(field.uuid, key, "regex" -> regex, "value" -> field.getValue))
-    else None)
+  def notNull(f: R => Field[_]): this.type =
+    add(r => {
+      val field = f(r)
+      if (field.null_?) Some(new ValidationError(field.uuid, "null")) else None
+    })
+  def notEmpty(f: R => TextField): this.type =
+    add(r => {
+      val field = f(r)
+      if (field.null_?)
+        Some(new ValidationError(field.uuid, "null"))
+      else if (field.getValue.trim == "")
+        Some(new ValidationError(field.uuid, "empty"))
+      else None
+    })
+  def pattern(f: R => TextField, regex: String, key: String = "pattern"): this.type =
+    add(r => {
+      val field = f(r)
+      if (field.null_?)
+        None
+      else if (!field.getValue.matches(regex))
+        Some(new ValidationError(field.uuid, key, "regex" -> regex, "value" -> field.getValue))
+      else None
+    })
 }
 
 

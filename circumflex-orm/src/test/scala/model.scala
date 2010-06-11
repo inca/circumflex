@@ -14,16 +14,16 @@ class Country extends Record[Country] {
   val name = "name" TEXT
   // Inverse associations
   def cities = inverse(City.country)
-  // Validations
-  validation.notEmpty(code)
-      .notEmpty(name)
-      .pattern(code, "(?i:[a-z]{2})")
   // Miscellaneous
   override def toString = name.getOrElse("Unknown")
 }
 
 object Country extends Table[Country] {
   INDEX("country_code_idx", "LOWER(code)") USING "btree" UNIQUE
+
+  validation.notEmpty(_.code)
+      .notEmpty(_.name)
+      .pattern(_.code, "(?i:[a-z]{2})")
 }
 
 class City extends Record[City] {
@@ -37,14 +37,14 @@ class City extends Record[City] {
   val name = "name" TEXT
   // Associations
   val country = "country_id" REFERENCES(Country) ON_DELETE CASCADE ON_UPDATE CASCADE
-  // Validations
-  validation.notEmpty(name)
-      .notNull(country.field)
   // Miscellaneous
   override def toString = name.getOrElse("Unknown")
 }
 
-object City extends Table[City]
+object City extends Table[City] {
+  validation.notEmpty(_.name)
+      .notNull(_.country.field)
+}
 
 class Capital extends Record[Capital] {
   // Constructor shortcuts

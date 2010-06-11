@@ -50,11 +50,6 @@ abstract class Record[R <: Record[R]] { this: R =>
   val id = new PrimaryKeyField(this)
 
   /**
-   * Validator for this record.
-   */
-  val validation = new RecordValidator(this)
-
-  /**
    * Yield `true` if `primaryKey` field is empty (contains `None`).
    */
   def transient_?(): Boolean = id.get() == None
@@ -77,7 +72,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    * Performs record validation.
    */
   def validate(): Option[ValidationErrors] = {
-    val errors = validation.validate()
+    val errors = relation.validation.validate(this)
     if (errors.size == 0) None
     else Some(new ValidationErrors(errors))
   }

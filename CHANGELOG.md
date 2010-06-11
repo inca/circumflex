@@ -36,6 +36,7 @@ dispatching within `TransactionManager.executeInContext` method.
 * Added named parameters feature to `Query` to allow reusing same queries.
 * Added setters to `ValueHolder`.
 * Validators are now resolved more loyally.
+* Whole validation routine moved to relation level.
 
 ### Circumflex Markdown
 

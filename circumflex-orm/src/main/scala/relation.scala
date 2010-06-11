@@ -106,6 +106,11 @@ abstract class Relation[R <: Record[R]] {
   def primaryKey = recordSample.id
 
   /**
+   * Validator for this record.
+   */
+  val validation = new RecordValidator[R]()
+
+  /**
    * Create new `RelationNode` with specified `alias`.
    */
   def as(alias: String) = new RelationNode[R](this).as(alias)
