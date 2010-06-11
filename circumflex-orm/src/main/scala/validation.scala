@@ -49,8 +49,12 @@ trait ValidationErrorGroup extends HashModel {
   override def toString = errors.map(_.toString).mkString(", ")
 }
 
-class ValidationErrors(val errors: Seq[ValidationError]) extends ValidationErrorGroup {
+class ValidationErrors(var errors: Seq[ValidationError]) extends ValidationErrorGroup {
   def toException = new ValidationException(errors)
+  def add(e: ValidationError): this.type = {
+    errors ++= List(e)
+    return this
+  }
 }
 
 class ValidationException(val errors: Seq[ValidationError])
