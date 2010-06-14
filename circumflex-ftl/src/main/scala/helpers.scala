@@ -11,9 +11,9 @@ import java.io.StringWriter
 
 trait FreemarkerHelper {
   def freemarkerConf: Configuration = DefaultConfiguration
-  def ftl(template: String): HttpResponse =
-    new FreemarkerResponse(freemarkerConf.getTemplate(template))
-  def ftl(template: String, statusCode: Int): HttpResponse = {
+  def ftl(template: String): Nothing =
+    throw new RouteMatchedException(new FreemarkerResponse(freemarkerConf.getTemplate(template)))
+  def ftl(template: String, statusCode: Int): Nothing = {
     ctx.statusCode = statusCode
     ftl(template)
   }
