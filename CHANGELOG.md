@@ -49,6 +49,8 @@ dispatching within `TransactionManager.executeInContext` method.
 ### Circumflex Freemarker
 
 * Hashes are now wrapped with `TemplateHashModelEx` which provides useful built-ins.
+* `ftl` now throws `RouteMatchedException`.
+* `ScalaBaseWrapper` now implements `TemplateScalarModel` to eliminate explicit `toString` calls.
 
 ### Circumflex Docco
 

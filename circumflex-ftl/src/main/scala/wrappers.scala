@@ -55,7 +55,7 @@ class ScalaIterableWrapper[T](val it: Iterable[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(it, wrapper) with TemplateCollectionModel {
   def iterator = new ScalaIteratorWrapper(it.iterator, wrapper)
 }
-            
+
 class ScalaIteratorWrapper[T](val it: Iterator[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(it, wrapper) with TemplateModelIterator with TemplateCollectionModel {
   def next = wrapper.wrap(it.next)
@@ -71,7 +71,7 @@ class ScalaMethodWrapper(val target: Any,
     wrapper.wrap(MethodUtils.invokeMethod(target, methodName, arguments.toArray))
 }
 
-class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends TemplateHashModel {
+class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends TemplateHashModel with TemplateScalarModel {
 
   val objectClass = obj.asInstanceOf[Object].getClass
 
@@ -111,6 +111,7 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
 
   def isEmpty = false
 
+  def getAsString = obj.toString
 }
 
 class CircumflexHashWrapper(val hash: HashModel, wrapper: ObjectWrapper)
