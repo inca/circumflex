@@ -65,6 +65,10 @@ class RecordValidator[R <: Record[R]] {
     _validators ++= List(validator)
     return this
   }
+  def addForInsert(validator: R => Option[ValidationError]): this.type =
+    add(r => if (r.transient_?) validator(r) else None)
+  def addForUpdate(validator: R => Option[ValidationError]): this.type =
+    add(r => if (!r.transient_?) validator(r) else None)
   def notNull(f: R => Field[_]): this.type = add(r => {
     val field = f(r)
     if (field.null_?) Some(new ValidationError(field.uuid, "null")) else None
@@ -85,11 +89,11 @@ class RecordValidator[R <: Record[R]] {
       Some(new ValidationError(field.uuid, key, "regex" -> regex, "value" -> field.getValue))
     else None
   })
-  def unique(f: R => Field[_], key: String = "unique"): this.type = add(r => {
+  def unique(f: R => Field[_], key: String = "unique"): this.type = addForInsert(r => {
     val field = f(r)
     r.relation.criteria.add(field EQ field()).unique.map(a => new ValidationError(field.uuid, key))
   })
-  def uniqueAll(f: R => Seq[Field[_]], key: String = "unique"): this.type = add(r => {
+  def uniqueAll(f: R => Seq[Field[_]], key: String = "unique"): this.type = addForInsert(r => {
     val fields = f(r)
     val crit = r.relation.criteria
     fields.foreach(f => crit.add(f EQ f()))
