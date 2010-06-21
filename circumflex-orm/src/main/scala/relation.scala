@@ -142,10 +142,10 @@ abstract class Relation[R <: Record[R]] {
   /**
    * Fetch all records.
    */
-  def all(limit: Int = -1, offset: Int = 0): Seq[R] = as("root").criteria
-      .limit(limit)
-      .offset(offset)
-      .list
+  def all(limit: Int = -1, offset: Int = 0): Seq[R] = {
+    val root = as("root")
+    SELECT (root.*) FROM root LIMIT (limit) OFFSET (offset) list
+  }
 
   // ### Introspection and Initialization
 

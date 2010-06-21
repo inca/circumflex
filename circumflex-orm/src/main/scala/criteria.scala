@@ -27,9 +27,6 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   protected var _restrictions: Seq[Predicate] = Nil
   protected var _orders: Seq[Order] = Nil
 
-  protected var _limit: Int = -1
-  protected var _offset: Int = 0
-
   // ### Internal stuff
 
   /**
@@ -131,12 +128,6 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
         processTupleTree(tuple, j.right)
       case _ =>
     }
-  
-  protected def prepareLimitOffsetPredicate: Predicate = {
-    val n = rootNode.clone.as("__lo")
-    val q = SELECT (n.id) FROM (n) LIMIT (_limit) OFFSET (_offset) ORDER_BY (_orders: _*)
-    return rootNode.id IN (q)  
-  }
 
   // ## Public Stuff
 
@@ -155,22 +146,6 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
    */
   def addOrder(orders: Order*): Criteria[R] = {
     _orders ++= orders.toList
-    return this
-  }
-
-  /**
-   * Set the maximum amount of root records that will be returned by the query.
-   */
-  def limit(value: Int): Criteria[R] = {
-    this._limit = value
-    return this
-  }
-
-  /**
-   * Set the offset for root records that will be returned by the query.
-   */
-  def offset(value: Int): Criteria[R] = {
-    this._offset = value
     return this
   }
 
@@ -226,13 +201,9 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
   /**
    * Compose an actual predicate from restrictions.
    */
-  def predicate: Predicate = {
-    if (_limit != -1 || _offset != 0)
-      add(prepareLimitOffsetPredicate)
-    if (_restrictions.size > 0)
-      AND(_restrictions: _*)
+  def predicate: Predicate =
+    if (_restrictions.size > 0) AND(_restrictions: _*)
     else EmptyPredicate
-  }
 
   /**
    * Merge the *join tree* with *prefetch tree* to form an actual `FROM` clause.
