@@ -4,7 +4,6 @@ import _root_.freemarker.cache._
 import _root_.ru.circumflex.md.Markdown
 import ru.circumflex.core._
 import javax.servlet.http.HttpServletResponse
-import java.util.Map
 import freemarker.template._
 import freemarker.core.Environment
 import java.io.StringWriter
@@ -17,11 +16,19 @@ trait FreemarkerHelper {
     ctx.statusCode = statusCode
     ftl(template)
   }
+  def ftl(template: String, params: Pair[String, Any]*): String =
+    ftl(template, Map[String, Any](params: _*))
+  def ftl(template: String, root: Any): String = {
+    val result = new StringWriter
+    freemarkerConf.getTemplate(template).process(root, result)
+    return result.toString
+  }
+
 }
 
 object FTL extends FreemarkerHelper
 
-case class FreemarkerResponse(val template:Template) extends HttpResponse {
+case class FreemarkerResponse(val template: Template) extends HttpResponse {
   override def apply(response: HttpServletResponse) = {
     var ftlCtx = ctx;
     ftlCtx('context) = ctx;
@@ -58,7 +65,7 @@ object DefaultConfiguration extends Configuration {
 
 object MarkdownDirective extends TemplateDirectiveModel {
   def execute(env: Environment,
-              params: Map[_, _],
+              params: java.util.Map[_, _],
               loopVars: Array[TemplateModel],
               body: TemplateDirectiveBody) = {
     val nested = new StringWriter
