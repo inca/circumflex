@@ -69,15 +69,15 @@ class CircumflexContext(val request: HttpServletRequest,
     lazy val all: Seq[HttpCookie] = if (ctx.request.getCookies == null) Nil
     else ctx.request.getCookies.map(c => HttpCookie.convert(c))
     def get(key: String): Option[HttpCookie] = all.find(c => c.name == key)
-    def update(name: String,
-               value: String,
-               domain: String = null,
-               path: String = null,
-               comment: String = null,
-               secure: Boolean = false,
-               maxAge: Int = -1): Unit =
-      update(new HttpCookie(name, value, domain, path, comment, secure, maxAge))
-    def update(cookie: HttpCookie): Unit = ctx.response.addCookie(cookie.convert)
+    def set(name: String,
+            value: String,
+            domain: String = null,
+            path: String = null,
+            comment: String = null,
+            secure: Boolean = false,
+            maxAge: Int = -1): Unit =
+      set(new HttpCookie(name, value, domain, path, comment, secure, maxAge))
+    def set(cookie: HttpCookie): Unit = ctx.response.addCookie(cookie.convert)
   }
 
   /**
@@ -102,7 +102,8 @@ class CircumflexContext(val request: HttpServletRequest,
     "session" -> session,
     "flash" -> flash,
     "msg" -> messages,
-    "cookie" -> cookie
+    "cookie" -> cookie,
+    "ctx" -> this
     )
   def get(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => value
