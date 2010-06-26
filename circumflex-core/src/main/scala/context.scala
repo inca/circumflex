@@ -3,6 +3,7 @@ package ru.circumflex.core
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import java.net.URLDecoder
 import java.util.ResourceBundle
+import java.lang.String
 
 class CircumflexContext(val request: HttpServletRequest,
                         val response: HttpServletResponse)
@@ -55,10 +56,28 @@ class CircumflexContext(val request: HttpServletRequest,
         value
       }}
     }
-    def update(key: String, value: Any) {
+    def update(key: String, value: Any) = {
       val flashMap = session.getOrElse(SESSION_KEY, MutableMap[String, Any]())
       session(SESSION_KEY) = flashMap + (key -> value)
     }
+  }
+
+  /**
+   * A helper for getting and setting HTTP cookies.
+   */
+  object cookie extends HashModel {
+    lazy val all: Seq[HttpCookie] = if (ctx.request.getCookies == null) Nil
+    else ctx.request.getCookies.map(c => HttpCookie.convert(c))
+    def get(key: String): Option[HttpCookie] = all.find(c => c.name == key)
+    def update(name: String,
+               value: String,
+               domain: String = null,
+               path: String = null,
+               comment: String = null,
+               secure: Boolean = false,
+               maxAge: Int = -1): Unit =
+      update(new HttpCookie(name, value, domain, path, comment, secure, maxAge))
+    def update(cookie: HttpCookie): Unit = ctx.response.addCookie(cookie.convert)
   }
 
   /**
@@ -82,7 +101,8 @@ class CircumflexContext(val request: HttpServletRequest,
     "header" -> header,
     "session" -> session,
     "flash" -> flash,
-    "msg" -> messages
+    "msg" -> messages,
+    "cookie" -> cookie
     )
   def get(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => value

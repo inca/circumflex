@@ -4,6 +4,7 @@
 
 ### Circumflex Web Framework
 
+* Added helpers for HTTP cookies.
 * Changed `apply` and `get` methods in `HashModel` to follow Scala convention
   for data structures.
 * Refactored matchers, `&` method is used to make up composite matchers.

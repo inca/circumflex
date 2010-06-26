@@ -23,7 +23,6 @@ package object core {
   val AcceptRanges = new HeaderMatcherHelper("Accept-Ranges")
   val Authorization = new HeaderMatcherHelper("Authorization")
   val CacheControl = new HeaderMatcherHelper("Cache-Control")
-  val Cookie = new HeaderMatcherHelper("Cookie")
   val ContentLength = new HeaderMatcherHelper("Content-Length")
   val ContentType = new HeaderMatcherHelper("Content-Type")
   val HeaderDate = new HeaderMatcherHelper("Date")

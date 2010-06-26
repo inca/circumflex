@@ -68,6 +68,7 @@ class RequestRouter(val prefix: String = "") {
   def flash = ctx.flash
   def param = ctx.param
   def msg = ctx.messages
+  def cookie = ctx.cookie
 
   def uri: Match = ctx.get("uri") match {
     case Some(m: Match) => m

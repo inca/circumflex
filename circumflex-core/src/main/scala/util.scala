@@ -3,6 +3,7 @@ package ru.circumflex.core
 import collection.mutable.{HashMap, ListBuffer}
 import java.io.File
 import util.matching.Regex
+import javax.servlet.http.Cookie
 
 /**
  * Contains utility stuff.
@@ -43,6 +44,40 @@ object CircumflexUtil {
     System.currentTimeMillis - startTime
   }
 
+}
+
+/**
+ * Mutable helper for dealing with HTTP cookies.
+ */
+case class HttpCookie(var name: String,
+                      var value: String,
+                      var domain: String = null,
+                      var path: String = null,
+                      var comment: String = null,
+                      var secure: Boolean = false,
+                      var maxAge: Int = -1) {
+  def convert: Cookie = {
+    val c = new Cookie(name, value)
+    if (domain != null) c.setDomain(domain)
+    if (path != null) c.setPath(path)
+    if (comment != null) c.setComment(comment)
+    c.setSecure(secure)
+    c.setMaxAge(maxAge)
+    return c
+  }
+  override def toString = name + " = " + value
+}
+
+object HttpCookie {
+  def convert(cookie: Cookie): HttpCookie =
+    new HttpCookie(
+      cookie.getName,
+      cookie.getValue,
+      cookie.getDomain,
+      cookie.getPath,
+      cookie.getComment,
+      cookie.getSecure,
+      cookie.getMaxAge)
 }
 
 /**
