@@ -8,7 +8,7 @@ import java.lang.String
 import ru.circumflex.core.{WrapperModel, HashModel}
 
 class ScalaObjectWrapper extends ObjectWrapper {
-  override def wrap(obj: Any) = obj match {
+  override def wrap(obj: Any): TemplateModel = obj match {
     // Basic types
     case null => null
     case option: Option[Any] => option match {

@@ -17,7 +17,7 @@ class Match(val name: String,
   def apply(index: Int): String = get(index).getOrElse("")
   override def apply(name: String): String = get(name).getOrElse("")
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
-  override def toString = name
+  override def toString = apply(0)
 }
 
 // ## Matchers
