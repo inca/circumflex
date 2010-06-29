@@ -103,7 +103,8 @@ class CircumflexContext(val request: HttpServletRequest,
     "flash" -> flash,
     "msg" -> messages,
     "cookie" -> cookie,
-    "ctx" -> this
+    "ctx" -> this,
+    "cx" -> Circumflex
     )
   def get(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => value
