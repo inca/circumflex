@@ -93,13 +93,11 @@ class CircumflexContext(val request: HttpServletRequest,
    *   3. parameters from matchers;
    *   4. flash parameters;
    *   5. session parameters;
-   *   6. Circumflex parameters (from `cx.properties` or `pom.xml`).
    */
   object lookup extends HashModel {
     def get(key: String): Option[Any] = param.get(key)
           .orElse(flash.get(key))
           .orElse(session.get(key))
-          .orElse(Circumflex.get(key))
     override def apply(key: String): Any = get(key).getOrElse("")
   }
 
@@ -125,8 +123,7 @@ class CircumflexContext(val request: HttpServletRequest,
     "cx" -> Circumflex,
     "cfg" -> Circumflex,
     "param" -> param,
-    "lookup" -> lookup,
-    "p" -> lookup
+    "lookup" -> lookup
     )
   def get(key: String): Option[Any] = _params.get(key) match {
     case Some(value) if (value != null) => value
