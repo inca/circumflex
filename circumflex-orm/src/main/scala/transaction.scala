@@ -225,18 +225,26 @@ class StatefulTransaction {
     inverseCache = new HashMap[String, Seq[Any]]
   }
 
-  def getCachedRecord[R <: Record[R]](relation: Relation[R], id: Long): Option[R] =
-    recordCache.get(key(relation, id)).asInstanceOf[Option[R]]
+  def getCachedRecord[R <: Record[R]](relation: Relation[R], id: Long): Option[R] = relation match {
+    case c: Cacheable[R] => c.getCachedRecord(id)
+    case _ => recordCache.get(key(relation, id)).asInstanceOf[Option[R]]
+  }
 
   def updateRecordCache[R <: Record[R]](record: R): Unit =
     if (record.transient_?)
       throw new ORMException("Transient records cannot be cached.")
-    else
-      recordCache += key(record.relation, record.id.getValue) -> record
+    else record.relation match {
+      case c: Cacheable[R] => c.updateRecordCache(record)
+      case _ =>
+        recordCache += key(record.relation, record.id.getValue) -> record
+    }
 
   def evictRecordCache[R <: Record[R]](record: R): Unit =
-    if (!record.transient_?)
-      recordCache -= key(record.relation, record.id.getValue)
+    if (!record.transient_?) record.relation match {
+      case c: Cacheable[R] => c.evictRecordCache(record)
+      case _ =>
+        recordCache -= key(record.relation, record.id.getValue)
+    }
 
   def getCachedInverse[P <: Record[P], C <: Record[C]](record: P,
                                                        association: Association[C, P]): Seq[C] =

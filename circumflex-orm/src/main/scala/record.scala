@@ -95,13 +95,16 @@ abstract class Record[R <: Record[R]] { this: R =>
   def insert_!(fields: Field[_]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else transactionManager.dml(conn => {
+    relation.beforeInsert.foreach(c => c(this))
     var f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => !f.empty_?) else fields
     val sql = dialect.insertRecord(this, f)
     sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
+    val result = auto(conn.prepareStatement(sql))(st => {
       relation.setParams(this, st, f)
       st.executeUpdate
     })
+    relation.afterInsert.foreach(c => c(this))
+    return result
   })
   def INSERT_!(fields: Field[_]*): Int = insert_!(fields: _*)
 
@@ -122,14 +125,17 @@ abstract class Record[R <: Record[R]] { this: R =>
   def update_!(fields: Field[_]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else transactionManager.dml(conn => {
+    relation.beforeUpdate.foreach(c => c(this))
     val f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => f != id) else fields
     val sql = dialect.updateRecord(this, f)
     sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
+    val result = auto(conn.prepareStatement(sql))(st => {
       relation.setParams(this, st, f)
       typeConverter.write(st, id.getValue, f.size + 1)
       st.executeUpdate
     })
+    relation.afterUpdate.foreach(c => c(this))
+    return result
   })
   def UPDATE_!(fields: Field[_]*): Int = update_!(fields: _*)
 
@@ -149,12 +155,15 @@ abstract class Record[R <: Record[R]] { this: R =>
   def delete_!(): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else transactionManager.dml(conn => {
+    relation.beforeDelete.foreach(c => c(this))
     val sql = dialect.deleteRecord(this)
     sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
+    val result = auto(conn.prepareStatement(sql))(st => {
       typeConverter.write(st, id.getValue, 1)
       st.executeUpdate
     })
+    relation.afterDelete.foreach(c => c(this))
+    return result
   })
   def DELETE_!(): Int = delete_!()
 

@@ -16,16 +16,24 @@ import java.sql.PreparedStatement
  */
 object RelationRegistry {
 
-  protected var classToRelation: Map[Class[_], Relation[_]] = Map()
+  protected var _classToRelation: Map[Class[_], Relation[_]] = Map()
+  protected var _cacheableRelations: Seq[Cacheable[_]] = Nil
+
+  def cacheableRelations = _cacheableRelations
 
   def getRelation[R <: Record[R]](r: R): Relation[R] =
-    classToRelation.get(r.getClass) match {
+    _classToRelation.get(r.getClass) match {
       case Some(rel: Relation[R]) => rel
       case _ => {
         val relClass = Circumflex.loadClass[Relation[R]](r.getClass.getName + "$")
         val relation = relClass.getField("MODULE$").get(null).asInstanceOf[Relation[R]]
-        classToRelation += (r.getClass -> relation)
-        relation
+        _classToRelation += (r.getClass -> relation)
+        relation match {
+          case c: Cacheable[_] =>
+            _cacheableRelations ++= List[Cacheable[_]](c)
+          case _ =>
+        }
+        return relation
       }
     }
 
@@ -134,10 +142,8 @@ abstract class Relation[R <: Record[R]] {
    * Retrieve the record by specified `id` from transaction-scoped cache,
    * or fetch it from database.
    */
-  def get(id: Long): Option[R] = tx.getCachedRecord(this, id) match {
-    case Some(record: R) => Some(record)
-    case None => as("root").criteria.add("root.id" EQ id).unique
-  }
+  def get(id: Long): Option[R] = tx.getCachedRecord(this, id)
+      .orElse(as("root").criteria.add("root.id" EQ id).unique)
 
   /**
    * Fetch all records.
@@ -145,6 +151,45 @@ abstract class Relation[R <: Record[R]] {
   def all(limit: Int = -1, offset: Int = 0): Seq[R] = {
     val root = as("root")
     SELECT (root.*) FROM root LIMIT (limit) OFFSET (offset) list
+  }
+
+  // ### Events
+
+  protected var _beforeInsert: Seq[R => Unit] = Nil
+  def beforeInsert = _beforeInsert
+  def beforeInsert(callback: R => Unit): this.type = {
+    this._beforeInsert ++= List(callback)
+    return this
+  }
+  protected var _afterInsert: Seq[R => Unit] = Nil
+  def afterInsert = _afterInsert
+  def afterInsert(callback: R => Unit): this.type = {
+    this._afterInsert ++= List(callback)
+    return this
+  }
+  protected var _beforeUpdate: Seq[R => Unit] = Nil
+  def beforeUpdate = _beforeUpdate
+  def beforeUpdate(callback: R => Unit): this.type = {
+    this._beforeUpdate ++= List(callback)
+    return this
+  }
+  protected var _afterUpdate: Seq[R => Unit] = Nil
+  def afterUpdate = _afterUpdate
+  def afterUpdate(callback: R => Unit): this.type = {
+    this._afterUpdate ++= List(callback)
+    return this
+  }
+  protected var _beforeDelete: Seq[R => Unit] = Nil
+  def beforeDelete = _beforeDelete
+  def beforeDelete(callback: R => Unit): this.type = {
+    this._beforeDelete ++= List(callback)
+    return this
+  }
+  protected var _afterDelete: Seq[R => Unit] = Nil
+  def afterDelete = _afterDelete
+  def afterDelete(callback: R => Unit): this.type = {
+    this._afterDelete ++= List(callback)
+    return this
   }
 
   // ### Introspection and Initialization
