@@ -10,8 +10,8 @@ import java.util.concurrent.ConcurrentHashMap
  * or `delete_!` method on corresponding record.
  *
  * **Warning!** We see no way of invalidating application-scope cache in response to custom DML queries,
- * so if you writing data into cacheable relations with other methods, then `insert_!`, `update_!`
- * or `delete_!` will **always** result in cache inconsistencies. Use at your own risk!
+ * so writing data into cacheable relations with other methods, than `insert_!`, `update_!`
+ * or `delete_!`, will **always** result in cache inconsistencies. Use at your own risk!
  */
 trait Cacheable[R <: Record[R]] extends Relation[R] {
   protected var _cache = new ConcurrentHashMap[Long, R]

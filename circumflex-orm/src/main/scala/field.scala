@@ -3,7 +3,8 @@ package ru.circumflex.orm
 import ORM._
 import java.lang.String
 import java.util.Date
-
+import java.sql.ResultSet
+import xml.{Elem, XML, NodeSeq}
 // ## Field
 
 /**
@@ -31,6 +32,8 @@ class Field[T](name: String,
     this
   }
   def DEFAULT(expr: String): this.type = default(expr)
+
+  def read(rs: ResultSet, alias: String): T = typeConverter.read(rs, alias).asInstanceOf[T]
 
   def toSql = dialect.columnDefinition(this)
 }
@@ -91,6 +94,12 @@ class TimeField(name: String, uuid: String)
     extends XmlSerializableField[Date](name, uuid, dialect.timeType) {
   def from(string: String) = new Date(java.sql.Time.valueOf(string).getTime)
   override def to(value: Date) = new java.sql.Time(value.getTime).toString
+}
+
+class XmlField(name: String, uuid: String)
+    extends XmlSerializableField[NodeSeq](name, uuid, dialect.xmlType) {
+  def from(string: String) = XML.loadString(string)
+  override def read(rs: ResultSet, alias: String) = from(rs.getString(alias))
 }
 
 

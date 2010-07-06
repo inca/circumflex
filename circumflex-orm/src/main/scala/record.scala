@@ -264,6 +264,7 @@ class DefinitionHelper[R <: Record[R]](record: R, name: String) {
   def date = new DateField(name, uuid)
   def time = new TimeField(name, uuid)
   def timestamp = new TimestampField(name, uuid)
+  def xml = new XmlField(name, uuid)
 
   def INTEGER = integer
   def BIGINT = bigint
@@ -274,6 +275,7 @@ class DefinitionHelper[R <: Record[R]](record: R, name: String) {
   def DATE = date
   def TIME = time
   def TIMESTAMP = timestamp
+  def XML = xml
 
   def references[F <: Record[F]](relation: Relation[F]): Association[R, F] =
     new Association[R, F](name, uuid, record, relation)

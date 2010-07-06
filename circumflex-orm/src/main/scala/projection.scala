@@ -30,7 +30,10 @@ trait AtomicProjection[T] extends Projection[T] {
    */
   protected[orm] var alias: String = "this"
 
-  def read(rs: ResultSet) = typeConverter.read(rs, alias).asInstanceOf[T]
+  /**
+   * Reads a value designated by current projection from specified `resultSet`.
+   */
+  def read(resultSet: ResultSet): T
 
   /**
    * Change an alias of this projection.
@@ -83,6 +86,8 @@ class ExpressionProjection[T](val expression: String)
 
   def toSql = dialect.alias(expression, alias)
 
+  def read(rs: ResultSet) = typeConverter.read(rs, alias).asInstanceOf[T]
+
   override def equals(obj: Any) = obj match {
     case p: ExpressionProjection[T] =>
       p.expression == this.expression
@@ -107,6 +112,8 @@ class FieldProjection[T, R <: Record[R]](val node: RelationNode[R],
   def expr = dialect.qualifyColumn(field, node.alias)
 
   def toSql = dialect.alias(expr, alias)
+
+  def read(rs: ResultSet) = field.read(rs, alias)
 
   override def equals(obj: Any) = obj match {
     case p: FieldProjection[T, R] =>
