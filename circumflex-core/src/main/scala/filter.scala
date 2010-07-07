@@ -95,7 +95,7 @@ class CircumflexFilter extends AbstractCircumflexFilter {
     case Some(s: String) => Circumflex.loadClass[RequestRouter](s)
     case Some(c: Class[RequestRouter]) => c
     case _ => throw new CircumflexException("Could not initialize Request Router; " +
-            "configure 'cx.router' properly.")
+        "configure 'cx.router' properly.")
   }
 
   /**
@@ -137,15 +137,21 @@ class CircumflexFilter extends AbstractCircumflexFilter {
     try {
       routerClass.getConstructor().newInstance()
       // Request not matched by router
+      cxLog.debug("No routes matched.")
       onNoMatch(ctx, chain)
     } catch {
-      case e: InvocationTargetException if e.getCause.isInstanceOf[RouteMatchedException] =>
-        // Request matched
-        e.getCause.asInstanceOf[RouteMatchedException].response.apply(ctx.response)
-      case e: InvocationTargetException if e.getCause.isInstanceOf[FileNotFoundException] =>
-        onNotFound(e, ctx, chain)
-      case e =>
-        onRouterError(e, ctx, chain)
+      case e: InvocationTargetException => e.getCause match {
+        case e: RouteMatchedException =>
+          // Request matched
+          e.response.apply(ctx.response)
+          cxLog.debug(ctx.response.toString)
+        case e: FileNotFoundException =>
+          // Not found file or template
+          onNotFound(e, ctx, chain)
+          cxLog.debug("File not found: " + e.getMessage)
+        case e =>  // Generic error
+          onRouterError(e, ctx, chain)
+      }
     }
   }
 

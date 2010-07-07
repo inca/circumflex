@@ -23,7 +23,8 @@ trait XmlSerializable[T] {
 class Deployment(val id: String,
                  val prefix: String,
                  val onExist: Deployment.OnExistAction,
-                 val entries: Seq[Node]) {
+                 val entries: Seq[Node],
+                 val validate: Boolean = true) {
 
   def process(): Unit = try {
     entries.foreach(e => processNode(e, Nil))
@@ -52,8 +53,8 @@ class Deployment(val id: String,
         case _ =>
       }
     }
-    // If we are still here, let's process the record further: set parents, attributes, subelements
-    // and foreigners.
+    // If we are still here, let's process the record further: set parents, attributes,
+    // subelements and foreigners.
     parentPath.foreach(p =>
       if (r._fields.contains(p._1.field)) r.setField(p._1.field, p._2.id.getValue))
     var foreigns: Seq[Pair[Association[_, _], Node]] = Nil
@@ -83,7 +84,7 @@ class Deployment(val id: String,
       case _ =>
     }
     // Now the record is ready to be saved.
-    r.save()
+    if (validate) r.save() else r.save_!()
     // Finally, process the foreigners.
     foreigns.foreach(p =>
       processNode(p._2, parentPath ++ List(p._1.asInstanceOf[Association[R, R]] -> r)))
@@ -148,7 +149,11 @@ object Deployment {
       case "recreate" | "delete" | "delete-create" | "overwrite" => Deployment.Recreate
       case _ => Deployment.Skip
     }
-    return new Deployment(id, prefix, onExist, n.child.filter(n => n.isInstanceOf[Elem]))
+    val validate = (n \ "@validate").text match {
+      case "false" | "f" | "no" | "off" => false
+      case _ => true
+    }
+    return new Deployment(id, prefix, onExist, n.child.filter(n => n.isInstanceOf[Elem]), validate)
   } else throw new ORMException("<deployment> expected, but <" + n.label + "> found.")
 
   def readAll(n: Node): Seq[Deployment] = if (n.label == "deployments")
