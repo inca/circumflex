@@ -91,17 +91,18 @@ abstract class Relation[R <: Record[R]] {
    * Relation name defaults to record's unqualified class name, transformed
    * with `Circumflex.camelCaseToUnderscore`.
    */
-  val relationName = camelCaseToUnderscore(recordClass.getSimpleName)
+  protected val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
+  def relationName: String = _relationName
 
   /**
    * Schema is used to produce a qualified name for relation.
    */
-  val schema: Schema = defaultSchema
+  def schema: Schema = defaultSchema
 
   /**
    * Obtain a qualified name for this relation from dialect.
    */
-  val qualifiedName = dialect.relationQualifiedName(this)
+  def qualifiedName = dialect.relationQualifiedName(this)
 
   /**
    * Are DML statements allowed against this relation?
