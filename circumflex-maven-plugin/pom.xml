@@ -6,13 +6,13 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>maven-cx-plugin</artifactId>
   <packaging>maven-plugin</packaging>
-  <version>1.1</version>
+  <version>1.2</version>
   <name>Circumflex Maven Plugin</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -20,17 +20,17 @@
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-core</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-orm</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-docco</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <!-- Maven plugin -->
     <dependency>

@@ -6,7 +6,7 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.1</version>
+  <version>1.2</version>
   <name>Circumflex</name>
   <description>
     Circumflex is a set of software components for quick and robust application

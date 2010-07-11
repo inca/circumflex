@@ -9,7 +9,11 @@ import freemarker.core.Environment
 import java.io.StringWriter
 
 trait FreemarkerHelper {
-  def freemarkerConf: Configuration = DefaultConfiguration
+  protected var _freemarkerConf: Configuration = DefaultConfiguration
+  def freemarkerConf = _freemarkerConf
+  def setConfiguration(c: Configuration) = {
+    _freemarkerConf = c
+  }
   def ftl(template: String): Nothing =
     throw new RouteMatchedException(new FreemarkerResponse(freemarkerConf.getTemplate(template)))
   def ftl(template: String, statusCode: Int): Nothing = {
@@ -23,7 +27,6 @@ trait FreemarkerHelper {
     freemarkerConf.getTemplate(template).process(root, result)
     return result.toString
   }
-
 }
 
 object FTL extends FreemarkerHelper
@@ -32,7 +35,6 @@ case class FreemarkerResponse(val template: Template) extends HttpResponse {
   override def apply(response: HttpServletResponse) = {
     var ftlCtx = ctx;
     ftlCtx('context) = ctx;
-    ftlCtx('md) = MarkdownDirective
     super.apply(response)
     template.process(ftlCtx, response.getWriter)
   }
@@ -61,6 +63,7 @@ object DefaultConfiguration extends Configuration {
   setObjectWrapper(new ScalaObjectWrapper())
   setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER)
   setDefaultEncoding("utf-8")
+  setSharedVariable("md", MarkdownDirective)
 }
 
 object MarkdownDirective extends TemplateDirectiveModel {
