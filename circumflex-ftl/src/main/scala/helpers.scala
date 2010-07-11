@@ -9,10 +9,12 @@ import freemarker.core.Environment
 import java.io.StringWriter
 
 trait FreemarkerHelper {
-  protected var _freemarkerConf: Configuration = DefaultConfiguration
-  def freemarkerConf = _freemarkerConf
-  def setConfiguration(c: Configuration) = {
+  protected var _freemarkerConf: Configuration = null
+  def freemarkerConf: Configuration =
+    if (_freemarkerConf == null) DefaultConfiguration else _freemarkerConf
+  def setConfiguration(c: Configuration): this.type = {
     _freemarkerConf = c
+    return this
   }
   def ftl(template: String): Nothing =
     throw new RouteMatchedException(new FreemarkerResponse(freemarkerConf.getTemplate(template)))
