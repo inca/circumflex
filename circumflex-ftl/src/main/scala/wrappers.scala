@@ -106,7 +106,7 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
         return new ScalaMethodWrapper(obj, method.getName, wrapper)
       case _ =>
     }
-    throw new TemplateModelException("Could not resolve " + key + " of object type " + obj.asInstanceOf[Object].getClass + ".")
+    return wrapper.wrap(null)
   }
 
   def isEmpty = false
