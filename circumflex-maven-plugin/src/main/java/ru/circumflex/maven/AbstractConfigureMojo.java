@@ -16,17 +16,14 @@ public abstract class AbstractConfigureMojo extends AbstractCircumflexMojo {
      */
     protected boolean skipUnresolved;
 
+    protected Properties props = new Properties();
+
     public abstract File targetFile();
 
     public void execute() throws MojoExecutionException {
         try {
-            Properties props = new Properties();
-            for (Object key : project.getProperties().keySet()) {
-                String value = project.getProperties().get(key).toString().trim();
-                if (!(skipUnresolved && value.startsWith("${") && value.endsWith("}")))
-                    props.put(key, value);
-                else getLog().warn("Property with key " + key + " is unresolved. To include it, set 'skipUnresolved' to false.");
-            }
+            processProps(System.getProperties());
+            processProps(project.getProperties());
             getLog().info("Writing Circumflex configuration to " + targetFile());
             FileOutputStream out = new FileOutputStream(targetFile());
             try {
@@ -36,6 +33,15 @@ public abstract class AbstractConfigureMojo extends AbstractCircumflexMojo {
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Could not configure Circumflex.", e);
+        }
+    }
+
+    private void processProps(Properties p) {
+        for (Object key : p.keySet()) {
+            String value = p.get(key).toString().trim();
+            if (!(skipUnresolved && value.startsWith("${") && value.endsWith("}")))
+                props.put(key, value);
+            else getLog().warn("Property with key " + key + " is unresolved. To include it, set 'skipUnresolved' to false.");
         }
     }
 
