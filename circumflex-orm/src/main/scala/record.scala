@@ -95,14 +95,20 @@ abstract class Record[R <: Record[R]] { this: R =>
   def insert_!(fields: Field[_]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else transactionManager.dml(conn => {
+    // Execute events
     relation.beforeInsert.foreach(c => c(this))
+    // Collect fields which will participate in query
     var f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => !f.empty_?) else fields
+    // Prepare and execute query
     val sql = dialect.insertRecord(this, f)
     sqlLog.debug(sql)
     val result = auto(conn.prepareStatement(sql))(st => {
       relation.setParams(this, st, f)
       st.executeUpdate
     })
+    // Issue additional select to read generated ID (and default column values)
+    relation.refetchLast(this)
+    // Execute events
     relation.afterInsert.foreach(c => c(this))
     return result
   })
@@ -125,8 +131,11 @@ abstract class Record[R <: Record[R]] { this: R =>
   def update_!(fields: Field[_]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else transactionManager.dml(conn => {
+    // Execute events
     relation.beforeUpdate.foreach(c => c(this))
+    // Collect fields which will participate in query
     val f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => f != id) else fields
+    // Prepare and execute a query
     val sql = dialect.updateRecord(this, f)
     sqlLog.debug(sql)
     val result = auto(conn.prepareStatement(sql))(st => {
@@ -134,6 +143,7 @@ abstract class Record[R <: Record[R]] { this: R =>
       typeConverter.write(st, id.getValue, f.size + 1)
       st.executeUpdate
     })
+    // Execute events
     relation.afterUpdate.foreach(c => c(this))
     return result
   })
@@ -155,13 +165,16 @@ abstract class Record[R <: Record[R]] { this: R =>
   def delete_!(): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else transactionManager.dml(conn => {
+    // Execute events
     relation.beforeDelete.foreach(c => c(this))
+    // Prepare and execute query
     val sql = dialect.deleteRecord(this)
     sqlLog.debug(sql)
     val result = auto(conn.prepareStatement(sql))(st => {
       typeConverter.write(st, id.getValue, 1)
       st.executeUpdate
     })
+    // Execute events
     relation.afterDelete.foreach(c => c(this))
     return result
   })
@@ -171,11 +184,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    * If record's `id` field is not `NULL` perform `update`, otherwise perform `insert`
    * and then refetch record using last generated identity.
    */
-  def save_!(): Int = if (transient_?) {
-    val rows = insert_!()
-    relation.refetchLast(this)
-    return rows
-  } else update_!()
+  def save_!(): Int = if (transient_?) insert_!() else update_!()
 
   /**
    * Validates record and executes `save_!` on success.
