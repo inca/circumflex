@@ -12,18 +12,14 @@ class FTL extends Configuration {
   // ## Loaders
   protected var _loaders: Seq[TemplateLoader] = Nil
   def loaders = _loaders
-  def addLoader(loader: TemplateLoader): this.type = try {
+  def addLoader(loader: TemplateLoader): this.type = {
     _loaders ++= List(loader)
     setTemplateLoader(new MultiTemplateLoader(loaders.toArray))
     return this
-  } catch {
-    case e =>
-      cxLog.error("Could not add loader " + loader + " to FreeMarker configuration.")
-      return this
   }
   def setLoaders(ldrs: TemplateLoader*): this.type = {
-    _loaders = Nil
-    ldrs.foreach(l => addLoader(l))
+    _loaders = ldrs.toList
+    setTemplateLoader(new MultiTemplateLoader(loaders.toArray))
     return this
   }
 
@@ -62,7 +58,12 @@ class FTL extends Configuration {
  * </ul>
  */
 object FTL extends FTL {
-  addLoader(new WebappTemplateLoader(ctx.request.getSession.getServletContext, "/templates"))
+  try {
+    addLoader(new WebappTemplateLoader(ctx.request.getSession.getServletContext, "/templates"))
+  } catch {
+    case e =>
+      cxLog.warn("Not running in webapp context.")
+  }
   addLoader(new ClassTemplateLoader(getClass, "/"))
 }
 
