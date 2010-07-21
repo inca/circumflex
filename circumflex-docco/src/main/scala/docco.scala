@@ -1,6 +1,6 @@
 package ru.circumflex.docco
 
-import ru.circumflex.freemarker.DefaultConfiguration
+import ru.circumflex.freemarker._
 import _root_.freemarker.template.Configuration
 import java.io._
 import ru.circumflex.md.Markdown
@@ -73,7 +73,7 @@ object Docco {
 class Docco(val file: File) {
   import Docco._
   /* FreeMarker stuff */
-  var ftlConfig: Configuration = DefaultConfiguration
+  var ftl: FTL = FTL
   var pageTemplate: String = DEFAULT_SINGLE_PAGE_TEMPLATE
 
   /* Scala comments regex */
@@ -131,7 +131,7 @@ class Docco(val file: File) {
 
   /* Export to HTML */
 
-  def toHtml(writer: Writer): Unit = ftlConfig.getTemplate(pageTemplate)
+  def toHtml(writer: Writer): Unit = ftl.getTemplate(pageTemplate)
       .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
 
   def toHtml(file: File): Unit = {
@@ -163,7 +163,7 @@ class Docco(val file: File) {
 class DoccoBatch(val basePath: File, val outputDirectory: File) {
   import Docco._
   /* FreeMarker stuff */
-  var ftlConfig: Configuration = DefaultConfiguration
+  var ftl: FTL = FTL
   var pageTemplate: String = DEFAULT_BATCH_PAGE_TEMPLATE
   var indexTemplate: String = DEFAULT_INDEX_TEMPLATE
   /* Regex to filter sources */
@@ -238,7 +238,7 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
           "title" -> f.getName,
           "sections" -> docco.sections,
           "depth" -> relName.toList.filter(c => c == File.separatorChar).length)
-        ftlConfig.getTemplate(pageTemplate).process(data, out)
+        ftl.getTemplate(pageTemplate).process(data, out)
       } finally {
         out.close
       }
@@ -255,7 +255,7 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
     val out = new FileWriter(new File(outputDirectory, "index.html"))
     try {
       var data = Map[String, Any]("index" -> indexMap, "title" -> title)
-      ftlConfig.getTemplate(indexTemplate).process(data, out)
+      ftl.getTemplate(indexTemplate).process(data, out)
     } finally {
       out.close
     }
