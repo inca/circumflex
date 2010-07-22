@@ -7,11 +7,21 @@ class MySQLDialect extends Dialect {
   override def timestampType = "TIMESTAMP"
   override def supportsSchema_?(): Boolean = false
   override def supportsDropConstraints_?(): Boolean = false
-  override def relationQualifiedName(relation: Relation[_]) = relation.relationName
+  override def relationQualifiedName(relation: Relation[_]) = quoteTable(relation.relationName)
   override def primaryKeyExpression(record: Record[_]) = "AUTO_INCREMENT"
   override def initializeRelation(relation: Relation[_]) = {}
   override def lastIdExpression(node: RelationNode[_]) =
     node.alias + "." + node.relation.primaryKey.name + " = LAST_INSERT_ID()"
+
+  /**
+   * Quote identifier with MySQL backtick.
+   */
+  override def quoteIdentifer(identifier: String) = "`" + identifier + "`"
+
+  /**
+   * Quote table with MySQL backtick.
+   */
+  override def quoteTable(table: String) = quoteIdentifer(table).replace(".", "`.`")
 }
 
 class OracleDialect extends Dialect {

@@ -115,10 +115,20 @@ class Dialect {
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
 
   /**
+   * Quote identifier for dialects that support it.
+   */
+  def quoteIdentifer(identifier: String) = identifier
+
+  /**
+   * Quote table for dialects that support it.
+   */
+  def quoteTable(table: String) = table
+
+  /**
    * Qualify relation name with it's schema.
    */
   def relationQualifiedName(relation: Relation[_]) =
-    relation.schema.name + "." + relation.relationName
+    quoteIdentifer(relation.schema.name) + "." + quoteTable(relation.relationName)
 
   /**
    * Just prepend specified expression with `DEFAULT` keyword.
@@ -128,13 +138,13 @@ class Dialect {
   /**
    * Just append `AS` and specified `alias` to specified `expression`.
    */
-  def alias(expression: String, alias: String) = expression + " AS " + alias
+  def alias(expression: String, alias: String) = expression + " AS " + quoteIdentifer(alias)
 
   /**
    * Qualify a column with table alias (e.g. "p.id")
    */
   def qualifyColumn(field: Field[_], tableAlias: String) =
-    tableAlias + "." + field.name
+    quoteTable(tableAlias) + "." + quoteIdentifer(field.name)
 
   /**
    * Take specified `expression` into parentheses and prepend `ON`.
@@ -160,13 +170,13 @@ class Dialect {
    * with `CONSTRAINT` keyword and constraint name.
    */
   def constraintDefinition(constraint: Constraint) =
-    "CONSTRAINT " + constraint.constraintName + " " + constraint.sqlDefinition
+    "CONSTRAINT " + quoteIdentifer(constraint.constraintName) + " " + constraint.sqlDefinition
 
   /**
    * Produce `ALTER TABLE` statement with abstract action.
    */
   def alterTable(rel: Relation[_], action: String) =
-    "ALTER TABLE " + rel.qualifiedName + " " + action
+    "ALTER TABLE " + quoteTable(rel.qualifiedName) + " " + action
 
   /**
    * Produce `ALTER TABLE` statement with `ADD CONSTRAINT` action.
@@ -178,45 +188,45 @@ class Dialect {
    * Produce `ALTER TABLE` statement with `DROP CONSTRAINT` action.
    */
   def alterTableDropConstraint(constraint: Constraint) =
-    alterTable(constraint.relation, "DROP CONSTRAINT " + constraint.constraintName);
+    alterTable(constraint.relation, "DROP CONSTRAINT " + quoteIdentifer(constraint.constraintName));
 
   /**
    * Produces `CREATE SCHEMA` statement.
    */
-  def createSchema(schema: Schema) = "CREATE SCHEMA " + schema.name
+  def createSchema(schema: Schema) = "CREATE SCHEMA " + quoteIdentifer(schema.name)
 
   /**
    * Produce `DROP SCHEMA` statement.
    */
-  def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name + " CASCADE"
+  def dropSchema(schema: Schema) = "DROP SCHEMA " + quoteIdentifer(schema.name) + " CASCADE"
 
   /**
    * Produce `CREATE TABLE` statement without constraints.
    */
   def createTable(table: Table[_]) =
-    "CREATE TABLE " + table.qualifiedName + " (" +
+    "CREATE TABLE " + quoteTable(table.qualifiedName) + " (" +
         table.fields.map(_.toSql).mkString(", ") +
-        ", PRIMARY KEY (" + table.primaryKey.name + "))"
+        ", PRIMARY KEY (" + quoteIdentifer(table.primaryKey.name) + "))"
 
   /**
    * Produce `DROP TABLE` statement.
    */
   def dropTable(table: Table[_]) =
-    "DROP TABLE " + table.qualifiedName
+    "DROP TABLE " + quoteTable(table.qualifiedName)
 
   /**
    * Produces `CREATE VIEW` statement.
    */
   def createView(view: View[_]) =
-    "CREATE VIEW " + view.qualifiedName + " (" +
-        view.fields.map(_.name).mkString(", ") + ") AS " +
+    "CREATE VIEW " + quoteTable(view.qualifiedName) + " (" +
+        view.fields.map(field => quoteIdentifer(field.name)).mkString(", ") + ") AS " +
         view.query.toInlineSql
 
   /**
    * Produce `DROP VIEW` statement.
    */
   def dropView(view: View[_]) =
-    "DROP VIEW " + view.qualifiedName
+    "DROP VIEW " + quoteIdentifer(view.qualifiedName)
 
   /**
    * Produce `CREATE INDEX` statement.
@@ -224,7 +234,7 @@ class Dialect {
   def createIndex(idx: Index): String = {
     var result = "CREATE "
     if (idx.unique_?) result += "UNIQUE "
-    result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
+    result += "INDEX " + quoteIdentifer(idx.name) + " ON " + quoteTable(idx.relation.qualifiedName) +
         " USING " + idx.using + " (" + idx.expression + ")"
     if (idx.where != EmptyPredicate)
       result += " WHERE " + idx.where.toInlineSql
@@ -234,7 +244,7 @@ class Dialect {
   /**
    * Produce `DROP INDEX` statement.
    */
-  def dropIndex(idx: Index) = "DROP INDEX " + idx.relation.schema.name + "." + idx.name
+  def dropIndex(idx: Index) = "DROP INDEX " + quoteTable(idx.relation.schema.name) + "." + quoteIdentifer(idx.name)
 
   /**
    * SQL definition for a column represented by specified `field`
@@ -359,8 +369,8 @@ class Dialect {
    * Produce `INSERT INTO .. VALUES` statement for specified `record` and specified `fields`.
    */
   def insertRecord(record: Record[_], fields: Seq[Field[_]]) =
-    "INSERT INTO " + record.relation.qualifiedName +
-        " (" + fields.map(_.name).mkString(", ") +
+    "INSERT INTO " + quoteTable(record.relation.qualifiedName) +
+        " (" + fields.map(column => quoteIdentifer(column.name)).mkString(", ") +
         ") VALUES (" + fields.map(f => "?").mkString(", ") + ")"
 
   /**
@@ -368,29 +378,29 @@ class Dialect {
    * `fields` in the `SET` clause.
    */
   def updateRecord(record: Record[_], fields: Seq[Field[_]]): String =
-    "UPDATE " + record.relation.qualifiedName +
-        " SET " + fields.map(_.name + " = ?").mkString(", ") +
-        " WHERE " + record.id.name + " = ?"
+    "UPDATE " + quoteTable(record.relation.qualifiedName) +
+        " SET " + fields.map(column => quoteIdentifer(column.name) + " = ?").mkString(", ") +
+        " WHERE " + quoteIdentifer(record.id.name) + " = ?"
 
   /**
    * Produce `DELETE` statement for specified `record`.
    */
   def deleteRecord(record: Record[_]): String =
-    "DELETE FROM " + record.relation.qualifiedName +
-        " WHERE " + record.id.name + " = ?"
+    "DELETE FROM " + quoteTable(record.relation.qualifiedName) +
+        " WHERE " + quoteIdentifer(record.id.name) + " = ?"
 
   /**
    * Produce `INSERT .. SELECT` statement.
    */
-  def insertSelect(dml: InsertSelect[_]) = "INSERT INTO " + dml.relation.qualifiedName + " (" +
-      dml.relation.fields.map(_.name).mkString(", ") + ") " + dml.query.toSql
+  def insertSelect(dml: InsertSelect[_]) = "INSERT INTO " + quoteTable(dml.relation.qualifiedName) + " (" +
+      dml.relation.fields.map(column => quoteIdentifer(column.name)).mkString(", ") + ") " + dml.query.toSql
 
   /**
    * Produce `UPDATE` statement.
    */
   def update(dml: Update[_]): String = {
-    var result = "UPDATE " + dml.node.toSql + " SET " +
-        dml.setClause.map(_._1.name + " = ?").mkString(", ")
+    var result = "UPDATE " + quoteTable(dml.node.toSql) + " SET " +
+        dml.setClause.map(column => quoteIdentifer(column._1.name) + " = ?").mkString(", ")
     if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
     return result
   }
@@ -399,7 +409,7 @@ class Dialect {
    * Produce `DELETE` statement.
    */
   def delete(dml: Delete[_]): String = {
-    var result = "DELETE FROM " + dml.node.toSql
+    var result = "DELETE FROM " + quoteTable(dml.node.toSql)
     if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
     return result
   }
