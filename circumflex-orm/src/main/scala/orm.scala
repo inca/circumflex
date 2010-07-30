@@ -134,6 +134,11 @@ trait ConnectionProvider {
  */
 class DefaultConnectionProvider extends ConnectionProvider {
 
+  protected val autocommit: Boolean = Circumflex.get("orm.connection.autocommit") match {
+    case Some("true") => true
+    case _ => false
+  }
+
   protected val isolation: Int = Circumflex.get("orm.connection.isolation") match {
     case Some("none") => Connection.TRANSACTION_NONE
     case Some("read_uncommitted") => Connection.TRANSACTION_READ_UNCOMMITTED
@@ -195,7 +200,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
    */
   def openConnection: Connection = {
     val conn = dataSource.getConnection
-    conn.setAutoCommit(false)
+    conn.setAutoCommit(autocommit)
     conn.setTransactionIsolation(isolation)
     return conn
   }
