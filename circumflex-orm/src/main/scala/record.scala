@@ -250,6 +250,13 @@ abstract class Record[R <: Record[R]] { this: R =>
     case _ =>
   }
 
+  override def equals(obj: Any) = obj match {
+    case r: R => this.id() == r.id()
+    case _ => false
+  }
+
+  override def hashCode = id.getOrElse(0l).hashCode
+
   override def toString = getClass.getSimpleName + "@" + id.toString("TRANSIENT")
 
 }
