@@ -14,7 +14,7 @@
   </root>
 
   <category name="ru.circumflex.orm">
-    <priority value="info"/>
+    <priority value="debug"/>
   </category>
 
 </log4j:configuration>

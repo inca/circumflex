@@ -40,7 +40,14 @@ object ORM {
     case Some(d: Dialect) => d
     case Some(c: Class[Dialect]) => c.newInstance
     case Some(s: String) => Circumflex.loadClass[Dialect](s).newInstance
-    case _ => DefaultDialect
+    case _ => Circumflex.get("orm.connection.url") match {
+      case Some(url: String) =>
+        if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
+        else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
+        else if (url.startsWith("jdbc:oracle:")) new OracleDialect
+        else DefaultDialect
+      case _ => DefaultDialect
+    }
   }
 
   /**
