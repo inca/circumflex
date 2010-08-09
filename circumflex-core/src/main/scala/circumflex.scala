@@ -14,13 +14,7 @@ object Circumflex extends HashModel {
   def get(key: String): Option[Any] = _params.get(key)
   def update(key: String, value: Any) = { _params(key) = value }
 
-  // ### Defaults
-
-  // Should filter process request?
-  this("cx.process_?") =
-      (r: HttpServletRequest) => !r.getRequestURI.toLowerCase.matches("/public/.*")
-
-  // ### Read configuration from `cx.properties` file
+ // ### Read configuration from `cx.properties` file
 
   try {
     val bundle = ResourceBundle.getBundle("cx", Locale.getDefault, classLoader)
@@ -65,6 +59,13 @@ object Circumflex extends HashModel {
     case _ => default
   }
 
+  // ### Defaults
+
+  // Should filter process request?
+  this("cx.process_?") =
+      (r: HttpServletRequest) => !r.getRequestURI.startsWith(publicUri)
+
+ 
 }
 
 // ## Exception
