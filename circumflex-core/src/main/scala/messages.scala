@@ -2,12 +2,36 @@ package ru.circumflex.core
 
 import java.util.{Locale, ResourceBundle}
 
-class Messages(val baseName: String, val locale: Locale) extends HashModel {
+/*!
+
+# Messages API
+
+Messages API present you a convenient way to internationalize your application.
+
+Generally, all strings that should be presented to user are stored in
+separate `.properties`-files as suggested by [Java Internationalization][java-i18n].
+Such strings are resolved using `Messages` class or `msg` helper object.
+
+Circumflex Messages API goes beyound this simple approach and offers [messages grouping](#grouping),
+[ranged resolving](#range), [parameters interpolation](#params) and [formatting](#format).
+
+    [java-i18n]: http://java.sun.com/javase/technologies/core/basic/intl
+
+*/
+
+class Message(val key: String, var params: Map[String, Object]) {
+
+  def this(key: String, params: Pair[String, Object]*) =
+    this(key, Map(params: _*))
+
+}
+
+class Messages(val bundleName: String, val locale: Locale) extends HashModel {
   val msgBundle: ResourceBundle = try {
-    ResourceBundle.getBundle(baseName, locale)
+    ResourceBundle.getBundle(bundleName, locale)
   } catch {
     case e => {
-      cxLog.debug("ResourceBundle for messages instance not found: " + baseName)
+      cxLog.debug("ResourceBundle for messages instance not found: " + bundleName)
       null
     }
   }
