@@ -2,7 +2,6 @@ package ru.circumflex.core
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import java.net.URLDecoder
-import java.util.ResourceBundle
 import java.lang.String
 
 class CircumflexContext(val request: HttpServletRequest,
@@ -143,6 +142,6 @@ object CircumflexContext {
   def destroy() = threadLocalContext.set(null)
 }
 
-class ParamHelper(val key: String) {
-  def :=(value: Any): Unit = { ctx(key) = value }
+class ParamHelper(val key: Symbol) {
+  def :=(value: Any): Unit = ctx(key).update(value)
 }

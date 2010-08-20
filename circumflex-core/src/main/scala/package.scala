@@ -3,16 +3,24 @@ package ru.circumflex
 import ru.circumflex.core._
 import org.slf4j.LoggerFactory
 
+/*!
+
+# Circumflex Helpers
+
+
+
+ */
+
 package object core {
 
   implicit def symbol2string(sym: Symbol): String = sym.name
   @inline implicit def any2option[A](a: A): Option[A] = if (a == null) None else Some(a)
-  implicit def string2paramHelper(str: String): ParamHelper = new ParamHelper(str)
-  implicit def symbol2paramHelper(sym: Symbol): ParamHelper = new ParamHelper(sym.name)
+  implicit def string2paramHelper(str: String): ParamHelper = new ParamHelper(new Symbol(str))
+  implicit def symbol2paramHelper(sym: Symbol): ParamHelper = new ParamHelper(sym)
 
   type MutableMap[A, B] = collection.mutable.Map[A, B]
   val MutableMap  = collection.mutable.Map
-  
+
   val cxLog = LoggerFactory.getLogger("ru.circumflex.core")
   def ctx = CircumflexContext.get
 
