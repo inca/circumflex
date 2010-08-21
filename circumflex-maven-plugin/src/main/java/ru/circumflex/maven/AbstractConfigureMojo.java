@@ -22,8 +22,8 @@ public abstract class AbstractConfigureMojo extends AbstractCircumflexMojo {
 
     public void execute() throws MojoExecutionException {
         try {
-            processProps(System.getProperties());
             processProps(project.getProperties());
+            processProps(System.getProperties());
             getLog().info("Writing Circumflex configuration to " + targetFile());
             FileOutputStream out = new FileOutputStream(targetFile());
             try {
