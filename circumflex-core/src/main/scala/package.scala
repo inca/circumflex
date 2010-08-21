@@ -15,6 +15,8 @@ package object core {
 
   val CX_LOG = LoggerFactory.getLogger("ru.circumflex.core")
 
+  val cx = Circumflex
   def ctx = Context.get
+  def msg = cx.get[MessageResolver]("cx.messages", DefaultMessageResolver)
 
 }

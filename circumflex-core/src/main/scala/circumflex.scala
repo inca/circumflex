@@ -106,4 +106,5 @@ object Circumflex extends HashMap[String, Any] {
     }
   }
 
+  override def stringPrefix = "cx"
 }

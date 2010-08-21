@@ -4,11 +4,12 @@ import scala.collection.mutable.HashMap
 
 /*!# Context
 
-Context is a thread-local container which allows you to share objects within
-one logical scope. Such logical scope could be anything: database transaction,
-HTTP request, user session within GUI form, etc. Within this scope you can obtain
-current context by calling `Context.get` method (or using `ctx` method or package
-`ru.circumflex.core`).
+Context is a thread-local container which allows you to share objects (also known as
+context variables) within one logical scope.
+
+Such logical scope could be anything: database transaction, HTTP request, user
+session within GUI form, etc. Within this scope you can obtain current context by
+calling `Context.get` method (or using `ctx` method of package `ru.circumflex.core`).
 
 Most Circumflex components depend on context and, therefore, can only be run
 inside context-aware code. Application is responsible for maintaining context
@@ -16,7 +17,9 @@ lifecycle. For example, [Circumflex Web Framework](http://circumflex.ru/web.html
 takes care of context initialization and finalization inside `CircumflexFilter`.
 See [Context Lifecycle](#lifecycle) for more information.
 */
-class Context extends HashMap[String, Any]
+class Context extends HashMap[String, Any] {
+  override def stringPrefix = "ctx"
+}
 
 /*!# Context Lifecycle {#lifecycle}
 
