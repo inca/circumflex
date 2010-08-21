@@ -9,12 +9,12 @@ They do not relate to public API, but you should import the whole
 package if you intend to use Circumflex API:
 
     import ru.circumflex.core._
-
 */
 
 package object core {
 
-  type MutableMap[A, B] = collection.mutable.Map[A, B]
-  val cxLog = LoggerFactory.getLogger("ru.circumflex.core")
+  val CX_LOG = LoggerFactory.getLogger("ru.circumflex.core")
+
+  def ctx = Context.get
 
 }
