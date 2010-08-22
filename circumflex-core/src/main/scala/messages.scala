@@ -9,7 +9,7 @@ import java.text.MessageFormat
 
 /*!# Messages API
 
-Messages API offer you a convenient way to internationalize your application.
+Messages API offers you a convenient way to internationalize your application.
 
 Generally, all strings that should be presented to user are stored in
 separate `.properties`-files as suggested by [Java Internationalization][java-i18n].
@@ -39,7 +39,7 @@ method, each `{key}` in message are replaced by corresponding value).
 
 Circumflex Messages API also allows very robust ranged resolving. The message is searched
 using the range of keys, from the most specific to the most general ones: if the message
-is not resolved with using given key, then the key is truncated from the left side to
+is not resolved with given key, then the key is truncated from the left side to
 the first dot (`.`) and the message is searched again. For example, if you are looking
 for a message with key `com.myapp.model.Account.name.empty` (possibly while performing
 domain model validation), then following keys will be used to lookup an appropriate
