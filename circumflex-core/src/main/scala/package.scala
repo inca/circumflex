@@ -2,9 +2,9 @@ package ru.circumflex
 
 import org.slf4j.LoggerFactory
 
-/*!# Core Package
+/*!# The `core` Package
 
-The package `core` contains different utilities and implicits.
+Package `core` contains different utilities and implicits.
 They do not relate to public API, but you should import the whole
 package if you intend to use Circumflex API:
 
@@ -24,7 +24,7 @@ package object core {
   def ctx = Context.get
   def msg = cx.get[MessageResolver]("cx.messages", DefaultMessageResolver)
 
-  /*! Next come some neat utilities. */
+  /*! Next come some neat utilities and useful implicits. */
 
   def camelCaseToUnderscore(arg: String) = arg.replaceAll("(?<!^)([A-Z])","_$1").toLowerCase
 
@@ -33,5 +33,8 @@ package object core {
     block
     System.currentTimeMillis - startTime
   }
+
+  @inline implicit def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
+  @inline implicit def symbol2string(sym: Symbol): String = sym.name
 
 }
