@@ -34,8 +34,8 @@ If you need to search messages in different sources, you can use
 `resolvers` list, the first resolved message is returned.
 
 Messages can also be formatted. We support both classic `MessageFormat` style
-and parameters interpolation (key-value pairs are passed as arguments to `interpolate`
-method, each `{key}` in message are replaced by corresponding value).
+and parameters interpolation (key-value pairs are passed as arguments to `fmt`
+method, each `{key}` in message is replaced by corresponding value).
 
 Circumflex Messages API also allows very robust ranged resolving. The message is searched
 using the range of keys, from the most specific to the most general ones: if the message
@@ -76,7 +76,7 @@ trait MessageResolver extends Map[String, String] {
     case _ => Locale.getDefault
   }
 
-  def interpolate(key: String, params: Pair[String, Any]*): String =
+  def fmt(key: String, params: Pair[String, Any]*): String =
     params.foldLeft(getOrElse(key, "")) {
       (result, p) => result.replaceAll("\\{" + p._1 + "\\}", p._2.toString)
     }
