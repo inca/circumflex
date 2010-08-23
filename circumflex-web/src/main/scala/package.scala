@@ -2,26 +2,28 @@ package ru.circumflex
 
 import ru.circumflex.core._
 import org.slf4j.LoggerFactory
+import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+/*!# The `web` Package
 
-/*!
+Package `web` contains different utilities and implicits -- the basis of
+routing DSL of Circumflex Web Framework.
 
-# Circumflex Helpers
+You should import this package to use Circumflex Web Framework in your application:
 
+    import ru.circumflex.web._
+*/
 
+package object web {
 
- */
+  implicit def string2paramHelper(str: String): ParamHelper = new ParamHelper(str)
+  implicit def symbol2paramHelper(sym: Symbol): ParamHelper = string2paramHelper(sym.name)
 
-package object core {
+  val CX_WEB_LOG = LoggerFactory.getLogger("ru.circumflex.web")
 
-  implicit def string2paramHelper(str: String): ParamHelper = new ParamHelper(new Symbol(str))
-  implicit def symbol2paramHelper(sym: Symbol): ParamHelper = new ParamHelper(sym)
+  def request = ctx('request).asInstanceOf[HttpServletRequest]
+  def response = ctx('response).asIstanceOf[HttpServletResponse]
 
-  type MutableMap[A, B] = collection.mutable.Map[A, B]
-  val MutableMap  = collection.mutable.Map
-
-  val cxLog = LoggerFactory.getLogger("ru.circumflex.core")
-  def ctx = CircumflexContext.get
-
+  /*
   val Accept = new HeaderMatcherHelper("Accept")
   val AcceptCharset = new HeaderMatcherHelper("Accept-Charset")
   val AcceptEncoding = new HeaderMatcherHelper("Accept-Encoding")
@@ -46,5 +48,5 @@ package object core {
   val Upgrade = new HeaderMatcherHelper("Upgrade")
   val UserAgent = new HeaderMatcherHelper("User-Agent")
   val Via = new HeaderMatcherHelper("Via")
-
+  */
 }
