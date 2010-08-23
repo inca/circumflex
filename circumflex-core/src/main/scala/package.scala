@@ -24,12 +24,10 @@ package object core {
   def ctx = Context.get
   def msg = cx.get[MessageResolver]("cx.messages", DefaultMessageResolver)
 
-  /*! This thingy is very useful and very light: it translates every
-  `ThisKindOfIdentifiers` into `that_kinds_of_identifiers`.
-  */
+  /*! Next come some neat utilities. */
+
   def camelCaseToUnderscore(arg: String) = arg.replaceAll("(?<!^)([A-Z])","_$1").toLowerCase
 
-  /*! Executes specified `block` and reports the time taken. */
   def time(block: => Unit): Long = {
     val startTime = System.currentTimeMillis
     block
