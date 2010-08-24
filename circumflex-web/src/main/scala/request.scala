@@ -27,48 +27,45 @@ class HttpRequest(val raw: HttpServletRequest) {
     * `uri` returns the request URI without query string;
     * `queryString` returns the query string that is contained in the request URL after the path;
     * `url` reconstructs an URL the client used to make the request;
-    * `sessionId` returns session identifier specified by the client;
-    * `secure_?` returns `true` if the request was made using a secure channel, such as HTTPS;
-    *
+    * `secure_?` returns `true` if the request was made using a secure channel, such as HTTPS.
   */
   def method = raw.getMethod
   def scheme = raw.getScheme
   def uri = raw.getRequestURI
   def queryString = raw.getQueryString
   def url = raw.getRequestURL
-  def sessionId = raw.getRequestedSessionId
   def secure_?() = raw.isSecure
 
-  /*!# Server Information
+  /*!# Client & Server Information
 
   Following methods provide information about the server:
 
-    * `serverHost` returns the host name of the server for which this request is originated;
-    * `serverPort` returns the port number to which the request was sent.
+    * `serverHost` returns the host name of the server for which this request was originated;
+    * `serverPort` returns the port number to which the request was sent;
+    * `localIp` returns the Internet Protocol address of the interface on which the request was
+    received;
+    * `localHost` returns the host name of the IP interface on which the request was received;
+    * `localPort` returns the IP port on which the request was received.
+
+  Following methods can be used to retrieve basic information about the client:
+
+    * `remoteIp` returns the Internet Protocol address of the client (or last proxy) that sent
+    the request;
+    * `remoteHost` returns the host name of the client (or last proxy) that sent the request;
+    * `remoteLogin` returns the login of the user making the request wrapped in `Some`, if the
+    user has been authenticated, or `None` if the user has not been authenticated;
+    * `sessionId` returns session identifier specified by the client;
   */
   def serverHost: String = raw.getServerName
   def serverPort: String = raw.getServerPort
+  def localIp: String = raw.getLocalAddr
+  def localHost: String = raw.getLocalName
+  def localPort: String = raw.getLocalPort
 
-  /*!# Client Information
-
-  Following methods provide information about the client wich sent this request.
-  */
-
-  /**
-   * If the request is authenticated, return the login of user making this request. Otherwise,
-   * return `None`.
-   */
-  def clientLogin: Option[String] = raw.getRemoteUser
-
-  /**
-   * Returns the Internet Protocol address of the client or last proxy that sent this request.
-   */
-  def clientIp: String = raw.getRemoteAddr
-
-  /**
-   * Returns the fully-qualified host name of the client or last proxy that sent this request.
-   */
-  def clientHost: String = raw.getRemoteHost
+  def remoteIp: String = raw.getRemoteAddr
+  def remoteHost: String = raw.getRemoteHost
+  def remoteLogin: Option[String] = raw.getRemoteUser
+  def sessionId = raw.getRequestedSessionId
 
   /*!## Cookies
 
@@ -83,9 +80,9 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   /*!## Headers
 
-  Request headers are accessible via the `headers` field. It is immutable Scala map,
-  from `String` to `String`, thus you can use all Scala fancies to work with request
-  headers.
+  Request headers contain operational information about the requst.
+
+  Circumflex Web Framework lets you access request headers via the `headers` field.
 
   Note that HTTP specification allows clients to send multiple header values using
   comma-delimited strings. To read multiple values from header use `split`:
@@ -110,8 +107,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   between a servlet and the servlet container or between collaborating servlets.
 
   Circumflex Web Framework let's you access request attributes via the `attrs`
-  field. It is immutable Scala map, from `String` to `Any`, so you can use all Scala
-  fancies to work with request attributes.
+  field.
   */
   val attrs: Map[String, Any] = new Map[String, Any]() { map =>
     def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
@@ -127,5 +123,25 @@ class HttpRequest(val raw: HttpServletRequest) {
           .map(k => (k -> raw.getAttribute(k)))
     def get(key: String): Option[Any] = raw.getAttribute(key)
   }
+
+  /*!## Session
+
+  Session is a convenient in-memory storage presented by Servlet API which allows web
+  applications to maintain state of their clients.
+
+  A special identifier, session ID, is generated once the session is initiated.
+  Clients then, to identify themselves within application, send session ID as a cookie
+  with every request.
+
+  Circumflex Web Framework let's you access session attributes via the `session` field.
+
+  Note that if session was not already created for the request, it will only be created
+  if you attempt to add an attribute into it via `update` or `+` method.
+  */
+  val session: Map[String, Any] = new Map[String, Any]() { map =>
+    
+  }
+
+  
 
 }
