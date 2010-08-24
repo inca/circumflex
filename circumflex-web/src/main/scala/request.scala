@@ -92,16 +92,40 @@ class HttpRequest(val raw: HttpServletRequest) {
 
       val accepts = request.headers('Accept).split(",")
   */
-  val headers: Map[String, String] = new Map[String, String]() {
-    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
-    def -(key: String): Map[String, String] = this
+  val headers: Map[String, String] = new Map[String, String]() { map =>
+    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = map
+    def -(key: String): Map[String, String] = map
     def iterator: Iterator[(String, String)] =
       new EnumerationIterator[String](raw.getHeaderNames)
-          .map(n => (n -> raw.getHeader(n)))
+          .map(k => (k -> raw.getHeader(k)))
     def get(key: String): Option[String] = raw.getHeader(key)
     def getAsMillis(key: String): Option[Long] = raw.getDateHeader(key)
     def getAsDate(key: String): Option[Long] = getAsMillis(key).map(new Date(_))
     def getAsInt(key: String): Option[Long] = raw.getIntHeader(key)
+  }
+
+  /*!## Attributes
+
+  Request attributes presented by Servlet API are typically used to pass information
+  between a servlet and the servlet container or between collaborating servlets.
+
+  Circumflex Web Framework let's you access request attributes via the `attrs`
+  field. It is immutable Scala map, from `String` to `Any`, so you can use all Scala
+  fancies to work with request attributes.
+  */
+  val attrs: Map[String, Any] = new Map[String, Any]() { map =>
+    def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
+      raw.setAttribute(kv._1, kv._2)
+      map
+    }
+    def -(key: String): Map[String, Any] = {
+      raw.removeAttribute(key)
+      map
+    }
+    def iterator: Iterator[(String, Any)] =
+      new EnumerationIterator[String](raw.getAttributeNames)
+          .map(k => (k -> raw.getAttribute(k)))
+    def get(key: String): Option[Any] = raw.getAttribute(key)
   }
 
 }
