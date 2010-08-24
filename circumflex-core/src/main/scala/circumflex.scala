@@ -73,8 +73,17 @@ object Circumflex extends HashMap[String, Any] {
     return o
   }
 
+  /*! You can also ask `Circumflex` to instantiate a new object instead of getting a cached one
+  using `newObject` method:
+
+      val transaction = Circumflex.newObject("myApp.transaction", new DefaultTransaction)
+
+  Note, however, that singletons cannot be instantiated more than once, so if you'll ask
+  Circumflex to instantiate a singleton (or provide singleton as default), you'll get the
+  same instance on each invokation (just like using the `get` method).
+  */
   def newObject[C](name: String, default: =>C): C = this.get(name) match {
-    case Some(obj: C) => obj
+    case Some(obj: C) => instantiateObject(name, obj.asInstanceOf[AnyRef].getClass, default)
     case Some(c: Class[C]) => instantiateObject(name, c, default)
     case Some(s: String) => try {
       // lookup class

@@ -47,40 +47,6 @@ object CircumflexUtil {
 }
 
 /**
- * Mutable helper for dealing with HTTP cookies.
- */
-case class HttpCookie(var name: String,
-                      var value: String,
-                      var domain: String = null,
-                      var path: String = null,
-                      var comment: String = null,
-                      var secure: Boolean = false,
-                      var maxAge: Int = -1) {
-  def convert: Cookie = {
-    val c = new Cookie(name, value)
-    if (domain != null) c.setDomain(domain)
-    if (path != null) c.setPath(path)
-    if (comment != null) c.setComment(comment)
-    c.setSecure(secure)
-    c.setMaxAge(maxAge)
-    return c
-  }
-  override def toString = name + " = " + value
-}
-
-object HttpCookie {
-  def convert(cookie: Cookie): HttpCookie =
-    new HttpCookie(
-      cookie.getName,
-      cookie.getValue,
-      cookie.getDomain,
-      cookie.getPath,
-      cookie.getComment,
-      cookie.getSecure,
-      cookie.getMaxAge)
-}
-
-/**
  * Represents an HTTP header for `xSendFile` method of `RequestRouter`. X-SendFile feature
  * allows sending files via Web server, thus eliminating all the dirty work from the
  * application code. See the documentation of your Web server to obtain information on

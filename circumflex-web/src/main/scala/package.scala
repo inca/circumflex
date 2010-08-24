@@ -3,9 +3,10 @@ package ru.circumflex
 import ru.circumflex.core._
 import org.slf4j.LoggerFactory
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+
 /*!# The `web` Package
 
-Package `web` contains different utilities and implicits -- the basis of
+Package `web` contains different shortcuts, utilities and implicits -- the basis of
 routing DSL of Circumflex Web Framework.
 
 You should import this package to use Circumflex Web Framework in your application:
@@ -20,8 +21,8 @@ package object web {
 
   val CX_WEB_LOG = LoggerFactory.getLogger("ru.circumflex.web")
 
-  def request = ctx('request).asInstanceOf[HttpServletRequest]
-  def response = ctx('response).asIstanceOf[HttpServletResponse]
+  def request = ctx("cx.request").asInstanceOf[HttpRequest]
+  def response = ctx("cx.response").asIstanceOf[HttpResponse]
 
   /*
   val Accept = new HeaderMatcherHelper("Accept")
