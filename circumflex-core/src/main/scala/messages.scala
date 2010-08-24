@@ -73,9 +73,12 @@ trait MessageResolver extends Map[String, String] {
 
 /*! You can use `ResourceBundleMessageResolver` to resolve messages from Java `ResourceBundle`s. */
 class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
-  def iterator: Iterator[(String, String)] = bundle.iterator
-  protected def bundle = ResourceBundleCache(bundleName -> locale)
-  protected def resolve(key: String): Option[String] = bundle.get(key)
+  protected val bundle = ResourceBundle.getBundle(bundleName, locale)
+  def iterator: Iterator[(String, String)] =
+    new EnumerationIterator[String](bundle.getKeys)
+      .map(k => (k -> bundle.getString(k)))
+  protected def resolve(key: String): Option[String] =
+    try { Some(bundle.getString(key)) } catch { case _ => None }
 }
 
 /*! The default implementation (`msg` method in package `ru.circumflex.core`)
@@ -83,28 +86,6 @@ uses `ResourceBundle` with base name `Messages` to lookup messages. You can over
 the default implementation by setting `cx.messages` configuration parameter.
 */
 object DefaultMessageResolver extends ResourceBundleMessageResolver("Messages")
-
-/*! `ResourceBundleMessageResolver` caches resource bundles so that iterators can be accessed
-more effectively.
-*/
-object ResourceBundleCache extends HashMap[(String, Locale), Map[String, String]] {
-  override def get(key: (String, Locale)): Option[Map[String, String]] = super.get(key) orElse {
-    val m = HashMap[String, String]()
-    try {
-      val b = ResourceBundle.getBundle(key._1, key._2)
-      val e = b.getKeys
-      while (e.hasMoreElements) {
-        val k = e.nextElement
-        m(k) = b.getString(k)
-      }
-    } catch {
-      case e =>
-        CX_LOG.error("Could not process message bundle.", e)
-    }
-    this(key) = m
-    Some(m)
-  }
-}
 
 /*! If you need to search messages in different sources, you can use
 `DelegatingMessageResolver`: it tries to resolve a message using specified
