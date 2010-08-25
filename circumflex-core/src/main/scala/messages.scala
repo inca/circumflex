@@ -74,8 +74,7 @@ trait MessageResolver extends Map[String, String] {
 /*! You can use `ResourceBundleMessageResolver` to resolve messages from Java `ResourceBundle`s. */
 class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
   protected val bundle = ResourceBundle.getBundle(bundleName, locale)
-  def iterator: Iterator[(String, String)] =
-    new EnumerationIterator[String](bundle.getKeys)
+  def iterator: Iterator[(String, String)] = bundle.getKeys
       .map(k => (k -> bundle.getString(k)))
   protected def resolve(key: String): Option[String] =
     try { Some(bundle.getString(key)) } catch { case _ => None }

@@ -28,6 +28,8 @@ package object core {
 
   @inline implicit def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
   @inline implicit def symbol2string(sym: Symbol): String = sym.name
+  implicit def enum2iterator[T](enum: java.util.Enumeration[T]): Iterator[T] =
+    new EnumerationIterator[T](enum)
 
   /*! Shortcuts let you access Circumflex singletons and helpers conveniently,
   in a DSL-like style. */

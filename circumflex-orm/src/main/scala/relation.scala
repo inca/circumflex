@@ -68,7 +68,7 @@ abstract class Relation[R <: Record[R]] {
 
   /**
    * Attempt to find a record class by convention of companion object,
-   * e.g. strip trailing `$` from `this.getClass.getName`.
+   * i.e. strip trailing `$` from `this.getClass.getName`.
    */
   val recordClass: Class[R] = Circumflex
       .loadClass[R](this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
