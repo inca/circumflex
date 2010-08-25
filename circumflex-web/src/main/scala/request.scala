@@ -1,11 +1,10 @@
 package ru.circumflex.web
 
-import javax.servlet.http.HttpServletRequest
 import collection.immutable.Map
 import ru.circumflex.core._
 import java.util.Date
 import collection.Iterator
-
+import javax.servlet.http.{HttpSession, HttpSession, HttpServletRequest}
 /*!# HTTP Request
 
 The `HttpRequest` class wraps specified `raw` HTTP servlet request and allows you to
@@ -136,10 +135,31 @@ class HttpRequest(val raw: HttpServletRequest) {
   Circumflex Web Framework let's you access session attributes via the `session` field.
 
   Note that if session was not already created for the request, it will only be created
-  if you attempt to add an attribute into it via `update` or `+` method.
+  if you attempt to add an attribute into it via `update` or `+` method, all other methods
+  will return empty values without implicitly creating a session.
   */
   val session: Map[String, Any] = new Map[String, Any]() { map =>
-    
+    def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
+      raw.getSession(true).setAttribute(kv._1, kv._2)
+      map
+    }
+    def -(key: String): Map[String, Any] = {
+      val s: HttpSession = raw.getSession(false)
+      if (s != null) s.removeAttribute(key)
+      map
+    }
+    def iterator: Iterator[(String, Any)] = {
+      val s: HttpSession = raw.getSession(false)
+      if (s != null)
+        new EnumerationIterator[String](s.getAttributeNames)
+            .map(k => (k -> s.getAttribute(k)))
+      else Iterator.empty
+    }
+    def get(key: String): Option[Any] = {
+      val s: HttpSession = raw.getSession(false)
+      if (s != null) s.getAttribute(name)
+      else None
+    }
   }
 
   
