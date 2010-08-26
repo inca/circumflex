@@ -8,8 +8,11 @@ import javax.servlet.http.{HttpServletRequest}
 import java.security.Principal
 import java.util.{Locale, Date}
 import javax.servlet.ServletInputStream
-import java.io.BufferedReader
 import org.apache.commons.io.IOUtils
+import org.apache.commons.fileupload._
+import org.apache.commons.fileupload.servlet._
+import java.io.{File, BufferedReader}
+
 
 /*!# HTTP Request
 
@@ -89,7 +92,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   factor) using `locales` and `locale` fields.
    */
   def locale: Locale = raw.getLocale
-  
+
   lazy val locales: Seq[Locale] = raw.getLocales.toSeq
 
   /*!## Cookies
@@ -193,6 +196,8 @@ class HttpRequest(val raw: HttpServletRequest) {
 
         request.body.encoding = "UTF-8"
 
+    * `multipart_?` returns `true` if the request has `multipart/form-data` content and is
+    suitable for [multipart operations](#multipart);
     * `length` returns the length, in bytes, of the request body;
     * `contentType` returns the MIME type of the body of the request;
     * `reader` opens `java.io.BufferedReader` to read the request body;
@@ -201,13 +206,13 @@ class HttpRequest(val raw: HttpServletRequest) {
     fails;
     * `asString` reads request body into `String` using request `encoding`.
 
-    Note that due to limitations of Java Servlet API, you can only access one of `reader`, `stream`,
-    `xml` or `toString` methods. An `IllegalStateException` is thrown if you access more than one
-    of these methods.
-
+    Note that due to limitations of Servlet API, you can only access one of `reader`, `stream`,
+    `xml` or `toString` methods (and only once). An `IllegalStateException` is thrown if you
+    access more than one of these methods.
   */
 
   object body {
+    def multipart_?(): Boolean = ServletFileUpload.isMultipartContent(raw)
     def encoding: String = raw.getCharacterEncoding
     def encoding_=(enc: String) = raw.setCharacterEncoding(enc)
     def length: Int = raw.getContentLength
@@ -216,6 +221,71 @@ class HttpRequest(val raw: HttpServletRequest) {
     def stream: ServletInputStream = raw.getInputStream
     lazy val asXml: Elem = XML.load(stream)
     lazy val asString = IOUtils.toString(stream, encoding)
+
+    /*!## Multipart Requests & File Uploading {#multipart}
+
+    Standard Servlet API doesn't provide any capabilities to work with requests of MIME type
+    `multipart/form-data` which are usually used by the clients to upload files on the server.
+
+    Circumfex API uses [Apache Commons FileUpload](http://commons.apache.org/fileupload) to
+    simplify this things for you. Commons FileUpload API is very robust and can be used in a
+    number of different ways, depending upon the requirements of your application.
+
+    Commons FileUpload offers you two approaches to deal with `multipart/form-data` requests:
+
+      * *traditional API* relies on `FileItemFactory` which can be configured to keep small files
+      in memory and to store larger files on the disk, you set threshold sizes and operate with
+      convenient `FileItem` objects, which could be queried for different information, like the
+      name of the corresponding field, it's size in bytes, content type, etc.
+      * *streaming API* does not use intermediate storage facilities and allows you to work with
+      `FileItemStream` objects, which show better performance and lower memory usage.
+
+    Circumflex Web Framework provides support for both FileUpload styles via `parseFileItems` and
+    `parseFileStreams` methods respectively.
+
+    Note, however, that you can only use one of them (and only once) while working with the request
+    (it's the limitation of accessing request body in Servlet API mentioned above, so `reader`,
+    `stream`, `asXml` and `asString` methods will also interfere with FileUpload).
+    */
+
+    /**
+     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
+     * using specified `factory`. Returns `Nil` if request does not have multipart content.
+     */
+    def parseFileItems(factory: FileItemFactory): Seq[FileItem] =
+      if (multipart_?) {
+        val uploader = new ServletFileUpload(factory)
+        return asBuffer(uploader.parseRequest(raw).asInstanceOf[java.util.List[FileItem]])
+      } else Nil
+
+    /**
+     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
+     * using `DefaultFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
+     * `Nil` if request does not have multipart content.
+     */
+    def parseFileItems(sizeThreshold: Int, tempStorage: File): Seq[FileItem] =
+      parseFileItems(new DefaultFileItemFactory(sizeThreshold, tempStorage))
+
+    /**
+     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
+     * using `DefaultFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
+     * `Nil` if request does not have multipart content.
+     */
+    def parseFileItems(sizeThreshold: Int, tempStorage: String): Seq[FileItem] =
+      parseFileItems(sizeThreshold, new File(tempStorage))
+
+    /**
+     * Parses multipart request into an iterator of `FileItemStream` (Apache Commons FileUpload).
+     * Returns an empty iterator if request does not have multipart content.
+     */
+    def parseFileStreams(): Iterator[FileItemStream] = if (multipart_?) {
+      val it = new ServletFileUpload().getItemIterator(raw)
+      return new Iterator[FileItemStream]() {
+        def next(): FileItemStream = it.next
+        def hasNext: Boolean = it.hasNext
+      }
+    } else Iterator.empty
+
   }
 
 }

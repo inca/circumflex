@@ -3,6 +3,7 @@ package ru.circumflex.core
 import java.lang.String
 import collection.{Iterator, Map}
 import collection.mutable.HashMap
+import collection.JavaConversions._
 import java.util.{ResourceBundle, Locale}
 import java.text.MessageFormat
 
