@@ -18,21 +18,34 @@ Circumflex Messages API goes beyound this simple approach and offers
 delegating resolving, messages grouping, parameters interpolation and formatting.
 
   [java-i18n]: http://java.sun.com/javase/technologies/core/basic/intl
+
+The usage is pretty simple: you use the `msg` method of package object `ru.circumflex.core`
+which returns an implementation of `MessageResolver` used to retrieve messages. This instance
+is also refered to as *global messages resolver*. By default, the `DefaultMessageResolver`
+singleton is used. You can set `cx.messages` configuration parameter to use your own
+`MessageResolver` implementation as global resolver.
 */
+
+/**
+ * Provides an interface for resolving messages.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
+ */
 trait MessageResolver extends Map[String, String] {
   def -(key: String): Map[String, String] = this
   def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
 
-  /*! `MessageResolver` is responsible for resolving a message by `key`. */
+  /*! The `resolve` method is responsible for resolving a message by `key`. */
   protected def resolve(key: String): Option[String]
 
   /*! Circumflex Messages API features very robust ranged resolving. The message is searched
   using the range of keys, from the most specific to the most general ones: if the message
   is not resolved with given key, then the key is truncated from the left side to
   the first dot (`.`) and the message is searched again. For example, if you are looking
-  for a message with key `com.myapp.model.Account.name.empty` (possibly while performing
+  for a message with the key `com.myapp.model.Account.name.empty` (possibly while performing
   domain model validation), then following keys will be used to lookup an appropriate
-  message:
+  message (until first success):
 
       com.myapp.model.Account.name.empty
       myapp.model.Account.name.empty
@@ -46,23 +59,27 @@ trait MessageResolver extends Map[String, String] {
     else resolveRange(key.substring(key.indexOf(".") + 1))
   }
 
+  /*! You can use the methods of Scala `Map` to retrieve messages from resolver.
+  Default implementation also reports missing messages into Circumflex debug log.
+  */
   def get(key: String): Option[String] = resolveRange(key) orElse {
     CX_LOG.debug("Message with key '" + key + "' is missing.")
     None
   }
 
   /*! The locale is taken from `cx.locale` context variable (see `Context` for more details).
-  If no such variable found in context, platform's default locale is used.
+  If no such variable found in the context, then the platform's default locale is used.
   */
-  def locale: Locale = Circumflex.get("cx.locale") match {
+  def locale: Locale = ctx.get("cx.locale") match {
     case Some(l: Locale) => l
     case Some(l: String) => new Locale(l)
     case _ => Locale.getDefault
   }
 
   /*! Messages can also be formatted. We support both classic `MessageFormat` style
-  and parameters interpolation (key-value pairs are passed as arguments to `fmt`
-  method, each `{key}` in message is replaced by corresponding value).
+  (you know, with `{0}`s in and varargs) and parameters interpolation (key-value pairs
+  are passed as arguments to `fmt` method, each `{key}` in message is replaced by
+  corresponding value).
   */
   def fmt(key: String, params: Pair[String, Any]*): String =
     params.foldLeft(getOrElse(key, "")) {
@@ -81,7 +98,7 @@ class ResourceBundleMessageResolver(val bundleName: String) extends MessageResol
     try { Some(bundle.getString(key)) } catch { case _ => None }
 }
 
-/*! The default implementation (`msg` method in package `ru.circumflex.core`)
+/*! The default implementation (the `msg` method in package `ru.circumflex.core`)
 uses `ResourceBundle` with base name `Messages` to lookup messages. You can override
 the default implementation by setting `cx.messages` configuration parameter.
 */

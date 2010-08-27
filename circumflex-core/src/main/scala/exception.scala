@@ -6,7 +6,7 @@ All exceptions thrown from Circumflex components should extend `CircumflexExcept
 */
 
 /**
- * Indicated a common error occured inside Circumflex component.
+ * Indicates a common error occured inside Circumflex component.
  */
 class CircumflexException(msg: String, cause: Throwable = null)
     extends RuntimeException(msg, cause) {

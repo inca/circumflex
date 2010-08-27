@@ -54,7 +54,6 @@ object Context {
   /*! You can also add event listeners which will be executed after the context is
   initialized or before the context is destroyed.
   */
-
   protected var initListeners: Seq[Context => Unit] = Nil
   protected var destroyListeners: Seq[Context => Unit] = Nil
 
