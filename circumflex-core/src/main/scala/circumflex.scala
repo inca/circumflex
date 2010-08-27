@@ -29,7 +29,7 @@ manual filtering sources and resources.
  * Provides access to Circumflex configuration parameters.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-core/circumflex.scala">circumflex.scala</a>
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/circumflex.scala">circumflex.scala</a>.
  */
 object Circumflex extends HashMap[String, Any] {
 

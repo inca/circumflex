@@ -16,11 +16,12 @@ import java.io.{File, BufferedReader}
 
 /*!# HTTP Request
 
-The `HttpRequest` class wraps specified `raw` HTTP servlet request and allows you to
+The `HttpRequest` class wraps specified `raw` `HttpServletRequest` and allows you to
 use core Scala classes to operate with Servlet API.
 
 This class is designed to efficiently cover mostly used methods of `HttpServletRequest`,
-however, you still can access the `raw` field, which holds actual request.
+however, you still can access the `raw` field, which holds actual request. For more
+information refer to Java Servlet API.
 
 Since Circumflex is UTF-friendly it will implicitly set character encoding of request body
 to `UTF-8`. Feel free to change it if your application requires so.
@@ -31,10 +32,13 @@ to `UTF-8`. Feel free to change it if your application requires so.
  *
  * Most methods are self-descriptive and have direct equivalents in Servlet API, so
  * Scaladocs are omitted.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-web/request.scala">request.scala</a>.
  */
 class HttpRequest(val raw: HttpServletRequest) {
 
-  /*!# Request Basics
+  /*!## Request Basics
 
   General request information can be accessed using following methods:
 
@@ -55,7 +59,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   def url = raw.getRequestURL
   def secure_?() = raw.isSecure
 
-  /*!# Client & Server Information
+  /*!## Client & Server Information
 
   Following methods provide information about the server:
 
@@ -118,13 +122,8 @@ class HttpRequest(val raw: HttpServletRequest) {
   /*!## Headers
 
   Request headers contain operational information about the requst.
-
   Circumflex Web Framework lets you access request headers via the `headers` object.
-
-  Note that HTTP specification allows clients to send multiple header values using
-  comma-delimited strings. To read multiple values from header use `split`:
-
-      val accepts = request.headers('Accept).split(",")
+  TODO: add helpers to retrieve multiple header values
   */
   object headers extends Map[String, String] { map =>
     def +[B1 >: String](kv: (String, B1)): Map[String, B1] = map
@@ -200,11 +199,8 @@ class HttpRequest(val raw: HttpServletRequest) {
   Circumflex Web Framework lets you access the body of the request via `body` object. Following
   methods can be used to work with request body:
 
-    * `encoding` returns the name of the character encoding used in the body of the request;
-    you can override this encoding by assigning to `encoding`:
-
-        request.body.encoding = "UTF-8"
-
+    * `encoding` returns or sets the name of the character encoding used in the body of the
+    request (as mentioned above, we implicitly set it to `UTF-8`);
     * `multipart_?` returns `true` if the request has `multipart/form-data` content and is
     suitable for [multipart operations](#multipart);
     * `length` returns the length, in bytes, of the request body;
@@ -218,9 +214,6 @@ class HttpRequest(val raw: HttpServletRequest) {
   Note that due to limitations of Servlet API, you can only access one of `reader`, `stream`,
   `xml` or `toString` methods (and only once). An `IllegalStateException` is thrown if you
   access more than one of these methods.
-
-  The encoding of the request body is implicitly set to `UTF-8`. Feel free to change it
-  using the `encoding` method if your application requires so.
   */
   object body {
 

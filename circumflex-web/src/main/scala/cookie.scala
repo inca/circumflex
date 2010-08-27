@@ -12,6 +12,13 @@ is often refered to as *cookie*.
 Circumflex Web Framework helps you set response cookies and access request cookies
 throughout your application using case class `HttpCookie`. It is mutable and dead simple.
 */
+
+/**
+ * Provides convenient mutable wrapper to work with HTTP cookies.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-web/cookie.scala">cookie.scala</a>.
+ */
 case class HttpCookie(var name: String,
                       var value: String,
                       var domain: String = null,
