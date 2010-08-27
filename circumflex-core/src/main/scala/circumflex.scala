@@ -9,16 +9,31 @@ This singleton can be used to retrieve Circumflex configuration parameters
 throughout your application.
 
 Configuration parameters are read from `cx.properties` available in classpath.
+
 You can also configure your application in runtime, just add your configuration
 parameters into `Circumflex` using methods of Scala's `Map` interface.
+Note, however, that `Circumflex` singleton is not thread-safe, so it is a best
+practice to only set configuration parameters inside some initialization block
+which will be executed only once by only one thread.
 
-Note, that [Circumflex Maven Plugin](http://circumflex.ru/maven-plugin.html)
+Note that [Circumflex Maven Plugin](http://circumflex.ru/maven-plugin.html)
 also enables you to configure your application at build time using Maven properties
 (specified either in application's `pom.xml` or in `settings.xml`) and system
 properties (specified in command line). This is very robust production scenario,
 because it allows different configurations in different environments without
 manual filtering sources and resources.
 */
+
+/**
+ * Provides access to Circumflex configuration parameters.
+ *
+ * Circumflex configuration parameters are read from `cx.properties` which should be
+ * available in classpath of your application.
+ *
+ * You can also set configuration parameters in runtime using the methods of Scala `Map`.
+ * Note, however, that `Circumflex` singleton is not thread-safe. It is a best practice to
+ * only set configuration parameters inside some initialization block of your application.
+ */
 object Circumflex extends HashMap[String, Any] {
 
   /*! The configuration object is initialized by reading `cx.properties`. */
@@ -66,8 +81,22 @@ object Circumflex extends HashMap[String, Any] {
       object MyServiceImpl extends MyService { ... }
 
   then set your `myApp.myService` configuration parameter to `com.myapp.MyServiceImpl$`.
+
+  Also note that the instantiation is done using default public class constructors, so
+  make sure that the supplied class has one.
   */
-  def get[C](name: String, default: =>C): C = {
+
+  /**
+   * Reads a configuration parameter with specified `name` and returns either an object
+   * of specified type `C` or, if failed, specified by-name object `default`.
+   * If the configuration parameter resolves into `Class` or `String` containing
+   * fully-qualified class name, then the object is instantiated. If the supplied
+   * class resolves to Scala singleton (`object`), then it's instance is returned.
+   *
+   * This method caches the result (by overwriting the configuration parameter), so neither
+   * `default` nor object instantiation are executed twice.
+   */
+  def get[C](name: String, default: =>C): C = synchronized {
     val o = newObject(name, default)
     this(name) = o
     return o
@@ -81,7 +110,18 @@ object Circumflex extends HashMap[String, Any] {
   Note, however, that singletons cannot be instantiated more than once, so if you'll ask
   Circumflex to instantiate a singleton (or provide singleton as default), you'll get the
   same instance on each invokation (just like using the `get` method).
+
+  If configuration parameter already contains an object it will be instantiated again using
+  the default constructor (so make sure it has one).
   */
+
+  /**
+   * Reads a configuration parameter with specified `name` and returns either new object of
+   * specified type `C` or specified by-name object `default`, if failed.
+   * If the configuration parameter resolves into `Class` or `String`
+   * containing fully-qualified class name, then the object is instantiated. If the supplied
+   * class resolves to Scala singleton (`object`), then it's instance is returned.
+   */
   def newObject[C](name: String, default: =>C): C = this.get(name) match {
     case Some(obj: C) => instantiateObject(name, obj.asInstanceOf[AnyRef].getClass, default)
     case Some(c: Class[C]) => instantiateObject(name, c, default)

@@ -21,8 +21,17 @@ use core Scala classes to operate with Servlet API.
 
 This class is designed to efficiently cover mostly used methods of `HttpServletRequest`,
 however, you still can access the `raw` field, which holds actual request.
+
+Since Circumflex is UTF-friendly it will implicitly set character encoding of request body
+to `UTF-8`. Feel free to change it if your application requires so.
 */
 
+/**
+ * Provides a wrapper around `HttpServletRequest`, which is still available as `raw` field.
+ *
+ * Most methods are self-descriptive and have direct equivalents in Servlet API, so
+ * Scaladocs are omitted.
+ */
 class HttpRequest(val raw: HttpServletRequest) {
 
   /*!# Request Basics
@@ -90,7 +99,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   A list of preferred locales is specified by the value of the `Accept-Language` header of
   the request. You can access this list and the most preferred locale (with maximum relative quality
   factor) using `locales` and `locale` fields.
-   */
+  */
   def locale: Locale = raw.getLocale
 
   lazy val locales: Seq[Locale] = raw.getLocales.toSeq
@@ -206,12 +215,15 @@ class HttpRequest(val raw: HttpServletRequest) {
     fails;
     * `asString` reads request body into `String` using request `encoding`.
 
-    Note that due to limitations of Servlet API, you can only access one of `reader`, `stream`,
-    `xml` or `toString` methods (and only once). An `IllegalStateException` is thrown if you
-    access more than one of these methods.
-  */
+  Note that due to limitations of Servlet API, you can only access one of `reader`, `stream`,
+  `xml` or `toString` methods (and only once). An `IllegalStateException` is thrown if you
+  access more than one of these methods.
 
+  The encoding of the request body is implicitly set to `UTF-8`. Feel free to change it
+  using the `encoding` method if your application requires so.
+  */
   object body {
+
     def multipart_?(): Boolean = ServletFileUpload.isMultipartContent(raw)
     def encoding: String = raw.getCharacterEncoding
     def encoding_=(enc: String) = raw.setCharacterEncoding(enc)
@@ -221,6 +233,9 @@ class HttpRequest(val raw: HttpServletRequest) {
     def stream: ServletInputStream = raw.getInputStream
     lazy val asXml: Elem = XML.load(stream)
     lazy val asString = IOUtils.toString(stream, encoding)
+
+    // implicitly set request encoding to UTF-8
+    encoding = "UTF-8"
 
     /*!## Multipart Requests & File Uploading {#multipart}
 
@@ -246,6 +261,9 @@ class HttpRequest(val raw: HttpServletRequest) {
     Note, however, that you can only use one of them (and only once) while working with the request
     (it's the limitation of accessing request body in Servlet API mentioned above, so `reader`,
     `stream`, `asXml` and `asString` methods will also interfere with FileUpload).
+
+    For more information about configuring a FileUpload environment that will suit your needs,
+    visit [Commons FileUpload Project Page](http://commons.apache.org/fileupload).
     */
 
     /**
