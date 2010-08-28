@@ -34,6 +34,36 @@ object CircumflexCoreSpec extends Specification {
     }
   }
 
+  // Circumflex Context API
+  "Circumflex Context" should {
+    "be initialized and destroyed properly" in {
+      Context.live_? must beFalse
+      Context.init()
+      Context.live_? must beTrue
+      Context.destroy()
+      Context.live_? must beFalse
+    }
+    "initialize on demand" in {
+      Context.live_? must beFalse
+      Context.get must notBeNull
+      Context.live_? must beTrue
+    }
+    "process events" in {
+      var inits = 0;
+      var destroys = 0;
+      Context.addInitListener(c => inits += 1)
+      Context.addDestroyListener(c => destroys += 1)
+      Context.init()
+      Context.destroy()
+      Context.init()
+      Context.destroy()
+      Context.init()
+      Context.destroy()
+      inits must_== 3
+      destroys must_== 3
+    }
+  }
+
   // Circumflex Messages API
   "Circumflex Messages" should {
     "resolve messages in different locales" in {
