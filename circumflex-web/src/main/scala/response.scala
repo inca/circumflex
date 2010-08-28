@@ -13,14 +13,14 @@ The `HttpResponse` class provides functionality to prepare HTTP responses which 
 sent to clients.
 
 This class is designed to hold the response state, which then will be applied to
-actual `HttpServletResponse` when the `apply` method will be invoked.
+actual `HttpServletResponse` using the `apply` method.
 
 Since Circumflex is UTF-friendly it will implicitly set character encoding of
 response body to `UTF-8`. Feel free to change it if your application requires so.
 */
 
 /**
- * Provides a wrapper around `HttpServletResponse`, which is still available as `raw` field.
+ * Provides functionality for sending HTTP responses.
  *
  * Most methods are self-descriptive and have direct equivalents in Servlet API, so
  * Scaladocs are omitted.
@@ -88,60 +88,16 @@ class HttpResponse {
 
 }
 
-object EmptyResponse extends HttpResponse
+/* TODO implement following response helpers:
 
-case class ErrorResponse(val errorCode: Int, val msg: String) extends HttpResponse {
-  override def apply(response: HttpServletResponse) = {
-    ctx.statusCode = errorCode
-    response.sendError(errorCode, msg)
-  }
-}
+  * empty
+  * error
+  * redirect
+  * text
+  * xml
+  * binary (write byte array)
+  * file
+  * stream
+  * writer
 
-case class RedirectResponse(val url: String) extends HttpResponse {
-  override def apply(response: HttpServletResponse) = response.sendRedirect(url)
-}
-
-case class TextResponse(val text: String) extends HttpResponse {
-  override def apply(response: HttpServletResponse) = {
-    super.apply(response)
-    response.getWriter.print(text)
-  }
-}
-
-case class BinaryResponse(val data: Array[Byte]) extends HttpResponse {
-  override def apply(response: HttpServletResponse) = {
-    super.apply(response)
-    response.getOutputStream.write(data)
-  }
-}
-
-case class FileResponse(val file: File) extends HttpResponse {
-  override def apply(response: HttpServletResponse) = {
-    // determine mime type by extension
-    if (ctx.contentType.isEmpty)
-      ctx.contentType = (new MimetypesFileTypeMap).getContentType(file)
-    super.apply(response)
-    // transfer a file
-    val is = new FileInputStream(file)
-    try {
-      IOUtils.copy(is, response.getOutputStream)
-    } finally {
-      is.close
-    }
-  }
-}
-
-case class DirectStreamResponse(val streamingFunc: OutputStream => Unit)
-    extends HttpResponse {
-  override def apply(response: HttpServletResponse) = {
-    super.apply(response)
-    streamingFunc(response.getOutputStream)
-  }
-}
-
-case class WriterResponse(val f: Writer => Unit) extends HttpResponse {
-  override def apply(response: HttpServletResponse) = {
-    super.apply(response)
-    f(response.getWriter)
-  }
-}
+ */

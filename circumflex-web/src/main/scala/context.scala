@@ -133,15 +133,4 @@ class CircumflexContext(val request: HttpServletRequest,
 
 }
 
-object CircumflexContext {
-  private val threadLocalContext = new ThreadLocal[CircumflexContext]
-  def get = threadLocalContext.get
-  def live_?() = get != null
-  def init(req: HttpServletRequest, res: HttpServletResponse) =
-    if (!live_?) threadLocalContext.set(new CircumflexContext(req, res))
-  def destroy() = threadLocalContext.set(null)
-}
 
-class ParamHelper(val key: Symbol) {
-  def :=(value: Any): Unit = ctx(key).update(value)
-}

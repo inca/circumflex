@@ -13,11 +13,7 @@ You should import this package to use Circumflex Web Framework in your applicati
 
     import ru.circumflex.web._
 */
-
 package object web {
-
-  implicit def string2paramHelper(str: String): ParamHelper = new ParamHelper(str)
-  implicit def symbol2paramHelper(sym: Symbol): ParamHelper = string2paramHelper(sym.name)
 
   val CX_WEB_LOG = LoggerFactory.getLogger("ru.circumflex.web")
 

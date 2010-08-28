@@ -109,3 +109,30 @@ object Context {
   }
 
 }
+
+/*!# Context DSL
+
+Circumflex enables you to use Scala `Symbol` to access and set context variables in a DSL
+fashion.
+
+Following syntaxes are available for accessing context variables:
+
+    'key.apply[T]                // T
+    'key.get[T]                  // Option[T]
+    'key.getOrElse(default: T)   // T
+
+Following syntaxes are available for setting context variables:
+
+    'key := value
+    'key.update(value)
+
+The implicit conversions from `Symbol` into `ContextVarHelper` are available in the
+`ru.circumflex.core` package.
+*/
+class ContextVarHelper(val key: Symbol) {
+  def apply[T](): T = ctx.apply(key).asInstanceOf[T]
+  def get[T](): Option[T] = ctx.get(key).asInstanceOf[Option[T]]
+  def getOrElse[T](default: T): T = ctx.getOrElse(key, default).asInstanceOf[T]
+  def update(value: Any): Unit = ctx.update(key, value)
+  def :=(value: Any): Unit = update(value)
+}

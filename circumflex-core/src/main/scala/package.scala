@@ -31,14 +31,10 @@ package object core {
     System.currentTimeMillis - startTime
   }
 
-  /*! Implicits let you avoid boilerplates when wrapping nullable objects into `Option` and
-  converting `Symbol` instances to `String`s.
-   */
   @inline implicit def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
   @inline implicit def symbol2string(sym: Symbol): String = sym.name
-
-  /*! Shortcuts let you access Circumflex singletons and helpers conveniently,
-  in a DSL-like style. */
+  @inline implicit def symbol2contextVarHelper(sym: Symbol): ContextVarHelper =
+    new ContextVarHelper(sym)
 
   /**
    * A shortcut for accessing the `Circumflex` singleton.
