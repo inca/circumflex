@@ -6,7 +6,8 @@ import org.specs.Specification
 
 class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
-object CircumflexCoreSpec extends Specification {
+object 
+CircumflexCoreSpec extends Specification {
 
   class MainRouter extends RequestRouter {
     // Common stuff

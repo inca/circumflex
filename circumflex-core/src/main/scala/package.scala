@@ -17,26 +17,6 @@ package object core {
   val CX_LOG = LoggerFactory.getLogger("ru.circumflex.core")
 
   /**
-   * Converts `ThisTypeOfIdentifiers` into `that_type_of_identifiers`.
-   */
-  def camelCaseToUnderscore(arg: String) = arg.replaceAll("(?<!^)([A-Z])","_$1").toLowerCase
-
-
-  /**
-   * Executes specified `block` and counts it's execution time.
-   */
-  def time(block: => Unit): Long = {
-    val startTime = System.currentTimeMillis
-    block
-    System.currentTimeMillis - startTime
-  }
-
-  @inline implicit def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
-  @inline implicit def symbol2string(sym: Symbol): String = sym.name
-  @inline implicit def symbol2contextVarHelper(sym: Symbol): ContextVarHelper =
-    new ContextVarHelper(sym)
-
-  /**
    * A shortcut for accessing the `Circumflex` singleton.
    */
   val cx = Circumflex
@@ -47,8 +27,31 @@ package object core {
   def ctx = Context.get
 
   /**
-   * A shortcut for accessing global messages resolver.
+   * Global messages resolver configurable via `cx.messages` configuration parameter.
    */
-  def msg = cx.get[MessageResolver]("cx.messages", DefaultMessageResolver)
+  lazy val msg = cx.instantiate[MessageResolver]("cx.messages", DefaultMessageResolver)
+
+  /* Utils */
+
+  /**
+   * Converts `ThisTypeOfIdentifiers` into `that_type_of_identifiers`.
+   */
+  def camelCaseToUnderscore(arg: String) = arg.replaceAll("(?<!^)([A-Z])","_$1").toLowerCase
+
+  /**
+   * Executes specified `block` and counts it's execution time.
+   */
+  def time(block: => Unit): Long = {
+    val startTime = System.currentTimeMillis
+    block
+    System.currentTimeMillis - startTime
+  }
+
+  /* Implicits */
+
+  @inline implicit def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
+  @inline implicit def symbol2string(sym: Symbol): String = sym.name
+  @inline implicit def symbol2contextVarHelper(sym: Symbol): ContextVarHelper =
+    new ContextVarHelper(sym)
 
 }

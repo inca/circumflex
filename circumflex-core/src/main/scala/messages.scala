@@ -85,13 +85,13 @@ trait MessageResolver extends Map[String, String] {
     params.foldLeft(getOrElse(key, "")) {
       (result, p) => result.replaceAll("\\{" + p._1 + "\\}", p._2.toString)
     }
-  def format(key: String, params: Any*): String =
-    MessageFormat.format(getOrElse(key, ""), params.toArray)
+  def format(key: String, params: AnyRef*): String =
+    MessageFormat.format(getOrElse(key, ""), params: _*)
 }
 
 /*! You can use `ResourceBundleMessageResolver` to resolve messages from Java `ResourceBundle`s. */
 class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
-  protected val bundle = ResourceBundle.getBundle(bundleName, locale)
+  protected def bundle = ResourceBundle.getBundle(bundleName, locale)
   def iterator: Iterator[(String, String)] = bundle.getKeys
       .map(k => (k -> bundle.getString(k)))
   protected def resolve(key: String): Option[String] =

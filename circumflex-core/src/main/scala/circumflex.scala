@@ -3,7 +3,7 @@ package ru.circumflex.core
 import java.util.{ResourceBundle, Locale}
 import collection.mutable.HashMap
 
-/*!# Circumflex Configuration
+/*!# Configuration API
 
 This singleton can be used to retrieve Circumflex configuration parameters
 throughout your application.
@@ -49,71 +49,45 @@ object Circumflex extends HashMap[String, Any] {
   different implementations of components and services, such as configuring
   dialects or connection providers for [Circumflex ORM](http://circumflex.ru/orm.html)
   or request routers for [Circumflex Web Framework](http://circumflex.ru/web.html).
+  We call this mechanism an *instantiation facility*.
 
   The logic is pretty simple. Let's say an application or library expects you
   to provide an implementation of some interface, for example, `MyService`, and
   has a default implementation, for example, `DefaultMyService`:
 
-      val mySvc = Circumflex.get("myApp.myService", DefaultMyService)
+      cx.instantiate[MyService]("myApp.myService", DefaultMyService)
 
-  Then you can override this implementation by setting configuration parameter
+  Then you can override this implementation by setting the configuration parameter
   (`myApp.myService` in our example) to one of the following values:
 
-    * an object itself or it's class, if you run some initialization code before your
-    application starts:
+    * the class of the desired object, if you run some initialization code:
 
-        Circumflex("myApp.myService") = new MyServiceImpl
-        // or
-        Circumflex("myApp.myService") = classOf[MyServiceImpl]
+        cx("myApp.myService") = classOf[MyServiceImpl]
 
     * class name of your implementation, if you use `cx.properties`:
 
         myApp.myService=com.myapp.MyServiceImpl
 
-  Note that Scala singletons also work pretty fine as service implementations,
+  Scala singletons might also work pretty fine as service implementations,
   but you should remember to add a dollar sign (`$`) to the class name.
+
   For example, if you have following singleton:
 
       package com.myapp
       object MyServiceImpl extends MyService { ... }
 
   then set your `myApp.myService` configuration parameter to `com.myapp.MyServiceImpl$`.
+  Note that singletons cannot be instantiated more than once, so you'll get the same
+  instance each time.
 
   Also note that the instantiation is done using default public class constructors, so
   make sure that the supplied class has one.
-
-  The `get` method caches the result (by overwriting the configuration parameter) before
-  returning it so the access to it is synchronized.
   */
 
-  def get[C](name: String, default: =>C): C = synchronized {
-    val o = newObject(name, default)
-    this(name) = o
-    return o
-  }
-
-  /*! You can also ask `Circumflex` to instantiate a new object instead of getting a cached one
-  using `newObject` method:
-
-      val transaction = Circumflex.newObject("myApp.transaction", new DefaultTransaction)
-
-  Note, however, that singletons cannot be instantiated more than once, so if you'll ask
-  Circumflex to instantiate a singleton (or provide singleton as default), you'll get the
-  same instance on each invokation (just like using the `get` method).
-
-  If configuration parameter already contains an object it will be instantiated again using
-  the default constructor (so make sure it has one).
-  */
-  def newObject[C](name: String, default: =>C): C = this.get(name) match {
-    case Some(obj: C) => instantiateObject(name, obj.asInstanceOf[AnyRef].getClass, default)
+  def instantiate[C](name: String, default: =>C): C = this.get(name) match {
     case Some(c: Class[C]) => instantiateObject(name, c, default)
     case Some(s: String) => try {
-      // lookup class
-      val c = Class.forName(s)
-      // cache class so we don't have to look it up again
-      this(name) = c
-      // try to instantiate an object
-      instantiateObject(name, c, default)
+      instantiateObject(name, Class.forName(s), default)
     } catch {
       case e: ClassNotFoundException =>
         CX_LOG.error("Could not find class for configuration parameter '" + name + "'.", e)
@@ -121,6 +95,9 @@ object Circumflex extends HashMap[String, Any] {
     }
     case _ => default
   }
+
+  def instantiate[C](name: String): C = instantiate[C](name,
+    throw new CircumflexException("Could not instantiate configuration parameter '" + name + "'."))
 
   /*! Internally the instantiation is performed by the `instantiateObject` method. */
   protected def instantiateObject[C](name: String, c: Class[_], default: =>C): C = try {

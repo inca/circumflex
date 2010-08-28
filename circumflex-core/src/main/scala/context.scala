@@ -2,7 +2,7 @@ package ru.circumflex.core
 
 import scala.collection.mutable.HashMap
 
-/*!# Context
+/*!# Context API
 
 Context is a thread-local container which allows you to share objects (also known as
 context variables) within one logical scope.
@@ -94,7 +94,7 @@ object Context {
    * listener subscribed to context initialization event is executed.
    */
   def init(): Unit = {
-    threadLocal.set(Circumflex.newObject("cx.context", new Context))
+    threadLocal.set(cx.instantiate[Context]("cx.context", new Context))
     initListeners.foreach(l => l.apply(get()))
   }
 
