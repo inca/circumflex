@@ -1,25 +1,57 @@
 package ru.circumflex.core
 
 import java.lang.reflect.InvocationTargetException
-import java.util.regex.Pattern
-import util.matching.Regex
 import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import java.io.{FileNotFoundException, File}
-import org.apache.commons.io.FilenameUtils._
+import java.io._
+import java.net.URLDecoder
+import ru.circumflex.core._
+
+/*! Circumflex Filter
+
+`CircumflexFilter` is an entry point of your web application. It handles
+context lifecycle (initializes context before the request is processed and
+finalizes context after the response is sent), serves [static files](#static)
+and executes main request router.
+
+To setup your web application place following snippet into your `WEB-INF/web.xml`:
+
+    <filter>
+      <filter-name>Circumflex Filter</filter-name>
+      <filter-class>ru.circumflex.web.CircumflexFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+      <filter-name>Circumflex Filter</filter-name>
+      <url-pattern>*</url-pattern>
+    </filter-mapping>
+
+You can also include `<dispatcher>REQUEST</dispatcher>`, `<dispatcher>FORWARD</dispatcher>`,
+`<dispatcher>INCLUDE</dispatcher>` and `<dispatcher>ERROR</dispatcher>` under `filter-mapping`
+if your application requires so.
+
+The filter configuration is saved into the `cx.filterConfig` configuration parameter and
+is available throughout your configuration via the `filterConfig` method of the
+`ru.circumflex.web` package.
+*/
 
 /**
- * ## Circumflex Filters
+ * Serves as an entry point of Circumflex Web Application.
  *
- * Provides a base class for Circumflex filter implementations.
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-web/filter.scala">filter.scala</a>.
  */
-abstract class AbstractCircumflexFilter extends Filter {
+class CircumflexFilter extends Filter {
 
   /**
    * Place your application initialization code here.
-   * Does nothing by default.
+   * By default it saves filter configuration into the `cx.filterConfig` configuration
+   * parameter so that it could be accessed later.
    */
-  def init(filterConfig: FilterConfig) = {}
+  def init(filterConfig: FilterConfig) = {
+    CX_WEB_LOG.info("Circumflex 2.0")
+    cx("cx.filterConfig") = filterConfig
+  }
 
   /**
    * Place your application shutdown code here.
@@ -27,139 +59,103 @@ abstract class AbstractCircumflexFilter extends Filter {
    */
   def destroy = {}
 
-  /**
-   * Determines, if a filter should process the request.
-   * The default behavior is controlled by `cx.process_?` parameter:
-   *
-   *  * `String` or `Regex` or `Pattern`;
-   *  * the filter processes request if URI *does not match* specified regex;
-   *  * `HttpServletRequest => Boolean` or `() => Boolean` functions,
-   *  the filter processes request depending on the result of function invocation.
-   * </ul>
-   */
-  def isProcessed(req: HttpServletRequest): Boolean = Circumflex.get("cx.process_?") match {
-    case Some(s: String) => !req.getRequestURI.toLowerCase.matches(s)
-    case Some(r: Regex) => !req.getRequestURI.toLowerCase.matches(r.toString)
-    case Some(p: Pattern) => !p.matcher(req.getRequestURI.toLowerCase).matches()
-    case Some(func: (() => Boolean)) => func.apply()
-    case Some(func: (HttpServletRequest => Boolean)) => func.apply(req)
-    case _ => true
-  }
+  /*## Serving static  {#static}
 
-  /**
-   * Instantiates a `CircumflexContext` object, binds it to current request,
-   * consults `isProcessed, whether the request should be processed
-   * and delegates to high-level equivalent
-   * `doFilter(CircumflexContext, FilterChain)`
-   * if necessary.
-   */
-  def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit =
-    (req, res) match {
-      case (req: HttpServletRequest, res: HttpServletResponse) =>
-        // try to serve static first
-        if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
-          val resource = new File(Circumflex.publicRoot, separatorsToSystem(req.getRequestURI))
-          if (resource.isFile) {
-            req.getRequestDispatcher(Circumflex.publicUri + req.getRequestURI).forward(req, res)
-            return
-          }
-        }
-        if (isProcessed(req)) {
-          // Instantiate a context if it does not yet exist and bind it thread-locally.
-          CircumflexContext.init(req, res)
-          // chain a call and make sure the context is destroyed afterwards
-          try {
-            doFilter(CircumflexContext.get, chain)
-          } finally {
-            CircumflexContext.destroy()
-          }
-        } else chain.doFilter(req, res)
-      case _ =>
-    }
+  Static files are images, stylesheets, javascripts and all other application assets
+  which do not require special processing and can be served to clients "as is".
 
-  /**
-   * Implementing classes should provide their filtering logic for processed requests.
-   */
-  def doFilter(ctx: CircumflexContext, chain: FilterChain): Unit
-
-}
-
-/**
- * Configures Circumflex-based web application and serves it's requests.
- * Web application should configure it according to JSR-154 (Java Servlet Specification) via
- * `your_webapp_root/WEB-INF/web.xml` (also known as Deployment Descriptor).
- */
-class CircumflexFilter extends AbstractCircumflexFilter {
-
-  val routerClass: Class[RequestRouter] = Circumflex.get("cx.router") match {
-    case Some(s: String) => Circumflex.loadClass[RequestRouter](s)
-    case Some(c: Class[RequestRouter]) => c
-    case _ => throw new CircumflexException("Could not initialize Request Router; " +
-        "configure 'cx.router' properly.")
-  }
-
-  /**
-   * Executed when no routes match current request.
-   * Default behavior is to send 404 NOT FOUND.
-   * You may override it, say, to call `chain.doFilter` to pass request
-   * along the chain.
-   */
-  def onNoMatch(ctx: CircumflexContext, chain: FilterChain) =
-    ErrorResponse(404, "The requested resource does not exist.")(ctx.response)
-
-  /**
-   * Executed when router throws an exception.
-   * Default behavior is to send the `500 Internal Server Error` to client.
-   */
-  def onRouterError(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
-    cxLog.error("Router threw an exception, see stack trace for details.", e)
-    ErrorResponse(500, e.getMessage)(ctx.response)
-  }
-
-  /**
-   * Executed when `java.io.FileNotFoundException`
-   * is thrown from router.
-   * Default behavior is to send the `404 Not Found` to client.
-   */
-  def onNotFound(e: Throwable, ctx: CircumflexContext, chain: FilterChain) = {
-    ErrorResponse(404, e.getMessage)(ctx.response)
-  }
-
-  /**
-   * Instantiates a router that processes current request.
-   */
-  def doFilter(ctx: CircumflexContext, chain: FilterChain): Unit = {
-    cxLog.debug(ctx.request.toString)
-    // Set X-Powered-By header
-    ctx.response.setHeader("X-Powered-By", "Circumflex v. 2.0")
-    // Set character encoding
-    ctx.request.setCharacterEncoding("UTF-8")
-    try {
-      routerClass.getConstructor().newInstance()
-      // Request not matched by router
-      cxLog.debug("No routes matched.")
-      onNoMatch(ctx, chain)
-    } catch {
-      case e: InvocationTargetException => e.getCause match {
-        case e: RouteMatchedException =>
-          // Request matched
-          e.response.apply(ctx.response)
-          cxLog.debug(ctx.response.toString)
-        case e: FileNotFoundException =>
-          // Not found file or template
-          onNotFound(e, ctx, chain)
-          cxLog.debug("File not found: " + e.getMessage)
-        case e =>  // Generic error
-          onRouterError(e, ctx, chain)
+  By default static files are served from `/public` location of your webapp root,
+  but you can specify different location by setting the `cx.public` configuration
+  parameter.
+  */
+  def serveStatic(req: HttpServletRequest, res: HttpServletResponse): Boolean = {
+    if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
+      val uri = URLDecoder.decode(
+        cx.getOrElse("cx.public", "/public").toString + req.getRequestURI, "UTF-8")
+      val resource = new File(filterConfig.getServletContext.getRealPath(uri))
+      if (resource.isFile) {
+        req.getRequestDispatcher(uri).forward(req, res)
+        return true
       }
     }
+    return false
   }
 
-  /**
-   * Called when a filter is instantiated by Servlet Container.
-   */
-  override def init(cfg: FilterConfig) = {
-    cxLog.info("Circumflex v. 2.0")
+  /*## Main Lifecycle {#lifecycle}
+
+  The lifecycle of `CircumflexFilter` involves following actions:
+
+    1. try to serve static context and immediately exit on success;
+    2. initialize `Context` and fill it with following variables:
+
+      * `cx.request` will hold current `HttpRequest`;
+      * `cx.response` will hold current `HttpResponse`;
+      * `cx.filterChain` will hold current `FilterChain`;
+
+    3. the main router is instantiated (it's class should be specified via the
+    `cx.router` configuration parameter;
+    4. depending on the result of router's execution, either the response or
+    the error is flushed to the client;
+    5. the `Context` is destroyed.
+
+  */
+  def doFilter(req: ServletRequest,
+               res: ServletResponse,
+               chain: FilterChain): Unit = (req, res) match {
+    case (req: HttpServletRequest, res: HttpServletResponse) =>
+      // try to serve static first
+      if (serveStatic(req, res)) return
+      // initialize context
+      Context.init()
+      ctx("cx.request") = new HttpRequest(req)
+      ctx("cx.response") = new HttpResponse(res)
+      ctx("cx.filterChain") = chain
+      try {
+        CX_WEB_LOG.trace(req)
+        // execute main router
+        try {
+          cx.instantiate("cx.router")
+          // no routes matched
+          onNoMatch()
+        } catch {
+          case e: InvocationTargetException => e.getCause match {
+            case e: RouteMatchedException =>
+              // request matched -- flush response
+              response.apply(res)
+              CX_WEB_LOG.trace(res)
+            case e: FileNotFoundException => onNotFound(e)
+            case e => onRouterError(e)
+          }
+        }
+      } finally {
+        // destroy context
+        Context.destroy()
+      }
+    case _ =>
+  }
+
+  /*!## Callbacks
+
+  `CircumflexFilter` allows you to override following callbacks:
+
+    * `onNoMatch` is executed if no routes match current request;
+    * `onNotFound` is executed if a `FileNotFoundException` is thrown from a router;
+    * `onRouterError` is executed if a general exception is thrown from a router;
+  */
+
+  def onNoMatch(): Unit = {
+    CX_WEB_LOG.debug("No routes matched: " + request)
+    sendError(404, "The requested resource does not exist.")
+  }
+
+  def onRouterError(e: Throwable): Unit = {
+    CX_WEB_LOG.error("Router threw an exception, see stack trace for details.", e)
+    sendError(500, e.getMessage)
+  }
+
+  def onNotFound(e: Throwable): Unit = {
+    CX_WEB_LOG.debug("Resource not found, see stack trace for details.", e)
+    sendError(404, e.getMessage)
   }
 
 }

@@ -6,6 +6,7 @@ import javax.activation.MimetypesFileTypeMap
 import java.io._
 import javax.servlet.ServletOutputStream
 import collection.mutable.{ListBuffer, HashMap}
+import java.lang.String
 
 /*!# HTTP Response
 
@@ -78,7 +79,7 @@ class HttpResponse {
   Response headers contain operational information about the response.
   Circumflex Web Framework lets you access response headers via the `headers` object.
   */
-  val headers = new HashMap[String, String]
+  val headers = HashMap[String, String]("X-Powered-By" -> "Circumflex 2.0")
 
   /*!## Cookies
 

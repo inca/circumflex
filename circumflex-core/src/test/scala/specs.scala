@@ -4,6 +4,8 @@ import org.specs.runner.JUnit4
 import org.specs.Specification
 import java.util.UUID
 
+// Mocks
+
 class Dummy {
   val uuid = UUID.randomUUID.toString
   override def equals(obj: Any): Boolean = obj match {
@@ -15,11 +17,16 @@ class Dummy {
 
 object DefaultDummy extends Dummy
 
+class CustomContext extends Context
+
+// Specs
+
 class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
 object CircumflexCoreSpec extends Specification {
 
   // Circumflex Configuration API
+
   "Circumflex Configuration" should {
     "take params from `cx.properties`" in {
       cx("test") must_== "preved"
@@ -35,6 +42,7 @@ object CircumflexCoreSpec extends Specification {
   }
 
   // Circumflex Context API
+
   "Circumflex Context" should {
     "be initialized and destroyed properly" in {
       Context.live_? must beFalse
@@ -62,9 +70,14 @@ object CircumflexCoreSpec extends Specification {
       inits must_== 3
       destroys must_== 3
     }
+    "be configurable" in {
+      cx("cx.context") = classOf[CustomContext]
+      ctx.isInstanceOf[CustomContext] must beTrue
+    }
   }
 
   // Circumflex Messages API
+
   "Circumflex Messages" should {
     "resolve messages in different locales" in {
       ctx("cx.locale") = "en_US"

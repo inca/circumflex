@@ -12,6 +12,8 @@ import org.apache.commons.io.IOUtils
 import org.apache.commons.fileupload._
 import org.apache.commons.fileupload.servlet._
 import java.io.{File, BufferedReader}
+import java.net.URLDecoder
+import java.lang.String
 
 
 /*!# HTTP Request
@@ -50,14 +52,16 @@ class HttpRequest(val raw: HttpServletRequest) {
     * `queryString` returns the query string that is contained in the request URL after the path;
     * `url` reconstructs an URL the client used to make the request;
     * `secure_?` returns `true` if the request was made using a secure channel, such as HTTPS.
+
+  The result of `uri`, `url` and `queryString` is decoded into UTF-8 string using `URLDecoder`.
   */
   def protocol = raw.getProtocol
   def method = raw.getMethod
   def scheme = raw.getScheme
-  def uri = raw.getRequestURI
-  def queryString = raw.getQueryString
-  def url = raw.getRequestURL
   def secure_?() = raw.isSecure
+  lazy val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
+  lazy val queryString = URLDecoder.decode(request.getQueryString, "UTF-8")
+  lazy val url = URLDecoder.decode(request.getRequestURL, "UTF-8")
 
   /*!## Client & Server Information
 
@@ -298,5 +302,7 @@ class HttpRequest(val raw: HttpServletRequest) {
     } else Iterator.empty
 
   }
+
+  override def toString: String = method + " " + uri + " " + protocol
 
 }
