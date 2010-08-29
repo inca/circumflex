@@ -29,24 +29,24 @@ response body to `UTF-8`. Feel free to change it if your application requires so
  * For more information refer to
  * <a href="http://circumflex.ru/api/2.0/circumflex-web/response.scala">response.scala</a>.
  */
-class HttpResponse {
+class HttpResponse(val raw: HttpServletResponse) {
 
-  def apply(response: HttpServletResponse) = {
+  def apply() = {
     if (bufferSize > -1)
-      response.setBufferSize(bufferSize)
-    response.setContentType(contentType)
-    response.setCharacterEncoding(encoding)
-    response.setStatus(statusCode)
+      raw.setBufferSize(bufferSize)
+    raw.setContentType(contentType)
+    raw.setCharacterEncoding(encoding)
+    raw.setStatus(statusCode)
     if (contentLength > -1)
-      response.setContentLength(contentLength)
+      raw.setContentLength(contentLength)
     // apply headers
-    headers.foreach((k,v) => response.setHeader(k, v))
+    headers.foreach((k,v) => raw.setHeader(k, v))
     // apply cookies
-    cookies.foreach(c => response.addCookie(c.convert))
+    cookies.foreach(c => raw.addCookie(c.convert))
     // write response body
-    body(response)
+    body(raw)
     // flush
-    response.flushBuffer
+    raw.flushBuffer
   }
 
   /*!## Response Basics
@@ -59,11 +59,36 @@ class HttpResponse {
     * `statusCode` returns or sets the status code of the response.
     * `contentLength` returns or sets the `Content-Length` header of the response.
   */
-  var bufferSize: Int = -1      // -1 means that container's default will be used
-  var contentType: String = "text/html"
-  var encoding: String = "UTF-8"
-  var statusCode: Int = 200
-  var contentLength: Int = -1   // -1 means that container's default will be used
+  protected var _bufferSize: Int = -1      // -1 means that container's default will be used
+  def bufferSize = _bufferSize
+  def bufferSize(bs: Int): this.type = {
+    _bufferSize = bs
+    return this
+  }
+  protected var _contentType: String = "text/html"
+  def contentType = _contentType
+  def contentType(ct: String): this.type = {
+    contentType = ct
+    return this
+  }
+  protected var _encoding: String = "UTF-8"
+  def encoding = _encoding
+  def encoding(e: String): this.type = {
+    encoding = e
+    return this
+  }
+  protected var _statusCode: Int = 200
+  def statusCode = _statusCode
+  def statusCode(sc: Int): this.type = {
+    _statusCode = sc
+    return this
+  }
+  protected var _contentLength: Int = -1   // -1 means that container's default will be used
+  def contentLength = _contentLength
+  def contentLength(cl: Int): this.type = {
+    _contentLength = cl
+    return this
+  }
 
   /*!## Response Body
 
@@ -72,12 +97,18 @@ class HttpResponse {
   The function is invoked inside the `apply` method when response is completely ready
   to be sent -- this is done to avoid `IllegalStateException`s when working with response.
   */
-  var body: (HttpServletResponse) => Unit = r => {}
+  protected var _body: HttpServletResponse => Unit = r => {}
+  def body = _body
+  def body(f: HttpServletResponse => Unit): this.type = {
+    _body = f
+    return this
+  }
 
   /*!## Headers
 
   Response headers contain operational information about the response.
   Circumflex Web Framework lets you access response headers via the `headers` object.
+  TODO add helpers for setting and adding headers
   */
   val headers = HashMap[String, String]("X-Powered-By" -> "Circumflex 2.0")
 
