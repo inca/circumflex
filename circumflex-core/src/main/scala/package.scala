@@ -1,7 +1,5 @@
 package ru.circumflex
 
-import org.slf4j.LoggerFactory
-
 /*!# The `core` Package
 
 Package `core` contains different shortcuts, utilities and implicits.
@@ -14,7 +12,7 @@ package object core {
   /**
    * Returns a logger instance used by Circumflex core components.
    */
-  val CX_LOG = LoggerFactory.getLogger("ru.circumflex.core")
+  val CX_LOG = new Logger("ru.circumflex.core")
 
   /**
    * A shortcut for accessing the `Circumflex` singleton.

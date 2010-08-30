@@ -6,4 +6,3 @@ import ru.circumflex.core._
 
 Helpers form a foundation of DSL for web application development with Circumflex.
 */
-

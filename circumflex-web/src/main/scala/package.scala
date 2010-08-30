@@ -1,8 +1,6 @@
 package ru.circumflex
 
 import ru.circumflex.core._
-import org.slf4j.LoggerFactory
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import javax.servlet.{FilterChain, FilterConfig}
 
 /*!# The `web` Package
@@ -16,7 +14,7 @@ You should import this package to use Circumflex Web Framework in your applicati
 */
 package object web {
 
-  val CX_WEB_LOG = LoggerFactory.getLogger("ru.circumflex.web").isD
+  val CX_WEB_LOG = new Logger("ru.circumflex.web")
 
   def request = ctx("cx.request").asInstanceOf[HttpRequest]
   def response = ctx("cx.response").asInstanceOf[HttpResponse]
