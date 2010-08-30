@@ -4,6 +4,9 @@ import ru.circumflex.core._
 import javax.servlet.{FilterChain, FilterConfig}
 import collection.immutable.Map
 import collection.Iterator
+import javax.activation.MimetypesFileTypeMap
+import java.io._
+import org.apache.commons.io.IOUtils
 
 /*!# The `web` Package
 
@@ -13,6 +16,12 @@ the basis of routing DSL of Circumflex Web Framework.
 You should import this package to use Circumflex Web Framework in your application:
 
     import ru.circumflex.web._
+
+If you don't wish to import all helpers into your global scope, then import this
+package under an alias:
+
+    import ru.circumflex.{web => cx}    // import package object under alias "cx"
+    cx.request                          // access package object members
 */
 package object web {
 
@@ -120,5 +129,53 @@ package object web {
     }
     override def contains(key: String): Boolean = flashMap.contains(key)
   }
+
+  /*!## Response Helpers
+
+  Circumflex Web Framework provides following helpers for sending standard
+  HTTP responses:
+
+  // TODO document'em
+
+  All helpers by convention throw `ResponseSentException` which is caught by
+  `CircumflexFilter` to indicate that the response have been processed
+  successfully.
+  */
+
+  def send(text: String = "", statusCode: Int = 200): Nothing =
+    response.statusCode(statusCode).body(r => r.getWriter.write(text)).flush_!
+  def sendError(message: String = "", statusCode: Int = 400): Nothing =
+    response.body(r => r.sendError(statusCode, message)).flush_!
+  def sendRedirect(url: String, flashes: Pair[String, Any]*): Nothing = {
+    flashes.foreach(kv => flash(kv._1) = kv._2)
+    response.body(r => r.sendRedirect(url)).flush_!
+  }
+  def sendFile(file: File, filename: String = ""): Nothing = {
+    // if filename is provided, add `Content-Disposition` header
+    if (filename != "") response.attachment(filename)
+    // if not set explicitly, infer content type from extension
+    if (response.contentType == "")
+      response.contentType(new MimetypesFileTypeMap().getContentType(file))
+    // send file by copying streams
+    response.body { r =>
+      val is = new FileInputStream(file)
+      try {
+        IOUtils.copy(is, r.getOutputStream)
+      } finally {
+        is.close
+      }
+    } flush_!
+  }
+  def xSendFile(file: File, filename: String = ""): Nothing = {
+    // if filename is provided, add `Content-Disposition` header
+    if (filename != "") response.attachment(filename)
+    val xsf = cx.instantiate[XSendFileHeader]("cx.xSendFile", DefaultXSendFileHeader)
+    response.headers(xsf.name) = xsf.value(file)
+    send()
+  }
+  def sendData(streamFunc: OutputStream => Unit): Nothing =
+    response.body(r => streamFunc(r.getOutputStream)).flush_!
+  def sendData(writerFunc: Writer => Unit): Nothing =
+    response.body(r => writerFunc(r.getWriter)).flush_!
 
 }

@@ -203,6 +203,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   Circumflex Web Framework lets you access the body of the request via `body` object. Following
   methods can be used to work with request body:
 
+    * `xhr_?` returns true if this request is XMLHttpRequest;
     * `encoding` returns or sets the name of the character encoding used in the body of the
     request (as mentioned above, we implicitly set it to `UTF-8`);
     * `multipart_?` returns `true` if the request has `multipart/form-data` content and is
@@ -221,6 +222,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   */
   object body {
 
+    def xhr_?(): Boolean = headers.getOrElse("X-Requested-With", "") == "XMLHttpRequest"
     def multipart_?(): Boolean = ServletFileUpload.isMultipartContent(raw)
     def encoding: String = raw.getCharacterEncoding
     def encoding_=(enc: String) = raw.setCharacterEncoding(enc)
@@ -302,6 +304,15 @@ class HttpRequest(val raw: HttpServletRequest) {
     } else Iterator.empty
 
   }
+
+  /*## Include & Forward
+
+  The methods `forward` and `include` use request dispatcher mechanism provided by Servlet API
+  to forward the request processing to or to include partial result from different web application
+  object (such as servlet).
+  */
+  def forward(uri: String) = raw.getRequestDispatcher(uri).forward(raw, response.raw)
+  def include(uri: String) = raw.getRequestDispatcher(uri).include(raw, response.raw)
 
   override def toString: String = method + " " + uri + " " + protocol
 

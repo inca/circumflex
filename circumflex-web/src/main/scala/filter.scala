@@ -114,19 +114,17 @@ class CircumflexFilter extends Filter {
         WEB_LOG.trace(req)
         // execute main router
         try {
-          cx.instantiate("cx.router")
-          // no routes matched
+          cx.instantiate("cx.router") // ResponseSentException must be thrown
           onNoMatch()
         } catch {
           case e: InvocationTargetException => e.getCause match {
-            case e: RouteMatchedException =>
-              // request matched -- flush response
-              response.apply()
-              WEB_LOG.trace(res)
+            case e: ResponseSentException => throw e
             case e: FileNotFoundException => onNotFound(e)
             case e => onRouterError(e)
           }
         }
+      } catch {
+        case e: ResponseSentException => WEB_LOG.trace(res)
       } finally {
         // destroy context
         Context.destroy()
@@ -145,17 +143,17 @@ class CircumflexFilter extends Filter {
 
   def onNoMatch(): Unit = {
     WEB_LOG.debug("No routes matched: " + request)
-    response.statusCode(404).apply()
+    sendError(404)
   }
 
   def onRouterError(e: Throwable): Unit = {
     WEB_LOG.error("Router threw an exception, see stack trace for details.", e)
-    response.statusCode(500).apply()
+    sendError(500)
   }
 
   def onNotFound(e: Throwable): Unit = {
     WEB_LOG.debug("Resource not found, see stack trace for details.", e)
-    response.statusCode(404).apply()
+    sendError(404)
   }
 
 }

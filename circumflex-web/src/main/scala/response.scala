@@ -14,7 +14,7 @@ The `HttpResponse` class provides functionality to prepare HTTP responses which 
 sent to clients.
 
 This class is designed to hold the response state, which then will be applied to
-actual `HttpServletResponse` using the `apply` method.
+actual `HttpServletResponse` using the `flush` method.
 
 Since Circumflex is UTF-friendly it will implicitly set character encoding of
 response body to `UTF-8`. Feel free to change it if your application requires so.
@@ -31,13 +31,15 @@ response body to `UTF-8`. Feel free to change it if your application requires so
  */
 class HttpResponse(val raw: HttpServletResponse) {
 
-  def apply() = {
-    if (bufferSize > -1)
-      raw.setBufferSize(bufferSize)
-    raw.setContentType(contentType)
-    raw.setCharacterEncoding(encoding)
-    raw.setStatus(statusCode)
-    if (contentLength > -1)
+  def flush_!(): Nothing = {
+    flush()
+    throw new ResponseSentException
+  }
+
+  def flush(): Unit = {
+    if (statusCode != -1)
+      raw.setStatus(statusCode)
+    if (contentLength != -1)
       raw.setContentLength(contentLength)
     // apply headers
     headers.foreach((k,v) => raw.setHeader(k, v))
@@ -59,25 +61,22 @@ class HttpResponse(val raw: HttpServletResponse) {
     * `statusCode` returns or sets the status code of the response.
     * `contentLength` returns or sets the `Content-Length` header of the response.
   */
-  protected var _bufferSize: Int = -1      // -1 means that container's default will be used
-  def bufferSize = _bufferSize
+  def bufferSize = raw.getBufferSize
   def bufferSize(bs: Int): this.type = {
-    _bufferSize = bs
+    raw.setBufferSize(bs)
     return this
   }
-  protected var _contentType: String = "text/html"
-  def contentType = _contentType
+  def contentType = raw.getContentType
   def contentType(ct: String): this.type = {
-    contentType = ct
+    raw.setContentType(ct)
     return this
   }
-  protected var _encoding: String = "UTF-8"
-  def encoding = _encoding
+  def encoding = raw.getCharacterEncoding
   def encoding(e: String): this.type = {
-    encoding = e
+    raw.setCharacterEncoding(e)
     return this
   }
-  protected var _statusCode: Int = 200
+  protected var _statusCode: Int = -1
   def statusCode = _statusCode
   def statusCode(sc: Int): this.type = {
     _statusCode = sc
@@ -90,11 +89,14 @@ class HttpResponse(val raw: HttpServletResponse) {
     return this
   }
 
+  // set encoding implicitly
+  encoding("UTF-8")
+
   /*!## Response Body
 
   The body of the response is set by supplying a function which works with `HttpServletResponse`
   passed inside that function.
-  The function is invoked inside the `apply` method when response is completely ready
+  The function is invoked inside the `flush` method when response is completely ready
   to be sent -- this is done to avoid `IllegalStateException`s when working with response.
   */
   protected var _body: HttpServletResponse => Unit = r => {}
@@ -118,18 +120,26 @@ class HttpResponse(val raw: HttpServletResponse) {
   */
   val cookies = new ListBuffer[HttpCookie]
 
+  /*!## Helpers
+
+  Circumflex Web Framework includes following helpers to perform some common tasks:
+
+    * set `Content-Disposition` header to `attachment` with specified `filename`
+    using the `attachment` method;
+    * set `Pragma: no-cache`, `Cache-Control: no-store` and `Expires: 0` to disable
+    client-side cache using `noCache` method.
+  */
+  def attachment(filename: String): this.type = {
+    headers("Content-Disposition") =
+        "attachment; filename=\"" + new String(filename.getBytes("UTF-8"), "ISO-8859-1") + "\""
+    return this
+  }
+
+  def noCache(): this.type = {
+    headers("Pragma") = "no-cache"
+    headers("Cache-Control") = "no-store"
+    headers("Expires") = 0l
+    return this
+  }
+
 }
-
-/* TODO implement following response helpers:
-
-  * empty
-  * error
-  * redirect
-  * text
-  * xml
-  * binary (write byte array)
-  * file
-  * stream
-  * writer
-
- */
