@@ -49,7 +49,7 @@ class CircumflexFilter extends Filter {
    * parameter so that it could be accessed later.
    */
   def init(filterConfig: FilterConfig) = {
-    CX_WEB_LOG.info("Circumflex 2.0")
+    WEB_LOG.info("Circumflex 2.0")
     cx("cx.filterConfig") = filterConfig
   }
 
@@ -111,7 +111,7 @@ class CircumflexFilter extends Filter {
       ctx("cx.response") = new HttpResponse(res)
       ctx("cx.filterChain") = chain
       try {
-        CX_WEB_LOG.trace(req)
+        WEB_LOG.trace(req)
         // execute main router
         try {
           cx.instantiate("cx.router")
@@ -122,7 +122,7 @@ class CircumflexFilter extends Filter {
             case e: RouteMatchedException =>
               // request matched -- flush response
               response.apply()
-              CX_WEB_LOG.trace(res)
+              WEB_LOG.trace(res)
             case e: FileNotFoundException => onNotFound(e)
             case e => onRouterError(e)
           }
@@ -144,17 +144,17 @@ class CircumflexFilter extends Filter {
   */
 
   def onNoMatch(): Unit = {
-    CX_WEB_LOG.debug("No routes matched: " + request)
+    WEB_LOG.debug("No routes matched: " + request)
     response.statusCode(404).apply()
   }
 
   def onRouterError(e: Throwable): Unit = {
-    CX_WEB_LOG.error("Router threw an exception, see stack trace for details.", e)
+    WEB_LOG.error("Router threw an exception, see stack trace for details.", e)
     response.statusCode(500).apply()
   }
 
   def onNotFound(e: Throwable): Unit = {
-    CX_WEB_LOG.debug("Resource not found, see stack trace for details.", e)
+    WEB_LOG.debug("Resource not found, see stack trace for details.", e)
     response.statusCode(404).apply()
   }
 
