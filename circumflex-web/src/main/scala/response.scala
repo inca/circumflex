@@ -1,4 +1,4 @@
-package ru.circumflex.core
+package ru.circumflex.web
 
 import javax.servlet.http.HttpServletResponse
 import org.apache.commons.io.IOUtils

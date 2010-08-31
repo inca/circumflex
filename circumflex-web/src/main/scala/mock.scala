@@ -1,4 +1,4 @@
-package ru.circumflex.core.test
+package ru.circumflex.web.test
 
 import javax.servlet.http.Cookie
 import org.mortbay.jetty.Handler

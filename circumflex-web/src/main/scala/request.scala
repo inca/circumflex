@@ -196,6 +196,11 @@ class HttpRequest(val raw: HttpServletRequest) {
       if (s != null) s.getAttribute(name)
       else None
     }
+    def invalidate: this.type = {
+      val s = raw.getSession(false)
+      if (s != null) s.invalidate
+      return this
+    }
   }
 
   /*!## Body

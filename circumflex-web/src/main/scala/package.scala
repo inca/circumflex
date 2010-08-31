@@ -142,9 +142,12 @@ package object web {
   successfully.
   */
 
-  def send(text: String = "", statusCode: Int = 200): Nothing =
-    response.statusCode(statusCode).body(r => r.getWriter.write(text)).flush_!
-  def sendError(message: String = "", statusCode: Int = 400): Nothing =
+  def send(statusCode: Int = -1, text: String = ""): Nothing = {
+    if (statusCode != -1)
+      response.statusCode(statusCode)
+    response.body(r => r.getWriter.write(text)).flush_!
+  }
+  def sendError(statusCode: Int, message: String = ""): Nothing =
     response.body(r => r.sendError(statusCode, message)).flush_!
   def sendRedirect(url: String, flashes: Pair[String, Any]*): Nothing = {
     flashes.foreach(kv => flash(kv._1) = kv._2)

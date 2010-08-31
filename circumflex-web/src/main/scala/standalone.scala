@@ -1,4 +1,5 @@
-package ru.circumflex.core
+package ru.circumflex.web
+
 import javax.servlet.Filter
 import org.mortbay.jetty.servlet.{ServletHolder, DefaultServlet, Context}
 import org.mortbay.jetty.{Handler, Server}
@@ -16,11 +17,11 @@ class StandaloneServer {
   protected var context: Context = null
 
   def init() = {
-    val webappRoot = Circumflex.get("cx.root") match {
+    val webappRoot = cx.get("cx.root") match {
       case Some(s: String) => s
       case _ => "src/main/webapp"
     }
-    jetty = new Server(Circumflex.get("cx.port") match {
+    jetty = new Server(cx.get("cx.port") match {
       case Some(p: Int) => p
       case Some(s: String) => try { s.toInt } catch { case _ => 8180 }
       case _ => 8180

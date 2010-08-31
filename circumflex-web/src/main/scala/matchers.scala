@@ -1,4 +1,4 @@
-package ru.circumflex.core
+package ru.circumflex.web
 
 import util.matching.Regex
 import scala.collection.immutable.Map

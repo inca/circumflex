@@ -1,4 +1,4 @@
-package ru.circumflex.core.test
+package ru.circumflex.web.test
 
 import ru.circumflex.core._
 import org.specs.runner.JUnit4
