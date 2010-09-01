@@ -1,7 +1,9 @@
 package ru.circumflex.core
 
-import java.util.{ResourceBundle, Locale}
+import collection.Map
 import collection.mutable.HashMap
+import java.util.{Date, ResourceBundle, Locale}
+import java.text.SimpleDateFormat
 
 /*!# Configuration API
 
@@ -31,7 +33,7 @@ manual filtering sources and resources.
  * For more information refer to
  * <a href="http://circumflex.ru/api/2.0/circumflex-core/circumflex.scala">circumflex.scala</a>.
  */
-object Circumflex extends HashMap[String, Any] {
+object Circumflex extends HashMap[String, Any] with UntypedContainer {
 
   /*! The configuration object is initialized by reading `cx.properties`. */
   try {
@@ -45,75 +47,89 @@ object Circumflex extends HashMap[String, Any] {
     case _ => CX_LOG.error("Could not read configuration parameters from cx.properties.")
   }
 
-  /*! Circumflex configuration also offers you a convenient way to configure
-  different implementations of components and services, such as configuring
-  dialects or connection providers for [Circumflex ORM](http://circumflex.ru/orm.html)
-  or request routers for [Circumflex Web Framework](http://circumflex.ru/web.html).
-  We call this mechanism an *instantiation facility*.
+  override def stringPrefix = "cx"
+}
 
-  The logic is pretty simple. Let's say an application or library expects you
-  to provide an implementation of some interface, for example, `MyService`, and
-  has a default implementation, for example, `DefaultMyService`:
+/*! Several helper methods allow you to obtain parameter precisely in the type you expect:
 
-      cx.instantiate[MyService]("myApp.myService", DefaultMyService)
+  * `getAs[T]` returns `Option[T]`;
+  * `as[T]` returns `[T]`;
+  * `getXXX` returns `XXX` trying to coerce the value to the `XXX` type.
 
-  Then you can override this implementation by setting the configuration parameter
-  (`myApp.myService` in our example) to one of the following values:
+A `ClassCastException` is thrown if the configation contains the value
+with different type than you expect.
 
-    * the class of the desired object, if you run some initialization code:
+Circumflex configuration (and every untyped container) also offers you a convenient
+way to configure different implementations of components and services, such as configuring
+dialects or connection providers for [Circumflex ORM](http://circumflex.ru/orm.html)
+or request routers for [Circumflex Web Framework](http://circumflex.ru/web.html).
+We call this mechanism an *instantiation facility*.
 
-        cx("myApp.myService") = classOf[MyServiceImpl]
+The logic is pretty simple. Let's say an application or library expects you
+to provide an implementation of some interface, for example, `MyService`, and
+has a default implementation, for example, `DefaultMyService`:
 
-    * class name of your implementation, if you use `cx.properties`:
+    cx.instantiate[MyService]("myApp.myService", DefaultMyService)
 
-        myApp.myService=com.myapp.MyServiceImpl
+Then you can override this implementation by setting the configuration parameter
+(`myApp.myService` in our example) to one of the following values:
 
-  Scala singletons might also work pretty fine as service implementations,
-  but you should remember to add a dollar sign (`$`) to the class name.
+  * the class of the desired object, if you run some initialization code:
 
-  For example, if you have following singleton:
+      cx("myApp.myService") = classOf[MyServiceImpl]
 
-      package com.myapp
-      object MyServiceImpl extends MyService { ... }
+  * class name of your implementation, if you use `cx.properties`:
 
-  then set your `myApp.myService` configuration parameter to `com.myapp.MyServiceImpl$`.
-  Note that singletons cannot be instantiated more than once, so you'll get the same
-  instance each time.
+      myApp.myService=com.myapp.MyServiceImpl
 
-  Also note that the instantiation is done using default public class constructors, so
-  make sure that the supplied class has one.
-  */
+Scala singletons might also work pretty fine as service implementations,
+but you should remember to add a dollar sign (`$`) to the class name.
 
-  def instantiate[C](name: String, default: =>C): C = this.get(name) match {
-    case Some(c: Class[C]) => instantiateObject(name, c, default)
-    case Some(s: String) => try {
-      instantiateObject(name, Class.forName(s), default)
-    } catch {
-      case e: ClassNotFoundException =>
-        CX_LOG.error("Could not find class for configuration parameter '" + name + "'.", e)
-        default
-    }
-    case _ => default
+For example, if you have following singleton:
+
+    package com.myapp
+    object MyServiceImpl extends MyService { ... }
+
+then set your `myApp.myService` configuration parameter to `com.myapp.MyServiceImpl$`.
+Note that singletons cannot be instantiated more than once, so you'll get the same
+instance each time.
+
+Also note that the instantiation is done using default public class constructors, so
+make sure that the supplied class has one.
+*/
+trait UntypedContainer extends Map[String, Any] {
+
+  def as[C](key: String): C = apply(key).asInstanceOf[C]
+  def getAs[C](key: String): Option[C] = get(key).asInstanceOf[Option[C]]
+  def getString(key: String): String = getOrElse(key, "").toString
+  def getBoolean(key: String): Boolean = getOrElse(key, "false").toString.toBoolean
+  def getInt(key: String): Int = getOrElse(key, "0").toString.toInt
+  def getLong(key: String): Long = getOrElse(key, "0").toString.toLong
+  def getDouble(key: String): Double = getOrElse(key, "0").toString.toDouble
+  def getDate(key: String, pattern: String): Date =
+    get(key).map(v => new SimpleDateFormat(pattern).parse(v.toString)).getOrElse(new Date)
+
+  def instantiate[C](name: String): C = this.get(name) match {
+    case Some(c: Class[C]) => instantiateObject(name, c)
+    case Some(s: String) => instantiateObject(name, Class.forName(s))
+    case v => throw new CircumflexException(
+      "Could not perform instantiation: cx(\"" + name + "\") = " + v)
   }
 
-  def instantiate[C](name: String): C = instantiate[C](name,
-    throw new CircumflexException("Could not instantiate configuration parameter '" + name + "'."))
+  def instantiate[C](name: String, default: =>C): C = try {
+    return instantiate[C](name)
+  } catch {
+    case e =>
+      CX_LOG.warn(
+        "Could not perform instantiation for configuration parameter: " + name + "; using defaults.")
+      return default
+  }
 
   /*! Internally the instantiation is performed by the `instantiateObject` method. */
-  protected def instantiateObject[C](name: String, c: Class[_], default: =>C): C = try {
-    // we try to treat a class as Scala singleton first
+  protected def instantiateObject[C](name: String, c: Class[_]): C = try {
     c.getField("MODULE$").get(null).asInstanceOf[C]
   } catch {
-    case _ => try {
-      // if we cannot obtain singleton instance, we stick with plain instantiation
-      c.newInstance.asInstanceOf[C]
-    } catch {
-      case e =>
-        // if instantiation fails, we return provided `default`
-        CX_LOG.error("Could not instantiate configuration parameter '" + name + "'.", e)
-        default
-    }
+    case _ => c.newInstance.asInstanceOf[C]
   }
 
-  override def stringPrefix = "cx"
 }

@@ -119,9 +119,9 @@ class CircumflexFilter extends Filter {
           onNoMatch()
         } catch {
           case e: InvocationTargetException => e.getCause match {
-            case e: ResponseSentException => throw e
-            case e: FileNotFoundException => onNotFound(e)
-            case e => onRouterError(e)
+            case ex: ResponseSentException => throw ex
+            case ex: FileNotFoundException => onNotFound(ex)
+            case ex => onRouterError(ex)
           }
         }
       } catch {

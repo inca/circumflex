@@ -74,6 +74,20 @@ object CircumflexCoreSpec extends Specification {
       cx("cx.context") = classOf[CustomContext]
       ctx.isInstanceOf[CustomContext] must beTrue
     }
+    "provide DSL for setting and getting context variables" in {
+      'test := "preved"
+      'test.get must_== Some("preved")
+    }
+    "provide untyped container functionality" in {
+      'dummy := DefaultDummy
+      'dummy.apply[Dummy].uuid must_== DefaultDummy.uuid
+      'testInt := "0"
+      'testInt.getInt must_== 0
+      'testBoolean := "false"
+      'testBoolean.getBoolean must_== false
+      'testDate := "29.01.1988"
+      'testDate.getDate("dd.MM.yyyy").toString must_== "Fri Jan 29 00:00:00 MSK 1988"
+    }
   }
 
   // Circumflex Messages API

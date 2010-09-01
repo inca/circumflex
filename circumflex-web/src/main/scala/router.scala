@@ -46,6 +46,8 @@ class Route(matchingMethods: String*) {
 
 class RequestRouter(val prefix: String = "") {
 
+  implicit def string2response(str: String): RouteResponse =
+    new RouteResponse(str)
   implicit def xml2response(xml: Node): RouteResponse =
     new RouteResponse("<?xml version=\"1.0\"?>\n" + xml.toString)
   implicit def router2response(router: RequestRouter): RouteResponse = sendError(404)

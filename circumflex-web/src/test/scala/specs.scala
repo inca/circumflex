@@ -1,12 +1,48 @@
-package ru.circumflex.web.test
+package ru.circumflex.web
 
 import ru.circumflex.core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
 
-//class SpecsTest extends JUnit4(CircumflexCoreSpec)
-//
-//object CircumflexCoreSpec extends Specification {
+class SpecsTest extends JUnit4(CircumflexCoreSpec)
+
+class MockRouter extends RequestRouter {
+  get("/") = "preved"
+  post("/") = "preved from POST"
+  get("/decode me") = "preved"
+  get("/regex/(.*)"r) = "uri$1 is " + uri(1)
+}
+
+object CircumflexCoreSpec extends Specification {
+
+  doBeforeSpec{
+    cx("cx.router") = classOf[MockRouter]
+    MockApp.start
+  }
+
+  doAfterSpec { MockApp.stop }
+
+  "RequestRouter" should {
+    "return to the filter if no routes matched" in {
+      MockApp.get("/this/does/not/match/any/routes").execute().getStatus must_== 404
+    }
+    "decode URIs before matching" in {
+      MockApp.get("/decode%20me").execute().getContent must_== "preved"
+    }
+    "match requests by simple URI" in {
+      MockApp.get("/").execute().getContent must_== "preved"
+    }
+    "match requests by method" in {
+      MockApp.post("/").execute().getContent must_== "preved from POST"
+    }
+    "match requests by regex" in {
+      MockApp.post("/regex/piu").execute().getContent must_== "uri$1 is piu"
+    }
+
+  }
+
+}
+
 //
 //  class MainRouter extends RequestRouter {
 //    // Common stuff
@@ -157,4 +193,3 @@ import org.specs.Specification
 //    }
 //  }
 //
-//}

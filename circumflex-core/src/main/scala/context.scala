@@ -1,6 +1,8 @@
 package ru.circumflex.core
 
 import scala.collection.mutable.HashMap
+import java.text.SimpleDateFormat
+import java.util.Date
 
 /*!# Context API
 
@@ -16,6 +18,9 @@ inside context-aware code. Application is responsible for maintaining context
 lifecycle. For example, [Circumflex Web Framework](http://circumflex.ru/web.html)
 takes care of context initialization and finalization inside `CircumflexFilter`.
 See [Context Lifecycle](#lifecycle) for more information.
+
+Circumflex context also extends `UntypedContainer` so you may access instantiation
+fancies as well as coercing parameters to expected types.
 */
 
 /**
@@ -24,7 +29,7 @@ See [Context Lifecycle](#lifecycle) for more information.
  * bound to current thread (a.k.a. current context) as well as to initialize and
  * destroy current context.
  */
-class Context extends HashMap[String, Any] {
+class Context extends HashMap[String, Any] with UntypedContainer {
   override def stringPrefix = "ctx"
 }
 
@@ -130,9 +135,17 @@ The implicit conversions from `Symbol` into `ContextVarHelper` are available in 
 `ru.circumflex.core` package.
 */
 class ContextVarHelper(val key: Symbol) {
-  def apply[T](): T = ctx.apply(key).asInstanceOf[T]
-  def get[T](): Option[T] = ctx.get(key).asInstanceOf[Option[T]]
-  def getOrElse[T](default: T): T = ctx.getOrElse(key, default).asInstanceOf[T]
+  def apply[T](): T = ctx.as[T](key)
+  def get[T](): Option[T] = ctx.getAs[T](key)
+  def getOrElse[T >: Any](default: T): T = ctx.getOrElse[T](key, default)
   def update(value: Any): Unit = ctx.update(key, value)
   def :=(value: Any): Unit = update(value)
+    def getString(key: String): String = getOrElse(key, "").toString
+
+  def getString: String = ctx.getString(key)
+  def getBoolean: Boolean = ctx.getBoolean(key)
+  def getInt: Int = ctx.getInt(key)
+  def getLong: Long = ctx.getLong(key)
+  def getDouble: Double = ctx.getDouble(key)
+  def getDate(pattern: String): Date = ctx.getDate(key, pattern)
 }
