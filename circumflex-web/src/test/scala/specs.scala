@@ -4,16 +4,16 @@ import ru.circumflex.core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
 
-class SpecsTest extends JUnit4(CircumflexCoreSpec)
+class SpecsTest extends JUnit4(CircumflexWebSpec)
 
 class MockRouter extends RequestRouter {
   get("/") = "preved"
   post("/") = "preved from POST"
   get("/decode me") = "preved"
-  get("/regex/(.*)"r) = "uri$1 is " + uri(1)
+  get("/regex/(.*)".r) = "matched " + uri(1)
 }
 
-object CircumflexCoreSpec extends Specification {
+object CircumflexWebSpec extends Specification {
 
   doBeforeSpec{
     cx("cx.router") = classOf[MockRouter]
@@ -23,7 +23,7 @@ object CircumflexCoreSpec extends Specification {
   doAfterSpec { MockApp.stop }
 
   "RequestRouter" should {
-    "return to the filter if no routes matched" in {
+    "return 404 by default on non-matched requests" in {
       MockApp.get("/this/does/not/match/any/routes").execute().getStatus must_== 404
     }
     "decode URIs before matching" in {
@@ -36,7 +36,7 @@ object CircumflexCoreSpec extends Specification {
       MockApp.post("/").execute().getContent must_== "preved from POST"
     }
     "match requests by regex" in {
-      MockApp.post("/regex/piu").execute().getContent must_== "uri$1 is piu"
+      MockApp.get("/regex/piu").execute().getContent must_== "matched piu"
     }
 
   }

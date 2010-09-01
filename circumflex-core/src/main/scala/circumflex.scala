@@ -109,21 +109,14 @@ trait UntypedContainer extends Map[String, Any] {
   def getDate(key: String, pattern: String): Date =
     get(key).map(v => new SimpleDateFormat(pattern).parse(v.toString)).getOrElse(new Date)
 
-  def instantiate[C](name: String): C = this.get(name) match {
+  def instantiate[C](name: String, default: =>C): C = this.get(name) match {
     case Some(c: Class[C]) => instantiateObject(name, c)
     case Some(s: String) => instantiateObject(name, Class.forName(s))
-    case v => throw new CircumflexException(
-      "Could not perform instantiation: cx(\"" + name + "\") = " + v)
+    case v => default
   }
 
-  def instantiate[C](name: String, default: =>C): C = try {
-    return instantiate[C](name)
-  } catch {
-    case e =>
-      CX_LOG.warn(
-        "Could not perform instantiation for configuration parameter: " + name + "; using defaults.")
-      return default
-  }
+  def instantiate[C](name: String): C = instantiate[C](name, throw new CircumflexException(
+    "Could not perform instantiation for parameter " + name))
 
   /*! Internally the instantiation is performed by the `instantiateObject` method. */
   protected def instantiateObject[C](name: String, c: Class[_]): C = try {
