@@ -1,5 +1,6 @@
 package ru.circumflex.web
 
+import ru.circumflex.core._
 import util.matching.Regex
 import xml.Node
 
@@ -30,7 +31,7 @@ class Route(matchingMethods: String*) {
         matcher.apply() match {
           case None => return
           case Some(matches: Seq[MatchResult]) =>
-            matches.foreach(m => ctx += m.name -> m)
+            matches.foreach(m => ctx.update(m.name, m))
             val r = response.body
             send(text = r)
         }

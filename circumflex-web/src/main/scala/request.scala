@@ -2,6 +2,7 @@ package ru.circumflex.web
 
 import scala.collection.immutable.Map
 import scala.collection.Iterator
+import scala.collection.JavaConversions._
 import scala.xml._
 import ru.circumflex.core._
 import javax.servlet.http.{HttpServletRequest}
@@ -14,6 +15,7 @@ import org.apache.commons.fileupload.servlet._
 import java.io.{File, BufferedReader}
 import java.net.URLDecoder
 import java.lang.String
+import java.util.{Enumeration => JEnumeration}
 
 
 /*!# HTTP Request
@@ -59,9 +61,9 @@ class HttpRequest(val raw: HttpServletRequest) {
   def method = raw.getMethod
   def scheme = raw.getScheme
   def secure_?() = raw.isSecure
-  lazy val uri = URLDecoder.decode(request.getRequestURI, "UTF-8")
-  lazy val queryString = URLDecoder.decode(request.getQueryString, "UTF-8")
-  lazy val url = URLDecoder.decode(request.getRequestURL, "UTF-8")
+  lazy val uri = URLDecoder.decode(raw.getRequestURI, "UTF-8")
+  lazy val queryString = URLDecoder.decode(raw.getQueryString, "UTF-8")
+  lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")
 
   /*!## Client & Server Information
 
@@ -89,10 +91,10 @@ class HttpRequest(val raw: HttpServletRequest) {
     container-managed security system.
   */
   def serverHost: String = raw.getServerName
-  def serverPort: String = raw.getServerPort
+  def serverPort: Int = raw.getServerPort
   def localIp: String = raw.getLocalAddr
   def localHost: String = raw.getLocalName
-  def localPort: String = raw.getLocalPort
+  def localPort: Int = raw.getLocalPort
 
   def remoteIp: String = raw.getRemoteAddr
   def remoteHost: String = raw.getRemoteHost
@@ -110,7 +112,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   */
   def locale: Locale = raw.getLocale
 
-  lazy val locales: Seq[Locale] = raw.getLocales.toSeq
+  lazy val locales: Seq[Locale] = raw.getLocales.asInstanceOf[JEnumeration[Locale]].toSeq
 
   /*!## Cookies
 
@@ -129,14 +131,15 @@ class HttpRequest(val raw: HttpServletRequest) {
   Circumflex Web Framework lets you access request headers via the `headers` object.
   TODO: add helpers to retrieve multiple header values
   */
-  object headers extends Map[String, String] { map =>
-    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = map
-    def -(key: String): Map[String, String] = map
+  object headers extends Map[String, String] {
+    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
+    def -(key: String): Map[String, String] = this
     def iterator: Iterator[(String, String)] = raw.getHeaderNames
+        .asInstanceOf[JEnumeration[String]]
         .map(k => (k -> raw.getHeader(k)))
     def get(key: String): Option[String] = raw.getHeader(key)
     def getAsMillis(key: String): Option[Long] = raw.getDateHeader(key)
-    def getAsDate(key: String): Option[Long] = getAsMillis(key).map(new Date(_))
+    def getAsDate(key: String): Option[Date] = getAsMillis(key).map(new Date(_))
     def getAsInt(key: String): Option[Long] = raw.getIntHeader(key)
   }
 
@@ -147,16 +150,17 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   Circumflex Web Framework lets you access request attributes via the `attrs` object.
   */
-  object attrs extends Map[String, Any]() { map =>
+  object attrs extends Map[String, Any] {
     def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
       raw.setAttribute(kv._1, kv._2)
-      map
+      return this
     }
     def -(key: String): Map[String, Any] = {
       raw.removeAttribute(key)
-      map
+      return this
     }
     def iterator: Iterator[(String, Any)] = raw.getAttributeNames
+        .asInstanceOf[JEnumeration[String]]
         .map(k => (k -> raw.getAttribute(k)))
     def get(key: String): Option[Any] = raw.getAttribute(key)
   }
@@ -176,24 +180,27 @@ class HttpRequest(val raw: HttpServletRequest) {
   if you attempt to add an attribute into it via `update` or `+` method, all other methods
   will return empty values without implicitly creating a session.
   */
-  object session extends Map[String, Any]() { map =>
+  object session extends Map[String, Any] {
     def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
       raw.getSession(true).setAttribute(kv._1, kv._2)
-      map
+      return this
     }
     def -(key: String): Map[String, Any] = {
       val s = raw.getSession(false)
       if (s != null) s.removeAttribute(key)
-      map
+      return this
     }
     def iterator: Iterator[(String, Any)] = {
       val s = raw.getSession(false)
-      if (s != null) s.getAttributeNames.map(k => (k -> s.getAttribute(k)))
+      if (s != null)
+        s.getAttributeNames
+            .asInstanceOf[JEnumeration[String]]
+            .map(k => (k -> s.getAttribute(k)))
       else Iterator.empty
     }
     def get(key: String): Option[Any] = {
       val s = raw.getSession(false)
-      if (s != null) s.getAttribute(name)
+      if (s != null) s.getAttribute(key)
       else None
     }
     def invalidate: this.type = {

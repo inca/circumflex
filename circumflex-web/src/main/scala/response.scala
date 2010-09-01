@@ -7,6 +7,7 @@ import java.io._
 import javax.servlet.ServletOutputStream
 import collection.mutable.{ListBuffer, HashMap}
 import java.lang.String
+import java.util.Date
 
 /*!# HTTP Response
 
@@ -42,7 +43,11 @@ class HttpResponse(val raw: HttpServletResponse) {
     if (contentLength != -1)
       raw.setContentLength(contentLength)
     // apply headers
-    headers.foreach((k,v) => raw.setHeader(k, v))
+    headers.foreach {
+      case (k: String, v: Date) => raw.setDateHeader(k, v.getTime)
+      case (k: String, v: Int) => raw.setIntHeader(k, v)
+      case (k: String, v) => raw.setHeader(k, v.toString)
+    }
     // apply cookies
     cookies.foreach(c => raw.addCookie(c.convert))
     // write response body
@@ -112,7 +117,9 @@ class HttpResponse(val raw: HttpServletResponse) {
   Circumflex Web Framework lets you access response headers via the `headers` object.
   TODO add helpers for setting and adding headers
   */
-  val headers = HashMap[String, String]("X-Powered-By" -> "Circumflex 2.0")
+  object headers extends HashMap[String, Any] {
+    update("X-Powered-By", "Circumflex 2.0")
+  }
 
   /*!## Cookies
 

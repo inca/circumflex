@@ -1,10 +1,10 @@
-package ru.circumflex.web.test
+package ru.circumflex.web
 
+import ru.circumflex.core._
 import javax.servlet.http.Cookie
 import org.mortbay.jetty.Handler
 import org.mortbay.jetty.servlet.{DefaultServlet}
 import org.mortbay.jetty.testing.{HttpTester, ServletTester}
-import ru.circumflex.core._
 
 trait MockServer extends StandaloneServer {
 

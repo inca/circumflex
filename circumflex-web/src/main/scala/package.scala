@@ -61,8 +61,14 @@ package object web {
   and `response.headers`).
   */
   object headers extends Map[String, String] {
-    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = response.headers + kv
-    def -(key: String): Map[String, String] = response.headers - key
+    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = {
+      response.headers + kv
+      return this
+    }
+    def -(key: String): Map[String, String] = {
+      response.headers - key
+      return this
+    }
     def iterator: Iterator[(String, String)] = request.headers.iterator
     def get(key: String): Option[String] = request.headers.get(key)
   }
@@ -87,7 +93,7 @@ package object web {
   */
   object cookies extends Map[String, HttpCookie] {
     def +[B1 >: HttpCookie](kv: (String, B1)): Map[String, B1] = {
-      response.cookies += kv._2
+      response.cookies += kv._2.asInstanceOf[HttpCookie]
       return this
     }
     def -(key: String): Map[String, HttpCookie] = {
@@ -176,9 +182,9 @@ package object web {
     response.headers(xsf.name) = xsf.value(file)
     send()
   }
-  def sendData(streamFunc: OutputStream => Unit): Nothing =
+  def sendStream(streamFunc: OutputStream => Unit): Nothing =
     response.body(r => streamFunc(r.getOutputStream)).flush_!
-  def sendData(writerFunc: Writer => Unit): Nothing =
+  def sendChars(writerFunc: Writer => Unit): Nothing =
     response.body(r => writerFunc(r.getWriter)).flush_!
 
 }

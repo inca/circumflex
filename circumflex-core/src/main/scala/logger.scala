@@ -8,13 +8,13 @@ The `Logger` class lets applications save some performance by introducing by-nam
 */
 class Logger(val name: String) {
   protected val log = org.slf4j.LoggerFactory.getLogger(name)
-  def info(msg: => String): Unit = if (log.isInfoEnabled) log.info(msg)
-  def warn(msg: => String): Unit = if (log.isWarnEnabled) log.warn(msg)
-  def warn(msg: => String, e: Throwable): Unit = if (log.isWarnEnabled) log.warn(msg, e)
-  def error(msg: => String, e: Throwable): Unit = if (log.isErrorEnabled) log.error(msg, e)
-  def error(msg: => String): Unit = if (log.isErrorEnabled) log.error(msg)
-  def debug(msg: => String, e: Throwable): Unit = if (log.isDebugEnabled) log.debug(msg, e)
-  def debug(msg: => String): Unit = if (log.isDebugEnabled) log.debug(msg)
-  def trace(msg: => String, e: Throwable): Unit = if (log.isTraceEnabled) log.trace(msg, e)
-  def trace(msg: => String): Unit = if (log.isTraceEnabled) log.trace(msg)
+  def info(msg: => Any): Unit = if (log.isInfoEnabled) log.info(msg.toString)
+  def warn(msg: => Any): Unit = if (log.isWarnEnabled) log.warn(msg.toString)
+  def warn(msg: => Any, e: Throwable): Unit = if (log.isWarnEnabled) log.warn(msg.toString, e)
+  def error(msg: => Any, e: Throwable): Unit = if (log.isErrorEnabled) log.error(msg.toString, e)
+  def error(msg: => Any): Unit = if (log.isErrorEnabled) log.error(msg.toString)
+  def debug(msg: => Any, e: Throwable): Unit = if (log.isDebugEnabled) log.debug(msg.toString, e)
+  def debug(msg: => Any): Unit = if (log.isDebugEnabled) log.debug(msg.toString)
+  def trace(msg: => Any, e: Throwable): Unit = if (log.isTraceEnabled) log.trace(msg.toString, e)
+  def trace(msg: => Any): Unit = if (log.isTraceEnabled) log.trace(msg.toString)
 }

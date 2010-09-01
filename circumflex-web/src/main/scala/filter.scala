@@ -28,7 +28,8 @@ To setup your web application place following snippet into your `WEB-INF/web.xml
 
 You can also include `<dispatcher>REQUEST</dispatcher>`, `<dispatcher>FORWARD</dispatcher>`,
 `<dispatcher>INCLUDE</dispatcher>` and `<dispatcher>ERROR</dispatcher>` under `filter-mapping`
-if your application requires so.
+if your application requires so (for example, include `ERROR` dispatcher if you wish to
+serve error pages with Circumflex; beware of infinite loops, however).
 
 The filter configuration is saved into the `cx.filterConfig` configuration parameter and
 is available throughout your configuration via the `filterConfig` method of the
