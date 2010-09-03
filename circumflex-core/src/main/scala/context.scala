@@ -1,7 +1,6 @@
 package ru.circumflex.core
 
 import scala.collection.mutable.HashMap
-import java.text.SimpleDateFormat
 import java.util.Date
 
 /*!# Context API
@@ -28,6 +27,9 @@ fancies as well as coercing parameters to expected types.
  * an application. The companion object, `Context`, is used to retrieve a context
  * bound to current thread (a.k.a. current context) as well as to initialize and
  * destroy current context.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/context.scala">context.scala</a>.
  */
 class Context extends HashMap[String, Any] with UntypedContainer {
   override def stringPrefix = "ctx"
@@ -47,6 +49,9 @@ methods.
  * initialization and finalization events. Note that these methods are not thread-safe,
  * so you can only add subscriptions inside some initialization block of your
  * application.
+ *
+ *  For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/context.scala">context.scala</a>.
  */
 object Context {
 
@@ -134,6 +139,13 @@ Following syntaxes are available for setting context variables:
 The implicit conversions from `Symbol` into `ContextVarHelper` are available in the
 `ru.circumflex.core` package.
 */
+
+/**
+ * A helper which enables DSL-like syntax for context.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/context.scala">context.scala</a>.
+ */
 class ContextVarHelper(val key: Symbol) {
   def apply[T](): T = ctx.as[T](key)
   def get[T](): Option[T] = ctx.getAs[T](key)

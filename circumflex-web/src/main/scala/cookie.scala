@@ -39,12 +39,18 @@ case class HttpCookie(var name: String,
   override def toString = name + " = " + value
 }
 
-/*!
-Depending on your application needs you can obtain an instance of `HttpCookie` by supplying
-`javax.servlet.Cookie` as an argument to `apply` method of `HttpCookie` singleton:
+/*! Depending on your application needs you can obtain an instance of `HttpCookie` by
+supplying `javax.servlet.Cookie` as an argument to `apply` method of `HttpCookie` singleton:
 
     HttpCookie(rawCookie)
 */
+
+/**
+ * Converts the `javax.serlvet.Cookie` into `HttpCookie`.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-web/cookie.scala">cookie.scala</a>.
+ */
 object HttpCookie {
   def apply(cookie: Cookie): HttpCookie =
     new HttpCookie(

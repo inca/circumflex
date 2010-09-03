@@ -139,7 +139,6 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   Request headers contain operational information about the requst.
   Circumflex Web Framework lets you access request headers via the `headers` object.
-  TODO: add helpers to retrieve multiple header values
   */
   object headers extends Map[String, String] {
     def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this

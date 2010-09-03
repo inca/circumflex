@@ -115,7 +115,6 @@ class HttpResponse(val raw: HttpServletResponse) {
 
   Response headers contain operational information about the response.
   Circumflex Web Framework lets you access response headers via the `headers` object.
-  TODO add helpers for setting and adding headers
   */
   object headers extends HashMap[String, Any] {
     update("X-Powered-By", "Circumflex 2.0")

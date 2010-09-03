@@ -6,7 +6,25 @@ import org.mortbay.jetty.servlet.{ServletHolder, DefaultServlet, Context => Jett
 import org.mortbay.jetty.{Handler, Server}
 import org.apache.commons.io.FilenameUtils._
 
-// TODO add documentation for standalone server
+/*!# Standalone Server
+
+Circumflex Web Framework ships `StandaloneServer` which uses Jetty to
+start accepting request without even the need to us deployment descriptor
+(which is otherwise required by Servlet Specification).
+
+Following configuration parameters are required to get standalone server
+up and running:
+
+  * `cx.root` specifies content root of web application (`src/main/webapp`
+  is default;
+  * `cx.port` specifies port which Jetty will listen to;
+  * `cx.router` specifies the class name of the main `RequestRouter`.
+
+Usage is simple: use `start` method to bring standalone server up
+and `stop` method to shut the server down.
+
+Refer to source code and Jetty documentation for more information.
+*/
 class StandaloneServer {
 
   def filters: Seq[Class[_ <: Filter]] = List(classOf[CircumflexFilter])

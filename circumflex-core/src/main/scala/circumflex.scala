@@ -97,6 +97,13 @@ instance each time.
 Also note that the instantiation is done using default public class constructors, so
 make sure that the supplied class has one.
 */
+
+/**
+ * Provides convenient methods for retrieving data from untyped containers.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/circumflex.scala">circumflex.scala</a>.
+ */
 trait UntypedContainer extends Map[String, Any] {
 
   def as[C](key: String): C = apply(key).asInstanceOf[C]
