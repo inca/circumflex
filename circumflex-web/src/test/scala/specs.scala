@@ -1,6 +1,7 @@
 package ru.circumflex.web
 
 import ru.circumflex.core._
+import matchers._
 import org.specs.runner.JUnit4
 import org.specs.Specification
 
@@ -12,6 +13,20 @@ class MockRouter extends RequestRouter {
   get("/decode me") = "preved"
   get("/regex/(.*)".r) = "matched " + uri(1)
   put("/") = "this is a put route"
+
+  any("/matching/*") = new MatchingMockRouter
+}
+
+class MatchingMockRouter extends RequestRouter("/matching") {
+  get("/") = "preved"
+  get("/uri/:name") = "preved, " + uri('name)
+  get("/param" & HOST(":host")) = "host is " + param("host")
+
+  get("/composite" & ACCEPT("text/:format") & REFERER("localhost")) =
+          "3 conditions met (" + param("format") + ")"
+  get("/composite" & ACCEPT("text/:format")) =
+          "2 conditions met (" + param("format") + ")"
+  get("/composite") = "1 condition met"
 }
 
 object CircumflexWebSpec extends Specification {
@@ -46,7 +61,34 @@ object CircumflexWebSpec extends Specification {
               .execute()
               .getContent must_== "this is a put route"
     }
+    "process subrouters" in {
+      MockApp.get("/matching/").execute().getContent must_== "preved"
+    }
+  }
 
+  "Matching mechanism" should {
+    "process named parameters from URI" in {
+      MockApp.get("/matching/uri/Jack").execute().getContent must_== "preved, Jack"
+    }
+    "process named parameters from current match results, delegating to request parameters on fail" in {
+      MockApp.get("/matching/param")
+              .setHeader("Host", "preved")
+              .execute()
+              .getContent must_== "host is preved"
+    }
+    "match composite routes" in {
+      MockApp.get("/matching/composite")
+              .setHeader("Accept","text/html")
+              .setHeader("Referer","localhost")
+              .execute().getContent must_== "3 conditions met (html)"
+      MockApp.get("/matching/composite")
+              .setHeader("Accept","text/plain")
+              .execute().getContent must_== "2 conditions met (plain)"
+      MockApp.get("/matching/composite")
+              .setHeader("Accept","application/xml")
+              .setHeader("Referer","localhost")
+              .execute().getContent must_== "1 condition met"
+    }
   }
 
 }
@@ -128,18 +170,6 @@ object CircumflexWebSpec extends Specification {
 //    }
 //    "process errors" in {
 //      MockApp.get("/error").execute().getStatus must_== 503
-//    }
-//    "process messages" in {
-//      MockApp.get("/msg").execute().getContent must_== "Hello!"
-//      MockApp.get("/msg")
-//          .setHeader("Accept-Language", "ru,en;q=0.8,en-us;q=0.2")
-//          .execute().getContent must_== "Hello!"
-//      MockApp.get("/msg")
-//          .setHeader("Accept-Language", "pt,br;q=0.8,en-us;q=0.2")
-//          .execute().getContent must_== "Hola!"
-//      MockApp.get("/msg/world")
-//          .setHeader("Accept-Language", "pt,br;q=0.8,en-us;q=0.2")
-//          .execute().getContent must_== "Hello, world!"
 //    }
 //  }
 //

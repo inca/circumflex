@@ -16,7 +16,7 @@ Match results are subsequently used inside matched route's block.
 TODO add more documentation and samples on how to use match results
 */
 class MatchResult(val name: String,
-            val params: (String, String)*) extends Map[String, String] {
+                  val params: (String, String)*) extends Map[String, String] {
   def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
   def -(key: String): Map[String, String] = this
   def iterator: Iterator[(String, String)] = params.iterator
@@ -49,8 +49,8 @@ trait Matcher {
 trait AtomicMatcher extends Matcher {
   def name: String
   def add(matcher: Matcher) = new CompositeMatcher()
-      .add(this)
-      .add(matcher)
+          .add(this)
+          .add(matcher)
 }
 
 class CompositeMatcher extends Matcher {
@@ -110,7 +110,7 @@ class RegexMatcher(val name: String,
 class HeaderMatcher(name: String,
                     regex: Regex,
                     groupNames: Seq[String] = Nil)
-    extends RegexMatcher(name, request.headers.getOrElse(name,""), regex, groupNames) {
+        extends RegexMatcher(name, request.headers.getOrElse(name,""), regex, groupNames) {
   def this(name: String, pattern: String) = {
     this(name, null, Nil)
     processPattern(pattern)
@@ -118,7 +118,7 @@ class HeaderMatcher(name: String,
 }
 
 class HeaderMatcherHelper(name: String) {
-  def apply(regex: Regex, groupNames: Seq[String] = Nil) = 
+  def apply(regex: Regex, groupNames: Seq[String] = Nil) =
     new HeaderMatcher(name, regex, groupNames)
   def apply(pattern: String) = new HeaderMatcher(name, pattern)
 }

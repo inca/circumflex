@@ -27,33 +27,6 @@ package object web {
 
   val WEB_LOG = new Logger("ru.circumflex.web")
 
-  /*
-  val Accept = new HeaderMatcherHelper("Accept")
-  val AcceptCharset = new HeaderMatcherHelper("Accept-Charset")
-  val AcceptEncoding = new HeaderMatcherHelper("Accept-Encoding")
-  val AcceptLanguage = new HeaderMatcherHelper("Accept-Language")
-  val AcceptRanges = new HeaderMatcherHelper("Accept-Ranges")
-  val Authorization = new HeaderMatcherHelper("Authorization")
-  val CacheControl = new HeaderMatcherHelper("Cache-Control")
-  val ContentLength = new HeaderMatcherHelper("Content-Length")
-  val ContentType = new HeaderMatcherHelper("Content-Type")
-  val HeaderDate = new HeaderMatcherHelper("Date")
-  val Expect = new HeaderMatcherHelper("Expect")
-  val Host = new HeaderMatcherHelper("Host")
-  val IfMatch = new HeaderMatcherHelper("If-Match")
-  val IfModifiedSince = new HeaderMatcherHelper("If-Modified-Since")
-  val IfNoneMatch = new HeaderMatcherHelper("If-None-Match")
-  val IfRange = new HeaderMatcherHelper("If-Range")
-  val IfUnmodifiedSince = new HeaderMatcherHelper("If-Unmodified-Since")
-  val MaxForwards = new HeaderMatcherHelper("Max-Forwards")
-  val Pragma = new HeaderMatcherHelper("Pragma")
-  val ProxyAuthorization = new HeaderMatcherHelper("Proxy-Authorization")
-  val Referer = new HeaderMatcherHelper("Referer")
-  val Upgrade = new HeaderMatcherHelper("Upgrade")
-  val UserAgent = new HeaderMatcherHelper("User-Agent")
-  val Via = new HeaderMatcherHelper("Via")
-  */
-
   /*!## The `headers` Helper
 
   The `headers` object of package `ru.circumflex.web` lets you access request
@@ -114,8 +87,8 @@ package object web {
   object flash extends Map[String, Any] {
     val SESSION_KEY = "cx.flash"
     protected def flashMap = session
-        .getOrElse(SESSION_KEY, Map[String, Any]())
-        .asInstanceOf[Map[String, Any]]
+            .getOrElse(SESSION_KEY, Map[String, Any]())
+            .asInstanceOf[Map[String, Any]]
 
     def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
       session(SESSION_KEY) = flashMap + (kv)
@@ -134,6 +107,24 @@ package object web {
       }
     }
     override def contains(key: String): Boolean = flashMap.contains(key)
+  }
+
+  /*!## The `param` Helper
+
+  The `param` object of package `ru.circumflex.web` is a convenient helper to
+  retrieve the parameters of current match or current request. The parameters
+  are first resolved from `MatchResult` objects found in context. If no
+  match result contain a parameter with specified name, then the parameter is
+  resolved from request parameters.
+  */
+  object param extends Map[String, String] {
+    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
+    def -(key: String): Map[String, String] = this
+    def iterator: Iterator[(String, String)] = ctx.iterator.flatMap(p => p._2 match {
+      case m: MatchResult => m.params.iterator
+      case _ => Iterator.empty
+    }) ++ request.params.iterator
+    def get(key: String): Option[String] = iterator.find(_._1 == key).map(_._2)
   }
 
   /*!## Response Helpers
@@ -186,5 +177,47 @@ package object web {
     response.body(r => streamFunc(r.getOutputStream)).flush_!
   def sendChars(writerFunc: Writer => Unit): Nothing =
     response.body(r => writerFunc(r.getWriter)).flush_!
+
+  /*!## The `matchers` Helper
+
+  The `matchers` helper contains shortcuts for various matchers (for example, by known HTTP headers).
+  You should import this object if you want to use it:
+
+      import ru.circumflex.web.{matchers => m}
+
+      get("/" & m.ACCEPT(":mime")) = "You are accepting " + param("mime")
+  */
+  object matchers {
+    val ACCEPT = new HeaderMatcherHelper("Accept")
+    val ACCEPT_CHARSET = new HeaderMatcherHelper("Accept-Charset")
+    val ACCEPT_ENCODING = new HeaderMatcherHelper("Accept-Encoding")
+    val ACCEPT_LANGUAGE = new HeaderMatcherHelper("Accept-Language")
+    val ACCEPT_RANGES = new HeaderMatcherHelper("Accept-Ranges")
+    val AUTHORIZARION = new HeaderMatcherHelper("Authorization")
+    val CACHE_CONTROL = new HeaderMatcherHelper("Cache-Control")
+    val CONNECTION = new HeaderMatcherHelper("Connection")
+    val CONTENT_LENGTH = new HeaderMatcherHelper("Content-Length")
+    val COOKIE = new HeaderMatcherHelper("Cookie")
+    val CONTENT_TYPE = new HeaderMatcherHelper("Content-Type")
+    val DATE = new HeaderMatcherHelper("Date")
+    val EXPECT = new HeaderMatcherHelper("Expect")
+    val FROM = new HeaderMatcherHelper("From")
+    val HOST = new HeaderMatcherHelper("Host")
+    val IF_MATCH = new HeaderMatcherHelper("If-Match")
+    val IF_MODIFIED_SINCE = new HeaderMatcherHelper("If-Modified-Since")
+    val IF_NONE_MATCH = new HeaderMatcherHelper("If-None-Match")
+    val IF_RANGE = new HeaderMatcherHelper("If-Range")
+    val IF_UNMODIFIED_SINCE = new HeaderMatcherHelper("If-Unmodified-Since")
+    val MAX_FORWARDS = new HeaderMatcherHelper("Max-Forwards")
+    val PRAGMA = new HeaderMatcherHelper("Pragma")
+    val PROXY_AUTHORIZATION = new HeaderMatcherHelper("Proxy-Authorization")
+    val RANGE = new HeaderMatcherHelper("Range")
+    val REFERER = new HeaderMatcherHelper("Referer")
+    val TE = new HeaderMatcherHelper("TE")
+    val UPGRADE = new HeaderMatcherHelper("Upgrade")
+    val USER_AGENT = new HeaderMatcherHelper("User-Agent")
+    val VIA = new HeaderMatcherHelper("Via")
+    val WARNING = new HeaderMatcherHelper("Warning")
+  }
 
 }
