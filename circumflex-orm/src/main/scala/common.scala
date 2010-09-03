@@ -154,8 +154,5 @@ abstract class ValueHolder[T](val name: String, val record: Record[_]) {
    */
   def asString(default: String = "") = if (getValue == null) default else getValue.toString
 
-  /**
-   * Return `uuid` as this holder's identifier.
-   */
-  override def toString = uuid
+  override def toString = asString()
 }

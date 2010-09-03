@@ -2,10 +2,7 @@ package ru.circumflex.orm
 
 import ru.circumflex.core._
 
-/*!# Validation
-
-TODO document
-*/
+/*!# Validation */
 
 class ValidationException(val errors: MsgGroup) extends CircumflexException("Validation failed.")
 

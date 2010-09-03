@@ -1,0 +1,11 @@
+[x] Remove HashModel and WrapperModel
+[ ] Find alternative in stdscala to our WrapperModel
+[ ] Move caches from transaction to context
+[ ] Transaction demaraction patterns:
+
+  [ ] one-per-context
+  [ ] explicit (transaction block)
+
+[ ] Tests
+[ ] Cumulative validation
+[ ] Caches reorganization, increase granularity
