@@ -153,7 +153,7 @@ package object web {
       response.statusCode(statusCode)
     response.body(r => r.getWriter.write(text)).flush_!
   }
-  def sendError(statusCode: Int, message: String = ""): Nothing =
+  def sendError(statusCode: Int, message: String = "No message available."): Nothing =
     response.body(r => r.sendError(statusCode, message)).flush_!
   def sendRedirect(url: String, flashes: Pair[String, Any]*): Nothing = {
     flashes.foreach(kv => flash(kv._1) = kv._2)

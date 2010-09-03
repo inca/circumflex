@@ -26,7 +26,7 @@ case class RouteResponse(val body: String)
 class Route(matchingMethods: String*) {
 
   protected def dispatch(matcher: Matcher, response: => RouteResponse): Unit =
-    matchingMethods.find(request.method.equalsIgnoreCase(_)) match {
+    matchingMethods.find(request.method.equals(_)) match {
       case Some(_) =>
         matcher.apply() match {
           case None => return
@@ -50,23 +50,22 @@ class RequestRouter(val prefix: String = "") {
     new RouteResponse(str)
   implicit def xml2response(xml: Node): RouteResponse =
     new RouteResponse("<?xml version=\"1.0\"?>\n" + xml.toString)
-  implicit def router2response(router: RequestRouter): RouteResponse = sendError(404)
+  implicit def router2response(router: RequestRouter): RouteResponse =
+    sendError(404)
 
   implicit def string2uriMatcher(str: String): RegexMatcher =
     new RegexMatcher("uri", request.uri, prefix + str)
   implicit def regex2uriMatcher(regex: Regex): RegexMatcher =
     new RegexMatcher("uri", request.uri, new Regex(prefix + regex.toString))
 
-  // ### Routes
-
   val get = new Route("get")
+  val head = new Route("head")
   val getOrPost = new Route("get", "post")
   val getOrHead = new Route("get", "head")
   val post = new Route("post")
   val put = new Route("put")
   val patch = new Route("patch")
   val delete = new Route("delete")
-  val head = new Route("head")
   val options = new Route("options")
   val any = new Route("get", "post", "put", "patch" , "delete", "head", "options")
 

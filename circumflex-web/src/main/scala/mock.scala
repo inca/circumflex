@@ -33,11 +33,17 @@ trait MockServer extends StandaloneServer {
   // ## HTTP Methods
 
   def get(uri: String) = new MockRequest(this, "GET", uri)
-  def post(uri: String) = new MockRequest(this, "POST", uri)
-  def put(uri: String) = new MockRequest(this, "PUT", uri)
-  def delete(uri: String) = new MockRequest(this, "DELETE", uri)
   def head(uri: String) = new MockRequest(this, "HEAD", uri)
+  def post(uri: String) = new MockRequest(this, "POST", uri)
+          .setHeader("Content-Type", "application/x-www-form-urlencoded")
+  def put(uri: String) = new MockRequest(this, "PUT", uri)
+          .setHeader("Content-Type", "application/x-www-form-urlencoded")
+  def delete(uri: String) = new MockRequest(this, "DELETE", uri)
+          .setHeader("Content-Type", "application/x-www-form-urlencoded")
   def options(uri: String) = new MockRequest(this, "OPTIONS", uri)
+          .setHeader("Content-Type", "application/x-www-form-urlencoded")
+  def patch(uri: String) = new MockRequest(this, "PATCH", uri)
+          .setHeader("Content-Type", "application/x-www-form-urlencoded")
 
 }
 
@@ -81,12 +87,12 @@ class MockRequest(val mockServer: MockServer, val method: String, val uri: Strin
   def delete_? = req.getMethod.equalsIgnoreCase("DELETE")
   def head_? = req.getMethod.equalsIgnoreCase("HEAD")
   def options_? = req.getMethod.equalsIgnoreCase("OPTIONS")
+  def patch_? = req.getMethod.equalsIgnoreCase("PATCH")
 
   override def toString = req.generate
 
   def execute(): HttpTester = {
     val result = new HttpTester
-    if (post_?) req.setHeader("Content-Type", "application/x-www-form-urlencoded")
     result.parse(mockServer.tester.getResponses(req.generate))
     return result
   }

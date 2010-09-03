@@ -11,6 +11,7 @@ class MockRouter extends RequestRouter {
   post("/") = "preved from POST"
   get("/decode me") = "preved"
   get("/regex/(.*)".r) = "matched " + uri(1)
+  put("/") = "this is a put route"
 }
 
 object CircumflexWebSpec extends Specification {
@@ -37,6 +38,13 @@ object CircumflexWebSpec extends Specification {
     }
     "match requests by regex" in {
       MockApp.get("/regex/piu").execute().getContent must_== "matched piu"
+    }
+    "interpret `_method` parameter as HTTP method" in {
+      MockApp.get("/?_method=PUT").execute().getContent must_== "this is a put route"
+      MockApp.post("/")
+              .setContent("_method=PUT")
+              .execute()
+              .getContent must_== "this is a put route"
     }
 
   }
@@ -97,27 +105,6 @@ object CircumflexWebSpec extends Specification {
 //  doAfterSpec { MockApp.stop }
 //
 //  "RequestRouter" should {
-//    "match the request against it's routes until first match" in {
-//      MockApp.get("/").execute().getContent must_== "preved"
-//    }
-//    "return to the filter if no routes match (default filter's behavior is 404)" in {
-//      MockApp.get("/this/does/not/match/any/routes").execute().getStatus must_== 404
-//    }
-//    "decode URIs before matching" in {
-//      MockApp.get("/decode%20me").execute().getContent must_== "preved"
-//    }
-//    "match POST requests" in {
-//      MockApp.post("/post").execute().getContent must_== "preved"
-//    }
-//    "match PUT requests" in {
-//      MockApp.put("/put").execute().getContent must_== "preved"
-//    }
-//    "match DELETE requests" in {
-//      MockApp.delete("/delete").execute().getContent must_== "preved"
-//    }
-//    "match OPTIONS requests" in {
-//      MockApp.options("/options").execute().getContent must_== "preved"
-//    }
 //    "match composite routes" in {
 //      MockApp.get("/composite")
 //          .setHeader("Accept","text/html")
@@ -130,13 +117,6 @@ object CircumflexWebSpec extends Specification {
 //          .setHeader("Accept","application/xml")
 //          .setHeader("Referer","localhost")
 //          .execute().getContent must_== "1 condition met"
-//    }
-//    "interpret '_method' parameter as HTTP method" in {
-//      MockApp.get("/put?_method=PUT").execute().getContent must_== "preved"
-//      MockApp.post("/put")
-//          .setContent("_method=PUT")
-//          .execute()
-//          .getContent must_== "preved"
 //    }
 //    "send redirects" in {
 //      val r = MockApp.get("/redirect").execute()
@@ -174,22 +154,5 @@ object CircumflexWebSpec extends Specification {
 //    }
 //  }
 //
-//  "CircumflexContext" should {
-//    "be available thread-locally in Circumflex application scope" in {
-//      MockApp.get("/ctx").execute().getContent mustNotBe "null"
-//    }
-//    "be destroyed after the request processing has finished" in {
-//      MockApp.get("/").execute
-//      CircumflexContext.live_? mustBe false
-//    }
-//    "contain captured groups from URI" in {
-//      MockApp.get("/capture/preved").execute().getContent must_== "uri$1 is preved"
-//    }
-//    "set response content type" in {
-//      MockApp.get("/contentType.html").execute()
-//          .getHeader("Content-Type") must beMatching("text/html(\\s*;\\s*charset=.*)?")
-//      MockApp.get("/contentType.css").execute()
-//          .getHeader("Content-Type") must beMatching("text/css(\\s*;\\s*charset=.*)?")
-//    }
 //  }
 //

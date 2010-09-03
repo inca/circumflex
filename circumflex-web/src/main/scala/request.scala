@@ -47,7 +47,8 @@ class HttpRequest(val raw: HttpServletRequest) {
   General request information can be accessed using following methods:
 
     * `protocol` returns the name and version of the protocol the request uses (e.g. `HTTP/1.1`);
-    * `method` returns the name of HTTP method with which the request was made;
+    * `method` returns the name of HTTP method with which the request was made, it's value is
+    overriden by request paremeter `_method` to provide a workaround for browsers;
     * `scheme` returns the name of the scheme used to make this request (e.g. "http", "https"
     or "ftp");
     * `uri` returns the request URI without query string;
@@ -56,11 +57,20 @@ class HttpRequest(val raw: HttpServletRequest) {
     * `secure_?` returns `true` if the request was made using a secure channel, such as HTTPS.
 
   The result of `uri`, `url` and `queryString` is decoded into UTF-8 string using `URLDecoder`.
+
+  Also note that if the method is overriden by the `_method` parameter, the original method is
+  saved in context under the `cx.originalMethod` key.
   */
   def protocol = raw.getProtocol
-  def method = raw.getMethod
   def scheme = raw.getScheme
   def secure_?() = raw.isSecure
+  lazy val method = params.get("_method") match {
+    case Some(m) =>
+      // store original method in context
+      ctx.update("cx.originalMethod", raw.getMethod.toLowerCase)
+      m.trim.toLowerCase
+    case _ => raw.getMethod.toLowerCase
+  }
   lazy val uri = URLDecoder.decode(raw.getRequestURI, "UTF-8")
   lazy val queryString = URLDecoder.decode(raw.getQueryString, "UTF-8")
   lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")
@@ -135,8 +145,8 @@ class HttpRequest(val raw: HttpServletRequest) {
     def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
     def -(key: String): Map[String, String] = this
     def iterator: Iterator[(String, String)] = raw.getHeaderNames
-        .asInstanceOf[JEnumeration[String]]
-        .map(k => (k -> raw.getHeader(k)))
+            .asInstanceOf[JEnumeration[String]]
+            .map(k => (k -> raw.getHeader(k)))
     def get(key: String): Option[String] = raw.getHeader(key)
     def getAsMillis(key: String): Option[Long] = raw.getDateHeader(key)
     def getAsDate(key: String): Option[Date] = getAsMillis(key).map(new Date(_))
@@ -160,9 +170,22 @@ class HttpRequest(val raw: HttpServletRequest) {
       return this
     }
     def iterator: Iterator[(String, Any)] = raw.getAttributeNames
-        .asInstanceOf[JEnumeration[String]]
-        .map(k => (k -> raw.getAttribute(k)))
+            .asInstanceOf[JEnumeration[String]]
+            .map(k => (k -> raw.getAttribute(k)))
     def get(key: String): Option[Any] = raw.getAttribute(key)
+  }
+
+  /*!## Parameters
+
+  Request parameters can be accessed via the `params` object.
+  */
+  object params extends Map[String, String] {
+    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
+    def -(key: String): Map[String, String] = this
+    def iterator: Iterator[(String, String)] = raw.getParameterNames
+            .asInstanceOf[JEnumeration[String]]
+            .map(k => (k -> raw.getParameter(k)))
+    def get(key: String): Option[String] = raw.getParameter(key)
   }
 
   /*!## Session
@@ -194,8 +217,8 @@ class HttpRequest(val raw: HttpServletRequest) {
       val s = raw.getSession(false)
       if (s != null)
         s.getAttributeNames
-            .asInstanceOf[JEnumeration[String]]
-            .map(k => (k -> s.getAttribute(k)))
+                .asInstanceOf[JEnumeration[String]]
+                .map(k => (k -> s.getAttribute(k)))
       else Iterator.empty
     }
     def get(key: String): Option[Any] = {
