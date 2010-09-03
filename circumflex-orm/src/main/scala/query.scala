@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
 import ORM._
-import JDBC._
+import jdbc._
 import java.sql.{ResultSet, PreparedStatement}
 import collection.mutable.ListBuffer
 
@@ -107,7 +107,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
    * Execute a query, open a JDBC `ResultSet` and executes specified `actions`.
    */
   def resultSet[A](actions: ResultSet => A): A = transactionManager.sql(toSql)(st => {
-    sqlLog.debug(toSql)
+    ORM_LOG.debug(toSql)
     setParams(st, 1)
     auto(st.executeQuery)(actions)
   })
@@ -146,7 +146,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
 class NativeSQLQuery[T](projection: Projection[T],
                         expression: ParameterizedExpression)
-    extends SQLQuery[T](projection) {
+        extends SQLQuery[T](projection) {
   def parameters = expression.parameters
   def toSql = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
 }
@@ -158,7 +158,7 @@ class NativeSQLQuery[T](projection: Projection[T],
  */
 class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
 
-    // ### Commons
+  // ### Commons
 
   protected var _auxProjections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_]] = Nil
@@ -174,9 +174,9 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
    * Query parameters.
    */
   def parameters: Seq[Any] = _where.parameters ++
-      _having.parameters ++
-      _setOps.flatMap(p => p._2.parameters) ++
-      _orders.flatMap(_.parameters)
+          _having.parameters ++
+          _setOps.flatMap(p => p._2.parameters) ++
+          _orders.flatMap(_.parameters)
 
   /**
    * Queries combined with this subselect using specific set operation
@@ -364,7 +364,7 @@ trait DMLQuery extends Query {
    */
   def execute(): Int = transactionManager.dml(conn => {
     val sql = toSql
-    sqlLog.debug(sql)
+    ORM_LOG.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
       setParams(st, 1)
       st.executeUpdate
@@ -389,7 +389,7 @@ class NativeDMLQuery(expression: ParameterizedExpression) extends DMLQuery {
  */
 class InsertSelect[R <: Record[R]](val relation: Relation[R],
                                    val query: SQLQuery[_])
-    extends DMLQuery {
+        extends DMLQuery {
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   def parameters = query.parameters
@@ -410,7 +410,7 @@ class InsertSelectHelper[R <: Record[R]](val relation: Relation[R]) {
  * Functionality for DELETE query.
  */
 class Delete[R <: Record[R]](val node: RelationNode[R])
-    extends DMLQuery {
+        extends DMLQuery {
   val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
@@ -436,7 +436,7 @@ class Delete[R <: Record[R]](val node: RelationNode[R])
  * Functionality for UPDATE query.
  */
 class Update[R <: Record[R]](val node: RelationNode[R])
-    extends DMLQuery {
+        extends DMLQuery {
   val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
@@ -478,5 +478,42 @@ class Update[R <: Record[R]](val node: RelationNode[R])
 
 }
 
+/**
+ * Join types for use in `FROM` clauses of SQL queries.
+ */
+case class JoinType(val toSql: String) extends SQLable {
+  override def toString = toSql
+}
+
+/**
+ * Set operations for use in SQL queries.
+ */
+case class SetOperation(val toSql: String) extends SQLable {
+  override def toString = toSql
+}
+
+/**
+ * An expression to use in `ORDER BY` clause.
+ */
+class Order(val expression: String, val parameters: Seq[Any])
+        extends ParameterizedExpression {
+
+  // Specificator (`ASC` or `DESC`).
+  protected[orm] var _specificator = dialect.asc
+
+  def asc: this.type = {
+    this._specificator = dialect.asc
+    return this
+  }
+  def ASC: this.type = asc
+
+  def desc: this.type = {
+    this._specificator = dialect.desc
+    return this
+  }
+  def DESC: this.type = desc
+
+  def toSql = expression + " " + _specificator
+}
 
 

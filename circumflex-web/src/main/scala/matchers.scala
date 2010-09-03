@@ -4,7 +4,7 @@ import util.matching.Regex
 import scala.collection.immutable.Map
 import collection.Iterator
 
-/*#! Matchers
+/*!# Matchers
 
 The `Matcher` trait and the `MatchResult` class are the cornerstone of request routing.
 

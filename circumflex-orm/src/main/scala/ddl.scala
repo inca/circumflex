@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
 import java.sql.Connection
-import JDBC._
+import jdbc._
 import ORM._
 
 // ## DDL stuff

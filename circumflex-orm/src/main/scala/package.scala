@@ -1,12 +1,15 @@
 package ru.circumflex
 
-import _root_.ru.circumflex.orm._
+import ru.circumflex.orm._
+import ru.circumflex.core._
 import ORM._
 import java.util.regex.Pattern
 
 // ## ORM package object
 
 package object orm {
+
+  val ORM_LOG = new Logger("ru.circumflex.orm")
 
   // ### Implicits
 
@@ -46,36 +49,36 @@ package object orm {
   implicit def field2order(field: Field[_]): Order = new Order(field2str(field), Nil)
 
   implicit def tuple2proj[T1, T2](
-      t: Tuple2[Projection[T1],Projection[T2]]) =
+          t: Tuple2[Projection[T1],Projection[T2]]) =
     new Tuple2Projection(t._1, t._2)
   implicit def tuple3proj[T1, T2, T3](
-      t: Tuple3[Projection[T1], Projection[T2], Projection[T3]]) =
+          t: Tuple3[Projection[T1], Projection[T2], Projection[T3]]) =
     new Tuple3Projection(t._1, t._2, t._3)
   implicit def tuple4proj[T1, T2, T3, T4](
-      t: Tuple4[Projection[T1], Projection[T2], Projection[T3], Projection[T4]]) =
+          t: Tuple4[Projection[T1], Projection[T2], Projection[T3], Projection[T4]]) =
     new Tuple4Projection(t._1, t._2, t._3, t._4)
   implicit def tuple5proj[T1, T2, T3, T4, T5](
-      t: Tuple5[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5]]) =
+          t: Tuple5[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5]]) =
     new Tuple5Projection(t._1, t._2, t._3, t._4, t._5)
   implicit def tuple6proj[T1, T2, T3, T4, T5, T6](
-      t: Tuple6[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6]]) =
+          t: Tuple6[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6]]) =
     new Tuple6Projection(t._1, t._2, t._3, t._4, t._5, t._6)
   implicit def tuple7proj[T1, T2, T3, T4, T5, T6, T7](
-      t: Tuple7[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6], Projection[T7]]) =
+          t: Tuple7[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6], Projection[T7]]) =
     new Tuple7Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7)
   implicit def tuple8proj[T1, T2, T3, T4, T5, T6, T7, T8](
-      t: Tuple8[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6], Projection[T7], Projection[T8]]) =
+          t: Tuple8[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6], Projection[T7], Projection[T8]]) =
     new Tuple8Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8)
   implicit def tuple9proj[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-      t: Tuple9[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6], Projection[T7], Projection[T8], Projection[T9]]) =
+          t: Tuple9[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6], Projection[T7], Projection[T8], Projection[T9]]) =
     new Tuple9Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9)
   implicit def tuple10proj[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-      t: Tuple10[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6], Projection[T7], Projection[T8], Projection[T9], Projection[T10]]) =
+          t: Tuple10[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+                  Projection[T6], Projection[T7], Projection[T8], Projection[T9], Projection[T10]]) =
     new Tuple10Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)
 
   // ### Current Transaction Shortcuts
@@ -190,5 +193,25 @@ package object orm {
   def UPDATE[R <: Record[R]](node: RelationNode[R]) = update(node)
   def delete[R <: Record[R]](node: RelationNode[R]) = new Delete(node)
   def DELETE[R <: Record[R]](node: RelationNode[R]) = delete(node)
+
+  // ## JDBC utilities
+
+  object jdbc {
+
+    def autoClose[A <: {def close(): Unit}, B](obj: A)
+                                              (actions: A => B)
+                                              (errors: Throwable => B): B =
+      try {
+        return actions(obj)
+      } catch {
+        case e => return errors(e)
+      } finally {
+        obj.close
+      }
+
+    def auto[A <: {def close(): Unit}, B](obj: A)
+                                         (actions: A => B): B =
+      autoClose(obj)(actions)(throw _)
+  }
 
 }

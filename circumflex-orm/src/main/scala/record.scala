@@ -1,7 +1,8 @@
 package ru.circumflex.orm
 
+import ru.circumflex.core._
 import ORM._
-import JDBC._
+import jdbc._
 
 // ## Record
 
@@ -71,10 +72,10 @@ abstract class Record[R <: Record[R]] { this: R =>
   /**
    * Performs record validation.
    */
-  def validate(): Option[ValidationErrors] = {
+  def validate(): Option[MsgGroup] = {
     val errors = relation.validation.validate(this)
     if (errors.size == 0) None
-    else Some(new ValidationErrors(errors: _*))
+    else Some(new MsgGroup(errors: _*))
   }
 
   /**
@@ -82,7 +83,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    * `ValidationError`s.
    */
   def validate_!(): Unit = validate match {
-    case Some(errors) => throw errors.toException
+    case Some(errors) => throw new ValidationException(errors)
     case _ =>
   }
 
@@ -101,7 +102,7 @@ abstract class Record[R <: Record[R]] { this: R =>
     var f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => !f.empty_?) else fields
     // Prepare and execute query
     val sql = dialect.insertRecord(this, f)
-    sqlLog.debug(sql)
+    ORM_LOG.debug(sql)
     val result = auto(conn.prepareStatement(sql))(st => {
       relation.setParams(this, st, f)
       st.executeUpdate
@@ -137,7 +138,7 @@ abstract class Record[R <: Record[R]] { this: R =>
     val f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => f != id) else fields
     // Prepare and execute a query
     val sql = dialect.updateRecord(this, f)
-    sqlLog.debug(sql)
+    ORM_LOG.debug(sql)
     val result = auto(conn.prepareStatement(sql))(st => {
       relation.setParams(this, st, f)
       typeConverter.write(st, id.getValue, f.size + 1)
@@ -169,7 +170,7 @@ abstract class Record[R <: Record[R]] { this: R =>
     relation.beforeDelete.foreach(c => c(this))
     // Prepare and execute query
     val sql = dialect.deleteRecord(this)
-    sqlLog.debug(sql)
+    ORM_LOG.debug(sql)
     val result = auto(conn.prepareStatement(sql))(st => {
       typeConverter.write(st, id.getValue, 1)
       st.executeUpdate
@@ -257,7 +258,7 @@ abstract class Record[R <: Record[R]] { this: R =>
 
   override def hashCode = id.getOrElse(0l).hashCode
 
-  override def toString = getClass.getSimpleName + "@" + id.toString("TRANSIENT")
+  override def toString = getClass.getSimpleName + "@" + id.asString("TRANSIENT")
 
 }
 

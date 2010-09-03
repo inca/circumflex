@@ -192,3 +192,11 @@ class Index(val relation: Relation[_],
   val sqlCreate = dialect.createIndex(this)
   val sqlDrop = dialect.dropIndex(this)
 }
+
+/**
+ * An action for `ON UPDATE` and `ON DELETE` clauses of
+ * foreign key definitions.
+ */
+case class ForeignKeyAction(val toSql: String) extends SQLable {
+  override def toString = toSql
+}

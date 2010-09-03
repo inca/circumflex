@@ -3,6 +3,7 @@ package ru.circumflex.core
 import java.lang.String
 import collection.{Iterator, Map}
 import collection.JavaConversions._
+import collection.mutable.ArrayBuffer
 import java.util.{ResourceBundle, Locale}
 import java.text.MessageFormat
 
@@ -80,9 +81,9 @@ trait MessageResolver extends Map[String, String] {
   are passed as arguments to `fmt` method, each `{key}` in message is replaced by
   corresponding value).
   */
-  def fmt(key: String, params: Pair[String, Any]*): String =
-    params.foldLeft(getOrElse(key, "")) {
-      (result, p) => result.replaceAll("\\{" + p._1 + "\\}", p._2.toString)
+  def fmt(key: String, params: (String, Any)*): String =
+    params.foldLeft(getOrElse(key, "")) { (result, p) =>
+      result.replaceAll("\\{" + p._1 + "\\}", p._2.toString)
     }
   def format(key: String, params: AnyRef*): String =
     MessageFormat.format(getOrElse(key, ""), params: _*)
@@ -144,4 +145,18 @@ class DelegatingMessageResolver(initialResolvers: MessageResolver*) {
   }
 }
 
+/*!## Messages Grouping
 
+Application-generated messages can be grouped using the `Msg` and `MsgGroup` classes.
+*/
+case class Msg(key: String, params: (String, Any)*) {
+  override def toString: String = msg.fmt(key, params: _*)
+}
+
+class MsgGroup extends ArrayBuffer[Msg] {
+  def this(msgs: Msg*) = {
+    this()
+    this.addAll(msgs)
+  }
+  def by[K](f: Msg => K) = groupBy(f)
+}

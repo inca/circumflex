@@ -1,9 +1,8 @@
 package ru.circumflex.orm
 
 import ORM._
-import JDBC._
-import ru.circumflex.core.Circumflex
-import ru.circumflex.core.CircumflexUtil._
+import jdbc._
+import ru.circumflex.core._
 import java.lang.reflect.Method
 import java.sql.PreparedStatement
 
@@ -25,7 +24,7 @@ object RelationRegistry {
     _classToRelation.get(r.getClass) match {
       case Some(rel: Relation[R]) => rel
       case _ => {
-        val relClass = Circumflex.loadClass[Relation[R]](r.getClass.getName + "$")
+        val relClass = Class.forName(r.getClass.getName + "$").asInstanceOf[Class[Relation[R]]]
         val relation = relClass.getField("MODULE$").get(null).asInstanceOf[Relation[R]]
         _classToRelation += (r.getClass -> relation)
         relation match {
@@ -70,8 +69,8 @@ abstract class Relation[R <: Record[R]] {
    * Attempt to find a record class by convention of companion object,
    * i.e. strip trailing `$` from `this.getClass.getName`.
    */
-  val recordClass: Class[R] = Circumflex
-      .loadClass[R](this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
+  val recordClass: Class[R] = Class.forName(this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
+          .asInstanceOf[Class[R]]
 
   /**
    * This sample is used to introspect record for fields, constraints and,
@@ -89,7 +88,7 @@ abstract class Relation[R <: Record[R]] {
 
   /**
    * Relation name defaults to record's unqualified class name, transformed
-   * with `Circumflex.camelCaseToUnderscore`.
+   * with `camelCaseToUnderscore`.
    */
   protected val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
   def relationName: String = _relationName
