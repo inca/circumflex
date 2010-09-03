@@ -133,7 +133,20 @@ package object web {
   Circumflex Web Framework provides following helpers for sending standard
   HTTP responses:
 
-  // TODO document'em
+    * `send` writes specified `text` to response buffer and, if specified,
+    sets `statusCode`;
+    * `sendError` sends an error to the client using specified `statusCode` and
+    `message`;
+    * `sendRedirect` sends `302 MOVED TEMPORARILY` to the client using specified
+    `url` and optional `flashes`;
+    * `sendFile` sends specified `file` to the client; if `filename` is provided,
+    `Content-Disposition: attachment` is also added to the response with specified
+    `filename`;
+    * `xSendFile` delegates filesending to the web server; refer to documentation
+    of your web server to understand how it works;
+    * `sendStream` accepts a function, which uses `OutputStream` to send binary
+    data;
+    * `sendChars` accepts a function, which uses `Writer` to send character data.
 
   All helpers by convention throw `ResponseSentException` which is caught by
   `CircumflexFilter` to indicate that the response have been processed

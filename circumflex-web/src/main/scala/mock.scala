@@ -6,6 +6,21 @@ import org.mortbay.jetty.Handler
 import org.mortbay.jetty.servlet.{DefaultServlet}
 import org.mortbay.jetty.testing.{HttpTester, ServletTester}
 
+/*!# Testing your application
+
+Circumflex Web Framework lets you test your web application using the `MockApp`.
+
+Refer to our test sources at [`circumflex-web/src/test/scala`][tests] to see it in action.
+
+   [tests]: http://github.com/inca/circumflex/tree/master/circumflex-web/src/test/scala/
+*/
+
+/**
+ * Provides functionality to test your web application.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-web/mock.scala">mock.scala</a>.
+ */
 trait MockServer extends StandaloneServer {
 
   protected var _tester: ServletTester = null
@@ -47,6 +62,9 @@ trait MockServer extends StandaloneServer {
 
 }
 
+/**
+ * @see MockServer
+ */
 class MockRequest(val mockServer: MockServer, val method: String, val uri: String) {
 
   private val req = new HttpTester
@@ -99,4 +117,7 @@ class MockRequest(val mockServer: MockServer, val method: String, val uri: Strin
 
 }
 
+/**
+ * @see MockServer
+ */
 object MockApp extends MockServer

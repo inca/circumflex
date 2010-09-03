@@ -24,9 +24,6 @@ response body to `UTF-8`. Feel free to change it if your application requires so
 /**
  * Provides functionality for sending HTTP responses.
  *
- * Most methods are self-descriptive and have direct equivalents in Servlet API, so
- * Scaladocs are omitted.
- *
  * For more information refer to
  * <a href="http://circumflex.ru/api/2.0/circumflex-web/response.scala">response.scala</a>.
  */

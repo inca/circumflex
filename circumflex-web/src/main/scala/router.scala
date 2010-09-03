@@ -19,31 +19,19 @@ to the client (unless `onNoMatch` method is overriden in `CircumflexFilter`).
 
 Inside an attached block you can access `MatchResult` object produced by enclosing route.
 Match results are stored in `Context`, you can look them up by name.
+
+Take a look at our test sources at [`circumflex-web/src/test/scala`][tests] to see routers
+in action.
+
+   [tests]: http://github.com/inca/circumflex/tree/master/circumflex-web/src/test/scala/
 */
 
-case class RouteResponse(val body: String)
-
-class Route(matchingMethods: String*) {
-
-  protected def dispatch(matcher: Matcher, response: => RouteResponse): Unit =
-    matchingMethods.find(request.method.equals(_)) match {
-      case Some(_) =>
-        matcher.apply() match {
-          case None => return
-          case Some(matches: Seq[MatchResult]) =>
-            matches.foreach(m => ctx.update(m.name, m))
-            val r = response.body
-            send(text = r)
-        }
-      case _ =>
-    }
-
-  // DSL-like syntax (`get("/") = { ... }`)
-  def update(matcher: Matcher, response: => RouteResponse): Unit =
-    dispatch(matcher, response)
-
-}
-
+/**
+ * Performs request routing for an application.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-web/router.scala">router.scala</a>.
+ */
 class RequestRouter(val prefix: String = "") {
 
   implicit def string2response(str: String): RouteResponse =
@@ -81,3 +69,32 @@ class RequestRouter(val prefix: String = "") {
   }
 
 }
+
+/**
+ * @see RequestRouter
+ */
+class Route(matchingMethods: String*) {
+
+  protected def dispatch(matcher: Matcher, response: => RouteResponse): Unit =
+    matchingMethods.find(request.method.equals(_)) match {
+      case Some(_) =>
+        matcher.apply() match {
+          case None => return
+          case Some(matches: Seq[MatchResult]) =>
+            matches.foreach(m => ctx.update(m.name, m))
+            val r = response.body
+            send(text = r)
+        }
+      case _ =>
+    }
+
+  // DSL-like syntax (`get("/") = { ... }`)
+  def update(matcher: Matcher, response: => RouteResponse): Unit =
+    dispatch(matcher, response)
+
+}
+
+/**
+ * @see RequestRouter
+ */
+case class RouteResponse(val body: String)
