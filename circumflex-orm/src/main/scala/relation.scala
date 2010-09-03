@@ -326,15 +326,6 @@ abstract class Relation[R <: Record[R]] {
       case _ =>
     })
 
-  // ### Equality and others
-
-  override def equals(that: Any) = that match {
-    case r: Relation[R] => r.relationName.equalsIgnoreCase(this.relationName)
-    case _ => false
-  }
-
-  override def hashCode = this.relationName.toLowerCase.hashCode
-
   override def toString = qualifiedName
 
 }
