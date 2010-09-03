@@ -14,12 +14,23 @@ class MockRouter extends RequestRouter {
   get("/regex/(.*)".r) = "matched " + uri(1)
   put("/") = "this is a put route"
 
-  any("/matching/*") = new MatchingMockRouter
+  get("/error") = error(503)
+  get("/redirect") = redirect("/")
+
+  any("/sub/*") = new SubMockRouter
+
+  new MatchingMockRouter
+}
+
+class SubMockRouter extends RequestRouter("/sub") {
+  get("/") = "preved"
 }
 
 class MatchingMockRouter extends RequestRouter("/matching") {
-  get("/") = "preved"
   get("/uri/:name") = "preved, " + uri('name)
+  get("/uri/:name.:ext") = uri('name) + "->" + uri('ext)
+  get("/uri/*/one/:two/+.:three") = uri(1) + uri('two) + uri(3) + uri('three)
+
   get("/param" & HOST(":host")) = "host is " + param("host")
 
   get("/composite" & ACCEPT("text/:format") & REFERER("localhost")) =
@@ -62,13 +73,21 @@ object CircumflexWebSpec extends Specification {
               .getContent must_== "this is a put route"
     }
     "process subrouters" in {
-      MockApp.get("/matching/").execute().getContent must_== "preved"
+      MockApp.get("/sub/").execute().getContent must_== "preved"
+    }
+    "send errors" in {
+      MockApp.get("/error").execute().getStatus must_== 503
+    }
+    "send redirects" in {
+      MockApp.get("/redirect").execute().getStatus must_== 302
     }
   }
 
   "Matching mechanism" should {
     "process named parameters from URI" in {
       MockApp.get("/matching/uri/Jack").execute().getContent must_== "preved, Jack"
+      MockApp.get("/matching/uri/file.txt").execute().getContent must_== "file->txt"
+      MockApp.get("/matching/uri/I/one/Love/Circum.flex").execute().getContent must_== "ILoveCircumflex"
     }
     "process named parameters from current match results, delegating to request parameters on fail" in {
       MockApp.get("/matching/param")

@@ -58,6 +58,7 @@ class RequestRouter(val prefix: String = "") {
   implicit def regex2uriMatcher(regex: Regex): RegexMatcher =
     new RegexMatcher("uri", request.uri, new Regex(prefix + regex.toString))
 
+  // Routes
   val get = new Route("get")
   val head = new Route("head")
   val getOrPost = new Route("get", "post")
@@ -69,6 +70,11 @@ class RequestRouter(val prefix: String = "") {
   val options = new Route("options")
   val any = new Route("get", "post", "put", "patch" , "delete", "head", "options")
 
+  // Shortcuts
+  def error(statusCode: Int = 400, message: String = "No message available."): Nothing =
+    sendError(statusCode, message)
+  def redirect(url: String, flashes: (String, Any)*): Nothing =
+    sendRedirect(url, flashes: _*)
   def uri: MatchResult = ctx.get("uri") match {
     case Some(m: MatchResult) => m
     case None => new MatchResult("uri", "splat" -> request.uri)
