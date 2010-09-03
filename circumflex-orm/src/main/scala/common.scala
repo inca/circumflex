@@ -82,7 +82,9 @@ trait SchemaObject {
   override def toString = objectName
 }
 
-abstract class ValueHolder[T](val name: String, val uuid: String) {
+abstract class ValueHolder[T](val name: String, val record: Record[_]) {
+
+  val uuid = record.uuid + "." + name
 
   // An internally stored value
   protected var _value: T = _

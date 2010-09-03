@@ -59,7 +59,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    * Non-DSL field creation.
    */
   def field[T](name: String, sqlType: String) =
-    new Field[T](name, uuid + "." + name, sqlType)
+    new Field[T](name, this, sqlType)
 
   /**
    * Inverse associations.
@@ -270,18 +270,16 @@ abstract class Record[R <: Record[R]] { this: R =>
  */
 class DefinitionHelper[R <: Record[R]](record: R, name: String) {
 
-  def uuid = record.uuid + "." + name
-
-  def integer = new IntField(name, uuid)
-  def bigint = new LongField(name, uuid)
-  def numeric(precision: Int = -1, scale: Int = 0) = new NumericField(name, uuid, precision, scale)
-  def text = new TextField(name, uuid, dialect.textType)
-  def varchar(length: Int = -1) = new TextField(name, uuid, length)
-  def boolean = new BooleanField(name, uuid)
-  def date = new DateField(name, uuid)
-  def time = new TimeField(name, uuid)
-  def timestamp = new TimestampField(name, uuid)
-  def xml = new XmlField(name, uuid)
+  def integer = new IntField(name, record)
+  def bigint = new LongField(name, record)
+  def numeric(precision: Int = -1, scale: Int = 0) = new NumericField(name, record, precision, scale)
+  def text = new TextField(name, record, dialect.textType)
+  def varchar(length: Int = -1) = new TextField(name, record, length)
+  def boolean = new BooleanField(name, record)
+  def date = new DateField(name, record)
+  def time = new TimeField(name, record)
+  def timestamp = new TimestampField(name, record)
+  def xml = new XmlField(name, record)
 
   def INTEGER = integer
   def BIGINT = bigint
@@ -295,7 +293,7 @@ class DefinitionHelper[R <: Record[R]](record: R, name: String) {
   def XML = xml
 
   def references[F <: Record[F]](relation: Relation[F]): Association[R, F] =
-    new Association[R, F](name, uuid, record, relation)
+    new Association[R, F](name, record, relation)
   def REFERENCES[F <: Record[F]](relation: Relation[F]): Association[R, F] =
     references(relation)
 }

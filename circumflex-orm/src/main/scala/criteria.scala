@@ -61,12 +61,12 @@ class Criteria[R <: Record[R]](val rootNode: RelationNode[R])
       case j: JoinNode[P, C] => j.replaceLeft(updateRootTree(j.left, association))
           .replaceRight(updateRootTree(j.right, association))
       case node: RelationNode[N] =>
-        if (node.relation == association.record.relation) {   // N == C
+        if (node.relation == association.localRecord.relation) {   // N == C
           val a = association.asInstanceOf[Association[N, P]]
           new ManyToOneJoin(node, preparePf(a.foreignRelation, a), a, LEFT)
         } else if (node.relation == association.foreignRelation) {  // N == P
           val a = association.asInstanceOf[Association[C, N]]
-          new OneToManyJoin(node, preparePf(a.record.relation, a), a, LEFT)
+          new OneToManyJoin(node, preparePf(a.localRecord.relation, a), a, LEFT)
         } else node
     }
 

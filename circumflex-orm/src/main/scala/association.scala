@@ -5,16 +5,15 @@ import ORM._
 // ## Association
 
 class Association[R <: Record[R], F <: Record[F]](name: String,
-                                                  uuid: String,
-                                                  val record: R,
+                                                  val localRecord: R,
                                                   val foreignRelation: Relation[F])
-    extends ValueHolder[F](name, uuid) { assoc =>
+    extends ValueHolder[F](name, localRecord) { assoc =>
 
   protected var _initialized: Boolean = false
 
   // ### Commons
 
-  class InternalField extends Field[Long](name, uuid, dialect.longType) {
+  class InternalField extends Field[Long](name, record, dialect.longType) {
     override def setValue(newValue: Long): this.type = {
       super.setValue(newValue)
       assoc._value = null.asInstanceOf[F]
@@ -31,7 +30,7 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
       // try to get from record cache
       val id = field.getValue
       _value = tx.getCachedRecord(foreignRelation, id) match {
-        case Some(record) => record
+        case Some(r) => r
         case None =>    // try to fetch lazily
           val r = foreignRelation.as("root")
           (SELECT (r.*) FROM (r) WHERE (r.id EQ id))
@@ -84,7 +83,7 @@ class InverseAssociation[P <: Record[P], C <: Record[C]](val record: P,
     if (record.transient_?) Nil
     else tx.getCachedInverse(this) match {  // lookup in cache
       case null =>                          // lazy fetch
-        val root = association.record.relation as "root"
+        val root = association.localRecord.relation as "root"
         lastAlias(root.alias)
         val v = (SELECT (root.*) FROM (root) WHERE (association.field EQ record.id.getValue)).list
         tx.updateInverseCache(this, v)
