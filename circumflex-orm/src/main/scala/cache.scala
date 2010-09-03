@@ -110,3 +110,15 @@ class HashMapCacheService extends CacheService {
 It can be overriden by setting the `orm.cacheService` parameter. */
 
 object DefaultCacheService extends HashMapCacheService
+
+/*! The `CacheService` object is used to retrieve context-bound cache service. */
+
+object CacheService {
+  def get: CacheService = ctx.get("orm.cacheService") match {
+    case Some(cs: CacheService) => cs
+    case _ =>
+      val cs = cx.instantiate[CacheService]("orm.cacheService", DefaultCacheService)
+      ctx.update("orm.cacheService", cs)
+      return cs
+  }
+}
