@@ -9,3 +9,5 @@
 [ ] Tests
 [ ] Cumulative validation
 [ ] Caches reorganization, increase granularity
+[ ] Support custom types in primary keys
+[ ] Work on inheritance mapping
