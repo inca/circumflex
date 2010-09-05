@@ -19,7 +19,7 @@ class Country extends Record[Country] {
 }
 
 object Country extends Table[Country] {
-  INDEX("country_code_idx", "LOWER(code)") USING "btree" UNIQUE
+  INDEX("country_code_idx", "code") USING "btree" UNIQUE
 
   validation.notEmpty(_.code)
       .notEmpty(_.name)
@@ -55,7 +55,7 @@ class Capital extends Record[Capital] {
   }
   // Associations
   val country = "country_id" REFERENCES(Country) ON_DELETE CASCADE
-  val city = "city_id" REFERENCES(City) ON_DELETE RESTRICT
+  val city = "city_id" REFERENCES(City) ON_DELETE CASCADE
 }
 
 object Capital extends Table[Capital] {

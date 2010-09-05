@@ -246,7 +246,7 @@ class Dialect {
    * (e.g. `mycolumn VARCHAR NOT NULL`).
    */
   def columnDefinition(field: Field[_]): String = {
-    var result = field.name + " " + field.sqlType
+    var result = quoteIdentifer(field.name) + " " + field.sqlType
     if (!field.nullable_?) result += " NOT NULL"
     field.default match {
       case Some(expr) => result += " " + expr

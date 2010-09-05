@@ -1,6 +1,6 @@
-[x] Remove HashModel and WrapperModel
+[+] Remove HashModel and WrapperModel
 [ ] Find alternative in stdscala to our WrapperModel
-[ ] Move caches from transaction to context
+[-] Move caches from transaction to context
 [ ] Transaction demaraction patterns:
 
   [ ] one-per-context
@@ -11,3 +11,4 @@
 [ ] Caches reorganization, increase granularity
 [ ] Support custom types in primary keys
 [ ] Work on inheritance mapping
+[ ] Fix exceptions on `prepareStatement` calls
