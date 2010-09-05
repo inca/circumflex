@@ -33,6 +33,9 @@ object Sample {
 
 object CircumflexORMSpec extends Specification {
 
+  val ci = City as "ci"
+  val co = Country as "co"
+
   doBeforeSpec {
     Sample.createSchema
     Sample.importData
@@ -44,12 +47,17 @@ object CircumflexORMSpec extends Specification {
 
   "Circumflex ORM" should {
     "do simple selects" >> {
-      val ci = City as "ci"
-      val co = Country as "co"
-      val countries = SELECT(co.*).FROM(co).list
-      countries.size must_== 3
-      val switzerland = SELECT(co.*).DISTINCT.FROM(co JOIN ci).WHERE(ci.name LIKE "Lausanne").unique.get
-      switzerland.code() must_== "ch"
+      SELECT(co.*).FROM(co).list.size must_==3
+    }
+    "process distinct, joins and predicates" >> {
+      SELECT(co.*)
+          .DISTINCT
+          .FROM(co JOIN ci)
+          .WHERE(ci.name LIKE "Lausanne")
+          .unique.get.code() must_== "ch"
+    }
+    "process projections" >> {
+      SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ru").unique.get must_== 3l
     }
   }
 

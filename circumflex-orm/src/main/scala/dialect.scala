@@ -337,7 +337,7 @@ class Dialect {
   def select(q: Select[_]): String = {
     var result = "SELECT "
     if (q.distinct_?)
-      result += " DISTINCT "
+      result += "DISTINCT "
     result += q.projections.map(_.toSql).mkString(", ")
     if (q.from.size > 0)
       result += " FROM " + q.from.map(_.toSql).mkString(", ")

@@ -165,11 +165,11 @@ package object orm {
   // Simple projections
 
   def count(expr: String) =
-    new ExpressionProjection[Int](dialect.count + "(" + expr + ")")
+    new ExpressionProjection[Long](dialect.count + "(" + expr + ")")
   def COUNT(expr: String) = count(expr)
 
   def countDistinct(expr: String) =
-    new ExpressionProjection[Int](
+    new ExpressionProjection[Long](
       dialect.count + "(" + dialect.distinct + " " + expr + ")")
   def COUNT_DISTINCT(expr: String) = countDistinct(expr)
 
