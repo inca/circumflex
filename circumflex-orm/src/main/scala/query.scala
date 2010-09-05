@@ -160,6 +160,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
 
   // ### Commons
 
+  protected var _distinct: Boolean = false
   protected var _auxProjections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_]] = Nil
   protected var _where: Predicate = EmptyPredicate
@@ -188,6 +189,17 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
    * The `SELECT` clause of query.
    */
   override def projections = List(projection) ++ _auxProjections
+
+  /**
+   * Returns true if `DISTINCT` keyword is used inside the `SELECT` clause
+   * of this query.
+   */
+  def distinct_?(): Boolean = _distinct
+  def distinct(): Select[T] = {
+    this._distinct = true
+    return this
+  }
+  def DISTINCT(): Select[T] = distinct()
 
   // ### FROM clause
 

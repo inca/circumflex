@@ -335,7 +335,10 @@ class Dialect {
    * clauses).
    */
   def select(q: Select[_]): String = {
-    var result = "SELECT " + q.projections.map(_.toSql).mkString(", ")
+    var result = "SELECT "
+    if (q.distinct_?)
+      result += " DISTINCT "
+    result += q.projections.map(_.toSql).mkString(", ")
     if (q.from.size > 0)
       result += " FROM " + q.from.map(_.toSql).mkString(", ")
     if (q.where != EmptyPredicate)

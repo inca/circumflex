@@ -6,9 +6,10 @@
   [ ] one-per-context
   [ ] explicit (transaction block)
 
-[ ] Tests
+[+] Tests
 [ ] Cumulative validation
 [ ] Caches reorganization, increase granularity
 [ ] Support custom types in primary keys
 [ ] Work on inheritance mapping
 [ ] Fix exceptions on `prepareStatement` calls
+[+] Add support for `distinct`
