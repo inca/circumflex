@@ -63,18 +63,6 @@ trait TransactionManager {
   def openTransaction(): StatefulTransaction = new StatefulTransaction()
 
   /**
-   * A shortcut for `getTransaction.sql(sql)(actions)`.
-   */
-  def sql[A](sql: String)(actions: PreparedStatement => A) =
-    getTransaction.sql(sql)(actions)
-
-  /**
-   * A shortcut for `getTransaction.dml(actions)`.
-   */
-  def dml[A](actions: Connection => A) =
-    getTransaction.dml(actions)
-
-  /**
    * Execute specified `block` in specified `transaction` context and
    * commits the `transaction` afterwards.
    *
@@ -168,22 +156,10 @@ class StatefulTransaction {
     if (!live_?) return
     else connection.close()
 
-  // ### Database communication methods
-
-  // In order to ensure that cache is synchronized with transaction we must use these methods
-  // to handle all communications with JDBC in a centralized way.
-  //
-  // The logic is pretty simple: every query that can possibly affect the data
-  // in current transaction (i.e. the one that is usually called via `executeUpdate`)
-  // should lead to full cache invalidation. This way we must re-read every record
-  // after such manipulation -- that fits perfectly with triggers and other stuff that
-  // could possibly affect more data at backend than you intended with any particular
-  // query.
-
   /**
-   * Prepare SQL statement and execute an attached block within the transaction scope.
+   * Executes a statement in current transaction.
    */
-  def sql[A](sql: String)(actions: PreparedStatement => A): A = {
+  def execute[A](sql: String)(actions: PreparedStatement => A): A = {
     val st = connection.prepareStatement(sql)
     try {
       return actions(st)
@@ -191,14 +167,6 @@ class StatefulTransaction {
       st.close
     }
   }
-
-  /**
-   * Execute a block with DML-like actions in state-safe manner (does cleanup afterwards).
-   */
-  def dml[A](actions: Connection => A): A = try {
-    actions(connection)
-  } finally {
-
-  }
+  def execute[A](actions: Connection => A): A = actions(connection)
 
 }

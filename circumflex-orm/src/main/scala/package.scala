@@ -4,7 +4,7 @@ import ru.circumflex.orm._
 import ru.circumflex.core._
 import ORM._
 import java.util.regex.Pattern
-
+import java.sql.{Connection, PreparedStatement}
 /*!# The `orm` package
 
 Package `orm` contains different shortcuts, utilities, helpers and implicits --

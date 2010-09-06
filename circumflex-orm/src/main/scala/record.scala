@@ -95,7 +95,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def insert_!(fields: Field[_]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
+  else tx.execute(conn => {
     // Execute events
     relation.beforeInsert.foreach(c => c(this))
     // Collect fields which will participate in query
@@ -131,7 +131,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def update_!(fields: Field[_]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
+  else tx.execute(conn => {
     // Execute events
     relation.beforeUpdate.foreach(c => c(this))
     // Collect fields which will participate in query
@@ -165,7 +165,7 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def delete_!(): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
+  else tx.execute(conn => {
     // Execute events
     relation.beforeDelete.foreach(c => c(this))
     // Prepare and execute query

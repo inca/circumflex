@@ -106,7 +106,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
   /**
    * Execute a query, open a JDBC `ResultSet` and executes specified `actions`.
    */
-  def resultSet[A](actions: ResultSet => A): A = transactionManager.sql(toSql)(st => {
+  def resultSet[A](actions: ResultSet => A): A = tx.execute(toSql)(st => {
     ORM_LOG.debug(toSql)
     setParams(st, 1)
     auto(st.executeQuery)(actions)
@@ -374,7 +374,7 @@ trait DMLQuery extends Query {
   /**
    * Execute a query and return the number of affected rows.
    */
-  def execute(): Int = transactionManager.dml(conn => {
+  def execute(): Int = tx.execute(conn => {
     val sql = toSql
     ORM_LOG.debug(sql)
     auto(conn.prepareStatement(sql))(st => {
