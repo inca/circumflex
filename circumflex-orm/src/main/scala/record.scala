@@ -2,7 +2,6 @@ package ru.circumflex.orm
 
 import ru.circumflex.core._
 import ORM._
-import jdbc._
 
 // ## Record
 
@@ -95,24 +94,23 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def insert_!(fields: Field[_]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else tx.execute(conn => {
+  else {
     // Execute events
     relation.beforeInsert.foreach(c => c(this))
     // Collect fields which will participate in query
     var f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => !f.empty_?) else fields
     // Prepare and execute query
     val sql = dialect.insertRecord(this, f)
-    ORM_LOG.debug(sql)
-    val result = auto(conn.prepareStatement(sql))(st => {
+    val result = tx.execute(sql) { st =>
       relation.setParams(this, st, f)
       st.executeUpdate
-    })
+    } { throw _ }
     // Issue additional select to read generated ID (and default column values)
     relation.refetchLast(this)
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     return result
-  })
+  }
   def INSERT_!(fields: Field[_]*): Int = insert_!(fields: _*)
 
   /**
@@ -131,23 +129,22 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def update_!(fields: Field[_]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else tx.execute(conn => {
+  else {
     // Execute events
     relation.beforeUpdate.foreach(c => c(this))
     // Collect fields which will participate in query
     val f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => f != id) else fields
     // Prepare and execute a query
     val sql = dialect.updateRecord(this, f)
-    ORM_LOG.debug(sql)
-    val result = auto(conn.prepareStatement(sql))(st => {
+    val result = tx.execute(sql) { st =>
       relation.setParams(this, st, f)
       typeConverter.write(st, id.getValue, f.size + 1)
       st.executeUpdate
-    })
+    } { throw _ }
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     return result
-  })
+  }
   def UPDATE_!(fields: Field[_]*): Int = update_!(fields: _*)
 
   /**
@@ -165,20 +162,19 @@ abstract class Record[R <: Record[R]] { this: R =>
    */
   def delete_!(): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else tx.execute(conn => {
+  else {
     // Execute events
     relation.beforeDelete.foreach(c => c(this))
     // Prepare and execute query
     val sql = dialect.deleteRecord(this)
-    ORM_LOG.debug(sql)
-    val result = auto(conn.prepareStatement(sql))(st => {
+    val result = tx.execute(sql) { st =>
       typeConverter.write(st, id.getValue, 1)
       st.executeUpdate
-    })
+    } { throw _ }
     // Execute events
     relation.afterDelete.foreach(c => c(this))
     return result
-  })
+  }
   def DELETE_!(): Int = delete_!()
 
   /**

@@ -28,10 +28,10 @@ class Deployment(val id: String,
 
   def process(): Unit = try {
     entries.foreach(e => processNode(e, Nil))
-    tx.commit
+    COMMIT
   } catch {
     case e =>
-      tx.rollback
+      ROLLBACK
       throw e
   }
 

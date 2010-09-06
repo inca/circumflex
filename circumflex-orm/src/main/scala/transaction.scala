@@ -1,6 +1,7 @@
 package ru.circumflex.orm
 
 import ru.circumflex.core._
+import jdbc._
 import java.sql.{PreparedStatement, Connection}
 
 /*!# Transaction management
@@ -19,34 +20,49 @@ transaction corresponds. For example, in web applications a transaction may corr
 to a single request.
 */
 class Transaction {
+
   // Connections are opened lazily
   protected var _connection: Connection = null
-  protected def init(): Unit = if (_connection == null)
-    _connection = ORM.connectionProvider.openConnection
 
-  def live_?(): Boolean = _connection != null && !_connection.isClosed
-  def commit(): Unit = if (live_?) _connection.commit
-  def rollback(): Unit = if (live_?) _connection.rollback
-  def close(): Unit = if (live_?) _connection.close
+  def live_?(): Boolean =
+    _connection != null && !_connection.isClosed
 
-  def execute[A](sql: String)(actions: PreparedStatement => A): A = {
-    init()
-    val st = _connection.prepareStatement(sql)
+  def commit(): Unit =
+    if (live_? && !_connection.getAutoCommit) _connection.commit
+
+  def rollback(): Unit =
+    if (live_? && !_connection.getAutoCommit) _connection.rollback
+
+  def close(): Unit =
+    if (live_?) _connection.close
+
+  protected def getConnection: Connection = {
+    if (_connection == null)
+      _connection = ORM.connectionProvider.openConnection
+    return _connection
+  }
+
+  def execute[A](connActions: Connection => A)
+                (errActions: Throwable => A): A =
     try {
-      return actions(st)
-    } finally {
-      st.close
+      connActions(getConnection)
+    } catch {
+      case e => errActions(e)
     }
-  }
-  def execute[A](actions: Connection => A): A = {
-    init()
-    actions(connection)
-  }
+
+  def execute[A](sql: String)
+                (stActions: PreparedStatement => A)
+                (errActions: Throwable => A): A = execute { conn =>
+    ORM_LOG.trace(sql)
+    autoClose(conn.prepareStatement(sql))(stActions)(errActions)
+  } (errActions)
+
 }
 
+
 trait TransactionManager {
+  def hasLive_?(): Boolean
   def get: Transaction
-  def execute[A](block: => A): A
 }
 
 class ContextTransactionManager extends TransactionManager {
@@ -68,6 +84,8 @@ class ContextTransactionManager extends TransactionManager {
     get.close
   })
 
+  def hasLive_?(): Boolean = ctx.contains("orm.transaction")
+
   def get: Transaction = ctx.get("orm.transaction") match {
     case Some(t: Transaction) => t
     case _ =>
@@ -75,69 +93,5 @@ class ContextTransactionManager extends TransactionManager {
       ctx.update("orm.transaction", t)
       return t
   }
-  def execute[A](block: A): A = {
-
-  }
-}
-
-
-// ### Stateful Transactions
-
-/**
- * The point to use extra-layer above standard JDBC connections is to maintain
- * a cache for each transaction.
- */
-class StatefulTransaction {
-
-  /**
-   * Undelying JDBC connection.
-   */
-  val connection: Connection = ORM.connectionProvider.openConnection
-
-  /**
-   * Should underlying connection be closed on `commit` or `rollback`?
-   */
-  protected var autoClose = false
-
-  def setAutoClose(value: Boolean): this.type = {
-    this.autoClose = value
-    return this
-  }
-
-  def autoClose_?(): Boolean = this.autoClose
-
-  /**
-   * Is underlying connection alive?
-   */
-  def live_?(): Boolean = connection != null && !connection.isClosed
-
-  /**
-   * Commit the transaction (and close underlying connection if `autoClose` is set to `true`).
-   */
-  def commit(): Unit = try {
-    if (!live_?) return
-    connection.commit
-  } finally {
-    if (autoClose) close()
-  }
-
-  /**
-   * Rollback the transaction (and close underlying connection if `autoClose` is set to `true`).
-   */
-  def rollback(): Unit = try {
-    if (!live_?) return
-    connection.rollback
-  } finally {
-    if (autoClose) connection.close
-  }
-
-  /**
-   * Close the underlying connection and dispose of any resources associated with this
-   * transaction.
-   */
-  def close(): Unit =
-    if (!live_?) return
-    else connection.close()
-
 
 }

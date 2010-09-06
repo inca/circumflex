@@ -106,11 +106,10 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
   /**
    * Execute a query, open a JDBC `ResultSet` and executes specified `actions`.
    */
-  def resultSet[A](actions: ResultSet => A): A = tx.execute(toSql)(st => {
-    ORM_LOG.debug(toSql)
+  def resultSet[A](actions: ResultSet => A): A = tx.execute(toSql) { st =>
     setParams(st, 1)
-    auto(st.executeQuery)(actions)
-  })
+    autoClose(st.executeQuery)(rs => actions(rs)) { throw _ }
+  } { throw _ }
 
   // ### Executors
 
@@ -146,7 +145,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
 class NativeSQLQuery[T](projection: Projection[T],
                         expression: ParameterizedExpression)
-        extends SQLQuery[T](projection) {
+    extends SQLQuery[T](projection) {
   def parameters = expression.parameters
   def toSql = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
 }
@@ -175,9 +174,9 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
    * Query parameters.
    */
   def parameters: Seq[Any] = _where.parameters ++
-          _having.parameters ++
-          _setOps.flatMap(p => p._2.parameters) ++
-          _orders.flatMap(_.parameters)
+      _having.parameters ++
+      _setOps.flatMap(p => p._2.parameters) ++
+      _orders.flatMap(_.parameters)
 
   /**
    * Queries combined with this subselect using specific set operation
@@ -374,14 +373,10 @@ trait DMLQuery extends Query {
   /**
    * Execute a query and return the number of affected rows.
    */
-  def execute(): Int = tx.execute(conn => {
-    val sql = toSql
-    ORM_LOG.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(st, 1)
-      st.executeUpdate
-    })
-  })
+  def execute(): Int = tx.execute(toSql){ st =>
+    setParams(st, 1)
+    st.executeUpdate
+  } { throw _ }
 }
 
 // ## Native DML
@@ -401,7 +396,7 @@ class NativeDMLQuery(expression: ParameterizedExpression) extends DMLQuery {
  */
 class InsertSelect[R <: Record[R]](val relation: Relation[R],
                                    val query: SQLQuery[_])
-        extends DMLQuery {
+    extends DMLQuery {
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   def parameters = query.parameters
@@ -422,7 +417,7 @@ class InsertSelectHelper[R <: Record[R]](val relation: Relation[R]) {
  * Functionality for DELETE query.
  */
 class Delete[R <: Record[R]](val node: RelationNode[R])
-        extends DMLQuery {
+    extends DMLQuery {
   val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
@@ -448,7 +443,7 @@ class Delete[R <: Record[R]](val node: RelationNode[R])
  * Functionality for UPDATE query.
  */
 class Update[R <: Record[R]](val node: RelationNode[R])
-        extends DMLQuery {
+    extends DMLQuery {
   val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
@@ -508,7 +503,7 @@ case class SetOperation(val toSql: String) extends SQLable {
  * An expression to use in `ORDER BY` clause.
  */
 class Order(val expression: String, val parameters: Seq[Any])
-        extends ParameterizedExpression {
+    extends ParameterizedExpression {
 
   // Specificator (`ASC` or `DESC`).
   protected[orm] var _specificator = dialect.asc

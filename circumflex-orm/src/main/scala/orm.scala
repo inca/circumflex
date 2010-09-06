@@ -62,7 +62,7 @@ object ORM {
    * Can be overriden with `orm.transactionManager` configuration parameter.
    */
   val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
-    "orm.transactionManager", DefaultTransactionManager)
+    "orm.transactionManager", new ContextTransactionManager)
 
   /**
    * Thread local to hold temporary aliases.

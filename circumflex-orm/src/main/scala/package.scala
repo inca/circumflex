@@ -4,7 +4,7 @@ import ru.circumflex.orm._
 import ru.circumflex.core._
 import ORM._
 import java.util.regex.Pattern
-import java.sql.{Connection, PreparedStatement}
+
 /*!# The `orm` package
 
 Package `orm` contains different shortcuts, utilities, helpers and implicits --
@@ -90,8 +90,7 @@ package object orm {
 
   // Shortcuts
 
-  def tx = transactionManager.getTransaction
-  def TX = tx
+  def tx: Transaction = transactionManager.get
   def commit() = tx.commit()
   def COMMIT() = commit()
   def rollback() = tx.rollback()
@@ -200,13 +199,10 @@ package object orm {
   def delete[R <: Record[R]](node: RelationNode[R]) = new Delete(node)
   def DELETE[R <: Record[R]](node: RelationNode[R]) = delete(node)
 
-  // JDBC utilities
-
   object jdbc {
-
     def autoClose[A <: {def close(): Unit}, B](obj: => A)
                                               (actions: A => B)
-                                              (errors: Throwable => B): B = {
+                                              (errors: Throwable => B): B =
       try {
         val res = obj
         try {
@@ -219,11 +215,6 @@ package object orm {
       } catch {
         case e => return errors(e)
       }
-    }
-
-    def auto[A <: {def close(): Unit}, B](obj: A)
-                                         (actions: A => B): B =
-      autoClose(obj)(actions)(throw _)
   }
-
+  
 }

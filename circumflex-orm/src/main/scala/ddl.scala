@@ -1,7 +1,6 @@
 package ru.circumflex.orm
 
 import java.sql.Connection
-import jdbc._
 import ORM._
 
 // ## DDL stuff
@@ -85,19 +84,19 @@ class DDLUnit {
 
   // ### Workers
 
-  protected def dropObjects(objects: Seq[SchemaObject], conn: Connection) =
-    for (o <- objects.reverse) autoClose(conn.prepareStatement(o.sqlDrop)) {st =>
+  protected def dropObjects(objects: Seq[SchemaObject]): Unit =
+    for (o <- objects.reverse) tx.execute (o.sqlDrop) { st =>
       st.executeUpdate
       _msgs ++= List(InfoMsg("DROP "  + o.objectName + ": OK", o.sqlDrop))
-    } {e =>
+    } { e =>
       _msgs ++= List(ErrorMsg("DROP " + o.objectName + ": " + e.getMessage, o.sqlDrop))
     }
 
-  protected def createObjects(objects: Seq[SchemaObject], conn: Connection) =
-    for (o <- objects) autoClose(conn.prepareStatement(o.sqlCreate)) {st =>
+  protected def createObjects(objects: Seq[SchemaObject]): Unit =
+    for (o <- objects) tx.execute(o.sqlCreate) { st =>
       st.executeUpdate
       _msgs ++= List(InfoMsg("CREATE " + o.objectName + ": OK", o.sqlCreate))
-    } {e =>
+    } { e =>
       _msgs ++= List(ErrorMsg("CREATE " + o.objectName + ": " + e.getMessage, o.sqlCreate))
     }
 
@@ -108,23 +107,23 @@ class DDLUnit {
     resetMsgs()
     _drop()
   }
-  def _drop(): this.type = auto(tx.connection) {conn =>
+  def _drop(): this.type = tx.execute { conn =>
   // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
     // Execute a script.
-    dropObjects(postAux, conn)
-    dropObjects(views, conn)
+    dropObjects(postAux)
+    dropObjects(views)
     if (dialect.supportsDropConstraints_?)
-      dropObjects(constraints, conn)
-    dropObjects(tables, conn)
-    dropObjects(preAux, conn)
+      dropObjects(constraints)
+    dropObjects(tables)
+    dropObjects(preAux)
     if (dialect.supportsSchema_?)
-      dropObjects(schemata, conn)
+      dropObjects(schemata)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
     return this
-  }
+  } { throw _ }
 
   /**
    * Execute a CREATE script for added objects.
@@ -133,22 +132,22 @@ class DDLUnit {
     resetMsgs()
     _create()
   }
-  def _create(): this.type = auto(tx.connection) { conn =>
+  def _create(): this.type = tx.execute { conn =>
   // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
     // Execute a script.
     if (dialect.supportsSchema_?)
-      createObjects(schemata, conn)
-    createObjects(preAux, conn)
-    createObjects(tables, conn)
-    createObjects(constraints, conn)
-    createObjects(views, conn)
-    createObjects(postAux, conn)
+      createObjects(schemata)
+    createObjects(preAux)
+    createObjects(tables)
+    createObjects(constraints)
+    createObjects(views)
+    createObjects(postAux)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
     return this
-  }
+  } { throw _ }
 
   /**
    * Execute a DROP script and then a CREATE script.

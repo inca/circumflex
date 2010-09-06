@@ -1,7 +1,6 @@
 package ru.circumflex.orm
 
 import ORM._
-import jdbc._
 import ru.circumflex.core._
 import java.lang.reflect.Method
 import java.sql.PreparedStatement
