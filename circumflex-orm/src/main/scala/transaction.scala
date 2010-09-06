@@ -1,102 +1,85 @@
 package ru.circumflex.orm
 
+import ru.circumflex.core._
 import java.sql.{PreparedStatement, Connection}
-import collection.mutable.HashMap
-import ORM._
 
-// ## Transaction management
+/*!# Transaction management
 
-// ### Transaction demarcation
+Datatabase transaction boundaries are always necessary. No communication with the
+database can occur outside of a database transaction (this seems to confuse many
+developers who are used to the auto-commit mode). Always use clear transaction
+boundaries, even for read-only operations. Depending on your isolation level and
+database capabilities this might not be required but there is no downside if you
+always demarcate transactions explicitly.
 
-// *Transaction demarcation* refers to setting the transaction boundaries.
-//
-// Datatabase transaction boundaries are always necessary. No communication with the
-// database can occur outside of a database transaction (this seems to confuse many
-// developers who are used to the auto-commit mode). Always use clear transaction
-// boundaries, even for read-only operations. Depending on your isolation level and
-// database capabilities this might not be required but there is no downside if you
-// always demarcate transactions explicitly.
-//
-// There are several popular transaction demarcation patterns for various application types,
-// most of which operate with some sort of "context" or "scope", to which a single
-// transaction corresponds. For example, in web applications a transaction may correspond
-// to a single request.
+*Transaction demarcation* refers to setting the transaction boundaries.
+There are several popular transaction demarcation patterns for various application types,
+most of which operate with some sort of "context" or "scope", to which a single
+transaction corresponds. For example, in web applications a transaction may correspond
+to a single request.
+*/
+class Transaction {
+  // Connections are opened lazily
+  protected var _connection: Connection = null
+  protected def init(): Unit = if (_connection == null)
+    _connection = ORM.connectionProvider.openConnection
 
-/**
- * ### TransactionManager interface
- *
- * *Transaction manager* aims to help developers demarcate their transactions
- * by providing contextual *current* transaction. By default it uses `ThreadLocal`
- * to bind contextual transactions (a separate transaction is allocated for each thread,
- * and each thread works with one transaction at a given time). You can
- * provide your own transaction manager by implementing the `TransactionManager`
- * trait and setting the `orm.transactionManager` configuration parameter.</p>
- *
- * Defines a contract to open stateful transactions and return
- * thread-locally current transaction.
- */
-trait TransactionManager {
-  private val threadLocalContext = new ThreadLocal[StatefulTransaction]
+  def live_?(): Boolean = _connection != null && !_connection.isClosed
+  def commit(): Unit = if (live_?) _connection.commit
+  def rollback(): Unit = if (live_?) _connection.rollback
+  def close(): Unit = if (live_?) _connection.close
 
-  /**
-   * Does transaction manager has live current transaction?
-   */
-  def hasLiveTransaction_?(): Boolean =
-    threadLocalContext.get != null && threadLocalContext.get.live_?
-
-  /**
-   * Retrieve a contextual transaction.
-   */
-  def getTransaction: StatefulTransaction = {
-    if (!hasLiveTransaction_?) threadLocalContext.set(openTransaction)
-    return threadLocalContext.get
-  }
-
-  /**
-   * Sets a contextual transaction to specified `tx`.
-   */
-  def setTransaction(tx: StatefulTransaction): Unit =threadLocalContext.set(tx)
-
-  /**
-   * Open new stateful transaction.
-   */
-  def openTransaction(): StatefulTransaction = new StatefulTransaction()
-
-  /**
-   * Execute specified `block` in specified `transaction` context and
-   * commits the `transaction` afterwards.
-   *
-   * If any exception occur, rollback the transaction and rethrow an
-   * exception.
-   *
-   * The contextual transaction is replaced with specified `transaction` and
-   * is restored after the execution of `block`.
-   */
-  def executeInContext(transaction: StatefulTransaction)(block: => Unit) = {
-    val prevTx: StatefulTransaction = if (hasLiveTransaction_?) getTransaction else null
+  def execute[A](sql: String)(actions: PreparedStatement => A): A = {
+    init()
+    val st = _connection.prepareStatement(sql)
     try {
-      setTransaction(transaction)
-      block
-      if (transaction.live_?) {
-        transaction.commit
-        ormLog.debug("Committed current transaction.")
-      }
-    } catch {
-      case e =>
-        if (transaction.live_?) {
-          transaction.rollback
-          ormLog.error("Rolled back current transaction.")
-        }
-        throw e
-    } finally if (transaction.live_?) {
-      transaction.close
-      ormLog.debug("Closed current connection.")
-      setTransaction(prevTx)
+      return actions(st)
+    } finally {
+      st.close
     }
+  }
+  def execute[A](actions: Connection => A): A = {
+    init()
+    actions(connection)
   }
 }
 
-object DefaultTransactionManager extends TransactionManager
+trait TransactionManager {
+  def get: Transaction
+  def execute[A](block: => A): A
+}
+
+class ContextTransactionManager extends TransactionManager {
+
+  Context.addDestroyListener(c => try {
+    get.commit
+    ORM_LOG.trace("Committed current transaction.")
+  } catch {
+    case e =>
+      ORM_LOG.error("Could not commit current transaction", e)
+      try {
+        get.rollback
+        ORM_LOG.trace("Rolled back current transaction.")
+      } catch {
+        case e =>
+          ORM_LOG.error("Could not roll back current transaction", e)
+      }
+  } finally {
+    get.close
+  })
+
+  def get: Transaction = ctx.get("orm.transaction") match {
+    case Some(t: Transaction) => t
+    case _ =>
+      val t = cx.instantiate[Transaction]("orm.transaction", new Transaction)
+      ctx.update("orm.transaction", t)
+      return t
+  }
+  def execute[A](block: A): A = {
+
+  }
+}
+
 
 // ### Stateful Transactions
 
@@ -156,17 +139,5 @@ class StatefulTransaction {
     if (!live_?) return
     else connection.close()
 
-  /**
-   * Executes a statement in current transaction.
-   */
-  def execute[A](sql: String)(actions: PreparedStatement => A): A = {
-    val st = connection.prepareStatement(sql)
-    try {
-      return actions(st)
-    } finally {
-      st.close
-    }
-  }
-  def execute[A](actions: Connection => A): A = actions(connection)
 
 }

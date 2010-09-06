@@ -118,6 +118,22 @@ object Context {
     threadLocal.set(null)
   }
 
+  /**
+   * Executes specified `block` within new context (by initializing a new one,
+   * passing it to the block and then destroying it). If previous context exists,
+   * it's content becomes unavailable within block, but is restored afterwards.
+   */
+  def executeInNew[A](block: Context => A): A = {
+    val previousCtx: Option[Context] = if (live_?) Some(get) else None
+    try {
+      Context.init()
+      block(get)
+    } finally {
+      Context.destroy()
+      previousCtx.map(threadLocal.set(_))
+    }
+  }
+
 }
 
 /*!# Context DSL
@@ -152,7 +168,7 @@ class ContextVarHelper(val key: Symbol) {
   def getOrElse[T >: Any](default: T): T = ctx.getOrElse[T](key, default)
   def update(value: Any): Unit = ctx.update(key, value)
   def :=(value: Any): Unit = update(value)
-    def getString(key: String): String = getOrElse(key, "").toString
+  def getString(key: String): String = getOrElse(key, "").toString
 
   def getString: String = ctx.getString(key)
   def getBoolean: Boolean = ctx.getBoolean(key)

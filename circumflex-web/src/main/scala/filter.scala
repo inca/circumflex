@@ -107,28 +107,26 @@ class CircumflexFilter extends Filter {
       // try to serve static first
       if (serveStatic(req, res)) return
       // initialize context
-      Context.init()
-      ctx("cx.request") = new HttpRequest(req)
-      ctx("cx.response") = new HttpResponse(res)
-      ctx("cx.filterChain") = chain
-      try {
-        WEB_LOG.trace(req)
-        // execute main router
+      Context.executeInNew { ctx =>
+        ctx("cx.request") = new HttpRequest(req)
+        ctx("cx.response") = new HttpResponse(res)
+        ctx("cx.filterChain") = chain
         try {
-          cx.instantiate("cx.router") // ResponseSentException must be thrown
-          onNoMatch()
-        } catch {
-          case e: InvocationTargetException => e.getCause match {
-            case ex: ResponseSentException => throw ex
-            case ex: FileNotFoundException => onNotFound(ex)
-            case ex => onRouterError(ex)
+          WEB_LOG.trace(req)
+          // execute main router
+          try {
+            cx.instantiate("cx.router") // ResponseSentException must be thrown
+            onNoMatch()
+          } catch {
+            case e: InvocationTargetException => e.getCause match {
+              case ex: ResponseSentException => throw ex
+              case ex: FileNotFoundException => onNotFound(ex)
+              case ex => onRouterError(ex)
+            }
           }
+        } catch {
+          case e: ResponseSentException => WEB_LOG.trace(res)
         }
-      } catch {
-        case e: ResponseSentException => WEB_LOG.trace(res)
-      } finally {
-        // destroy context
-        Context.destroy()
       }
     case _ =>
   }
