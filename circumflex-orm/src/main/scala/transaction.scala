@@ -147,7 +147,6 @@ class StatefulTransaction {
     if (!live_?) return
     connection.commit
   } finally {
-    cleanup()
     if (autoClose) close()
   }
 
@@ -158,16 +157,7 @@ class StatefulTransaction {
     if (!live_?) return
     connection.rollback
   } finally {
-    cleanup()
     if (autoClose) connection.close
-  }
-
-  /**
-   * Invalidate all caches and clears all state associated with this transaction.
-   */
-  def cleanup(): this.type = {
-    invalidateCaches
-    return this
   }
 
   /**
@@ -208,72 +198,7 @@ class StatefulTransaction {
   def dml[A](actions: Connection => A): A = try {
     actions(connection)
   } finally {
-    cleanup()
+
   }
 
-  // ### Cache
-
-  protected[orm] def key(relation: Relation[_], id: Long): String = relation.uuid + "@" + id
-  protected[orm] def key(relation: Relation[_], id: Long, association: Association[_, _]): String =
-    key(relation, id) + ":" + association.uuid
-
-  protected[orm] var recordCache = new HashMap[String, Any]
-  protected[orm] var inverseCache = new HashMap[String, Seq[Any]]
-
-  def invalidateCaches: Unit = {
-    recordCache = new HashMap[String, Any]
-    inverseCache = new HashMap[String, Seq[Any]]
-  }
-
-  def getCachedRecord[R <: Record[R]](relation: Relation[R], id: Long): Option[R] = relation match {
-    case c: Cacheable[R] => c.getCachedRecord(id)
-    case _ => recordCache.get(key(relation, id)).asInstanceOf[Option[R]]
-  }
-
-  def updateRecordCache[R <: Record[R]](record: R): Unit =
-    if (record.transient_?)
-      throw new ORMException("Transient records cannot be cached.")
-    else record.relation match {
-      case c: Cacheable[R] => c.updateRecordCache(record)
-      case _ =>
-        recordCache += key(record.relation, record.id.getValue) -> record
-    }
-
-  def evictRecordCache[R <: Record[R]](record: R): Unit =
-    if (!record.transient_?) record.relation match {
-      case c: Cacheable[R] => c.evictRecordCache(record)
-      case _ =>
-        recordCache -= key(record.relation, record.id.getValue)
-    }
-
-  def getCachedInverse[P <: Record[P], C <: Record[C]](record: P,
-                                                       association: Association[C, P]): Seq[C] =
-    if (record.transient_?)
-      throw new ORMException("Could not retrieve inverse association for transient record.")
-    else inverseCache.get(key(record.relation, record.id.getValue, association))
-        .getOrElse(null)
-        .asInstanceOf[Seq[C]]
-
-  def getCachedInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C]): Seq[C] =
-    getCachedInverse(inverse.record, inverse.association)
-
-  def updateInverseCache[P <: Record[P], C <: Record[C]](record: P,
-                                                         association: Association[C, P],
-                                                         children: Seq[C]): Unit =
-    if (record.transient_?)
-      throw new ORMException("Could not update inverse association cache for transient record.")
-    else inverseCache += key(record.relation, record.id.getValue, association) -> children
-
-  def updateInverseCache[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C],
-                                                         children: Seq[C]): Unit =
-    updateInverseCache(inverse.record, inverse.association, children)
-
-  def evictInverseCache[P <: Record[P], C <: Record[C]](record: P,
-                                                        association: Association[C, P]): Unit =
-    if (record.transient_?)
-      throw new ORMException("Could not evict inverse association cache for transient record.")
-    else inverseCache -= key(record.relation, record.id.getValue, association)
-
-  def evictInverseCache[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C]): Unit =
-    evictInverseCache(inverse.record, inverse.association)
 }

@@ -201,9 +201,9 @@ abstract class Record[R <: Record[R]] { this: R =>
   def refresh(): this.type = if (transient_?)
     throw new ORMException("Could not refresh transient record.")
   else {
-    tx.evictRecordCache(this)
     val root = relation.as("root")
     val id = this.id()
+    cacheService.evictRecord(relation, id)
     SELECT (root.*) FROM root WHERE (root.id EQ id) unique match {
       case Some(r: R) => relation.copyFields(r, this)
       case _ =>

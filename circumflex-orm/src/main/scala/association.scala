@@ -29,7 +29,7 @@ class Association[R <: Record[R], F <: Record[F]](name: String,
       _initialized = true
       // try to get from record cache
       val id = field.getValue
-      _value = tx.getCachedRecord(foreignRelation, id) match {
+      _value = cacheService.getRecord(foreignRelation, id) match {
         case Some(r) => r
         case None =>    // try to fetch lazily
           val r = foreignRelation.as("root")
@@ -81,14 +81,14 @@ class InverseAssociation[P <: Record[P], C <: Record[C]](val record: P,
                                                          val association: Association[C, P]) {
   def getValue(): Seq[C] =
     if (record.transient_?) Nil
-    else tx.getCachedInverse(this) match {  // lookup in cache
-      case null =>                          // lazy fetch
+    else cacheService.getInverse(association, record.id()) match {  // lookup in cache
+      case None =>                                           // lazy fetch
         val root = association.localRecord.relation as "root"
         lastAlias(root.alias)
         val v = (SELECT (root.*) FROM (root) WHERE (association.field EQ record.id.getValue)).list
-        tx.updateInverseCache(this, v)
+        cacheService.updateInverse(association, record.id(), v)
         return v
-      case l: Seq[C] =>
+      case Some(l: Seq[C]) =>
         return l
     }
 

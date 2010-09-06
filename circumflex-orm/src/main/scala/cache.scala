@@ -14,7 +14,7 @@ transaction. This functionality is required for all data-retrieval operations.
 The cache consists of two logical parts:
 
   1. *record cache* holds individual records by their relations and `id`s;
-  2. *inverse cache* holds sequences of records by their inverse associations and their parent's `id`s.
+  2. *inverse cache* holds sequences of records by their associations and their parent's `id`s.
 */
 trait CacheService {
 
@@ -38,38 +38,38 @@ trait CacheService {
   */
   def invalidateRecords: Unit
   def invalidateRecords[R <: Record[R]](relation: Relation[R]): Unit
-  def getRecord[R <: Record[R]](relation: Relation[R], id: Long): Option[R]
+  def getRecord[R <: Record[R]](relation: Relation[R], id: Any): Option[R]
   def updateRecord[R <: Record[R]](record: R): Unit
-  def evictRecord[R <: Record[R]](relation: Relation[R], id: Long): Unit
+  def evictRecord[R <: Record[R]](relation: Relation[R], id: Any): Unit
 
   /*!## Inverse Cache
 
   Following methods are used to maintain inverse cache:
 
   * `invalidateInverse` clears all records from inverse cache or only those who
-  correspond to specified `inverse` association;
+  correspond to specified `association`;
   * `getInverse` retrieves children records from cache by specified `inverse` association
   and their `parentId`;
   * `updateInverse` updates an inverse cache with specified `children`;
-  * `evictRecord` removes children from inverse cache by specified `inverse` and `parentId`.
+  * `evictRecord` removes children from inverse cache by specified `association` and `parentId`.
   */
   def invalidateInverse: Unit
-  def invalidateInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C]): Unit
-  def getInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C],
-                                                 parentId: Long): Option[Seq[C]]
-  def updateInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C],
-                                                    parentId: Long,
+  def invalidateInverse[P <: Record[P], C <: Record[C]](association: Association[C, P]): Unit
+  def getInverse[P <: Record[P], C <: Record[C]](association: Association[C, P],
+                                                 parentId: Any): Option[Seq[C]]
+  def updateInverse[P <: Record[P], C <: Record[C]](association: Association[C, P],
+                                                    parentId: Any,
                                                     children: Seq[C]): Unit
-  def evictInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C],
-                                                   parentId: Long): Unit
+  def evictInverse[P <: Record[P], C <: Record[C]](association: Association[C, P],
+                                                   parentId: Any): Unit
 
 }
 
 class HashMapCacheService extends CacheService {
 
-  class CacheMap extends HashMap[Any, HashMap[Long, Any]] {
-    override def get(key: Any): Option[HashMap[Long, Any]] = super.get(key) orElse {
-      val m = new HashMap[Long, Any]
+  class CacheMap extends HashMap[Any, HashMap[Any, Any]] {
+    override def get(key: Any): Option[HashMap[Any, Any]] = super.get(key) orElse {
+      val m = new HashMap[Any, Any]
       update(key, m)
       m
     }
@@ -82,27 +82,37 @@ class HashMapCacheService extends CacheService {
     _recordsCache.clear
   def invalidateRecords[R <: Record[R]](relation: Relation[R]): Unit =
     _recordsCache.remove(relation)
-  def getRecord[R <: Record[R]](relation: Relation[R], id: Long): Option[R] =
-    _recordsCache(relation).get(id).asInstanceOf[Option[R]]
+  def getRecord[R <: Record[R]](relation: Relation[R], id: Any): Option[R] =
+    relation match {
+      case c: Cacheable[R] => c.getCachedRecord(id)
+      case _ => _recordsCache(relation).get(id).asInstanceOf[Option[R]]
+    }
   def updateRecord[R <: Record[R]](record: R): Unit =
-    _recordsCache(record.relation).update(record.id(), record)
-  def evictRecord[R <: Record[R]](relation: Relation[R], id: Long): Unit =
-    _recordsCache(relation).remove(id)
+    if (!record.transient_?) record.relation match {
+      case c: Cacheable[R] => c.updateRecordCache(record)
+      case _ => _recordsCache(record.relation).update(record.id(), record)
+    }
+  def evictRecord[R <: Record[R]](relation: Relation[R], id: Any): Unit =
+    relation match {
+      case c: Cacheable[R] => c.evictRecordCache(id)
+      case _ => _recordsCache(relation).remove(id)
+    }
+
 
   def invalidateInverse: Unit =
     _inverseCache.clear
-  def invalidateInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C]): Unit =
-    _inverseCache.remove(inverse)
-  def getInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C],
-                                                 parentId: Long): Option[Seq[C]] =
-    _inverseCache(inverse).get(parentId).asInstanceOf[Option[Seq[C]]]
-  def updateInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C],
-                                                    parentId: Long,
+  def invalidateInverse[P <: Record[P], C <: Record[C]](association: Association[C, P]): Unit =
+    _inverseCache.remove(association)
+  def getInverse[P <: Record[P], C <: Record[C]](association: Association[C, P],
+                                                 parentId: Any): Option[Seq[C]] =
+    _inverseCache(association).get(parentId).asInstanceOf[Option[Seq[C]]]
+  def updateInverse[P <: Record[P], C <: Record[C]](association: Association[C, P],
+                                                    parentId: Any,
                                                     children: Seq[C]): Unit =
-    _inverseCache(inverse).update(parentId, children)
-  def evictInverse[P <: Record[P], C <: Record[C]](inverse: InverseAssociation[P, C],
-                                                   parentId: Long): Unit =
-    _inverseCache(inverse).remove(parentId)
+    _inverseCache(association).update(parentId, children)
+  def evictInverse[P <: Record[P], C <: Record[C]](association: Association[C, P],
+                                                   parentId: Any): Unit =
+    _inverseCache(association).remove(parentId)
 
 }
 

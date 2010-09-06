@@ -142,13 +142,13 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
 
   def read(rs: ResultSet): R =
     _fieldProjections.find(_.field == node.relation.primaryKey) match {
-      case Some(pkProjection) => pkProjection.read(rs) match {
-        case id: Long => tx.getCachedRecord(node.relation, id) match {
+      case Some(pkProjection) =>
+        val id = pkProjection.read(rs)
+        cacheService.getRecord(node.relation, id) match {
           case Some(record: R) => record
           case _ => readRecord(rs)
         }
-        case _ => nope
-      } case _ => nope
+      case _ => nope
     }
 
   protected def readRecord(rs: ResultSet): R = {
@@ -162,7 +162,7 @@ class RecordProjection[R <: Record[R]](val node: RelationNode[R])
     if (record.transient_?) return nope
     else {
       // Otherwise cache it and return.
-      tx.updateRecordCache(record)
+      cacheService.updateRecord(record)
       return record
     }
   }

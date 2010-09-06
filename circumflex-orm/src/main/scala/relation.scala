@@ -142,7 +142,7 @@ abstract class Relation[R <: Record[R]] {
    * Retrieve the record by specified `id` from transaction-scoped cache,
    * or fetch it from database.
    */
-  def get(id: Long): Option[R] = tx.getCachedRecord(this, id)
+  def get(id: Long): Option[R] = cacheService.getRecord(this, id)
       .orElse(as("root").criteria.add("root.id" EQ id).unique)
 
   /**
