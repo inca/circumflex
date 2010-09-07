@@ -35,7 +35,7 @@ trait ParameterizedExpression extends SQLable {
   override def equals(that: Any) = that match {
     case e: ParameterizedExpression =>
       e.toSql == this.toSql && (e.parameters.toList -- this.parameters.toList) == Nil
-   case _ => false
+    case _ => false
   }
 
   override def hashCode = 0
@@ -89,33 +89,32 @@ abstract class ValueHolder[T](val name: String, val record: Record[_]) {
   // An internally stored value
   protected var _value: T = _
 
-  protected var _setter: T => T = t => t
-
   // This way the value will be unwrapped by FTL engine
   def item = getValue
 
   // Should the `NOT NULL` constraint be applied to this value holder?
   protected var _notNull: Boolean = true
   def nullable_?(): Boolean = !_notNull
-
   def notNull: this.type = {
     _notNull = true
     return this
   }
   def NOT_NULL: this.type = notNull
-
   def nullable: this.type = {
     _notNull = false
     return this
   }
   def NULLABLE: this.type = nullable
 
-  def setter = _setter
+  // On-set event listeners
+  protected var _setters: Seq[T => T] = Nil
   def setter(sf: T => T): this.type = {
-    _setter = sf
+    _setters ++= List(sf)
     return this
   }
   def SETTER(sf: T => T): this.type = setter(sf)
+  def addSetter(sf: T => T): this.type = setter(sf)
+  def setters: Seq[T => T] = _setters
 
   // Getters
   def getValue(): T = _value
@@ -132,7 +131,9 @@ abstract class ValueHolder[T](val name: String, val record: Record[_]) {
 
   // Setters
   def setValue(newValue: T): this.type = {
-    _value = if (newValue != null) _setter(newValue) else newValue
+    _value = if (newValue != null)
+      setters.foldLeft(newValue) { (v, s) => s(v) }
+    else newValue
     return this
   }
   def :=(newValue: T): this.type = setValue(newValue)
