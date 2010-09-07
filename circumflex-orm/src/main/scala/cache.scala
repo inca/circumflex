@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 import ru.circumflex.core._
 import collection.mutable.HashMap
+import java.util.concurrent.ConcurrentHashMap
 
 /*!# Context-Level Cache
 
@@ -131,4 +132,34 @@ object CacheService {
       ctx.update("orm.cacheService", cs)
       return cs
   }
+}
+
+/*!# Application-Level Cache
+
+Circumflex ORM lets you organize application-scope cache for any relation of your
+application: just mix in the `Cacheable` trait into your relation. Note that since
+one record instance may become accessible to several threads, the modification
+of such records is subject for concurrency control.
+*/
+trait Cacheable[R <: Record[R]] extends Relation[R] {
+  protected var _cache = new ConcurrentHashMap[Any, R]
+
+  def updateRecordCache(record: R): R = {
+    _cache.put(record.id(), record)
+    return record
+  }
+  def getCachedRecord(id: Any): Option[R] = _cache.get(id)
+  def evictRecordCache(id: Any): Unit = _cache.remove(id)
+
+  /**
+   * Clears applciation-scoped cache.
+   */
+  def invalidateCache(): Unit = {
+    _cache = new ConcurrentHashMap[Any, R]
+  }
+
+  afterInsert(r => updateRecordCache(r))
+  afterUpdate(r => updateRecordCache(r))
+  afterDelete(r => evictRecordCache(r.id()))
+
 }
