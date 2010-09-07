@@ -57,6 +57,19 @@ class Transaction {
     autoClose(conn.prepareStatement(sql))(stActions)(errActions)
   } (errActions)
 
+  def apply(block: => Unit): Unit = {
+    val sp = getConnection.setSavepoint
+    try {
+      block
+    } catch {
+      case e =>
+        getConnection.rollback(sp)
+        throw e
+    } finally {
+      getConnection.releaseSavepoint(sp)
+    }
+  }
+
 }
 
 
