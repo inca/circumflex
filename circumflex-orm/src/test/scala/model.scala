@@ -19,9 +19,10 @@ class Country extends Record[Country] {
 }
 
 object Country extends Table[Country] {
-  INDEX("country_code_idx", "code") USING "btree" UNIQUE
+  UNIQUE(this.code)
 
   def byCode(c: String) = criteria.add(this.code EQ c.toLowerCase).unique
+  def byName(n: String) = criteria.add(this.name LIKE n).list
 
   validation.notEmpty(_.code)
       .notEmpty(_.name)

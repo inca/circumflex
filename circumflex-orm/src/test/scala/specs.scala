@@ -49,9 +49,28 @@ object CircumflexORMSpec extends Specification {
       SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ru").unique.get must_== 3l
     }
     "process transactions" >> {
-      new Country("pt", "Portugal").save
+      val c = new Country("pt", "Portugal")
+      c.save
+      Country.byCode("pt") must_== Some(c)
       ROLLBACK
       Country.byCode("pt") must_== None
+    }
+    "process nested transactions" >> {
+      // Let's try to create 10 countries, but emulate
+      // the conditions where only 3 operations are successful
+      for (i <- 0 until 10) try tx {
+        val code = i match {
+          case 0 => "xx"
+          case 1 => "yy"
+          case 2 => "zz"
+          case 3 => ""    // won't pass validation => fails
+          case _ => "xx"  // already exist => fails
+        }
+        new Country(code, "Test").save
+      } catch { case _ => }
+      Country.byName("Test").size must_== 3
+      ROLLBACK
+      Country.byName("Test").size must_== 0
     }
   }
 
