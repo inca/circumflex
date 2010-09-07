@@ -30,8 +30,10 @@ class Transaction {
   def commit(): Unit =
     if (live_? && !_connection.getAutoCommit) _connection.commit
 
-  def rollback(): Unit =
+  def rollback(): Unit = {
     if (live_? && !_connection.getAutoCommit) _connection.rollback
+    cacheService.invalidate
+  }
 
   def close(): Unit =
     if (live_?) _connection.close

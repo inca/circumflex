@@ -79,10 +79,15 @@ class HashMapCacheService extends CacheService {
   protected val _recordsCache = new CacheMap
   protected val _inverseCache = new CacheMap
 
-  def invalidateRecords: Unit =
+  def invalidateRecords: Unit = {
     _recordsCache.clear
+    RelationRegistry.cacheableRelations.foreach(_.invalidateCache)
+  }
   def invalidateRecords[R <: Record[R]](relation: Relation[R]): Unit =
-    _recordsCache.remove(relation)
+    relation match {
+      case c: Cacheable[R] => c.invalidateCache
+      case _ => _recordsCache.remove(relation)
+    }
   def getRecord[R <: Record[R]](relation: Relation[R], id: Any): Option[R] =
     relation match {
       case c: Cacheable[R] => c.getCachedRecord(id)

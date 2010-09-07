@@ -10,7 +10,7 @@ class Country extends Record[Country] {
     this.name := name
   }
   // Fields
-  val code = "code" VARCHAR(2) DEFAULT("'ch'")
+  val code = "code" VARCHAR(2) DEFAULT("'ch'") SETTER(_.toLowerCase)
   val name = "name" TEXT
   // Inverse associations
   def cities = inverse(City.country)
@@ -20,6 +20,8 @@ class Country extends Record[Country] {
 
 object Country extends Table[Country] {
   INDEX("country_code_idx", "code") USING "btree" UNIQUE
+
+  def byCode(c: String) = criteria.add(this.code EQ c.toLowerCase).unique
 
   validation.notEmpty(_.code)
       .notEmpty(_.name)

@@ -48,6 +48,11 @@ object CircumflexORMSpec extends Specification {
     "process projections" >> {
       SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ru").unique.get must_== 3l
     }
+    "process transactions" >> {
+      new Country("pt", "Portugal").save
+      ROLLBACK
+      Country.byCode("pt") must_== None
+    }
   }
 
 }
