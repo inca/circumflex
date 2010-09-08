@@ -2,7 +2,7 @@ package ru.circumflex.orm
 
 /*!# Exceptions
 
-The `ORMException`s are thrown by Circumflex ORM components and usually mean that current
+The `ORMException` are thrown by Circumflex ORM components and usually mean that current
 transaction needs to be rolled back and closed ASAP.
 */
 
