@@ -5,10 +5,10 @@ package ru.circumflex.orm
 Circumflex ORM employs some basic constructs and interfaces, which are used
 throughout the framework:
 
-  * `SQLable` represents objects capable of rendering themselves into SQL
+  * `SQLable` is an object capable of rendering themselves into SQL
   statements;
-  * `ParameterizedExpression` represents expression with JDBC-style parameters;
-  * `SchemaObject` represents a database schema objects capable of rendering
+  * `ParameterizedExpression` is an expression with JDBC-style parameters;
+  * `SchemaObject` is a database schema object capable of rendering itself into
   `sqlCreate` and `sqlDrop` DDL statements;
   * `ValueHolder` is an extensible atomic data carrier unit of record.
 
@@ -16,4 +16,3 @@ throughout the framework:
 trait SQLable {
   def toSql: String
 }
-
