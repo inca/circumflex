@@ -114,4 +114,11 @@ class Dialect {
    */
   def quoteIdentifer(identifier: String) = identifier
 
+  // Columns definition
+
+  /**
+   * The `DEFAULT` expression inside column's definition.
+   */
+  def defaultExpression(expr: String): String = "DEFAULT " + expr
+
 }

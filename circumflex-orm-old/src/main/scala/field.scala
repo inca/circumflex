@@ -5,6 +5,7 @@ import java.lang.String
 import java.util.Date
 import java.sql.ResultSet
 import xml.{XML, NodeSeq}
+
 // ## Field
 
 /**
