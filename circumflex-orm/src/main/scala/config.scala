@@ -33,9 +33,9 @@ object ORM {
 
   val dialect: Dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
     case Some(url: String) => new Dialect
-//      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
-//      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
-//      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
+    //      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
+    //      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
+    //      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
     case _ => new Dialect
   })
 
@@ -165,17 +165,31 @@ trait TypeConverter {
   /**
    * Reads a value from specified `ResultSet` at specified column `alias`.
    */
-  def read(rs: ResultSet, alias: String): Any
+  def read(rs: ResultSet, alias: String): Option[Any] = {
+    val result = rs.getObject(alias)
+    if (rs.wasNull) return None
+    else return Some(fromJDBC(result))
+  }
 
   /**
    * Writes a value to specified `PreparedStatement` at specified `paramIndex`.
    */
-  def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit
+  def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit =
+    parameter match {
+      case None | null => st.setObject(paramIndex, null)
+      case Some(v) => write(st, parameter, paramIndex)
+      case v => st.setObject(paramIndex, toJDBC(v))
+    }
 
   /**
-   * Converts a value to JDBC-compliant type.
+   * Converts a value from Scala type to JDBC type.
    */
-  def convert(value: Any): Any
+  def toJDBC(value: Any): Any
+
+  /**
+   * Converts a value from JDBC type to Scala type.
+   */
+  def fromJDBC(value: Any): Option[Any]
 
   /**
    * Converts a value to string and return it with SQL-compliant escaping.
@@ -185,28 +199,20 @@ trait TypeConverter {
 
 class DefaultTypeConverter extends TypeConverter {
 
-  def read(rs: ResultSet, alias: String): Any = {
-    val result = rs.getObject(alias)
-    if (rs.wasNull) return null
-    else return result
-  }
-
-  def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit = parameter match {
-    case Some(p) => write(st, p, paramIndex)
-    case None | null => st.setObject(paramIndex, null)
-    case value => st.setObject(paramIndex, convert(value))
-  }
-
-  def convert(value: Any): Any = value match {
-    case (p: Date) => new Timestamp(p.getTime)
+  def toJDBC(value: Any): Any = value match {
+    case Some(v) => toJDBC(v)
+    case p: Date => new Timestamp(p.getTime)
     case value => value
   }
 
-  def escape(value: Any): String = convert(value) match {
-    case None | null => "null"
-    case s: String => dialect.quoteLiteral(s)
-    case d: Timestamp => dialect.quoteLiteral(d.toString)
-    case other => other.toString
+  def fromJDBC(value: Any): Option[Any] =
+    if (value == null) None else Some(value)
+
+  def escape(value: Any): String = fromJDBC(value) match {
+    case Some(s: String) => dialect.quoteLiteral(s)
+    case Some(d: Timestamp) => dialect.quoteLiteral(d.toString)
+    case Some(other) => other.toString
+    case _ => "NULL"
   }
 }
 
@@ -237,7 +243,7 @@ class Transaction {
   def rollback(): Unit = {
     if (live_? && !_connection.getAutoCommit) _connection.rollback
     // TODO
-//    cacheService.invalidate
+    //    cacheService.invalidate
   }
 
   def close(): Unit =
