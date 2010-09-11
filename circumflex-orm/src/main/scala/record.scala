@@ -3,7 +3,7 @@ package ru.circumflex.orm
 /*!# Record
 
 */
-abstract class Record[PK, R <: Record[PK, R]] extends SchemaObject with Equals { this: R =>
+abstract class Record[R <: Record[R]] extends SchemaObject with Equals { this: R =>
 
   /*!## Record State
 
@@ -15,7 +15,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends SchemaObject with Equals {
   yet or it was. The default logic is simple: if the primary key contains `null` then the
   record is *transient* (i.e. not persisted), otherwise the record is considered persistent.
   */
-  def PRIMARY_KEY: Field[PK]
+  def PRIMARY_KEY: Field[_]
   def transient_?(): Boolean = PRIMARY_KEY.null_?
 
   /*!## Equality & Others

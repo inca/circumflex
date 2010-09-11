@@ -1,9 +1,9 @@
 package ru.circumflex.core
 
-import collection.Map
-import collection.mutable.HashMap
 import java.util.{Date, ResourceBundle, Locale}
 import java.text.SimpleDateFormat
+import collection.{Map}
+import collection.mutable.{HashMap}
 
 /*!# Configuration API
 
@@ -132,4 +132,21 @@ trait UntypedContainer extends Map[String, Any] {
     case _ => c.newInstance.asInstanceOf[C]
   }
 
+}
+
+/*! Internally, some Circumflex components use a handy trait called `CacheMap`
+to deal with caching maps which can be accessed by multiple threads.*/
+trait CacheMap[A, B] extends HashMap[A, B] {
+  override def get(key: A): Option[B] = super.get(key) match {
+    case None => this.synchronized {
+      super.get(key) match {
+        case None =>
+          val v = default(key)
+          super.update(key, v)
+          Some(v)
+        case v => v
+      }
+    }
+    case v => v
+  }
 }
