@@ -12,7 +12,7 @@ tables.
 It also provides handy mechanisms for processing values before setting
 using the `SETTER` field.
  */
-class Field[T](val record: Record[_],
+class Field[T](val record: Record,
                val name: String,
                val sqlType: String) extends Equals {
 
