@@ -1,7 +1,7 @@
 package ru.circumflex.orm
 
 import ru.circumflex.core._
-import collection.mutable.HashMap
+import collection.mutable.{ListBuffer, HashMap}
 
 /*!# Database Metadata
 
@@ -16,5 +16,5 @@ object RecordMetadata extends HashMap[Class[_], RecordMetadata]
 }
 
 class RecordMetadata(val recordClass: Class[_]) {
-
+  protected val _fields = new ListBuffer[Field[_]]
 }
