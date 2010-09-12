@@ -10,11 +10,12 @@ like cache invalidation, Circumflex ORM needs a little information about
 the structure of records. This information is retrieved via introspection
 the first time a record is accessed and stored as an instance of `MetaData`.
 */
-object RecordMetadata extends HashMap[Class[_], RecordMetadata]
-  with CacheMap[Class[_], RecordMetadata] {
-  override def default(key: Class[_]): RecordMetadata = new RecordMetadata(key)
+object RecordMetadata extends HashMap[Class[Record[_]], RecordMetadata]
+  with CacheMap[Class[Record[_]], RecordMetadata] {
+  override def default(key: Class[Record[_]]): RecordMetadata =
+    new RecordMetadata(key)
 }
 
-class RecordMetadata(val recordClass: Class[_]) {
+class RecordMetadata(val recordClass: Class[Record[_]]) {
   protected val _fields = new ListBuffer[Field[_]]
 }

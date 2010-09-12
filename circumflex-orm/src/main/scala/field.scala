@@ -9,7 +9,7 @@ and provides methods for constructing column definitions for enclosing
 tables. It also contains the `REFERENCES` method which is used to create
 associations.
  */
-class Field[T](record: Record,
+class Field[T](record: Record[_],
                name: String,
                sqlType: String) extends ValueHolder[T](record, name, sqlType) {
 

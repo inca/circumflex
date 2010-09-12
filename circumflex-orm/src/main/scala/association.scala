@@ -13,8 +13,8 @@ as the "parent relation"). The `K` type parameter corresponds to the type of pri
 relation (and, therefore, to the type of corresponding field of child relation to which a foreign key
 constraint is applied).
 */
-class Association[C <: Record, P <: Record, K](val field: Field[K],
-                                               val parentClass: Class[P])
+class Association[K, C <: Record[_], P <: Record[K]](val field: Field[K],
+                                                     val parentClass: Class[P])
     extends ValueHolder[P](field.record, field.name, field.sqlType) {
 
   /*!## Column Definition Methods
@@ -40,5 +40,5 @@ class Association[C <: Record, P <: Record, K](val field: Field[K],
   }
   override def defaultExpression: Option[String] =
     field.defaultExpression
-  
+
 }

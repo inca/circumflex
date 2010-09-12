@@ -3,9 +3,7 @@ package ru.circumflex.orm
 /*!# Record
 
 */
-abstract class Record extends SchemaObject with Equals {
-
-  type PK = Long
+abstract class Record[PK] extends Equals {
 
   /*!## Record State
 
@@ -35,7 +33,8 @@ abstract class Record extends SchemaObject with Equals {
   */
 
   override def equals(that: Any) = that match {
-    case that: Record => this.PRIMARY_KEY.null_? ^ that.PRIMARY_KEY.null_? &&
+    case that: Record[_] =>
+      this.PRIMARY_KEY.null_? ^ that.PRIMARY_KEY.null_? &&
       this.PRIMARY_KEY.value == that.PRIMARY_KEY.value &&
       this.getClass == that.getClass
     case _ => false
@@ -44,7 +43,8 @@ abstract class Record extends SchemaObject with Equals {
   override def hashCode = PRIMARY_KEY.hashCode
 
   def canEqual(that: Any): Boolean = that match {
-    case that: Record => this.getClass == that.getClass
+    case that: Record[_] =>
+      this.getClass == that.getClass
     case _ => false
   }
 
