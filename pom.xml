@@ -163,6 +163,12 @@
               <goals>
                 <goal>compile</goal>
               </goals>
+              <configuration>
+                <args>
+                  <arg>-unchecked</arg>
+                  <arg>-deprecation</arg>
+                </args>
+              </configuration>
             </execution>
             <execution>
               <id>scala-test-compile</id>

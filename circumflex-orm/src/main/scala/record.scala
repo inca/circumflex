@@ -5,7 +5,7 @@ package ru.circumflex.orm
 */
 abstract class Record extends SchemaObject with Equals {
 
-  type PK
+  type PK = Long
 
   /*!## Record State
 
