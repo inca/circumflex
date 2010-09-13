@@ -54,10 +54,9 @@ package object orm {
   val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
     "orm.transactionManager", new DefaultTransactionManager)
 
-  /*
-
   // Implicits
 
+  /*
   implicit def tuple2proj[T1, T2](
       t: (Projection[T1], Projection[T2])) =
     new Tuple2Projection(t._1, t._2)
@@ -90,6 +89,7 @@ package object orm {
       t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
           Projection[T6], Projection[T7], Projection[T8], Projection[T9], Projection[T10])) =
     new Tuple10Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)
+  */
 
   // Constants
 
@@ -113,6 +113,7 @@ package object orm {
 
   // Predicates DSL
 
+  /*
   def AND(predicates: Predicate*) =
     new AggregatePredicateHelper(predicates.head).and(predicates.tail: _*)
 

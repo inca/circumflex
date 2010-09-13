@@ -1,6 +1,7 @@
 package ru.circumflex.orm
 
 import ru.circumflex.core._
+import java.lang.reflect.Method
 
 /*!# Relations
 
@@ -35,6 +36,26 @@ it could be used to compose predicates and other expressions in a DSL-style.
 */
 trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject { this: R =>
 
+  // Record metadata
+
+  protected[orm] var _fields: List[Field[_]] = Nil
+  def fields: Seq[Field[_]] = _fields
+
+  protected[orm] var _associations: List[Association[_, R, _]] = Nil
+  def associations: Seq[Association[_, R, _]] = _associations
+
+  protected[orm] var _constraints: List[Constraint] = Nil
+  def constraints: Seq[Constraint] = _constraints
+
+  protected[orm] var _preAux: List[SchemaObject] = Nil
+  def preAux: Seq[SchemaObject] = _preAux
+
+  protected[orm] var _postAux: List[SchemaObject] = Nil
+  def postAux: Seq[SchemaObject] = _postAux
+
+  protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
+  def methodsMap: Map[Field[_], Method] = _methodsMap
+
   /*! If the relation follows default conventions of Circumflex ORM (about
   companion objects), then record class is inferred automatically. Otherwise
   you should override the `recordClass` method.
@@ -52,7 +73,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   def relationName = _relationName
 
   /*! The `readOnly_?()` method is used to indicate whether the DML operations
-  are allowed with this relation. Tables usually allow them and views don't.
+  are allowed with this relation. Tables usually allow them and views usually don't.
    */
   def readOnly_?(): Boolean
 

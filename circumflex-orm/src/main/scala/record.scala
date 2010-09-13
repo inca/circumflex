@@ -2,7 +2,23 @@ package ru.circumflex.orm
 
 /*!# Record
 
-TODO
+The record is a central abstraction in Circumflex ORM. Every object persisted into
+database should extend the `Record` class. It provides data definition methods
+necessary to create a domain model for your application as well as methods for
+saving and updating your record to backend database.
+
+Circumflex ORM is all about type safety and domain-specific languages (at a first
+glance the record definition may seem a little verbose). Here's the sample definition
+of fictional record `Country`:
+
+    class Country extends Record[String, Country] {
+      val code = "code".VARCHAR(2)
+      val name = "name".TEXT
+
+      def PRIMARY_KEY = code
+      val relation = Country
+    }
+
 */
 abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
@@ -15,10 +31,14 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   The `transient_?` method indicates, whether the record was not persisted into a database
   yet or it was. The default logic is simple: if the primary key contains `null` then the
   record is *transient* (i.e. not persisted), otherwise the record is considered persistent.
+
+  The `relation` method points to the relation from which a record came or to which it
+  should go. In general this method should point to the companion object. However, if
+  you do not convey to Circumflex ORM conventions, you may specify another object which
+  will act a relation for this type of records.
   */
   def PRIMARY_KEY: Field[PK]
   def transient_?(): Boolean = PRIMARY_KEY.null_?
-
   def relation: Relation[PK, R]
 
   /*!## Equality & Others
