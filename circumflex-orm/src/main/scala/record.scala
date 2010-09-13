@@ -2,8 +2,9 @@ package ru.circumflex.orm
 
 /*!# Record
 
+TODO
 */
-abstract class Record[PK] extends Equals {
+abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   /*!## Record State
 
@@ -18,6 +19,8 @@ abstract class Record[PK] extends Equals {
   def PRIMARY_KEY: Field[PK]
   def transient_?(): Boolean = PRIMARY_KEY.null_?
 
+  def relation: Relation[PK, R]
+
   /*!## Equality & Others
   
   Two record are considered equal if they share the same type and have same primary keys.
@@ -31,25 +34,23 @@ abstract class Record[PK] extends Equals {
   of the record followed by "@" and it's primary key value (or `TRANSIENT` word if
   primary key is `null`).
   */
-
   override def equals(that: Any) = that match {
-    case that: Record[_] =>
-      this.PRIMARY_KEY.null_? ^ that.PRIMARY_KEY.null_? &&
-      this.PRIMARY_KEY.value == that.PRIMARY_KEY.value &&
-      this.getClass == that.getClass
+    case that: Record[_, _] =>
+      !(this.PRIMARY_KEY.null_? || that.PRIMARY_KEY.null_?) &&
+          this.PRIMARY_KEY.value == that.PRIMARY_KEY.value &&
+          this.getClass == that.getClass
     case _ => false
   }
 
   override def hashCode = PRIMARY_KEY.hashCode
 
   def canEqual(that: Any): Boolean = that match {
-    case that: Record[_] =>
+    case that: Record[_, _] =>
       this.getClass == that.getClass
     case _ => false
   }
 
   override def toString = getClass.getSimpleName + "@" +
       PRIMARY_KEY.map(_.toString).getOrElse("TRANSIENT")
-
 
 }

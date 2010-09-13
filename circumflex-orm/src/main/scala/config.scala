@@ -5,7 +5,6 @@ import javax.sql.DataSource
 import javax.naming.InitialContext
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import java.sql._
-import ORM._
 import jdbc._
 
 /*!# ORM Configuration Objects
@@ -22,28 +21,7 @@ Following objects configure different aspects of Circumflex ORM:
   * *transaction manager* is responsible for allocating current transactions
   for execution contexts.
 
-*/
-object ORM {
-
-  val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
-    "orm.connectionProvider", new DefaultConnectionProvider)
-
-  val typeConverter: TypeConverter = cx.instantiate[TypeConverter](
-    "orm.typeConverter", new DefaultTypeConverter)
-
-  val dialect: Dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
-    case Some(url: String) => new Dialect
-    //      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
-    //      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
-    //      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
-    case _ => new Dialect
-  })
-
-  val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
-    "orm.transactionManager", new DefaultTransactionManager)
-}
-
-/*!## Connection Provider
+## Connection Provider
 
 The `ConnectionProvider` is a simple trait responsible for acquiring JDBC
 connections throughout the application.
@@ -251,7 +229,7 @@ class Transaction {
 
   protected def getConnection: Connection = {
     if (_connection == null)
-      _connection = ORM.connectionProvider.openConnection
+      _connection = connectionProvider.openConnection
     return _connection
   }
 
