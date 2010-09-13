@@ -54,6 +54,9 @@ package object orm {
   val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
     "orm.transactionManager", new DefaultTransactionManager)
 
+  val defaultSchema: Schema = new Schema(
+    cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
+
   // Implicits
 
   /*

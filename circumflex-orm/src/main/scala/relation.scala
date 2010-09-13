@@ -38,6 +38,9 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
 
   // Record metadata
 
+  protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
+  def methodsMap: Map[Field[_], Method] = _methodsMap
+
   protected[orm] var _fields: List[Field[_]] = Nil
   def fields: Seq[Field[_]] = _fields
 
@@ -49,12 +52,10 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
 
   protected[orm] var _preAux: List[SchemaObject] = Nil
   def preAux: Seq[SchemaObject] = _preAux
+  
 
   protected[orm] var _postAux: List[SchemaObject] = Nil
   def postAux: Seq[SchemaObject] = _postAux
-
-  protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
-  def methodsMap: Map[Field[_], Method] = _methodsMap
 
   /*! If the relation follows default conventions of Circumflex ORM (about
   companion objects), then record class is inferred automatically. Otherwise
@@ -71,6 +72,11 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   */
   val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
   def relationName = _relationName
+
+  /*! Default schema name is configured via the `orm.defaultSchema` configuration property.
+  You may provide different schema for different relations by overriding their `schema` method.
+   */
+  def schema: Schema = defaultSchema
 
   /*! The `readOnly_?()` method is used to indicate whether the DML operations
   are allowed with this relation. Tables usually allow them and views usually don't.
