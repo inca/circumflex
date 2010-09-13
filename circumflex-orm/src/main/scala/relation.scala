@@ -36,8 +36,10 @@ it could be used to compose predicates and other expressions in a DSL-style.
 */
 trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject { this: R =>
 
-  // Record metadata
+  /*!## Metadata
 
+  Relation metadata contains operational information about it's records.
+  */
   protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
   def methodsMap: Map[Field[_], Method] = _methodsMap
 
@@ -52,10 +54,17 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
 
   protected[orm] var _preAux: List[SchemaObject] = Nil
   def preAux: Seq[SchemaObject] = _preAux
-  
+  def addPreAux(objects: SchemaObject*): this.type = {
+    objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
+    return this
+  }
 
   protected[orm] var _postAux: List[SchemaObject] = Nil
   def postAux: Seq[SchemaObject] = _postAux
+  def addPostAux(objects: SchemaObject*): this.type = {
+    objects.foreach(o => if (!_postAux.contains(o)) _postAux ++= List(o))
+    return this
+  }
 
   /*! If the relation follows default conventions of Circumflex ORM (about
   companion objects), then record class is inferred automatically. Otherwise
