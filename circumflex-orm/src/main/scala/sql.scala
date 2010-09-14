@@ -19,18 +19,18 @@ Circumflex ORM also uses some helpers to make DSL-style data definition.
 
 class Schema(val name: String) extends SchemaObject {
   def objectName = "SCHEMA " + name
-  def sqlCreate = "todo"
-  def sqlDrop = "todo"
+  def sqlCreate = dialect.createSchema(this)
+  def sqlDrop = dialect.dropSchema(this)
 }
 
 abstract class Constraint(val constraintName: String,
                           val relation: Relation[_, _])
     extends SchemaObject with SQLable {
 
-  val objectName = "CONSTRAINT " + constraintName
-  val sqlCreate = "todo"
-  val sqlDrop = "todo"
-  val toSql = "todo"
+  def objectName = "CONSTRAINT " + constraintName
+  def sqlCreate = dialect.alterTableAddConstraint(this)
+  def sqlDrop = dialect.alterTableDropConstraint(this)
+  def toSql = dialect.constraintDefinition(this)
 
   def sqlDefinition: String
 
@@ -41,7 +41,7 @@ class UniqueKey(name: String,
                 relation: Relation[_, _],
                 val fields: Seq[Field[_, _]])
     extends Constraint(name, relation) {
-  def sqlDefinition = "todo"
+  def sqlDefinition = dialect.uniqueKeyDefinition(this)
 }
 
 class ForeignKey(name: String,
@@ -65,19 +65,19 @@ class ForeignKey(name: String,
     return this
   }
 
-  def sqlDefinition = "todo"
+  def sqlDefinition = dialect.foreignKeyDefinition(this)
 }
 
 class CheckConstraint(name: String,
                       relation: Relation[_, _],
                       val expression: String)
     extends Constraint(name, relation) {
-  def sqlDefinition = "todo"
+  def sqlDefinition = dialect.checkConstraintDefinition(this)
 }
 
 class Index(val name: String,
             val relation: Relation[_, _],
-            expression: String)
+            val expression: String)
     extends SchemaObject {
 
   protected var _unique: Boolean = false
@@ -101,9 +101,9 @@ class Index(val name: String,
   //    return this
   //  }
 
-  val objectName = "INDEX " + name
-  val sqlCreate = "todo"
-  val sqlDrop = "todo"
+  def objectName = "INDEX " + name
+  def sqlCreate = dialect.createIndex(this)
+  def sqlDrop = dialect.dropIndex(this)
 }
 
 class ConstraintHelper(name: String, relation: Relation[_, _]) {

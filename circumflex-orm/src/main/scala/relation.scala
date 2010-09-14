@@ -55,6 +55,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   */
   val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
   def relationName = _relationName
+  def qualifiedName = dialect.relationQualifiedName(this)
 
   /*! Default schema name is configured via the `orm.defaultSchema` configuration property.
   You may provide different schema for different relations by overriding their `schema` method.
@@ -142,6 +143,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     if (!_initialized) this.synchronized {
       if (!_initialized) {
         findMembers(this.getClass)
+        dialect.initializeRelation(this)
         this._initialized = true
       }
     }
@@ -260,7 +262,13 @@ records.
 */
 trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   def readOnly_?(): Boolean = false
-  def sqlCreate: String = "todo"
-  def sqlDrop: String = "todo"
+  def sqlCreate: String = {
+    init()
+    dialect.createTable(this)
+  }
+  def sqlDrop: String = {
+    init()
+    dialect.dropTable(this)
+  }
   def objectName: String = "TABLE " + relationName
 }

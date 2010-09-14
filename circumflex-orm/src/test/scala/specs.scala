@@ -8,9 +8,11 @@ class SpecsTest extends JUnit4(GeneralSpec)
 object GeneralSpec extends Specification {
 
   "Relations" should {
-    "handle equality" in {
+    "handle equality and canEqual" in {
       Country must_== new Country().relation
       City must_!= new Country().relation
+      City.canEqual(new City().relation) must beTrue
+      Country.canEqual(new City().relation) must beFalse
     }
     "disallow field assignment" in {
       (Country.name := "preved") must throwA[ORMException]
@@ -38,6 +40,8 @@ object GeneralSpec extends Specification {
       c1 must_== c2
       c2.id := 2l
       c1 must_!= c2
+      c1.canEqual(c2) must beTrue
+      c1.canEqual(new Country) must beFalse
     }
     "process field setters" in {
       val c = new Country

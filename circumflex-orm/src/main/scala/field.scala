@@ -12,7 +12,7 @@ tables. It also contains the `REFERENCES` method which is used to create
 associations.
  */
 class Field[T, R <: Record[_, R]](name: String, record: R , sqlType: String)
-    extends ValueHolder[T, R](name, record, sqlType) {
+    extends ValueHolder[T, R](name, record, sqlType) with SQLable {
 
   def read(rs: ResultSet, alias: String): Option[T] =
     typeConverter.read(rs, alias).asInstanceOf[Option[T]]
@@ -20,6 +20,7 @@ class Field[T, R <: Record[_, R]](name: String, record: R , sqlType: String)
   def REFERENCES[P <: Record[T, P]](relation: Relation[T, P]): Association[T, R, P] =
     new Association(this, relation)
 
+  def toSql: String = dialect.columnDefinition(this)
 }
 
 abstract class XmlSerializableField[T, R <: Record[_, R]](
