@@ -39,16 +39,16 @@ abstract class Constraint(val constraintName: String,
 
 class UniqueKey(name: String,
                 relation: Relation[_, _],
-                val fields: Seq[Field[_]])
+                val fields: Seq[Field[_, _]])
     extends Constraint(name, relation) {
   def sqlDefinition = "todo"
 }
 
 class ForeignKey(name: String,
                  childRelation: Relation[_, _],
-                 val childFields: Seq[Field[_]],
+                 val childFields: Seq[Field[_, _]],
                  val parentRelation: Relation[_, _],
-                 val parentFields: Seq[Field[_]])
+                 val parentFields: Seq[Field[_, _]])
     extends Constraint(name, childRelation) {
 
   protected var _onDelete: ForeignKeyAction = NO_ACTION
@@ -107,32 +107,47 @@ class Index(val name: String,
 }
 
 class ConstraintHelper(name: String, relation: Relation[_, _]) {
-  def UNIQUE(fields: Field[_]*): UniqueKey =
+  def UNIQUE(fields: Field[_, _]*): UniqueKey =
     new UniqueKey(name, relation, fields.toList)
 
   def CHECK(expression: String): CheckConstraint =
     new CheckConstraint(name, relation, expression)
 
   def FOREIGN_KEY(parentRelation: Relation[_, _],
-                  childFields: Seq[Field[_]],
-                  parentFields: Seq[Field[_]]): ForeignKey =
+                  childFields: Seq[Field[_, _]],
+                  parentFields: Seq[Field[_, _]]): ForeignKey =
     new ForeignKey(name, relation, childFields, parentRelation, parentFields)
 
   def FOREIGN_KEY(parentRelation: Relation[_, _],
-                  fields: Pair[Field[_], Field[_]]*): ForeignKey = {
+                  fields: (Field[_, _], Field[_, _])*): ForeignKey = {
     val childFields = fields.map(_._1)
     val parentFields = fields.map(_._2)
     return FOREIGN_KEY(parentRelation, childFields, parentFields)
   }
 
-  def FOREIGN_KEY(localFields: Field[_]*): ForeignKeyHelper =
+  def FOREIGN_KEY(localFields: Field[_, _]*): ForeignKeyHelper =
     new ForeignKeyHelper(name, relation, localFields)
 }
 
-class ForeignKeyHelper(name: String, childRelation: Relation[_, _], childFields: Seq[Field[_]]) {
+class ForeignKeyHelper(name: String, childRelation: Relation[_, _], childFields: Seq[Field[_, _]]) {
   def REFERENCES(parentRelation: Relation[_, _],
-                 parentFields: Field[_]*): ForeignKey =
+                 parentFields: Field[_, _]*): ForeignKey =
     new ForeignKey(name, childRelation, childFields, parentRelation, parentFields)
+}
+
+class DefinitionHelper[R <: Record[_, R]](name: String, record: R) {
+  def INTEGER = new IntField(name, record)
+  def BIGINT = new LongField(name, record)
+  def NUMERIC(precision: Int = -1, scale: Int = 0) = new NumericField(name, record, precision, scale)
+  def TEXT = new TextField(name, record, dialect.textType)
+  def VARCHAR(length: Int = -1) = new TextField(name, record, length)
+  def BOOLEAN = new BooleanField(name, record)
+  def DATE = new DateField(name, record)
+  def TIME = new TimeField(name, record)
+  def TIMESTAMP = new TimestampField(name, record)
+  def XML = new XmlField(name, record)
+
+  def INDEX(expression: String) = new Index(name, record.relation, expression)
 }
 
 case class ForeignKeyAction(val toSql: String) extends SQLable {

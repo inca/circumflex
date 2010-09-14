@@ -15,6 +15,16 @@ object GeneralSpec extends Specification {
     "disallow field assignment" in {
       (Country.name := "preved") must throwA[ORMException]
     }
+    "initialize metadata" in {
+      Country.fields.size must_== 2
+      Country.associations.size must_== 0
+      Country.constraints.size must_== 1
+      Country.indexes.size must_== 1
+      City.fields.size must_== 3
+      City.associations.size must_== 1
+      City.constraints.size must_== 2
+      City.indexes.size must_== 0
+    }
   }
 
   "Records" should {

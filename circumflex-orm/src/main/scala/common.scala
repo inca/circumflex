@@ -87,9 +87,9 @@ trait SchemaObject {
 Value holder is an atomic data-carrier unit of a record. Two implementations
 of `ValueHolder` are known: `Field` and `Association`.
 */
-abstract class ValueHolder[T](val record: Record[_, _],
-                              val name: String,
-                              val sqlType: String) extends Equals {
+abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
+                                                 val record: R,
+                                                 val sqlType: String) extends Equals {
 
   /*!## Setters
 
@@ -198,7 +198,7 @@ abstract class ValueHolder[T](val record: Record[_, _],
 
   /*!## Methods from `Option`
 
-  Since `Field` is just a wrapper around `Option`, we provide
+  Since `ValueHolder` is just a wrapper around `Option`, we provide
   some methods to work with your values in functional style
   (they delegate to their equivalents in `Option`).
   */
@@ -223,12 +223,12 @@ abstract class ValueHolder[T](val record: Record[_, _],
   is `null`.
   */
   override def equals(that: Any): Boolean = that match {
-    case that: ValueHolder[_] => this.value == that.value
+    case that: ValueHolder[_, _] => this.value == that.value
     case _ => false
   }
   override def hashCode: Int = value.hashCode
   def canEqual(that: Any): Boolean = that match {
-    case that: ValueHolder[_] => this.record.canEqual(that.record) &&
+    case that: ValueHolder[_, _] => this.record.canEqual(that.record) &&
         this.name == that.name
     case _ => false
   }

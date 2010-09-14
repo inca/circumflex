@@ -16,9 +16,9 @@ We use some terminology when speaking about associations:
   * the `K` type parameter is a type of this association field's value, it must
   match the type of parent relation's primary key.
 */
-class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K],
+class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C],
                                                            val parentRelation: Relation[K, P])
-    extends ValueHolder[P](field.record, field.name, field.sqlType) {
+    extends ValueHolder[P, C](field.name, field.record, field.sqlType) {
 
   /*! Column definition methods delegate to underlying field. */
   override def notNull_?(): Boolean = field.notNull_?

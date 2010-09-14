@@ -71,14 +71,14 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   Relation metadata contains operational information about it's records by
   introspecting current instance upon initialization.
   */
-  protected var _methodsMap: Map[Field[_], Method] = Map()
-  def methodsMap: Map[Field[_], Method] = {
+  protected var _methodsMap: Map[Field[_, R], Method] = Map()
+  def methodsMap: Map[Field[_, R], Method] = {
     init()
     _methodsMap
   }
 
-  protected var _fields: List[Field[_]] = Nil
-  def fields: Seq[Field[_]] = {
+  protected var _fields: List[Field[_, R]] = Nil
+  def fields: Seq[Field[_, R]] = {
     init()
     _fields
   }
@@ -110,8 +110,8 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
 
   private def processMember(m: Method): Unit = {
     val cl = m.getReturnType
-    if (classOf[Field[_]].isAssignableFrom(cl)) {
-      val f = m.invoke(this).asInstanceOf[Field[_]]
+    if (classOf[Field[_, R]].isAssignableFrom(cl)) {
+      val f = m.invoke(this).asInstanceOf[Field[_, R]]
       this._fields ++= List(f)
       if (f.unique_?) this.UNIQUE(f)
       this._methodsMap += (f -> m)
@@ -153,13 +153,9 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   */
 
   protected def CONSTAINT(name: String) = new ConstraintHelper(name, this)
-  protected def UNIQUE(fields: Field[_]*) =
+  protected def UNIQUE(fields: Field[_, R]*) =
     CONSTAINT(relationName + "_" + fields.map(_.name).mkString("_") + "_key")
         .UNIQUE(fields: _*)
-
-  protected def INDEX(indexName: String, expression: String): Index =
-    new Index(indexName, this, expression)
-
 
   /*!## Auxiliary Objects
 

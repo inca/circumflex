@@ -22,6 +22,9 @@ of fictional record `Country`:
 */
 abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
+  implicit def str2ddlHelper(str: String): DefinitionHelper[R] =
+    new DefinitionHelper(str, this)
+
   /*!## Record State
 
   Records in relational theory are distinguished from each other by the value of their
@@ -37,7 +40,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   you do not convey to Circumflex ORM conventions, you may specify another object which
   will act a relation for this type of records.
   */
-  def PRIMARY_KEY: Field[PK]
+  def PRIMARY_KEY: Field[PK, R]
   def transient_?(): Boolean = PRIMARY_KEY.null_?
   def relation: Relation[PK, R]
 

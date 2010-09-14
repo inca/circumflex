@@ -59,6 +59,9 @@ package object orm {
 
   // Implicits
 
+  implicit def association2field[K, C <: Record[_, C], P <: Record[K, P]](
+      association: Association[K, C, P]): Field[K, C] = association.field
+
   /*
   implicit def tuple2proj[T1, T2](
       t: (Projection[T1], Projection[T2])) =
