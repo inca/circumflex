@@ -38,7 +38,8 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
 
   /*!## Metadata
 
-  Relation metadata contains operational information about it's records.
+  Relation metadata contains operational information about it's records by
+  introspecting current instance upon initialization.
   */
   protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
   def methodsMap: Map[Field[_], Method] = _methodsMap
@@ -52,6 +53,14 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   protected[orm] var _constraints: List[Constraint] = Nil
   def constraints: Seq[Constraint] = _constraints
 
+  /*!## Auxiliary Objects
+
+  Auxiliary database objects like triggers, sequences and stored procedures
+  can be attached to relation using `addPreAux` and `addPostAux` methods:
+  the former one indicates that the auxiliary object will be created before
+  the creating of all the tables, the latter indicates that the auxiliary
+  object creation will be delayed until all tables are created.
+  */
   protected[orm] var _preAux: List[SchemaObject] = Nil
   def preAux: Seq[SchemaObject] = _preAux
   def addPreAux(objects: SchemaObject*): this.type = {
@@ -66,7 +75,59 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     return this
   }
 
-  /*! If the relation follows default conventions of Circumflex ORM (about
+  /*!## Events
+
+  Relation allows you to attach listeners to certain lifecycle events of its records.
+  Following events are available:
+
+    * `beforeInsert`
+    * `afterInsert`
+    * `beforeUpdate`
+    * `afterUpdate`
+    * `beforeDelete`
+    * `afterDelete`
+  */
+  protected var _beforeInsert: Seq[R => Unit] = Nil
+  def beforeInsert = _beforeInsert
+  def beforeInsert(callback: R => Unit): this.type = {
+    this._beforeInsert ++= List(callback)
+    return this
+  }
+  protected var _afterInsert: Seq[R => Unit] = Nil
+  def afterInsert = _afterInsert
+  def afterInsert(callback: R => Unit): this.type = {
+    this._afterInsert ++= List(callback)
+    return this
+  }
+  protected var _beforeUpdate: Seq[R => Unit] = Nil
+  def beforeUpdate = _beforeUpdate
+  def beforeUpdate(callback: R => Unit): this.type = {
+    this._beforeUpdate ++= List(callback)
+    return this
+  }
+  protected var _afterUpdate: Seq[R => Unit] = Nil
+  def afterUpdate = _afterUpdate
+  def afterUpdate(callback: R => Unit): this.type = {
+    this._afterUpdate ++= List(callback)
+    return this
+  }
+  protected var _beforeDelete: Seq[R => Unit] = Nil
+  def beforeDelete = _beforeDelete
+  def beforeDelete(callback: R => Unit): this.type = {
+    this._beforeDelete ++= List(callback)
+    return this
+  }
+  protected var _afterDelete: Seq[R => Unit] = Nil
+  def afterDelete = _afterDelete
+  def afterDelete(callback: R => Unit): this.type = {
+    this._afterDelete ++= List(callback)
+    return this
+  }
+  
+
+  /*!## Commons
+
+  If the relation follows default conventions of Circumflex ORM (about
   companion objects), then record class is inferred automatically. Otherwise
   you should override the `recordClass` method.
    */
