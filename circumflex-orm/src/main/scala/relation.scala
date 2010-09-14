@@ -36,22 +36,130 @@ it could be used to compose predicates and other expressions in a DSL-style.
 */
 trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject { this: R =>
 
+  protected var _initialized = false
+
+  /*!## Commons
+
+ If the relation follows default conventions of Circumflex ORM (about
+ companion objects), then record class is inferred automatically. Otherwise
+ you should override the `recordClass` method.
+  */
+  val _recordClass: Class[R] = Class.forName(this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
+      .asInstanceOf[Class[R]]
+  def recordClass: Class[R] = _recordClass
+
+  /*! By default the relation name is inferred from `recordClass` by replacing
+  camelcase delimiters with underscores (for example, record with class
+  `ShoppingCartItem` will have a relation with name `shopping_cart_item`).
+  You can override `relationName` to use different name.
+  */
+  val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
+  def relationName = _relationName
+
+  /*! Default schema name is configured via the `orm.defaultSchema` configuration property.
+  You may provide different schema for different relations by overriding their `schema` method.
+   */
+  def schema: Schema = defaultSchema
+
+  /*! The `readOnly_?()` method is used to indicate whether the DML operations
+  are allowed with this relation. Tables usually allow them and views usually don't.
+   */
+  def readOnly_?(): Boolean
+
   /*!## Metadata
 
   Relation metadata contains operational information about it's records by
   introspecting current instance upon initialization.
   */
-  protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
-  def methodsMap: Map[Field[_], Method] = _methodsMap
+  protected var _methodsMap: Map[Field[_], Method] = Map()
+  def methodsMap: Map[Field[_], Method] = {
+    init()
+    _methodsMap
+  }
 
-  protected[orm] var _fields: List[Field[_]] = Nil
-  def fields: Seq[Field[_]] = _fields
+  protected var _fields: List[Field[_]] = Nil
+  def fields: Seq[Field[_]] = {
+    init()
+    _fields
+  }
 
-  protected[orm] var _associations: List[Association[_, R, _]] = Nil
-  def associations: Seq[Association[_, R, _]] = _associations
+  protected var _associations: List[Association[_, R, _]] = Nil
+  def associations: Seq[Association[_, R, _]] = {
+    init()
+    _associations
+  }
 
-  protected[orm] var _constraints: List[Constraint] = Nil
-  def constraints: Seq[Constraint] = _constraints
+  protected var _constraints: List[Constraint] = Nil
+  def constraints: Seq[Constraint] = {
+    init()
+    _constraints
+  }
+
+  protected var _indexes: List[Index] = Nil
+  def indexes: Seq[Index] = {
+    init()
+    _indexes
+  }
+
+  private def findMembers(cl: Class[_]): Unit = {
+    if (cl != classOf[Any]) findMembers(cl.getSuperclass)
+    cl.getDeclaredFields
+        .flatMap(f => try Some(cl.getMethod(f.getName)) catch { case _ => None })
+        .foreach(processMember(_))
+  }
+
+  private def processMember(m: Method): Unit = {
+    val cl = m.getReturnType
+    if (classOf[Field[_]].isAssignableFrom(cl)) {
+      val f = m.invoke(this).asInstanceOf[Field[_]]
+      this._fields ++= List(f)
+      if (f.unique_?) this.UNIQUE(f)
+      this._methodsMap += (f -> m)
+    } else if (classOf[Association[_, R, _]].isAssignableFrom(cl)) {
+      val a = m.invoke(this).asInstanceOf[Association[_, R, _]]
+      this._associations ++= List[Association[_, R, _]](a)
+      this._fields ++= List(a.field)
+      this._methodsMap += (a.field -> m)
+      this._constraints ++= List(associationFK(a))
+      if (a.unique_?) this.UNIQUE(a.field)
+    } else if (classOf[Constraint].isAssignableFrom(cl)) {
+      val c = m.invoke(this).asInstanceOf[Constraint]
+      this._constraints ++= List(c)
+    } else if (classOf[Index].isAssignableFrom(cl)) {
+      val i = m.invoke(this).asInstanceOf[Index]
+      this._indexes ++= List(i)
+    }
+  }
+
+  private def associationFK(a: Association[_, R, _]) =
+    CONSTAINT(relationName + "_" + a.name + "_fkey")
+        .FOREIGN_KEY(a.field)
+        .REFERENCES(a.parentRelation, a.parentRelation.PRIMARY_KEY)
+        .ON_DELETE(a.onDelete)
+        .ON_UPDATE(a.onUpdate)
+
+  protected[orm] def init(): Unit =
+    if (!_initialized) this.synchronized {
+      if (!_initialized) {
+        findMembers(this.getClass)
+        this._initialized = true
+      }
+    }
+
+  /*!## Constaints & Indexes Definition
+
+  Circumflex ORM allows you to define constraints and indexes inside the
+  relation body using DSL style.
+  */
+
+  protected def CONSTAINT(name: String) = new ConstraintHelper(name, this)
+  protected def UNIQUE(fields: Field[_]*) =
+    CONSTAINT(relationName + "_" + fields.map(_.name).mkString("_") + "_key")
+        .UNIQUE(fields: _*)
+
+  protected def INDEX(indexName: String, expression: String): Index =
+    new Index(indexName, this, expression)
+
 
   /*!## Auxiliary Objects
 
@@ -123,35 +231,6 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     this._afterDelete ++= List(callback)
     return this
   }
-  
-
-  /*!## Commons
-
-  If the relation follows default conventions of Circumflex ORM (about
-  companion objects), then record class is inferred automatically. Otherwise
-  you should override the `recordClass` method.
-   */
-  val _recordClass: Class[R] = Class.forName(this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
-      .asInstanceOf[Class[R]]
-  def recordClass: Class[R] = _recordClass
-
-  /*! By default the relation name is inferred from `recordClass` by replacing
-  camelcase delimiters with underscores (for example, record with class
-  `ShoppingCartItem` will have a relation with name `shopping_cart_item`).
-  You can override `relationName` to use different name.
-  */
-  val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
-  def relationName = _relationName
-
-  /*! Default schema name is configured via the `orm.defaultSchema` configuration property.
-  You may provide different schema for different relations by overriding their `schema` method.
-   */
-  def schema: Schema = defaultSchema
-
-  /*! The `readOnly_?()` method is used to indicate whether the DML operations
-  are allowed with this relation. Tables usually allow them and views usually don't.
-   */
-  def readOnly_?(): Boolean
 
   /*!## Equality & Others
 

@@ -37,6 +37,21 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K],
     return this
   }
 
-  
-  
+  // Cascading actions
+
+  protected var _onDelete: ForeignKeyAction = NO_ACTION
+  def onDelete = _onDelete
+  def ON_DELETE(action: ForeignKeyAction): this.type = {
+    _onDelete = action
+    return this
+  }
+
+  protected var _onUpdate: ForeignKeyAction = NO_ACTION
+  def onUpdate = _onUpdate
+  def ON_UPDATE(action: ForeignKeyAction): this.type = {
+    _onUpdate = action
+    return this
+  }
+
+
 }
