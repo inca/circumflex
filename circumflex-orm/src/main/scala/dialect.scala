@@ -145,11 +145,6 @@ class Dialect {
   /*!## Data Definition Language */
 
   /**
-   * Appends the `DEFAULT` to specified expression inside column definition.
-   */
-  def defaultExpression(expr: String): String = "DEFAULT " + expr
-
-  /**
    * Produces a full definition of constraint (prepends the specific definition
    * with `CONSTRAINT` keyword and constraint name).
    */
@@ -222,41 +217,48 @@ class Dialect {
    * Produces an SQL definition for a column represented by specified `field`
    * (e.g. `mycolumn VARCHAR NOT NULL`).
    */
-  def columnDefinition(field: Field[_, _]): String = {
+  def columnDefinition[R <: Record[_, R]](field: Field[_, R]): String = {
     var result = field.name + " " + field.sqlType
     if (field.notNull_?) result += " NOT NULL"
-    field.defaultExpression match {
-      case Some(expr) => result += " " + expr
-      case _ =>
-    }
+    result += defaultExpression(field)
     return result
   }
 
   /**
-   * Make necessary stuff for relation initialization.
-   *
-   * This implementation adds an auxiliary sequence for primary key
-   * (sequences are supported by PostgreSQL, Oracle and DB2 dialects).
+   * Performs dialect-specific relation initialization.
    */
-  def initializeRelation(relation: Relation[_, _]): Unit = {
-    val seqName = pkSequenceName(relation)
-    val seq = new SchemaObject {
-      val objectName = "SEQUENCE " + seqName
-      val sqlDrop = "DROP SEQUENCE " + seqName
-      val sqlCreate = "CREATE SEQUENCE " + seqName
+  def initializeRelation[R <: Record[_, R]](relation: Relation[_, R]): Unit = {}
+
+  /**
+   * Performs dialect-specific field initialization.
+   */
+  def initializeField[R <: Record[_, R]](field: Field[_, R]): Unit = field match {
+    case f: AutoIncrementable[_, _] if (f.autoIncrement_?) => {
+      val seqName = sequenceName(f)
+      val seq = new SchemaObject {
+        val objectName = "SEQUENCE " + seqName
+        val sqlDrop = "DROP SEQUENCE " + seqName
+        val sqlCreate = "CREATE SEQUENCE " + seqName
+      }
+      f.record.relation.addPreAux(seq)
     }
-    relation.addPreAux(seq)
+    case _ =>
   }
 
   /**
-   * Produces an expression used in primary key column definition.
+   * Produces a `DEFAULT` expression for specified `field`.
    */
-  def primaryKeyExpression(record: Record[_, _]) =
-    "DEFAULT NEXTVAL('" + pkSequenceName(record.relation) + "')"
+  def defaultExpression[R <: Record[_, R]](field: Field[_, R]): String =
+    field match {
+      case a: AutoIncrementable[_, _] if (a.autoIncrement_?) =>
+        " DEFAULT NEXTVAL('" + sequenceName(field) + "')"
+      case _ =>
+        field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
+    }
 
-  protected def pkSequenceName(relation: Relation[_, _]) =
-    quoteIdentifer(relation.schema.name) + "." +
-        quoteIdentifer(relation.relationName + "_" + relation.PRIMARY_KEY.name + "_seq")
+  protected def sequenceName[R <: Record[_, R]](f: Field[_, R]) =
+    quoteIdentifer(f.record.relation.schema.name) + "." +
+        quoteIdentifer(f.record.relation.relationName + "_" + f.name + "_seq")
 
   /**
    * Produces a definition of unique constraint (e.g. `UNIQUE (name, value)`).

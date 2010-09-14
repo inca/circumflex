@@ -7,7 +7,7 @@ class Country extends Record[String, Country] {
   val name = "name".TEXT.NOT_NULL
 
   def PRIMARY_KEY = code
-  val relation = Country
+  def relation = Country
 }
 
 object Country extends Country with Table[String, Country] {
@@ -16,12 +16,12 @@ object Country extends Country with Table[String, Country] {
 }
 
 class City extends Record[Long, City] {
-  val id = "id".BIGINT.NOT_NULL
+  val id = "id".BIGINT.NOT_NULL.AUTO_INCREMENT
   val name = "name".TEXT.NOT_NULL
-  val country = "country_code".VARCHAR(2).REFERENCES(Country).ON_DELETE(CASCADE)
+  val country = "country_code".VARCHAR(2).NOT_NULL.REFERENCES(Country).ON_DELETE(CASCADE)
 
   def PRIMARY_KEY = id
-  val relation = City
+  def relation = City
 }
 
 object City extends City with Table[Long, City] {

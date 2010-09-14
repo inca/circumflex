@@ -189,10 +189,10 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
     return this
   }
 
-  protected var _defaultExpresion: Option[String] = None
-  def defaultExpression: Option[String] = _defaultExpresion
+  protected var _defaultExpression: Option[String] = None
+  def defaultExpression: Option[String] = _defaultExpression
   def DEFAULT(expr: String): this.type = {
-    _defaultExpresion = Some(dialect.defaultExpression(expr))
+    _defaultExpression = Some(expr)
     return this
   }
 

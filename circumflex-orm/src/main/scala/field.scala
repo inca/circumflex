@@ -23,6 +23,15 @@ class Field[T, R <: Record[_, R]](name: String, record: R , sqlType: String)
   def toSql: String = dialect.columnDefinition(this)
 }
 
+trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
+  protected var _autoIncrement: Boolean = false
+  def autoIncrement_?(): Boolean = _autoIncrement
+  def AUTO_INCREMENT(): this.type = {
+    _autoIncrement = true
+    return this
+  }
+}
+
 abstract class XmlSerializableField[T, R <: Record[_, R]](
     name: String, record: R, sqlType: String)
     extends Field[T, R](name, record, sqlType) with XmlSerializable[T] {
@@ -31,13 +40,15 @@ abstract class XmlSerializableField[T, R <: Record[_, R]](
 }
 
 class IntField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[Int, R](name, record, dialect.integerType) {
+    extends XmlSerializableField[Int, R](name, record, dialect.integerType)
+        with AutoIncrementable[Int, R] {
   def from(str: String): Option[Int] =
     try Some(str.toInt) catch { case _ => None }
 }
 
 class LongField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[Long, R](name, record, dialect.longType) {
+    extends XmlSerializableField[Long, R](name, record, dialect.longType)
+        with AutoIncrementable[Long, R]{
   def from(str: String): Option[Long] =
     try Some(str.toLong) catch { case _ => None }
 }

@@ -144,6 +144,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
       if (!_initialized) {
         findMembers(this.getClass)
         dialect.initializeRelation(this)
+        _fields.foreach(dialect.initializeField(_))
         this._initialized = true
       }
     }
