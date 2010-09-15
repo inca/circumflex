@@ -67,6 +67,9 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
    */
   def readOnly_?(): Boolean
 
+  /*! Use the `AS` method to create a relation node from this relation with explicit alias. */
+  def AS(alias: String): RelationNode[PK, R] = new RelationNode(this).AS(alias)
+
   /*!## Metadata
 
   Relation metadata contains operational information about it's records by

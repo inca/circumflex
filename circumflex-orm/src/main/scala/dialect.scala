@@ -201,9 +201,8 @@ class Dialect {
     if (idx.unique_?) result += "UNIQUE "
     result += "INDEX " + quoteIdentifer(idx.name) + " ON " + idx.relation.qualifiedName +
         " USING " + idx.using + " (" + idx.expression + ")"
-    // TODO
-    //    if (idx.where != EmptyPredicate)
-    //      result += " WHERE " + idx.where.toInlineSql
+    if (idx.where != EmptyPredicate)
+      result += " WHERE " + idx.where.toInlineSql
     return result
   }
 

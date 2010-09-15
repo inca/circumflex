@@ -44,10 +44,12 @@ package object orm {
     "orm.typeConverter", new DefaultTypeConverter)
 
   val dialect: Dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
-    case Some(url: String) => new Dialect
-    //      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
-    //      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
-    //      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
+    case Some(url: String) =>
+      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
+      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
+      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
+      else if (url.startsWith("jdbc:h2:")) new H2Dialect
+      else new Dialect
     case _ => new Dialect
   })
 
@@ -57,10 +59,27 @@ package object orm {
   val defaultSchema: Schema = new Schema(
     cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
 
+  def cacheService = CacheService.get
+
   // Implicits
 
   implicit def association2field[K, C <: Record[_, C], P <: Record[K, P]](
       association: Association[K, C, P]): Field[K, C] = association.field
+  implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
+    new RelationNode[PK, R](relation)
+  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Relation[PK, R] =
+    node.relation
+  implicit def string2helper(expression: String): SimpleExpressionHelper =
+    new SimpleExpressionHelper(expression)
+  implicit def string2predicate(expression: String): Predicate =
+    new SimpleExpression(expression, Nil)
+  implicit def string2order(expression: String): Order =
+    new Order(expression, Nil)
+  implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
+    new SimpleExpression(expression.toSql, expression.parameters)
+  implicit def predicate2aggregateHelper(predicate: Predicate) =
+    new AggregatePredicateHelper(predicate)
+  implicit def predicate2string(predicate: Predicate): String = predicate.toInlineSql
 
   /*
   implicit def tuple2proj[T1, T2](
@@ -119,19 +138,15 @@ package object orm {
 
   // Predicates DSL
 
-  /*
   def AND(predicates: Predicate*) =
-    new AggregatePredicateHelper(predicates.head).and(predicates.tail: _*)
-
+    new AggregatePredicateHelper(predicates.head).AND(predicates.tail: _*)
   def OR(predicates: Predicate*) =
-    new AggregatePredicateHelper(predicates.head).or(predicates.tail: _*)
-
+    new AggregatePredicateHelper(predicates.head).OR(predicates.tail: _*)
   def NOT(predicate: Predicate) =
     new SimpleExpression(dialect.not(predicate.toSql), predicate.parameters)
-
+  /*
   def expr[T](expression: String): ExpressionProjection[T] =
     new ExpressionProjection[T](expression)
-
   def prepareExpr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
     var sqlText = expression
     var parameters: Seq[Any] = Nil

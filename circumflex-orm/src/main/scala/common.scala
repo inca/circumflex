@@ -211,25 +211,26 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
 
   /*!## Equality & Others
 
-  Two fields are considered equal if their values are equal.
+  Two fields are considered equal if they belong to the same
+  type of records and share the same name.
 
   The `hashCode` calculation is delegated to underlying `value`.
 
   The `canEqual` method indicates whether the two fields belong
-  to the same type of records and share the same name.
+  to the same type of records.
 
   Finally, `toString` is delegated to underlying `value`'s
   `toString` method or shows `<undefined>` if the field's value
   is `null`.
   */
   override def equals(that: Any): Boolean = that match {
-    case that: ValueHolder[_, _] => this.value == that.value
+    case that: ValueHolder[_, _] => this.canEqual(that) &&
+      this.name == that.name
     case _ => false
   }
   override def hashCode: Int = value.hashCode
   def canEqual(that: Any): Boolean = that match {
-    case that: ValueHolder[_, _] => this.record.canEqual(that.record) &&
-        this.name == that.name
+    case that: ValueHolder[_, _] => this.record.canEqual(that.record)
     case _ => false
   }
   override def toString: String = value.map(_.toString).getOrElse("<undefined>")

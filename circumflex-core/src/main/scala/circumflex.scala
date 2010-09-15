@@ -117,7 +117,7 @@ trait UntypedContainer extends Map[String, Any] {
     get(key).map(v => new SimpleDateFormat(pattern).parse(v.toString)).getOrElse(new Date)
 
   def instantiate[C](name: String, default: =>C): C = this.get(name) match {
-    case Some(c: Class[C]) => instantiateObject(name, c)
+    case Some(c: Class[_]) => instantiateObject(name, c)
     case Some(s: String) => instantiateObject(name, Class.forName(s))
     case v => default
   }
@@ -134,19 +134,19 @@ trait UntypedContainer extends Map[String, Any] {
 
 }
 
-/*! Internally, some Circumflex components use a handy trait called `CacheMap`
+/*! Internally, some Circumflex components use a handy class called `AtomicMap`
 to deal with caching maps which can be accessed by multiple threads.*/
-trait CacheMap[A, B] extends HashMap[A, B] {
-  override def get(key: A): Option[B] = super.get(key) match {
+class AtomicMap[A, B] extends HashMap[A, B] {
+  override def getOrElseUpdate(key: A, value: => B): B = super.get(key) match {
     case None => this.synchronized {
       super.get(key) match {
         case None =>
-          val v = default(key)
+          val v = value
           super.update(key, v)
-          Some(v)
-        case v => v
+          v
+        case Some(v) => v
       }
     }
-    case v => v
+    case Some(v) => v
   }
 }

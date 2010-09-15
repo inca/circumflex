@@ -94,12 +94,12 @@ class Index(val name: String,
     return this
   }
 
-  //  private var _where: Predicate = EmptyPredicate
-  //  def where = _where
-  //  def WHERE(where: Predicate): this.type = {
-  //    this._where = predicate
-  //    return this
-  //  }
+  private var _where: Predicate = EmptyPredicate
+  def where = _where
+  def WHERE(predicate: Predicate): this.type = {
+    this._where = predicate
+    return this
+  }
 
   def objectName = "INDEX " + name
   def sqlCreate = dialect.createIndex(this)

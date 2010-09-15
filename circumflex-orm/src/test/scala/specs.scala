@@ -43,7 +43,16 @@ object GeneralSpec extends Specification {
       c1.canEqual(c2) must beTrue
       c1.canEqual(new Country) must beFalse
     }
-    "process field setters" in {
+  }
+
+  "Fields" should {
+    "handle equality" in {
+      new City().name must_== new City().name
+      new Country().name must_!= new City().name
+      City.name must_== City.name
+      City.name must_!= Country.name
+    }
+    "process setters" in {
       val c = new Country
       c.code := " CH  "
       c.code() must_== "ch"
