@@ -96,7 +96,7 @@ class DefaultCacheService extends CacheService {
     }
   def cacheRecord[PK, R <: Record[PK, R]](id: PK, relation: Relation[PK, R], record: => R): R =
     relation match {
-      case c: Cacheable[_, _] => c.cache(id, record)
+      case c: Cacheable[PK, R] => c.cache(id, record)
       case _ => _recordsCache(relation).getOrElseUpdate(id, record).asInstanceOf[R]
     }
 
