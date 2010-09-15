@@ -61,6 +61,10 @@ package object orm {
 
   def cacheService = CacheService.get
 
+  def tx: Transaction = transactionManager.get
+  def COMMIT() = tx.commit()
+  def ROLLBACK() = tx.rollback()
+
   // Implicits
 
   implicit def association2field[K, C <: Record[_, C], P <: Record[K, P]](
