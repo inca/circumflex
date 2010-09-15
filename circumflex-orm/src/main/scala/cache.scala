@@ -80,15 +80,25 @@ class DefaultCacheService extends CacheService {
 
   // Records cache
 
-  def invalidateRecords: Unit =
+  def invalidateRecords: Unit = {
     _recordsCache.clear()
+    Cacheable.relations.foreach(_.invalidateCache)
+  }
   def invalidateRecords[PK, R <: Record[PK, R]](relation: Relation[PK, R]): Unit =
-    _recordsCache(relation).clear()
+    relation match {
+      case c: Cacheable[_, _] => c.invalidateCache
+      case _ => _recordsCache.remove(relation)
+    }
   def evictRecord[PK, R <: Record[PK, R]](id: PK, relation: Relation[PK, R]): Unit =
-    _recordsCache(relation).remove(id)
+    relation match {
+      case c: Cacheable[_, _] => c.evict(id)
+      case _ => _recordsCache(relation).remove(id)
+    }
   def cacheRecord[PK, R <: Record[PK, R]](id: PK, relation: Relation[PK, R], record: => R): R =
-    _recordsCache(relation).getOrElseUpdate(id, record).asInstanceOf[R]
-
+    relation match {
+      case c: Cacheable[_, _] => c.cache(id, record)
+      case _ => _recordsCache(relation).getOrElseUpdate(id, record).asInstanceOf[R]
+    }
 
   // Inverse cache
 
