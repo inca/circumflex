@@ -133,20 +133,3 @@ trait UntypedContainer extends Map[String, Any] {
   }
 
 }
-
-/*! Internally, some Circumflex components use a handy class called `AtomicMap`
-to deal with caching maps which can be accessed by multiple threads.*/
-class AtomicMap[A, B] extends HashMap[A, B] {
-  override def getOrElseUpdate(key: A, value: => B): B = super.get(key) match {
-    case None => this.synchronized {
-      super.get(key) match {
-        case None =>
-          val v = value
-          super.update(key, v)
-          v
-        case Some(v) => v
-      }
-    }
-    case Some(v) => v
-  }
-}

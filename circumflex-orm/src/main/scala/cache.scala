@@ -2,6 +2,7 @@ package ru.circumflex.orm
 
 import ru.circumflex.core._
 import collection.mutable.HashMap
+import java.util.concurrent.ConcurrentHashMap
 
 /*!# Context-Level Cache
 
@@ -69,9 +70,9 @@ trait CacheService {
 It can be overriden by setting the `orm.cacheService` parameter. */
 class DefaultCacheService extends CacheService {
 
-  class CacheMap extends AtomicMap[Any, AtomicMap[Any, Any]] {
-    override def get(key: Any): Option[AtomicMap[Any, Any]] =
-      super.getOrElseUpdate(key, new AtomicMap[Any, Any])
+  class CacheMap extends HashMap[Any, HashMap[Any, Any]] {
+    override def get(key: Any): Option[HashMap[Any, Any]] =
+      super.getOrElseUpdate(key, new HashMap[Any, Any])
   }
 
   protected val _recordsCache = new CacheMap
@@ -123,10 +124,17 @@ one record instance may become accessible to several threads, the modification
 of such records is subject for concurrency control.
 */
 trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
-  protected val _cache = new AtomicMap[PK, R]
+  protected val _cache = new ConcurrentHashMap[PK, R]
 
-  def cache(id: PK, record: => R): R =
-    _cache.getOrElseUpdate(id, record)
+  def cache(id: PK, record: => R): R = {
+    if (_cache.containsKey(id))
+      return _cache.get(id)
+    else {
+      val v = record
+      _cache.put(id, v)
+      return v
+    }
+  }
   def evict(id: PK): Unit =
     _cache.remove(id)
   def invalidateCache(): Unit =
