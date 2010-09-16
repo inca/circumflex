@@ -282,4 +282,28 @@ class Dialect {
   def checkConstraintDefinition(check: CheckConstraint) =
     "CHECK (" + check.expression + ")"
 
+  /*!## Structured Query Language */
+
+  /**
+   * Produces an SQL representation of join node.
+   */
+  def join(j: JoinNode[_, _, _, _]): String = joinInternal(j, null)
+
+  /**
+   * Some magic to convert join tree to SQL.
+   */
+  protected def joinInternal(node: RelationNode[_, _], on: String): String = {
+    var result = ""
+    node match {
+      case j: JoinNode[_, _, _, _] =>
+        result += joinInternal(j.left, on) +
+            " " + j.joinType.toSql + " " +
+            joinInternal(j.right, j.sqlOn)
+      case _ =>
+        result += node.toSql
+        if (on != null) result += " " + on
+    }
+    return result
+  }
+
 }

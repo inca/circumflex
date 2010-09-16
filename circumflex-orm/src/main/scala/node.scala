@@ -72,7 +72,8 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
 }
 
 /*! The `ProxyNode` wraps a node and provides functionality to arrange
-joined nodes into a query plan (tree-like structure). Most methods delegate
+joined nodes into a query plan (tree-like structure) by allowing to replace
+an underlying `node` with it's equivalent `JoinNode`. Most methods delegate
 to underlying `node`.
 */
 class ProxyNode[PK, R <: Record[PK, R]](protected[orm] var node: RelationNode[PK, R])
@@ -103,5 +104,56 @@ class ProxyNode[PK, R <: Record[PK, R]](protected[orm] var node: RelationNode[PK
     newNode.node = n
     return newNode
   }
+
+}
+
+/*!# Joins
+
+Relations can be joined within one query to allow applying restrictions on
+associated relations. The `JoinNode` class represends a join between two relations.
+We stick to a general convention called *left associativity*: two joined nodes
+with equal left nodes are considered equal:
+
+    (ci JOIN co) == ci
+    (ci JOIN co JOIN ca) == ((ci JOIN co) JOIN ca)
+
+This way you can compose arbitrary complex query plans.
+*/
+abstract class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
+    protected var _left: RelationNode[PKL, L],
+    protected var _right: RelationNode[PKR, R],
+    protected var _joinType: JoinType) extends ProxyNode[PKL, L](_left) {
+
+  def left = _left
+  def right = _right
+  def joinType = _joinType
+
+  def on: String
+
+  def sqlOn = dialect.on(this.on)
+
+  override def projections = left.projections ++ right.projections
+
+  def replaceLeft(newLeft: RelationNode[PKL, L]): this.type = {
+    this._left = newLeft
+    return this
+  }
+
+  def replaceRight(newRight: RelationNode[PKR, R]): this.type = {
+    this._right = newRight
+    return this
+  }
+
+  override def toSql = dialect.join(this)
+
+  /**
+   * Creates a deep copy of this node, cloning left and right nodes.
+   * The underlying relations of nodes remain unchanged.
+   */
+  override def clone(): this.type = super.clone()
+          .replaceLeft(this.left.clone)
+          .replaceRight(this.right.clone)
+
+  override def toString = "(" + left + " -> " + right + ")"
 
 }
