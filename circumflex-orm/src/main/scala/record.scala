@@ -44,6 +44,48 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   def transient_?(): Boolean = PRIMARY_KEY.null_?
   def relation: Relation[PK, R]
 
+  /*!## Persistence
+
+  The `insert_!`, `update_!` and `delete_!` methods are used to insert, update or delete a single
+  record. The `insert` and `update` do the same as their equivalents except that validation
+  is performed before actual execution. The `refresh` method performs select with primary key
+  criteria and updates the fields with retrieved values.
+
+  When inserting new record into database the primary key should be generated. It is done either
+  by polling database, by supplying `NULL` in primary key and then querying last generated identifier
+  or manually by application. The default implementation relies on application-assigned identifiers;
+  to use different strategy mix in one of the `Generator` traits or simply override the `persist`
+  method.
+  */
+
+  def INSERT_!(fields: Field[_, R]*): Int = if (relation.readOnly_?)
+    throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+  else {
+    // Execute events
+    relation.beforeInsert.foreach(c => c(this))
+    // Collect fields which will participate in query
+    var f: Seq[Field[_, R]] = evalFields(fields)
+    // Prepare and execute query
+    val result = persist(f)
+    // Execute events
+    relation.afterInsert.foreach(c => c(this))
+    return result
+  }
+
+  protected def evalFields(fields: Seq[Field[_, R]]): Seq[Field[_, R]] =
+    (if (fields.size == 0) relation.fields else fields)
+        .map(f => relation.methodsMap(f).invoke(this).asInstanceOf[Field[_, R]])
+
+  protected def persist(fields: Seq[Field[_, R]]): Int = {
+    //    val sql = dialect.insertRecord(this, f)
+    //    val result = tx.execute(sql) { st =>
+    //      relation.setParams(this, st, f)
+    //      st.executeUpdate
+    //    } { throw _ }
+    //    relation.refetchLast(this)
+    0
+  }
+
   /*!## Equality & Others
   
   Two record are considered equal if they share the same type and have same primary keys.
