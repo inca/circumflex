@@ -137,3 +137,161 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
 }
 
+class NativeSQLQuery[T](projection: Projection[T],
+                        expression: ParameterizedExpression)
+    extends SQLQuery[T](projection) {
+  def parameters = expression.parameters
+  def toSql = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
+}
+
+class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
+
+  // Commons
+
+  protected var _distinct: Boolean = false
+  protected var _auxProjections: Seq[Projection[_]] = Nil
+  protected var _relations: Seq[RelationNode[_, _]] = Nil
+  protected var _where: Predicate = EmptyPredicate
+  protected var _having: Predicate = EmptyPredicate
+  protected var _groupBy: Seq[Projection[_]] = Nil
+  protected var _setOps: Seq[Pair[SetOperation, SQLQuery[T]]] = Nil
+  protected var _orders: Seq[Order] = Nil
+  protected var _limit: Int = -1
+  protected var _offset: Int = 0
+
+  def parameters: Seq[Any] = _where.parameters ++
+      _having.parameters ++
+      _setOps.flatMap(p => p._2.parameters) ++
+      _orders.flatMap(_.parameters)
+
+  def setOps = _setOps
+
+  // SELECT clause
+
+  override def projections = List(projection) ++ _auxProjections
+
+  def distinct_?(): Boolean = _distinct
+  def DISTINCT(): Select[T] = {
+    this._distinct = true
+    return this
+  }
+
+  // FROM clause
+
+  def from = _relations
+  def FROM(nodes: RelationNode[_, _]*): Select[T] = {
+    this._relations = nodes.toList
+    from.foreach(ensureNodeAlias(_))
+    return this
+  }
+
+  protected def ensureNodeAlias(node: RelationNode[_, _]): RelationNode[_, _] =
+    node match {
+      case j: JoinNode[_, _, _, _] =>
+        ensureNodeAlias(j.left)
+        ensureNodeAlias(j.right)
+        j
+      case n: RelationNode[_, _] if (n.alias == "this") => node.AS(nextAlias)
+      case n => n
+    }
+
+  // WHERE clause
+
+  def where: Predicate = this._where
+  def WHERE(predicate: Predicate): Select[T] = {
+    this._where = predicate
+    return this
+  }
+  def WHERE(expression: String, params: Pair[String,Any]*): Select[T] =
+    WHERE(prepareExpr(expression, params: _*))
+
+  // HAVING clause
+
+  def having: Predicate = this._having
+  def HAVING(predicate: Predicate): Select[T] = {
+    this._having = predicate
+    return this
+  }
+  def HAVING(expression: String, params: Pair[String,Any]*): Select[T] =
+    HAVING(prepareExpr(expression, params: _*))
+
+  // GROUP BY clause
+
+  def groupBy: Seq[Projection[_]] = _groupBy
+
+  def GROUP_BY(proj: Projection[_]*): Select[T] = {
+    proj.toList.foreach(p => addGroupByProjection(p))
+    return this
+  }
+
+  protected def addGroupByProjection(proj: Projection[_]): Unit =
+    findProjection(projection, p => p.equals(proj)) match {
+      case None =>
+        ensureProjectionAlias(proj)
+        this._auxProjections ++= List(proj)
+        this._groupBy ++= List(proj)
+      case Some(p) => this._groupBy ++= List(p)
+    }
+
+  /**
+   * Searches deeply for a `projection` that matches specified `predicate` function.
+   */
+  protected def findProjection(projection: Projection[_],
+                               predicate: Projection[_] => Boolean): Option[Projection[_]] =
+    if (predicate(projection)) return Some(projection)
+    else projection match {
+      case p: CompositeProjection[_] =>
+        return p.subProjections.find(predicate)
+      case _ => return None
+    }
+
+  // Set Operations
+
+  protected def addSetOp(op: SetOperation, sql: SQLQuery[T]): Select[T] = {
+    val q = clone()
+    q._setOps ++= List(op -> sql)
+    return q
+  }
+
+  def UNION(sql: SQLQuery[T]): Select[T] =
+    addSetOp(OP_UNION, sql)
+  def UNION_ALL(sql: SQLQuery[T]): Select[T] =
+    addSetOp(OP_UNION_ALL, sql)
+  def EXCEPT(sql: SQLQuery[T]): Select[T] =
+    addSetOp(OP_EXCEPT, sql)
+  def EXCEPT_ALL(sql: SQLQuery[T]): Select[T] =
+    addSetOp(OP_EXCEPT_ALL, sql)
+  def INTERSECT(sql: SQLQuery[T]): Select[T] =
+    addSetOp(OP_INTERSECT, sql)
+  def INTERSECT_ALL(sql: SQLQuery[T]): Select[T] =
+    addSetOp(OP_INTERSECT_ALL, sql)
+
+  // ORDER BY clause
+
+  def orderBy = _orders
+  def ORDER_BY(order: Order*): Select[T] = {
+    this._orders ++= order.toList
+    return this
+  }
+
+  // LIMIT and OFFSET clauses
+
+  def limit = this._limit
+  def LIMIT(value: Int): Select[T] = {
+    _limit = value
+    return this
+  }
+
+  def offset = this._offset
+  def OFFSET(value: Int): Select[T] = {
+    _offset = value
+    return this
+  }
+
+  // Miscellaneous
+
+  def toSql = dialect.select(this)
+
+}
+
+

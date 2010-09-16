@@ -67,25 +67,49 @@ package object orm {
 
   // Implicits
 
+  // for nodes, fields and records
+
   implicit def association2field[K, C <: Record[_, C], P <: Record[K, P]](
       association: Association[K, C, P]): Field[K, C] = association.field
   implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
     new RelationNode[PK, R](relation)
-  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Relation[PK, R] =
+  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Relation[PK, R] = {
+    ctx("orm.lastAlias") = node.alias
     node.relation
+  }
+  implicit def field2str(field: Field[_, _]): String = ctx.get("orm.lastAlias") match {
+    case Some(alias: String) => alias + "." + field.name
+    case _ => field.name
+  }
+
+  // for predicates
+
   implicit def string2helper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
+  implicit def field2helper(field: Field[_, _]): SimpleExpressionHelper =
+    new SimpleExpressionHelper(field2str(field))
   implicit def string2predicate(expression: String): Predicate =
     new SimpleExpression(expression, Nil)
-  implicit def string2order(expression: String): Order =
-    new Order(expression, Nil)
   implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
     new SimpleExpression(expression.toSql, expression.parameters)
   implicit def predicate2aggregateHelper(predicate: Predicate) =
     new AggregatePredicateHelper(predicate)
   implicit def predicate2string(predicate: Predicate): String = predicate.toInlineSql
 
-  /*
+  // for orders
+
+  implicit def string2order(expression: String): Order =
+    new Order(expression, Nil)
+  implicit def field2order(field: Field[_, _]): Order =
+    new Order(field2str(field), Nil)
+
+  // for projections
+
+  implicit def string2projection(expression: String): Projection[Any] =
+    new ExpressionProjection[Any](expression)
+  implicit def field2projection[T](field: Field[T, _]): Projection[T] =
+    new ExpressionProjection[T](field2str(field))
+
   implicit def tuple2proj[T1, T2](
       t: (Projection[T1], Projection[T2])) =
     new Tuple2Projection(t._1, t._2)
@@ -118,7 +142,6 @@ package object orm {
       t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
           Projection[T6], Projection[T7], Projection[T8], Projection[T9], Projection[T10])) =
     new Tuple10Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)
-  */
 
   // Constants
 
@@ -148,7 +171,6 @@ package object orm {
     new AggregatePredicateHelper(predicates.head).OR(predicates.tail: _*)
   def NOT(predicate: Predicate) =
     new SimpleExpression(dialect.not(predicate.toSql), predicate.parameters)
-  /*
   def expr[T](expression: String): ExpressionProjection[T] =
     new ExpressionProjection[T](expression)
   def prepareExpr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
@@ -190,6 +212,8 @@ package object orm {
     new ExpressionProjection[Any](dialect.avg + "(" + expr + ")")
 
   // Queries DSL
+
+  /*
 
   def SELECT[T](projection: Projection[T]) = new Select(projection)
   def INSERT_INTO[R <: Record[R]](relation: Relation[R]) = new InsertSelectHelper(relation)

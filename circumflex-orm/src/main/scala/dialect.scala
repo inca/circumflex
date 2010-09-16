@@ -142,6 +142,13 @@ class Dialect {
    */
   def not(expression: String) = "NOT (" + expression + ")"
 
+  /**
+   * Takes specified `subquery` into parentheses and prepend with
+   * specified `expression`.
+   */
+  def subquery(expression: String, subquery: SQLQuery[_]) =
+    expression + " ( " + subquery.toSql + " )"
+
   /*!## Data Definition Language */
 
   /**
@@ -303,6 +310,36 @@ class Dialect {
         result += node.toSql
         if (on != null) result += " " + on
     }
+    return result
+  }
+
+  /**
+   * Produces a `SELECT` statement.
+   */
+  def select(q: Select[_]): String = {
+    var result = "SELECT "
+    if (q.distinct_?)
+      result += "DISTINCT "
+    result += q.projections.map(_.toSql).mkString(", ")
+    if (q.from.size > 0)
+      result += " FROM " + q.from.map(_.toSql).mkString(", ")
+    if (q.where != EmptyPredicate)
+      result += " WHERE " + q.where.toSql
+    if (q.groupBy.size > 0)
+      result += " GROUP BY " + q.groupBy.flatMap(_.sqlAliases).mkString(", ")
+    if (q.having != EmptyPredicate)
+      result += " HAVING " + q.having.toSql
+    q.setOps.foreach {
+      case (op: SetOperation, subq: SQLQuery[_]) =>
+        result += " " + op.toSql + " ( " + subq.toSql + " )"
+      case _ =>
+    }
+    if (q.orderBy.size > 0)
+      result += " ORDER BY " + q.orderBy.map(_.toSql).mkString(", ")
+    if (q.limit > -1)
+      result += " LIMIT " + q.limit
+    if (q.offset > 0)
+      result += " OFFSET " + q.offset
     return result
   }
 
