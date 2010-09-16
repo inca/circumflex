@@ -164,7 +164,6 @@
               </goals>
               <configuration>
                 <args>
-                  <arg>-unchecked</arg>
                   <arg>-deprecation</arg>
                 </args>
               </configuration>

@@ -33,7 +33,37 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
    */
   def projections: Seq[Projection[_]] = List(*)
 
-  // TODO add criteria and joins
+  // TODO add criteria
+
+  /*! Relation nodes can be joined to allow restrictions of associated relations. */
+
+  def findAssociation[T, F <: Record[T, F]](node: RelationNode[T, F]): Option[Association[T, R, F]] =
+    this.relation.findAssociation(node.relation)
+
+  def JOIN[T, J <: Record[T, J]](node: RelationNode[T, J],
+                                 on: String,
+                                 joinType: JoinType): JoinNode[PK, R, T, J] =
+    new JoinNode(this, node, joinType).ON(on)
+  def JOIN[T, J <: Record[T, J]](node: RelationNode[T, J],
+                                 joinType: JoinType = LEFT): JoinNode[PK, R, T, J] =
+    findAssociation(node) match {
+      case Some(a: Association[T, R, J]) =>  // many-to-one join
+        new ManyToOneJoin[PK, R, T, J](this, node, a, joinType)
+      case _ => node.findAssociation(this) match {
+        case Some(a: Association[PK, J, R]) =>  // one-to-many join
+          new OneToManyJoin[PK, R, T, J](this, node, a, joinType)
+        case _ =>
+          new JoinNode[PK, R, T, J](this, node, joinType)
+      }
+    }
+  def INNER_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
+    JOIN(node, INNER)
+  def LEFT_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
+    JOIN(node, LEFT)
+  def RIGHT_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
+    JOIN(node, RIGHT)
+  def FULL_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
+    JOIN(node, FULL)
 
   /*!## Equality & Others
 
@@ -117,9 +147,11 @@ with equal left nodes are considered equal:
     (ci JOIN co) == ci
     (ci JOIN co JOIN ca) == ((ci JOIN co) JOIN ca)
 
-This way you can compose arbitrary complex query plans.
+This way you can compose arbitrary complex query plans. The join condition
+(the `ON` subclause) can be either inferred from associations or specified
+manually using the `ON` method.
 */
-abstract class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
+class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     protected var _left: RelationNode[PKL, L],
     protected var _right: RelationNode[PKR, R],
     protected var _joinType: JoinType) extends ProxyNode[PKL, L](_left) {
@@ -128,7 +160,12 @@ abstract class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
   def right = _right
   def joinType = _joinType
 
-  def on: String
+  protected var _on: String = ""
+  def on = _on
+  def ON(condition: String): this.type = {
+    _on = condition
+    return this
+  }
 
   def sqlOn = dialect.on(this.on)
 
@@ -151,9 +188,27 @@ abstract class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
    * The underlying relations of nodes remain unchanged.
    */
   override def clone(): this.type = super.clone()
-          .replaceLeft(this.left.clone)
-          .replaceRight(this.right.clone)
+      .replaceLeft(this.left.clone)
+      .replaceRight(this.right.clone)
 
   override def toString = "(" + left + " -> " + right + ")"
 
+}
+
+class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
+    childNode: RelationNode[PKL, L],
+    parentNode: RelationNode[PKR, R],
+    val association: Association[PKR, L, R],
+    joinType: JoinType) extends JoinNode[PKL, L, PKR, R](childNode, parentNode, joinType) {
+  _on = childNode.alias + "." + association.field.name + " = " +
+      parentNode.alias + "." + association.parentRelation.PRIMARY_KEY.name
+}
+
+class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
+    parentNode: RelationNode[PKL, L],
+    childNode: RelationNode[PKR, R],
+    val association: Association[PKL, R, L],
+    joinType: JoinType) extends JoinNode[PKL, L, PKR, R](parentNode, childNode, joinType) {
+  _on = childNode.alias + "." + association.field.name + " = " +
+      parentNode.alias + "." + association.parentRelation.PRIMARY_KEY.name
 }
