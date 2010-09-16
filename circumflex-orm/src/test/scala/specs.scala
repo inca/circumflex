@@ -59,6 +59,23 @@ object GeneralSpec extends Specification {
     }
   }
 
+  "Relation nodes" should {
+    "handle equality" in {
+      val co = Country AS "co"
+      val ci = City AS "ci"
+      co must_== (Country AS "co")
+      ci must_!= (City AS "c")
+      (co JOIN ci) must_== ((co JOIN ci) JOIN (ci JOIN co))
+      (co JOIN ci) must_!= (ci JOIN co)
+    }
+    "join with left-associativity" in {
+      val co = Country AS "co"
+      val ci = City AS "ci"
+      val ci1 = City AS "ci1"
+      (co JOIN ci JOIN ci1).toString must_== ((co JOIN ci) JOIN ci1).toString
+    }
+  }
+
   
 
 }

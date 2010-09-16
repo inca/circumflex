@@ -1,5 +1,7 @@
 package ru.circumflex.orm
 
+import java.sql.PreparedStatement
+
 /*!# Record
 
 The record is a central abstraction in Circumflex ORM. Every object persisted into
@@ -63,28 +65,74 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   else {
     // Execute events
     relation.beforeInsert.foreach(c => c(this))
-    // Collect fields which will participate in query
-    var f: Seq[Field[_, R]] = evalFields(fields)
     // Prepare and execute query
-    val result = persist(f)
+    val result = persist(evalFields(fields))
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     return result
   }
 
+  protected def persist(fields: Seq[Field[_, R]]): Int = PRIMARY_KEY.value match {
+    case Some(id: PK) =>
+      val sql = dialect.insertRecord(this, fields)
+      val result = tx.execute(sql) { st =>
+        setParams(st, fields)
+        st.executeUpdate
+      } { throw _ }
+      // TODO
+      // refetchLast(this)
+      result
+    case _ => throw new ORMException("Application-assigned identifier is expected." +
+        "Use one of the generators if you wish identifiers to be generated automatically.")
+  }
+
+  def UPDATE_!(fields: Field[_, R]*): Int = if (relation.readOnly_?)
+    throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+  else {
+    if (PRIMARY_KEY.null_?)
+      throw new ORMException("Update is only allowed with non-null PRIMARY KEY field.")
+    // Execute events
+    relation.beforeUpdate.foreach(c => c(this))
+    // Collect fields which will participate in query
+    val f = evalFields(fields).filter(_ != PRIMARY_KEY)
+    // Prepare and execute a query
+    val sql = dialect.updateRecord(this, f)
+    val result = tx.execute(sql) { st =>
+      setParams(st, f)
+      typeConverter.write(st, PRIMARY_KEY.value, f.size + 1)
+      st.executeUpdate
+    } { throw _ }
+    // Execute events
+    relation.afterUpdate.foreach(c => c(this))
+    return result
+  }
+
+  def DELETE_!(): Int = if (relation.readOnly_?)
+    throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+  else {
+    if (PRIMARY_KEY.null_?)
+      throw new ORMException("Delete is only allowed with non-null PRIMARY KEY field.")
+    // Execute events
+    relation.beforeDelete.foreach(c => c(this))
+    // Prepare and execute query
+    val sql = dialect.deleteRecord(this)
+    val result = tx.execute(sql) { st =>
+      typeConverter.write(st, PRIMARY_KEY.value, 1)
+      st.executeUpdate
+    } { throw _ }
+    // Execute events
+    relation.afterDelete.foreach(c => c(this))
+    return result
+  }
+
+  // Internal helpers
+
   protected def evalFields(fields: Seq[Field[_, R]]): Seq[Field[_, R]] =
     (if (fields.size == 0) relation.fields else fields)
         .map(f => relation.methodsMap(f).invoke(this).asInstanceOf[Field[_, R]])
 
-  protected def persist(fields: Seq[Field[_, R]]): Int = {
-    //    val sql = dialect.insertRecord(this, f)
-    //    val result = tx.execute(sql) { st =>
-    //      relation.setParams(this, st, f)
-    //      st.executeUpdate
-    //    } { throw _ }
-    //    relation.refetchLast(this)
-    0
-  }
+  protected def setParams(st: PreparedStatement, fields: Seq[Field[_, R]]): Unit =
+    (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).value, ix + 1))
 
   /*!## Equality & Others
   
