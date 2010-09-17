@@ -128,7 +128,6 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
       getOrElse(default: Long)  // Long
 
       // setting
-      id.value(Some(1l))
       id.set(Some(1l))
       id.setNull
       id := 1l
@@ -148,7 +147,7 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
 
   // Setting
 
-  def value(v: Option[T]): this.type = {
+  def set(v: Option[T]): this.type = {
     // disallow setting values on relation fields
     if (record.isInstanceOf[Relation[_, _]])
       throw new ORMException("Could not set the value of the field which belong to relation.")
@@ -158,9 +157,8 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
     }
     return this
   }
-  def set(v: Option[T]): this.type = value(v)
-  def setNull: this.type = value(None)
-  def :=(v: T): Unit = value(Some(v))
+  def setNull: this.type = set(None)
+  def :=(v: T): Unit = set(Some(v))
 
   /*!## Column Definition Methods
 

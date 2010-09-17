@@ -71,7 +71,7 @@ It can be overriden by setting the `orm.cacheService` parameter. */
 class DefaultCacheService extends CacheService {
 
   class CacheMap extends HashMap[Any, HashMap[Any, Any]] {
-    override def get(key: Any): Option[HashMap[Any, Any]] =
+    override def apply(key: Any): HashMap[Any, Any] =
       super.getOrElseUpdate(key, new HashMap[Any, Any])
   }
 

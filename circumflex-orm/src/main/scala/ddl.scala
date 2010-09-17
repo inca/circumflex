@@ -113,7 +113,7 @@ class DDLUnit {
   /**
    * Executes a DROP script for added objects.
    */
-  def drop(): this.type = {
+  def DROP(): this.type = {
     resetMsgs()
     _drop()
   }
@@ -138,7 +138,7 @@ class DDLUnit {
   /**
    * Executes a CREATE script for added objects.
    */
-  def create(): this.type = {
+  def CREATE(): this.type = {
     resetMsgs()
     _create()
   }
@@ -162,7 +162,7 @@ class DDLUnit {
   /**
    * Executes a DROP script and then a CREATE script.
    */
-  def dropCreate(): this.type = {
+  def DROP_CREATE(): this.type = {
     resetMsgs()
     _drop()
     _create()

@@ -73,9 +73,9 @@ package object orm {
       association: Association[K, C, P]): Field[K, C] = association.field
   implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
     new RelationNode[PK, R](relation)
-  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Relation[PK, R] = {
+  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): R = {
     ctx("orm.lastAlias") = node.alias
-    node.relation
+    node.relation.asInstanceOf[R]
   }
   implicit def field2str(field: Field[_, _]): String = ctx.get("orm.lastAlias") match {
     case Some(alias: String) => alias + "." + field.name
@@ -213,13 +213,11 @@ package object orm {
 
   // Queries DSL
 
-  /*
-
   def SELECT[T](projection: Projection[T]) = new Select(projection)
+  /*
   def INSERT_INTO[R <: Record[R]](relation: Relation[R]) = new InsertSelectHelper(relation)
   def UPDATE[R <: Record[R]](node: RelationNode[R]) = new Update(node)
   def DELETE[R <: Record[R]](node: RelationNode[R]) = new Delete(node)
-
   */
 
 }

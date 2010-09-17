@@ -16,4 +16,16 @@ class MySQLDialect extends Dialect
 
 class OracleDialect extends Dialect
 
-class H2Dialect extends Dialect
+class H2Dialect extends Dialect {
+  override def textType = "varchar"
+  override def createIndex(idx: Index): String = {
+    var result = "CREATE "
+    if (idx.unique_?) result += "UNIQUE "
+    result += "INDEX " + quoteIdentifer(idx.name) + " ON " + idx.relation.qualifiedName +
+        " (" + idx.expression + ")"
+    if (idx.where != EmptyPredicate)
+      result += " WHERE " + idx.where.toInlineSql
+    return result
+  }
+  override def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name
+}

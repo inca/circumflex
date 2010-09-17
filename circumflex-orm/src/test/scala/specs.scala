@@ -76,6 +76,14 @@ object GeneralSpec extends Specification {
     }
   }
 
-  
+  "DDL unit" should {
+    "be able to create and drop schema" in {
+      new DDLUnit(Country).CREATE()
+      val ch = new Country("ch", "switzerland")
+      ch.INSERT_!() must_== 1
+      new DDLUnit(Country).DROP()
+      ch.INSERT_!() must throwA[Throwable]
+    }
+  }
 
 }

@@ -146,7 +146,7 @@ trait TypeConverter {
   def read(rs: ResultSet, alias: String): Option[Any] = {
     val result = rs.getObject(alias)
     if (rs.wasNull) return None
-    else return Some(fromJDBC(result))
+    else return fromJDBC(result)
   }
 
   /**
@@ -155,7 +155,7 @@ trait TypeConverter {
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit =
     parameter match {
       case None | null => st.setObject(paramIndex, null)
-      case Some(v) => write(st, parameter, paramIndex)
+      case Some(v) => write(st, v, paramIndex)
       case v => st.setObject(paramIndex, toJDBC(v))
     }
 

@@ -1,6 +1,13 @@
 package ru.circumflex.orm
 
 class Country extends Record[String, Country] {
+
+  def this(code: String, name: String) = {
+    this()
+    this.code := code
+    this.name := name
+  }
+
   val code = "code".VARCHAR(2).NOT_NULL
       .addSetter(_.trim)
       .addSetter(_.toLowerCase)
