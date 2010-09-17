@@ -270,6 +270,7 @@ records.
 */
 trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   def readOnly_?(): Boolean = false
+  def objectName: String = "TABLE " + qualifiedName
   def sqlCreate: String = {
     init()
     dialect.createTable(this)
@@ -278,5 +279,24 @@ trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
     init()
     dialect.dropTable(this)
   }
-  def objectName: String = "TABLE " + relationName
+}
+
+/*!# View {#view}
+
+The `View` class represents a database view, whose definition is designated by
+the `query` method. By default we assume that views are not updateable, so
+DML operations are not allowed on view records.
+*/
+trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
+  def readOnly_?(): Boolean = true
+  def objectName: String = "VIEW " + qualifiedName
+  def sqlDrop: String = {
+    init()
+    dialect.dropView(this)
+  }
+  def sqlCreate: String = {
+    init()
+    dialect.createView(this)
+  }
+  def query: Select[_]
 }

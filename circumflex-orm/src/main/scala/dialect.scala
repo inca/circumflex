@@ -197,8 +197,22 @@ class Dialect {
   /**
    * Produces a `DROP TABLE` statement.
    */
-  def dropTable(table: Table[_, _]) =
+  def dropTable[PK, R <: Record[PK, R]](table: Table[PK, R]) =
     "DROP TABLE " + table.qualifiedName
+
+  /**
+   * Produces a `CREATE VIEW` statement.
+   */
+  def createView[PK, R <: Record[PK, R]](view: View[PK, R]) =
+    "CREATE VIEW " + view.qualifiedName + " (" +
+        view.fields.map(f => quoteIdentifer(f.name)).mkString(", ") + ") AS " +
+        view.query.toInlineSql
+
+  /**
+   * Produces a `DROP VIEW` statement.
+   */
+  def dropView[PK, R <: Record[PK, R]](view: View[PK, R]) =
+    "DROP VIEW " + quoteIdentifer(view.qualifiedName)
 
   /**
    * Produces a `CREATE INDEX` statement.

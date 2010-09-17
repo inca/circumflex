@@ -150,6 +150,8 @@ class DelegatingMessageResolver(initialResolvers: MessageResolver*) {
 Application-generated messages can be grouped using the `Msg` and `MsgGroup` classes.
 */
 case class Msg(key: String, params: (String, Any)*) {
+  def param(key: String): Option[Any] = params.find(_._1 == key).map(_._2)
+  def hasParam(key: String): Boolean = !params.find(_._1 == key).isEmpty
   override def toString: String = msg.fmt(key, params: _*)
 }
 
