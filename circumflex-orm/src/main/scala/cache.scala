@@ -44,6 +44,11 @@ trait CacheService {
       id: PK, relation: Relation[PK, R], record: => R): R
   def evictRecord[PK, R <: Record[PK, R]](
       id: PK, relation: Relation[PK, R]): Unit
+  def updateRecord[PK, R <: Record[PK, R]](
+      id: PK, relation: Relation[PK, R], record: R): R = {
+    evictRecord(id, relation)
+    cacheRecord(id, relation, record)
+  }
 
   /*!## Inverse Cache
 
@@ -63,6 +68,11 @@ trait CacheService {
       parentId: K, association: Association[K, C, P], children: => Seq[C]): Seq[C]
   def evictInverse[K, C <: Record[_, C], P <: Record[K, P]](
       parentId: K, association: Association[K, C, P]): Unit
+  def updateInverse[K, C <: Record[_, C], P <: Record[K, P]](
+      parentId: K, association: Association[K, C, P], children: Seq[C]): Seq[C] = {
+    evictInverse(parentId, association)
+    cacheInverse(parentId, association, children)
+  }
 
 }
 

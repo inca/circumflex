@@ -213,11 +213,13 @@ package object orm {
 
   // Queries DSL
 
-  def SELECT[T](projection: Projection[T]) = new Select(projection)
-  /*
-  def INSERT_INTO[R <: Record[R]](relation: Relation[R]) = new InsertSelectHelper(relation)
-  def UPDATE[R <: Record[R]](node: RelationNode[R]) = new Update(node)
-  def DELETE[R <: Record[R]](node: RelationNode[R]) = new Delete(node)
-  */
+  def SELECT[T](projection: Projection[T]) =
+    new Select(projection)
+  def INSERT_INTO[PK, R <: Record[PK, R]](relation: Relation[PK, R]) =
+    new InsertSelectHelper(relation)
+  def UPDATE[PK, R <: Record[PK, R]](node: RelationNode[PK, R]) =
+    new Update(node)
+  def DELETE[PK, R <: Record[PK, R]](node: RelationNode[PK, R]) =
+    new Delete(node)
 
 }
