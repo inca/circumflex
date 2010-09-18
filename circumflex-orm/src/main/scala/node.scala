@@ -33,7 +33,8 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
    */
   def projections: Seq[Projection[_]] = List(*)
 
-  // TODO add criteria
+  /*! Creates new `Criteria` instance with this node as its query plan root. */
+  def criteria = new Criteria[PK, R](this)
 
   /*! Relation nodes can be joined to allow restrictions of associated relations. */
 
