@@ -67,6 +67,13 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
    */
   def readOnly_?(): Boolean
 
+  /*! The `autorefresh_?()` method is used to indicate whether the record should be immediately
+  refreshed after every successful `INSERT` or `UPDATE` operation. By default it returns `false`
+  to maximize performance. However, if the relation contains columns with auto-generated values
+  (e.g. `DEFAULT` clauses, auto-increments, triggers, etc.) then you should override this method.
+   */
+  def autorefresh_?(): Boolean = false
+
   /*! Use the `AS` method to create a relation node from this relation with explicit alias. */
   def AS(alias: String): RelationNode[PK, R] = new RelationNode(this).AS(alias)
 
@@ -155,6 +162,15 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
         this._initialized = true
       }
     }
+
+  /**
+   * Copies all field values from specified `src` record to specified `dst` record.
+   */
+  protected def copyFields(src: R, dst: R): Unit = fields.foreach { f =>
+    val m = methodsMap(f)
+    val value = m.invoke(src).asInstanceOf[Field[Any, R]].value
+    methodsMap(f).invoke(dst).asInstanceOf[Field[Any, R]].set(value)
+  }
 
   /*!## Constaints & Indexes Definition
 

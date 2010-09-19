@@ -48,6 +48,9 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   /*!## Persistence
 
+  The `refresh` method is used to synchronize an already persisted record with its state in backend.
+  It evicts the record from cache and performs SQL `SELECT` using primary key-based predicate.
+
   The `insert_!`, `update_!` and `delete_!` methods are used to insert, update or delete a single
   record. The `insert` and `update` do the same as their equivalents except that validation
   is performed before actual execution. The `refresh` method performs select with primary key
@@ -59,6 +62,20 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   to use different strategy mix in one of the `Generator` traits or simply override the `persist`
   method.
   */
+
+  def refresh(): this.type = if (transient_?)
+      throw new ORMException("Could not refresh transient record.")
+  else {
+    val root = relation.AS("root")
+    val id = PRIMARY_KEY()
+    cacheService.evictRecord(id, relation)
+    SELECT(root.*).FROM(root).WHERE(root.PRIMARY_KEY EQ id).unique match {
+      case Some(r: R) =>
+        relation.copyFields(r, this)
+        return this
+      case _ => throw new ORMException("Could not refresh a record because it is missing in the backend.")
+    }
+  }
 
   def INSERT_!(fields: Field[_, R]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
@@ -79,8 +96,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
         setParams(st, fields)
         st.executeUpdate
       } { throw _ }
-      // TODO
-      // refetchLast(this)
+      if (relation.autorefresh_?) refresh()
       result
     case _ => throw new ORMException("Application-assigned identifier is expected." +
         "Use one of the generators if you wish identifiers to be generated automatically.")
@@ -102,6 +118,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
       typeConverter.write(st, PRIMARY_KEY.value, f.size + 1)
       st.executeUpdate
     } { throw _ }
+    if (relation.autorefresh_?) refresh()
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     return result
