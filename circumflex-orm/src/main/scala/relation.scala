@@ -86,11 +86,13 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   Following methods will help you perform common querying tasks:
 
     * `get` retrieves a record either from cache or from database by specified `id`;
-    * `all` retrieves all records, with optional `LIMIT`, `OFFSET` and `ORDER BY` clauses.
+    * `all` retrieves all records.
    */
 
   def get(id: PK): Option[R] =
-    cacheService.cacheRecord(id, this, AS("this").criteria.add(this.PRIMARY_KEY EQ id).unique)
+    cacheService.cacheRecord(id, this, this.criteria.add(this.PRIMARY_KEY EQ id).unique)
+
+  def all: Seq[R] = this.criteria.list
 
   /*!## Metadata
 
