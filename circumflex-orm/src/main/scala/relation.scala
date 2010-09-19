@@ -81,6 +81,17 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     associations.find(_.parentRelation == relation)
         .asInstanceOf[Option[Association[T, R, F]]]
 
+  /*!## Simple queries
+
+  Following methods will help you perform common querying tasks:
+
+    * `get` retrieves a record either from cache or from database by specified `id`;
+    * `all` retrieves all records, with optional `LIMIT`, `OFFSET` and `ORDER BY` clauses.
+   */
+
+  def get(id: PK): Option[R] =
+    cacheService.cacheRecord(id, this, AS("this").criteria.add(this.PRIMARY_KEY EQ id).unique)
+
   /*!## Metadata
 
   Relation metadata contains operational information about it's records by
@@ -166,11 +177,22 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   /**
    * Copies all field values from specified `src` record to specified `dst` record.
    */
-  protected def copyFields(src: R, dst: R): Unit = fields.foreach { f =>
+  protected[orm] def copyFields(src: R, dst: R): Unit = fields.foreach { f =>
     val m = methodsMap(f)
-    val value = m.invoke(src).asInstanceOf[Field[Any, R]].value
-    methodsMap(f).invoke(dst).asInstanceOf[Field[Any, R]].set(value)
+    val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
+    getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
   }
+
+  /**
+   * Retrieves actual field of specified `record` which corresponds to specified
+   * `field` via reflection.
+   */
+  protected[orm] def getField[T](record: R, field: Field[T, R]): Field[T, R] =
+    methodsMap(field).invoke(record) match {
+      case a: Association[T, R, _] => a.field
+      case f: Field[T, R] => f
+      case _ => throw new ORMException("Could not retrieve a field.")
+    }
 
   /*!## Constaints & Indexes Definition
 

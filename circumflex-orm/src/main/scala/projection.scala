@@ -111,15 +111,13 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   def read(rs: ResultSet): Option[R] = _fieldProjections
       .find(_.field == node.relation.PRIMARY_KEY)
       .map(_.read(rs))
-      .map(id => cacheService.cacheRecord(id.asInstanceOf[PK], node.relation, readRecord(rs)))
+      .flatMap(id => cacheService.cacheRecord(id.asInstanceOf[PK], node.relation, Some(readRecord(rs))))
 
   protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance
-    _fieldProjections.foreach(p => node.relation
-        .methodsMap(p.field)
-        .invoke(record)
-        .asInstanceOf[Field[Any, R]]
-        .set(p.read(rs)))
+    _fieldProjections.foreach { p =>
+      node.relation.getField(record, p.field.asInstanceOf[Field[Any, R]]).set(p.read(rs))
+    }
     return record
   }
 

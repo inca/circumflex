@@ -18,7 +18,9 @@ We use some terminology when speaking about associations:
 */
 class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C],
                                                            val parentRelation: Relation[K, P])
-    extends ValueHolder[P, C](field.name, field.record, field.sqlType) {
+    extends ValueHolder[P, C](field.name, field.record, field.sqlType) { assoc =>
+
+  protected var _initialized: Boolean = false
 
   /*! Column definition methods delegate to underlying field. */
   override def notNull_?(): Boolean = field.notNull_?
@@ -53,5 +55,29 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
     return this
   }
 
+  // State maintenance
 
+  def invalidate(): this.type = {
+    this._initialized = false
+    return this
+  }
+
+  override def value: Option[P] = if (_initialized) super.value else {
+    val value = field.value.flatMap(id => parentRelation.get(id))
+    super.set(value)
+    value
+  }
+
+  override def set(v: Option[P]): this.type = {
+    val value = v.flatMap(_.PRIMARY_KEY.value)
+    field.set(value)
+    _initialized = true
+    super.set(v)
+  }
+
+  field.addSetter { k =>
+    _initialized = false
+    assoc._value = None   // bypassing the `set` method is mandatory!
+    k
+  }
 }

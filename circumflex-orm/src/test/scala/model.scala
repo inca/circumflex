@@ -22,7 +22,7 @@ object Country extends Country with Table[String, Country] {
   val name_idx = "name_idx".INDEX("code")
 }
 
-class City extends Record[Long, City] {
+class City extends Record[Long, City] with IdentityGenerator[Long, City] {
   val id = "id".BIGINT.NOT_NULL.AUTO_INCREMENT
   val name = "name".TEXT.NOT_NULL
   val country = "country_code".VARCHAR(2).NOT_NULL.REFERENCES(Country).ON_DELETE(CASCADE)
@@ -33,4 +33,5 @@ class City extends Record[Long, City] {
 
 object City extends City with Table[Long, City] {
   val city_key = UNIQUE(id, country)
+  override def autorefresh_?(): Boolean = true
 }

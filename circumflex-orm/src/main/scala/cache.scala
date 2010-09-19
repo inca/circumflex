@@ -41,13 +41,14 @@ trait CacheService {
   def invalidateRecords[PK, R <: Record[PK, R]](
       relation: Relation[PK, R]): Unit
   def cacheRecord[PK, R <: Record[PK, R]](
-      id: PK, relation: Relation[PK, R], record: => R): R
+      id: PK, relation: Relation[PK, R], record: => Option[R]): Option[R]
   def evictRecord[PK, R <: Record[PK, R]](
       id: PK, relation: Relation[PK, R]): Unit
   def updateRecord[PK, R <: Record[PK, R]](
       id: PK, relation: Relation[PK, R], record: R): R = {
     evictRecord(id, relation)
-    cacheRecord(id, relation, record)
+    cacheRecord(id, relation, Some(record))
+    record
   }
 
   /*!## Inverse Cache
@@ -56,8 +57,8 @@ trait CacheService {
 
   * `invalidateInverse` clears all records from inverse cache or only those who
   correspond to specified `association`;
-  * `getInverse` retrieves children records from cache by specified `inverse` association
-  and their `parentId`;
+  * `cacheInverse` retrieves children records from cache by specified `association`
+  and their `parentId` or updates cache correspondingly;
   * `updateInverse` updates an inverse cache with specified `children`;
   * `evictRecord` removes children from inverse cache by specified `association` and `parentId`.
   */
@@ -104,10 +105,19 @@ class DefaultCacheService extends CacheService {
       case c: Cacheable[_, _] => c.evict(id)
       case _ => _recordsCache(relation).remove(id)
     }
-  def cacheRecord[PK, R <: Record[PK, R]](id: PK, relation: Relation[PK, R], record: => R): R =
+  def cacheRecord[PK, R <: Record[PK, R]](
+      id: PK, relation: Relation[PK, R], record: => Option[R]): Option[R] =
     relation match {
       case c: Cacheable[PK, R] => c.cache(id, record)
-      case _ => _recordsCache(relation).getOrElseUpdate(id, record).asInstanceOf[R]
+      case _ =>
+        val c = _recordsCache(relation)
+        c.get(id).map(_.asInstanceOf[R]) orElse {
+          val v = record
+          v.map { r =>
+            c.update(id, r)
+            r
+          }
+        }
     }
 
   // Inverse cache
@@ -146,19 +156,22 @@ of such records is subject for concurrency control.
 trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   protected val _cache = new ConcurrentHashMap[PK, R]
 
-  def cache(id: PK, record: => R): R = {
+  def cache(id: PK, record: => Option[R]): Option[R] =
     if (_cache.containsKey(id))
-      return _cache.get(id)
+      return Some(_cache.get(id))
     else {
       val v = record
-      _cache.put(id, v)
-      return v
+      v.map { r =>
+        _cache.put(id, r)
+        r
+      }
     }
-  }
   def evict(id: PK): Unit =
     _cache.remove(id)
   def invalidateCache(): Unit =
     _cache.clear()
+  def contains_?(id: PK): Boolean =
+    _cache.contains(id)
 
   afterInsert(r => cache(r.PRIMARY_KEY(), r))
   afterUpdate(r => cache(r.PRIMARY_KEY(), r))

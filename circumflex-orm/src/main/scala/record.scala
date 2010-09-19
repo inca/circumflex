@@ -64,7 +64,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   */
 
   def refresh(): this.type = if (transient_?)
-      throw new ORMException("Could not refresh transient record.")
+    throw new ORMException("Could not refresh transient record.")
   else {
     val root = relation.AS("root")
     val id = PRIMARY_KEY()
@@ -83,17 +83,19 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     // Execute events
     relation.beforeInsert.foreach(c => c(this))
     // Prepare and execute query
-    val result = persist(evalFields(fields))
+    val result = _persist(evalFields(fields))
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     return result
   }
 
-  protected def persist(fields: Seq[Field[_, R]]): Int = PRIMARY_KEY.value match {
+  protected def _persist(fields: Seq[Field[_, R]]): Int = PRIMARY_KEY.value match {
     case Some(id: PK) =>
-      val sql = dialect.insertRecord(this, fields)
+      // Only not-null fields participate in query
+      val f = fields.filter(!_.null_?)
+      val sql = dialect.insertRecord(this, f)
       val result = tx.execute(sql) { st =>
-        setParams(st, fields)
+        setParams(st, f)
         st.executeUpdate
       } { throw _ }
       if (relation.autorefresh_?) refresh()
@@ -146,7 +148,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   protected def evalFields(fields: Seq[Field[_, R]]): Seq[Field[_, R]] =
     (if (fields.size == 0) relation.fields else fields)
-        .map(f => relation.methodsMap(f).invoke(this).asInstanceOf[Field[_, R]])
+        .map(f => relation.getField(this, f))
 
   protected def setParams(st: PreparedStatement, fields: Seq[Field[_, R]]): Unit =
     (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).value, ix + 1))
@@ -183,4 +185,50 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   override def toString = getClass.getSimpleName + "@" +
       PRIMARY_KEY.map(_.toString).getOrElse("TRANSIENT")
 
+}
+
+/*!# Identity Generation Strategies
+
+Different identity generation strategies can be used by mixing in one of the `Generator`
+traits. Following identity generators are supported out-of-box:
+
+  * application-assigned identifiers (the default one, no need to mixin traits): application
+  is responsible for generating and assigning identifiers before attempting to persist a record;
+  * `IdentityGenerator` is a database-specific strategy: application should persist a record
+  with `NULL` primary key value, database is responsible for generating an identifier value and
+  for exposing last generated identifier;
+  * `SequenceGenerator` assumes that database supports sequences: the database is polled for
+  next sequence value which is then used as an identifier for persisting.
+*/
+trait Generator[PK, R <: Record[PK, R]] extends Record[PK, R] { this: R =>
+  override protected def _persist(fields: scala.Seq[Field[_, R]]): Int = persist(fields)
+  def persist(fields: Seq[Field[_, R]]): Int
+}
+
+trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this: R =>
+  def persist(fields: scala.Seq[Field[_, R]]): Int = {
+    // Make sure that PRIMARY_KEY contains `NULL`
+    this.PRIMARY_KEY.setNull
+    // Persist all not-null fields
+    val f = fields.filter(!_.null_?)
+    val sql = dialect.insertRecord(this, f)
+    val result = tx.execute(sql) { st =>
+      setParams(st, f)
+      st.executeUpdate
+    } { throw _ }
+    // Fetch either the whole record or just an identifier.
+    val root = relation.AS("root")
+    if (relation.autorefresh_?)
+      SELECT(root.*).FROM(root).WHERE(dialect.identityLastIdPredicate(root)).unique match {
+        case Some(r) => relation.copyFields(r, this)
+        case _ => throw new ORMException("Backend didn't return last inserted record. " +
+            "Try another identifier generation strategy.")
+      }
+    else dialect.identityLastIdQuery(root).unique match {
+      case Some(id: PK) => this.PRIMARY_KEY := id
+      case _ => throw new ORMException("Backend didn't return last generated identity. " +
+          "Try another identifier generation strategy.")
+    }
+    return result
+  }
 }

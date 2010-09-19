@@ -78,7 +78,9 @@ package object orm {
     node.relation.asInstanceOf[R]
   }
   implicit def field2str(field: Field[_, _]): String = ctx.get("orm.lastAlias") match {
-    case Some(alias: String) => alias + "." + field.name
+    case Some(alias: String) =>
+      ctx.remove("orm.lastAlias")
+      alias + "." + field.name
     case _ => field.name
   }
 

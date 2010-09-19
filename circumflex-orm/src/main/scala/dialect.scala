@@ -361,14 +361,14 @@ class Dialect {
    * Returns a predicate expression for querying the last inserted record
    * for `IdentityGenerator`.
    */
-  def identityLastIdPredicate[R <: Record[Long, R]](node: RelationNode[Long, R]): Predicate =
+  def identityLastIdPredicate[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Predicate =
     new SimpleExpression(node.alias + "." + node.relation.PRIMARY_KEY.name + " = LASTVAL()", Nil)
 
   /**
    * Returns a query to retrieve the last generated identity value for `IdentityGenerator`.
    */
-  def identityLastIdQuery[R <: Record[Long, R]](node: RelationNode[Long, R]): SQLQuery[Long] =
-    new Select(expr[Long]("LASTVAL()"))
+  def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+    new Select(expr[PK]("LASTVAL()"))
 
   /*!## Data Manipulation Language */
 
