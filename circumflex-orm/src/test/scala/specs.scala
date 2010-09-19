@@ -52,6 +52,17 @@ object GeneralSpec extends Specification {
         new DDLUnit(r).DROP
       }
     }
+    "handle validation" in {
+      new DDLUnit(Country).CREATE
+      val c = new Country
+      c.code := ""
+      c.validate.get.size must_== 2
+      c.code := "1"
+      c.validate.get.size must_== 1
+      c.validate_! must throwA[ValidationException]
+      
+      new DDLUnit(Country).DROP
+    }
   }
 
   "Fields" should {

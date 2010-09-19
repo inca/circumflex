@@ -1,11 +1,13 @@
 package ru.circumflex.orm
 
+import ru.circumflex.core._
+
 /*!# Association
 
 The `Association` class lets you create associations between relations which are
 typically represented by foreign key constraints in database. This kind of
 relationship is often refered to as *one-to-one* or *many-to-one* (the former
-is implemented by adding a `UNIQUE` constaint).
+is implemented by adding a `UNIQUE` constraint).
 
 We use some terminology when speaking about associations:
 
@@ -19,8 +21,6 @@ We use some terminology when speaking about associations:
 class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C],
                                                            val parentRelation: Relation[K, P])
     extends ValueHolder[P, C](field.name, field.record, field.sqlType) { assoc =>
-
-  protected var _initialized: Boolean = false
 
   /*! Column definition methods delegate to underlying field. */
   override def notNull_?(): Boolean = field.notNull_?
@@ -57,27 +57,52 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
 
   // State maintenance
 
-  def invalidate(): this.type = {
-    this._initialized = false
+  override def value: Option[P] =
+    field.value.flatMap(id => parentRelation.get(id))
+
+  override def set(v: Option[P]): this.type = {
+    field.set(v.flatMap(_.PRIMARY_KEY.value))
     return this
   }
 
-  override def value: Option[P] = if (_initialized) super.value else {
-    val value = field.value.flatMap(id => parentRelation.get(id))
-    super.set(value)
-    value
-  }
+}
 
-  override def set(v: Option[P]): this.type = {
-    val value = v.flatMap(_.PRIMARY_KEY.value)
-    field.set(value)
-    _initialized = true
-    super.set(v)
-  }
+/*!# Inverse Associations
 
-  field.addSetter { k =>
-    _initialized = false
-    assoc._value = None   // bypassing the `set` method is mandatory!
-    k
+Inverse assocations provide a way to access child records from parent relation.
+This type of relationship is often refered to as *one-to-one* or *one-to-many*
+(the former one is implemented by applying a `UNIQUE` constraint).
+They are essentially useful in a combination with `Criteria` for fetching
+whole hierarchy of associated records in a single SQL `SELECT`.
+*/
+trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T] {
+  def association: Association[K, C, P]
+  def record: P
+  def fetch(): Seq[C] = if (record.transient_?) Nil
+  else cacheService.cacheInverse(record.PRIMARY_KEY(), association, {
+    val root = association.field.record.relation AS "root"
+    ctx("orm.lastAlias") = root.alias
+    SELECT(root.*).FROM(root).WHERE(association.field EQ record.PRIMARY_KEY()).list
+  })
+  def get(): T
+  def apply(): T = get()
+}
+
+class InverseMany[K, C <: Record[_, C], P <: Record[K, P]](
+    val record: P, val association: Association[K, C, P])
+    extends InverseAssociation[K, C, P, Seq[C]] {
+  def get(): Seq[C] = fetch()
+}
+
+class InverseOne[K, C <: Record[_, C], P <: Record[K, P]](
+    val record: P, val association: Association[K, C, P])
+    extends InverseAssociation[K, C, P, Option[C]] {
+  def get(): Option[C] = {
+    val children = fetch()
+    if (children.size <= 0) return None
+    if (children.size > 1)
+      throw new ORMException("One-to-one relationship expected, by multiple records found. " +
+          "Add a UNIQUE constraint or stick with InverseMany.")
+    return Some(children(0))
   }
 }

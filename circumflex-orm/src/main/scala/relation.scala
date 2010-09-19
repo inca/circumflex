@@ -81,6 +81,8 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     associations.find(_.parentRelation == relation)
         .asInstanceOf[Option[Association[T, R, F]]]
 
+  protected val validation = new RecordValidator[PK, R]()
+
   /*!## Simple queries
 
   Following methods will help you perform common querying tasks:
@@ -160,7 +162,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   }
 
   private def associationFK(a: Association[_, R, _]) =
-    CONSTAINT(relationName + "_" + a.name + "_fkey")
+    CONSTRAINT(relationName + "_" + a.name + "_fkey")
         .FOREIGN_KEY(a.field)
         .REFERENCES(a.parentRelation, a.parentRelation.PRIMARY_KEY)
         .ON_DELETE(a.onDelete)
@@ -196,15 +198,15 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
       case _ => throw new ORMException("Could not retrieve a field.")
     }
 
-  /*!## Constaints & Indexes Definition
+  /*!## Constraints & Indexes Definition
 
   Circumflex ORM allows you to define constraints and indexes inside the
   relation body using DSL style.
   */
 
-  protected def CONSTAINT(name: String) = new ConstraintHelper(name, this)
+  protected def CONSTRAINT(name: String) = new ConstraintHelper(name, this)
   protected def UNIQUE(fields: Field[_, R]*) =
-    CONSTAINT(relationName + "_" + fields.map(_.name).mkString("_") + "_key")
+    CONSTRAINT(relationName + "_" + fields.map(_.name).mkString("_") + "_key")
         .UNIQUE(fields: _*)
 
   /*!## Auxiliary Objects
@@ -325,7 +327,9 @@ trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
 
 The `View` class represents a database view, whose definition is designated by
 the `query` method. By default we assume that views are not updateable, so
-DML operations are not allowed on view records.
+DML operations are not allowed on view records. If you implement updateable
+views on backend somehow (with triggers in Oracle or rules in PostgreSQL),
+override the `readOnly_?` method accordingly.
 */
 trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   def readOnly_?(): Boolean = true

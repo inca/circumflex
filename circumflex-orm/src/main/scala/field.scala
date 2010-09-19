@@ -14,6 +14,8 @@ associations.
 class Field[T, R <: Record[_, R]](name: String, record: R , sqlType: String)
     extends ValueHolder[T, R](name, record, sqlType) with SQLable {
 
+  def uuid = record.getClass.getName + "." + name
+
   def read(rs: ResultSet, alias: String): Option[T] =
     typeConverter.read(rs, alias).asInstanceOf[Option[T]]
 

@@ -166,7 +166,7 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
   the field will be persisted:
 
     * `NOT_NULL` will render `NOT NULL` constraint in column's definition;
-    note that starting from 2.0, by default the `NOT NULL` constaint is
+    note that starting from 2.0, by default the `NOT NULL` constraint is
     omitted and `NULLABLE` construct is no longer supported;
     * `DEFAULT` will render the `DEFAULT` expression in column's definition
     (if not overriden by dialect);
@@ -209,17 +209,16 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
 
   /*!## Equality & Others
 
-  Two fields are considered equal if they belong to the same
-  type of records and share the same name.
+  Two fields are considered equal if they belong to the same type of records
+  and share the same name.
 
   The `hashCode` calculation is delegated to underlying `value`.
 
-  The `canEqual` method indicates whether the two fields belong
-  to the same type of records.
+  The `canEqual` method indicates whether the two fields belong to the same
+  type of records.
 
-  Finally, `toString` is delegated to underlying `value`'s
-  `toString` method or shows `<undefined>` if the field's value
-  is `null`.
+  Finally, `toString` returns the qualified name of relation which it
+  belongs to followed by a dot and the field name.
   */
   override def equals(that: Any): Boolean = that match {
     case that: ValueHolder[_, _] => this.canEqual(that) &&
@@ -231,5 +230,5 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
     case that: ValueHolder[_, _] => this.record.canEqual(that.record)
     case _ => false
   }
-  override def toString: String = value.map(_.toString).getOrElse("<undefined>")
+  override def toString: String = record.relation.qualifiedName + "." + name
 }

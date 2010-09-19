@@ -1,6 +1,7 @@
 package ru.circumflex.orm
 
 import java.sql.PreparedStatement
+import ru.circumflex.core._
 
 /*!# Record
 
@@ -45,8 +46,9 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   def PRIMARY_KEY: Field[PK, R]
   def transient_?(): Boolean = PRIMARY_KEY.null_?
   def relation: Relation[PK, R]
+  def uuid = getClass.getName
 
-  /*!## Persistence
+  /*!## Persistence & Validation
 
   The `refresh` method is used to synchronize an already persisted record with its state in backend.
   It evicts the record from cache and performs SQL `SELECT` using primary key-based predicate.
@@ -89,6 +91,11 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     return result
   }
 
+  def INSERT(fields: Field[_, R]*): Int = {
+    validate_!
+    INSERT_!(fields: _*)
+  }
+
   protected def _persist(fields: Seq[Field[_, R]]): Int = PRIMARY_KEY.value match {
     case Some(id: PK) =>
       // Only not-null fields participate in query
@@ -126,6 +133,11 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     return result
   }
 
+  def UPDATE(fields: Field[_, R]*): Int = {
+    validate_!
+    UPDATE_!(fields: _*)
+  }
+
   def DELETE_!(): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else {
@@ -144,6 +156,21 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     return result
   }
 
+  def validate(): Option[MsgGroup] = {
+    val errors = relation.validation.validate(this)
+    if (errors.size <= 0) None
+    else Some(new MsgGroup(errors: _*))
+  }
+
+  def validate_!(): Unit = validate.map(errors => throw new ValidationException(errors))
+
+  def save_!(): Int = if (transient_?) INSERT_!() else UPDATE_!()
+
+  def save(): Int = {
+    validate_!()
+    save_!()
+  }
+
   // Internal helpers
 
   protected def evalFields(fields: Seq[Field[_, R]]): Seq[Field[_, R]] =
@@ -152,6 +179,18 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   protected def setParams(st: PreparedStatement, fields: Seq[Field[_, R]]): Unit =
     (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).value, ix + 1))
+
+  /*!## Inverse Associations
+
+  One-to-one and one-to-many relationships can be implemented using `inverseOne`
+  or `inverseMany` methods.
+  */
+  protected def inverseOne[C <: Record[_, C]](association: Association[PK, C, R]) =
+    new InverseOne[PK, C, R](this, association)
+
+  protected def inverseMany[C <: Record[_, C]](association: Association[PK, C, R]) =
+    new InverseMany[PK, C, R](this, association)
+
 
   /*!## Equality & Others
   
