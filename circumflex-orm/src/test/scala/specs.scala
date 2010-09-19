@@ -43,6 +43,15 @@ object GeneralSpec extends Specification {
       c1.canEqual(c2) must beTrue
       c1.canEqual(new Country) must beFalse
     }
+    "handle different identifier generation strategies" in {
+      List(IdGen1, IdGen2, IdGen3, IdGen4).foreach { r =>
+        new DDLUnit(r).CREATE
+        val record = r.recordClass.newInstance
+        record.INSERT_!()
+        record.transient_? must beFalse
+        new DDLUnit(r).DROP
+      }
+    }
   }
 
   "Fields" should {
@@ -86,4 +95,43 @@ object GeneralSpec extends Specification {
     }
   }
 
+}
+
+
+// Service classes
+
+class IdGen1 extends Record[Long, IdGen1] with IdentityGenerator[Long, IdGen1] {
+  val id = "id".BIGINT.AUTO_INCREMENT
+  def relation = IdGen1
+  def PRIMARY_KEY = id
+}
+
+object IdGen1 extends IdGen1 with Table[Long, IdGen1]
+
+class IdGen2 extends Record[Long, IdGen2] with IdentityGenerator[Long, IdGen2] {
+  val id = "id".BIGINT.AUTO_INCREMENT
+  def relation = IdGen2
+  def PRIMARY_KEY = id
+}
+
+object IdGen2 extends IdGen2 with Table[Long, IdGen2] {
+  override def autorefresh_?(): Boolean = true
+}
+
+class IdGen3 extends Record[Long, IdGen3] with SequenceGenerator[Long, IdGen3] {
+  val id = "id".BIGINT.AUTO_INCREMENT
+  def relation = IdGen3
+  def PRIMARY_KEY = id
+}
+
+object IdGen3 extends IdGen3 with Table[Long, IdGen3]
+
+class IdGen4 extends Record[Long, IdGen4] with SequenceGenerator[Long, IdGen4] {
+  val id = "id".BIGINT.AUTO_INCREMENT
+  def relation = IdGen4
+  def PRIMARY_KEY = id
+}
+
+object IdGen4 extends IdGen4 with Table[Long, IdGen4] {
+  override def autorefresh_?(): Boolean = true
 }

@@ -276,7 +276,10 @@ class Dialect {
         field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
     }
 
-  protected def sequenceName[R <: Record[_, R]](f: Field[_, R]) =
+  /**
+   * Produces a name for database sequence.
+   */
+  def sequenceName[R <: Record[_, R]](f: Field[_, R]) =
     quoteIdentifer(f.record.relation.schema.name) + "." +
         quoteIdentifer(f.record.relation.relationName + "_" + f.name + "_seq")
 
@@ -365,10 +368,16 @@ class Dialect {
     new SimpleExpression(node.alias + "." + node.relation.PRIMARY_KEY.name + " = LASTVAL()", Nil)
 
   /**
-   * Returns a query to retrieve the last generated identity value for `IdentityGenerator`.
+   * Returns a query which retrieves the last generated identity value for `IdentityGenerator`.
    */
   def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
     new Select(expr[PK]("LASTVAL()"))
+
+  /**
+   * Returns a query which retrieves the next sequence value for the primary key of specified `node`. 
+   */
+  def sequenceNextValQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+    new Select(expr[PK]("NEXTVAL('" + sequenceName(node.relation.PRIMARY_KEY) + "')"))
 
   /*!## Data Manipulation Language */
 

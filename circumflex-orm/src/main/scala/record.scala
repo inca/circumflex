@@ -232,3 +232,30 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     return result
   }
 }
+
+trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this: R =>
+  def persist(fields: scala.Seq[Field[_, R]]): Int = {
+    // Poll database for next sequence value
+    val root = relation.AS("root")
+    dialect.sequenceNextValQuery(root).unique match {
+      case Some(id: PK) =>
+        // Assign retrieved id and persist all not-null fields
+        val f = fields.map { f =>
+          if (f == this.PRIMARY_KEY)
+            f.asInstanceOf[Field[PK, R]].set(Some(id))
+          f
+        }.filter(!_.null_?)
+        val sql = dialect.insertRecord(this, f)
+        val result = tx.execute(sql) { st =>
+          setParams(st, f)
+          st.executeUpdate
+        } { throw _ }
+        // Perform additional select if required
+        if (relation.autorefresh_?)
+          refresh()
+        return result
+      case _ => throw new ORMException("Backend didn't return next sequence value. " +
+          "Try another identifier generation strategy.")
+    }
+  }
+}
