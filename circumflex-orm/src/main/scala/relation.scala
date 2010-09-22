@@ -300,6 +300,8 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   override def canEqual(that: Any): Boolean = that match {
     case that: Relation[_, _] =>
       this.recordClass == that.recordClass
+    case that: Record[_, _] =>
+      this.recordClass == that.getClass
     case _ => false
   }
 

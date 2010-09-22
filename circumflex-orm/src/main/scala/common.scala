@@ -225,7 +225,7 @@ abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
       this.name == that.name
     case _ => false
   }
-  override def hashCode: Int = value.hashCode
+  override def hashCode: Int = record.hashCode * 31 + name.hashCode
   def canEqual(that: Any): Boolean = that match {
     case that: ValueHolder[_, _] => this.record.canEqual(that.record)
     case _ => false

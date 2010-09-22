@@ -2,13 +2,30 @@ package ru.circumflex.orm
 
 import org.specs.runner.JUnit4
 import org.specs.Specification
+import xml._
 
-class SpecsTest extends JUnit4(GeneralSpec)
+class SpecsTest extends JUnit4(CircumflexORMSpec)
 
-object GeneralSpec extends Specification {
+object CircumflexORMSpec extends Specification {
+
+  val ci = City AS "ci"
+  val co = Country AS "co"
+
+  doBeforeSpec {
+    // create schema
+    new DDLUnit(City, Capital, Country).CREATE
+    // import test data
+    Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
+        .foreach(_.process)
+  }
+
+  doAfterSpec {
+    // drop schema
+    new DDLUnit(City, Capital, Country).DROP
+  }
 
   "Relations" should {
-    "handle equality and canEqual" in {
+    "handle equality" in {
       Country must_== new Country().relation
       City must_!= new Country().relation
       City.canEqual(new City().relation) must beTrue
@@ -44,7 +61,7 @@ object GeneralSpec extends Specification {
       c1.canEqual(new Country) must beFalse
     }
     "handle different identifier generation strategies" in {
-      List(IdGen1, IdGen2, IdGen3, IdGen4).foreach { r =>
+      List(IdentNoAuto, IdentAuto, SeqNoAuto, SeqAuto).foreach { r =>
         new DDLUnit(r).CREATE
         val record = r.recordClass.newInstance
         record.INSERT_!()
@@ -53,15 +70,12 @@ object GeneralSpec extends Specification {
       }
     }
     "handle validation" in {
-      new DDLUnit(Country).CREATE
       val c = new Country
       c.code := ""
       c.validate.get.size must_== 2
       c.code := "1"
       c.validate.get.size must_== 1
       c.validate_! must throwA[ValidationException]
-      
-      new DDLUnit(Country).DROP
     }
   }
 
@@ -96,53 +110,103 @@ object GeneralSpec extends Specification {
     }
   }
 
-  "DDL unit" should {
-    "be able to create and drop schema" in {
-      new DDLUnit(Country).CREATE()
-      val ch = new Country("ch", "switzerland")
-      ch.INSERT_!() must_== 1
-      new DDLUnit(Country).DROP()
-      ch.INSERT_!() must throwA[Throwable]
+  "Querying API" should {
+    "handle simple selects" in {
+      SELECT(co.*).FROM(co).list.size must_== 3
+    }
+    "handle distincts, joins and predicates" in {
+      SELECT(co.*)
+        .DISTINCT
+        .FROM(co JOIN ci)
+        .WHERE(ci.name LIKE "Lausanne")
+        .unique.get.code() must_== "ch"
+    }
+    "handle projections" in {
+      SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ch").unique.get must_== 3l
+    }
+    "handle unions" in {
+      SELECT(ci.name).FROM(ci).UNION(SELECT(co.name).FROM(co)).list.size must_== 10
+    }
+    "handle subqueries" in {
+      val q = SELECT(ci.country.field).FROM(ci).WHERE(ci.name LIKE "Lausanne")
+      SELECT(co.*).FROM(co).WHERE(co.code IN q).unique.get.code() must_== "ch"
+    }
+    "handle limits, offsets and order-by's" in {
+      SELECT(co.*).FROM(co).LIMIT(1).OFFSET(1).ORDER_BY(co.name ASC).unique.get.code() must_== "ch"
+    }
+  }
+
+  "Transaction API" should {
+    "handle rollbacks" in {
+      val pt = new Country("pt", "Portugal")
+      pt.INSERT()
+      SELECT(co.*).FROM(co).WHERE(co.code LIKE "pt").unique must_== Some(pt)
+      ROLLBACK
+      SELECT(co.*).FROM(co).WHERE(co.code LIKE "pt").unique must_== None
+    }
+    "handle nested transactions" in {
+      // we emulate the conditions where only 3 of 10 insert operations are successful.
+      for (i <- 0 until 10) try tx {
+        val code = i match {
+          case 0 => "xx"
+          case 1 => "yy"
+          case 6 => "zz"
+          case 2 => ""    // won't pass validation => fail
+          case _ => "xx"  // already exist => fail
+        }
+        new Country(code, "Test").INSERT()
+      } catch { case _ => }
+      SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list.size must_== 3
+      ROLLBACK
+      SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list.size must_== 0
     }
   }
 
 }
 
 
-// Service classes
+// Classes for testing Identifier Generation Strategies
 
-class IdGen1 extends Record[Long, IdGen1] with IdentityGenerator[Long, IdGen1] {
+object IdGen extends Schema("idgen")
+
+class IdentNoAuto extends Record[Long, IdentNoAuto] with IdentityGenerator[Long, IdentNoAuto] {
   val id = "id".BIGINT.AUTO_INCREMENT
-  def relation = IdGen1
+  def relation = IdentNoAuto
   def PRIMARY_KEY = id
 }
 
-object IdGen1 extends IdGen1 with Table[Long, IdGen1]
+object IdentNoAuto extends IdentNoAuto with Table[Long, IdentNoAuto] {
+  override def schema: Schema = IdGen
+}
 
-class IdGen2 extends Record[Long, IdGen2] with IdentityGenerator[Long, IdGen2] {
+class IdentAuto extends Record[Long, IdentAuto] with IdentityGenerator[Long, IdentAuto] {
   val id = "id".BIGINT.AUTO_INCREMENT
-  def relation = IdGen2
+  def relation = IdentAuto
   def PRIMARY_KEY = id
 }
 
-object IdGen2 extends IdGen2 with Table[Long, IdGen2] {
+object IdentAuto extends IdentAuto with Table[Long, IdentAuto] {
+  override def schema: Schema = IdGen
   override def autorefresh_?(): Boolean = true
 }
 
-class IdGen3 extends Record[Long, IdGen3] with SequenceGenerator[Long, IdGen3] {
+class SeqNoAuto extends Record[Long, SeqNoAuto] with SequenceGenerator[Long, SeqNoAuto] {
   val id = "id".BIGINT.AUTO_INCREMENT
-  def relation = IdGen3
+  def relation = SeqNoAuto
   def PRIMARY_KEY = id
 }
 
-object IdGen3 extends IdGen3 with Table[Long, IdGen3]
+object SeqNoAuto extends SeqNoAuto with Table[Long, SeqNoAuto] {
+  override def schema: Schema = IdGen
+}
 
-class IdGen4 extends Record[Long, IdGen4] with SequenceGenerator[Long, IdGen4] {
+class SeqAuto extends Record[Long, SeqAuto] with SequenceGenerator[Long, SeqAuto] {
   val id = "id".BIGINT.AUTO_INCREMENT
-  def relation = IdGen4
+  def relation = SeqAuto
   def PRIMARY_KEY = id
 }
 
-object IdGen4 extends IdGen4 with Table[Long, IdGen4] {
+object SeqAuto extends SeqAuto with Table[Long, SeqAuto] {
+  override def schema: Schema = IdGen
   override def autorefresh_?(): Boolean = true
 }

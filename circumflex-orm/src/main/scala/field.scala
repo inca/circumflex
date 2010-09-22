@@ -34,22 +34,15 @@ trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
   }
 }
 
-abstract class XmlSerializableField[T, R <: Record[_, R]](
-    name: String, record: R, sqlType: String)
-    extends Field[T, R](name, record, sqlType) with XmlSerializable[T] {
-  def to(value: Option[T]): String =
-    value.map(_.toString).getOrElse("")
-}
-
 class IntField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[Int, R](name, record, dialect.integerType)
+    extends XmlSerializable[Int, R](name, record, dialect.integerType)
         with AutoIncrementable[Int, R] {
   def from(str: String): Option[Int] =
     try Some(str.toInt) catch { case _ => None }
 }
 
 class LongField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[Long, R](name, record, dialect.longType)
+    extends XmlSerializable[Long, R](name, record, dialect.longType)
         with AutoIncrementable[Long, R]{
   def from(str: String): Option[Long] =
     try Some(str.toLong) catch { case _ => None }
@@ -57,7 +50,7 @@ class LongField[R <: Record[_, R]](name: String, record: R)
 
 class NumericField[R <: Record[_, R]](
     name: String, record: R, val precision: Int = -1, val scale: Int = 0)
-    extends XmlSerializableField[Double, R](
+    extends XmlSerializable[Double, R](
       name,
       record,
       dialect.numericType + (if (precision == -1) "" else "(" + precision + "," + scale + ")")) {
@@ -66,7 +59,7 @@ class NumericField[R <: Record[_, R]](
 }
 
 class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
-    extends XmlSerializableField[String, R](name, record, sqlType) {
+    extends XmlSerializable[String, R](name, record, sqlType) {
   def this(name: String, record: R, length: Int = -1) =
     this(name, record, dialect.varcharType + (if (length == -1) "" else "(" + length + ")"))
   def from(str: String): Option[String] =
@@ -74,13 +67,13 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
 }
 
 class BooleanField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[Boolean, R](name, record, dialect.booleanType) {
+    extends XmlSerializable[Boolean, R](name, record, dialect.booleanType) {
   def from(str: String): Option[Boolean] =
     try Some(str.toBoolean) catch { case _ => None }
 }
 
 class TimestampField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[Date, R](name, record, dialect.timestampType) {
+    extends XmlSerializable[Date, R](name, record, dialect.timestampType) {
   def from(str: String): Option[Date] =
     try Some(new Date(java.sql.Timestamp.valueOf(str).getTime)) catch { case _ => None }
   override def to(value: Option[Date]): String =
@@ -88,7 +81,7 @@ class TimestampField[R <: Record[_, R]](name: String, record: R)
 }
 
 class DateField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[Date, R](name, record, dialect.dateType) {
+    extends XmlSerializable[Date, R](name, record, dialect.dateType) {
   def from(str: String): Option[Date] =
     try Some(new Date(java.sql.Date.valueOf(str).getTime)) catch { case _ => None }
   override def to(value: Option[Date]): String =
@@ -96,7 +89,7 @@ class DateField[R <: Record[_, R]](name: String, record: R)
 }
 
 class TimeField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[Date, R](name, record, dialect.timeType) {
+    extends XmlSerializable[Date, R](name, record, dialect.timeType) {
   def from(str: String): Option[Date] =
     try Some(new Date(java.sql.Time.valueOf(str).getTime)) catch { case _ => None }
   override def to(value: Option[Date]): String =
@@ -104,7 +97,7 @@ class TimeField[R <: Record[_, R]](name: String, record: R)
 }
 
 class XmlField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializableField[NodeSeq, R](name, record, dialect.xmlType) {
+    extends XmlSerializable[NodeSeq, R](name, record, dialect.xmlType) {
   def from(str: String): Option[NodeSeq] =
     try Some(XML.loadString(str)) catch { case _ => None }
   override def read(rs: ResultSet, alias: String) =

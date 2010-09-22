@@ -118,7 +118,8 @@ trait UntypedContainer extends Map[String, Any] {
 
   def instantiate[C](name: String, default: =>C): C = this.get(name) match {
     case Some(c: Class[_]) => instantiateObject(name, c)
-    case Some(s: String) => instantiateObject(name, Class.forName(s))
+    case Some(s: String) => instantiateObject(name, Class.forName(
+      s, true, Thread.currentThread.getContextClassLoader))
     case v => default
   }
 

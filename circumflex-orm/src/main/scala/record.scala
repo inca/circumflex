@@ -215,7 +215,9 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   override def hashCode = PRIMARY_KEY.hashCode
 
-  def canEqual(that: Any): Boolean = that match {
+  override def canEqual(that: Any): Boolean = that match {
+    case that: Relation[_, _] =>
+      this.getClass == that.recordClass
     case that: Record[_, _] =>
       this.getClass == that.getClass
     case _ => false

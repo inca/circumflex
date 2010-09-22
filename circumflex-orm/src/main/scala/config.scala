@@ -220,8 +220,7 @@ class Transaction {
 
   def rollback(): Unit = {
     if (live_? && !_connection.getAutoCommit) _connection.rollback
-    // TODO
-    //    cacheService.invalidate
+    cacheService.invalidate
   }
 
   def close(): Unit =
