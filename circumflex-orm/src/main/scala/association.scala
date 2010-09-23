@@ -86,6 +86,13 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T] {
   })
   def get(): T
   def apply(): T = get()
+
+  override def equals(that: Any): Boolean = that match {
+    case that: InverseAssociation[_, _, _, _] =>
+      that.association == this.association
+    case _ => false
+  }
+  override def hashCode: Int = association.hashCode
 }
 
 class InverseMany[K, C <: Record[_, C], P <: Record[K, P]](

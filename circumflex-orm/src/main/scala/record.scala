@@ -53,7 +53,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   The `refresh` method is used to synchronize an already persisted record with its state in backend.
   It evicts the record from cache and performs SQL `SELECT` using primary key-based predicate.
 
-  The `insert_!`, `update_!` and `delete_!` methods are used to insert, update or delete a single
+  The `INSERT_!`, `UPDATE_!` and `DELETE_!` methods are used to insert, update or delete a single
   record. The `insert` and `update` do the same as their equivalents except that validation
   is performed before actual execution. The `refresh` method performs select with primary key
   criteria and updates the fields with retrieved values.
@@ -128,6 +128,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
       st.executeUpdate
     } { throw _ }
     if (relation.autorefresh_?) refresh()
+    // Invalidate inverse caches
+    cacheService.evictInverse[PK, R](this)
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     return result
@@ -151,6 +153,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
       typeConverter.write(st, PRIMARY_KEY.value, 1)
       st.executeUpdate
     } { throw _ }
+    // Invalidate inverse caches
+    cacheService.evictInverse[PK, R](this)
     // Execute events
     relation.afterDelete.foreach(c => c(this))
     return result
@@ -190,7 +194,6 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   protected def inverseMany[C <: Record[_, C]](association: Association[PK, C, R]) =
     new InverseMany[PK, C, R](this, association)
-
 
   /*!## Equality & Others
   

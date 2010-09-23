@@ -60,7 +60,7 @@ trait CacheService {
   * `cacheInverse` retrieves children records from cache by specified `association`
   and their `parentId` or updates cache correspondingly;
   * `updateInverse` updates an inverse cache with specified `children`;
-  * `evictRecord` removes children from inverse cache by specified `association` and `parentId`.
+  * `evictInverse` removes children from inverse cache by specified `association` and `parentId`;
   */
   def invalidateInverse: Unit
   def invalidateInverse[K, C <: Record[_, C], P <: Record[K, P]](
@@ -74,6 +74,8 @@ trait CacheService {
     evictInverse(parentId, association)
     cacheInverse(parentId, association, children)
   }
+  def evictInverse[K, P <: Record[K, P]](
+      parent: P): Unit
 
 }
 
@@ -86,8 +88,8 @@ class DefaultCacheService extends CacheService {
       super.getOrElseUpdate(key, new HashMap[Any, Any])
   }
 
-  protected val _recordsCache = new CacheMap
-  protected val _inverseCache = new CacheMap
+  val _recordsCache = new CacheMap
+  val _inverseCache = new CacheMap
 
   // Records cache
 
@@ -126,12 +128,21 @@ class DefaultCacheService extends CacheService {
     _inverseCache.clear()
   def invalidateInverse[K, C <: Record[_, C], P <: Record[K, P]](association: Association[K, C, P]): Unit =
     _inverseCache(association).clear()
-  def evictInverse[K, C <: Record[_, C], P <: Record[K, P]](
-      parentId: K, association: Association[K, C, P]): Unit =
-    _inverseCache(association).remove(parentId)
   def cacheInverse[K, C <: Record[_, C], P <: Record[K, P]](
       parentId: K, association: Association[K, C, P], children: => Seq[C]): Seq[C] =
     _inverseCache(association).getOrElseUpdate(parentId, children).asInstanceOf[Seq[C]]
+  def evictInverse[K, C <: Record[_, C], P <: Record[K, P]](
+      parentId: K, association: Association[K, C, P]): Unit =
+    _inverseCache(association).remove(parentId)
+  def evictInverse[K, P <: Record[K, P]](
+      parent: P): Unit = {
+    _inverseCache.keys.foreach {
+      case a: Association[K, _, P] =>
+        if (a.parentRelation == parent.relation)
+          _inverseCache(a).remove(parent.PRIMARY_KEY())
+      case _ =>
+    }
+  }
 
 }
 

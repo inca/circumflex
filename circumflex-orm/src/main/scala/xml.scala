@@ -23,7 +23,8 @@ abstract class XmlSerializable[T, R <: Record[_, R]](
 
 /*! Deployment is a unit of work of XML import tool. It specifies the `prefix` for record
 classes resolution, the `onExist` behavior (`keep`, `update` or `recreate`) and whether
-record validation is needed before persisting.
+record validation is needed before persisting. One deployment corresponds to one transaction,
+so each deployment is executed atomically.
 */
 class Deployment(val id: String,
                  val prefix: String,
@@ -173,6 +174,6 @@ object Deployment {
 
 }
 
-class FileDeploymentHelper(f: File) {
-  def process(): Unit = Deployment.readAll(XML.loadFile(f)).foreach(_.process)
+class DeploymentHelper(f: File) {
+  def loadData(): Unit = Deployment.readAll(XML.loadFile(f)).foreach(_.process)
 }

@@ -287,6 +287,8 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   The `hashCode` method delegates to record class.
 
   The `canEqual` method indicates that two relations share the same record class.
+
+  Record-specific methods derived from `Record` throw an exception when invoked against relation.
   */
   override def equals(that: Any) = that match {
     case that: Relation[_, _] =>
@@ -305,6 +307,17 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     case _ => false
   }
 
+
+  override def refresh(): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
+  override def validate(): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
+  override def INSERT_!(fields: Field[_, R]*): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
+  override def UPDATE_!(fields: Field[_, R]*): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
+  override def DELETE_!(): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
 }
 
 /*!# Table {#table}

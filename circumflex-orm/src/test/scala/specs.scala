@@ -4,6 +4,13 @@ import org.specs.runner.JUnit4
 import org.specs.Specification
 import xml._
 
+object Sample {
+  def createSchema = new DDLUnit(Country, City, Capital).CREATE
+  def loadData = Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
+        .foreach(_.process)
+  def dropSchema = new DDLUnit(Country, City, Capital).DROP
+}
+
 class SpecsTest extends JUnit4(CircumflexORMSpec)
 
 object CircumflexORMSpec extends Specification {
@@ -12,16 +19,12 @@ object CircumflexORMSpec extends Specification {
   val co = Country AS "co"
 
   doBeforeSpec {
-    // create schema
-    new DDLUnit(City, Capital, Country).CREATE
-    // import test data
-    Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
-        .foreach(_.process)
+    Sample.createSchema
+    Sample.loadData
   }
 
   doAfterSpec {
-    // drop schema
-    new DDLUnit(City, Capital, Country).DROP
+    Sample.dropSchema
   }
 
   "Relations" should {
@@ -116,10 +119,10 @@ object CircumflexORMSpec extends Specification {
     }
     "handle distincts, joins and predicates" in {
       SELECT(co.*)
-        .DISTINCT
-        .FROM(co JOIN ci)
-        .WHERE(ci.name LIKE "Lausanne")
-        .unique.get.code() must_== "ch"
+          .DISTINCT
+          .FROM(co JOIN ci)
+          .WHERE(ci.name LIKE "Lausanne")
+          .unique.get.code() must_== "ch"
     }
     "handle projections" in {
       SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ch").unique.get must_== 3l
@@ -145,7 +148,7 @@ object CircumflexORMSpec extends Specification {
       SELECT(co.*).FROM(co).WHERE(co.code LIKE "pt").unique must_== None
     }
     "handle nested transactions" in {
-      // we emulate the conditions where only 3 of 10 insert operations are successful.
+      // we emulate the conditions where only 3 of 10 insert operations are successful
       for (i <- 0 until 10) try tx {
         val code = i match {
           case 0 => "xx"

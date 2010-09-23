@@ -18,6 +18,7 @@ class Country extends Record[String, Country] {
 
   def PRIMARY_KEY = code
   def relation = Country
+  override def toString = name.getOrElse("<unknown>")
 }
 
 object Country extends Country with Table[String, Country] {
@@ -40,6 +41,7 @@ class City extends Record[Long, City] with IdentityGenerator[Long, City] {
 
   def PRIMARY_KEY = id
   def relation = City
+  override def toString = name.getOrElse("<unknown>")
 }
 
 object City extends City with Table[Long, City] {
@@ -57,6 +59,7 @@ class Capital extends Record[String, Capital] {
 
   def relation = Capital
   def PRIMARY_KEY = country.field
+  override def toString = city().name.getOrElse("<unknown>")
 }
 
 object Capital extends Capital with Table[String, Capital] {
