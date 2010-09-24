@@ -70,7 +70,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   else {
     val root = relation.AS("root")
     val id = PRIMARY_KEY()
-    cacheService.evictRecord(id, relation)
+    contextCache.evictRecord(id, relation)
     SELECT(root.*).FROM(root).WHERE(root.PRIMARY_KEY EQ id).unique match {
       case Some(r: R) =>
         relation.copyFields(r, this)
@@ -129,7 +129,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     } { throw _ }
     if (relation.autorefresh_?) refresh()
     // Invalidate inverse caches
-    cacheService.evictInverse[PK, R](this)
+    contextCache.evictInverse[PK, R](this)
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     return result
@@ -154,7 +154,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
       st.executeUpdate
     } { throw _ }
     // Invalidate inverse caches
-    cacheService.evictInverse[PK, R](this)
+    contextCache.evictInverse[PK, R](this)
     // Execute events
     relation.afterDelete.foreach(c => c(this))
     return result

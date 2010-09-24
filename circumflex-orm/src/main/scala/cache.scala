@@ -2,7 +2,8 @@ package ru.circumflex.orm
 
 import ru.circumflex.core._
 import collection.mutable.HashMap
-import java.util.concurrent.ConcurrentHashMap
+import net.sf.ehcache._
+import java.io.Serializable
 
 /*!# Context-Level Cache
 
@@ -80,7 +81,7 @@ trait CacheService {
 }
 
 /*! The default cache service implementation relies on Scala mutable `HashMap`s.
-It can be overriden by setting the `orm.cacheService` parameter. */
+It can be overriden by setting the `orm.contextCache` parameter. */
 class DefaultCacheService extends CacheService {
 
   class CacheMap extends HashMap[Any, HashMap[Any, Any]] {
@@ -148,41 +149,37 @@ class DefaultCacheService extends CacheService {
 
 /*! The `CacheService` object is used to retrieve context-bound cache service. */
 object CacheService {
-  def get: CacheService = ctx.get("orm.cacheService") match {
+  def get: CacheService = ctx.get("orm.contextCache") match {
     case Some(cs: CacheService) => cs
     case _ =>
-      val cs = cx.instantiate[CacheService]("orm.cacheService", new DefaultCacheService)
-      ctx.update("orm.cacheService", cs)
+      val cs = cx.instantiate[CacheService]("orm.contextCache", new DefaultCacheService)
+      ctx.update("orm.contextCache", cs)
       return cs
   }
 }
 
 /*!# Application-Level Cache
 
-Circumflex ORM lets you organize application-scope cache for any relation of your
-application: just mix in the `Cacheable` trait into your relation. Note that since
-one record instance may become accessible to several threads, the modification
-of such records is subject for concurrency control.
+Circumflex ORM lets you organize application-scope cache (backed by Terracotta Ehcache)
+for any relation of your application: just mix in the `Cacheable` trait into your relation.
+Note that since one record instance may become accessible to several threads, the
+modification of such records is a subject for concurrency control.
 */
 trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
-  protected val _cache = new ConcurrentHashMap[PK, R]
+  protected val _cache: Ehcache = ehcacheManager.addCacheIfAbsent(qualifiedName)
 
-  def cache(id: PK, record: => Option[R]): Option[R] =
-    if (_cache.containsKey(id))
-      return Some(_cache.get(id))
-    else {
-      val v = record
-      v.map { r =>
-        _cache.put(id, r)
-        r
-      }
+  def cache(id: PK, record: => Option[R]): Option[R] = {
+    var elem = _cache.get(id)
+    if (elem == null) {
+      elem = new Element(id, record)
+      _cache.put(elem)
     }
+    return elem.getValue().asInstanceOf[Option[R]]
+  }
   def evict(id: PK): Unit =
     _cache.remove(id)
   def invalidateCache(): Unit =
-    _cache.clear()
-  def contains_?(id: PK): Boolean =
-    _cache.contains(id)
+    _cache.removeAll()
 
   afterInsert(r => cache(r.PRIMARY_KEY(), r))
   afterUpdate(r => cache(r.PRIMARY_KEY(), r))

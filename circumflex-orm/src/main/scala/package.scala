@@ -3,6 +3,7 @@ package ru.circumflex
 import ru.circumflex.core._
 import orm._
 import java.util.regex.Pattern
+import net.sf.ehcache.CacheManager
 
 /*!# The `orm` Package
 
@@ -59,7 +60,12 @@ package object orm {
   val defaultSchema: Schema = new Schema(
     cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
 
-  def cacheService = CacheService.get
+  val ehcacheManager: CacheManager = cx.get("orm.ehcache.config") match {
+    case Some(f: String) => new CacheManager(f)
+    case _ => new CacheManager()
+  }
+
+  def contextCache = CacheService.get
 
   def tx: Transaction = transactionManager.get
   def COMMIT() = tx.commit()

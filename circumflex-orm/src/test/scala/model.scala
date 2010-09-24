@@ -21,14 +21,17 @@ class Country extends Record[String, Country] {
   override def toString = name.getOrElse("<unknown>")
 }
 
-object Country extends Country with Table[String, Country] {
+object Country extends Country
+    with Table[String, Country]
+    with Cacheable[String, Country] {
   val codeKey = CONSTRAINT("code_key").UNIQUE(code)
   val nameIdx = "name_idx".INDEX("code")
 
   validation.notEmpty(_.code).pattern(_.code, "^[a-z]{2}$", "syntax")
 }
 
-class City extends Record[Long, City] with IdentityGenerator[Long, City] {
+class City extends Record[Long, City]
+    with IdentityGenerator[Long, City] {
   def this(name: String, country: Country) = {
     this()
     this.name := name
@@ -44,7 +47,9 @@ class City extends Record[Long, City] with IdentityGenerator[Long, City] {
   override def toString = name.getOrElse("<unknown>")
 }
 
-object City extends City with Table[Long, City] {
+object City extends City
+    with Table[Long, City]
+    with Cacheable[Long, City] {
   val cityKey = UNIQUE(name, country)
 }
 
@@ -62,6 +67,8 @@ class Capital extends Record[String, Capital] {
   override def toString = city().name.getOrElse("<unknown>")
 }
 
-object Capital extends Capital with Table[String, Capital] {
+object Capital extends Capital
+    with Table[String, Capital]
+    with Cacheable[String, Capital] {
   val cityKey = UNIQUE(city)
 }
