@@ -21,7 +21,7 @@ delegating resolving, messages grouping, parameters interpolation and formatting
 
 The usage is pretty simple: you use the `msg` method of package object `ru.circumflex.core`
 which returns an implementation of `MessageResolver` used to retrieve messages. This instance
-is also refered to as *global messages resolver*. By default, the `DefaultMessageResolver`
+is also referred to as *global messages resolver*. By default, the `DefaultMessageResolver`
 singleton is used. You can set `cx.messages` configuration parameter to use your own
 `MessageResolver` implementation as global resolver.
 */
