@@ -1,15 +1,16 @@
 package ru.circumflex.freemarker
 
-import _root_.freemarker.template._
+import freemarker.template._
 import java.util.Date
 import org.apache.commons.beanutils.{MethodUtils, PropertyUtils}
 import java.lang.reflect.{Field, Method}
 import java.lang.String
-import ru.circumflex.core.{WrapperModel, HashModel}
+import ru.circumflex.core.Wrapper
+import scala.collection.Map
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any): TemplateModel = obj match {
-    // Basic types
+  // Basic types
     case null => null
     case option: Option[Any] => option match {
       case Some(o) => wrap(o)
@@ -17,11 +18,10 @@ class ScalaObjectWrapper extends ObjectWrapper {
     }
     case model: TemplateModel => model
     // Circumflex model types
-    case hash: HashModel => new CircumflexHashWrapper(hash, this)
-    case wrapper: WrapperModel => wrap(wrapper.item)
+    case wrapper: Wrapper[_] => wrap(wrapper.item)
     // Scala base types
     case seq: Seq[Any] => new ScalaSeqWrapper(seq, this)
-    case map: scala.collection.Map[Any, Any] => new ScalaMapWrapper(map, this)
+    case map: Map[Any, Any] => new ScalaMapWrapper(map, this)
     case it: Iterable[Any] => new ScalaIterableWrapper(it, this)
     case it: Iterator[Any] => new ScalaIteratorWrapper(it, this)
     case str: String => new SimpleScalar(str)
@@ -39,12 +39,10 @@ class ScalaSeqWrapper[T](val seq: Seq[T], wrapper: ObjectWrapper)
   def size = seq.size
 }
 
-class ScalaMapWrapper[String,V](val map: scala.collection.Map[String,V], wrapper: ObjectWrapper)
+class ScalaMapWrapper(val map: Map[Any, Any], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(map, wrapper) with TemplateHashModelEx {
-  override def get(key: java.lang.String) = wrapper.wrap(
-    map.get(key.asInstanceOf[String])
-        orElse map.get(key.replaceAll("\\$","_").asInstanceOf[String])
-        orElse Some(super.get(key)))
+  override def get(key: String) = wrapper.wrap(
+    map.get(key).orElse(Some(super.get(key))))
   override def isEmpty = map.isEmpty
   def values = new ScalaIterableWrapper(map.values, wrapper)
   val keys = new ScalaIterableWrapper(map.keys, wrapper)
@@ -94,10 +92,6 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
       case Some(field) => return wrapper.wrap(field.get(o))
       case _ =>
     }
-    // try property via beanutils
-    try {
-      return wrapper.wrap(PropertyUtils.getProperty(obj, key))
-    } catch { case _ => }
     // try method
     findMethod(objectClass, key) match {
       case Some(method) if (method.getParameterTypes.length == 0) =>
@@ -112,10 +106,4 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends Templat
   def isEmpty = false
 
   def getAsString = obj.toString
-}
-
-class CircumflexHashWrapper(val hash: HashModel, wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(hash, wrapper) with TemplateHashModel {
-  override def get(key: String) = wrapper.wrap(hash.get(key))
-  override def isEmpty = false
 }

@@ -19,7 +19,7 @@
   <dependencies>
     <dependency>
       <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-core</artifactId>
+      <artifactId>circumflex-web</artifactId>
       <version>2.0</version>
     </dependency>
     <dependency>

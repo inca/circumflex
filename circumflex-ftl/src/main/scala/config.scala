@@ -1,15 +1,17 @@
 package ru.circumflex.freemarker
 
-import _root_.freemarker.cache._
-import _root_.ru.circumflex.md.Markdown
+import ru.circumflex.md.Markdown
 import ru.circumflex.core._
+import ru.circumflex.web._
 import freemarker.template._
 import freemarker.core.Environment
+import freemarker.cache._
 import java.io.StringWriter
 
 class FTL extends Configuration {
 
-  // ## Loaders
+  // Loaders
+
   protected var _loaders: Seq[TemplateLoader] = Nil
   def loaders = _loaders
   def addLoader(loader: TemplateLoader): this.type = {
@@ -23,22 +25,21 @@ class FTL extends Configuration {
     return this
   }
 
-  // ## Defaults
+  // Defaults
 
   setObjectWrapper(new ScalaObjectWrapper())
   setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER)
   setDefaultEncoding("utf-8")
   setSharedVariable("md", MarkdownDirective)
 
-  // ## Rendering methods
+  // Rendering methods
 
-  def ftl(template: String): Nothing =
-    throw new RouteMatchedException(new WriterResponse(w => getTemplate(template).process(ctx, w)))
-  def ftl(template: String, statusCode: Int): Nothing = {
-    ctx.statusCode = statusCode
-    ftl(template)
+  def ftl(template: String, data: Any = ctx, statusCode: Int = -1): Nothing = {
+    if (statusCode != -1)
+      response.statusCode(statusCode)
+    response.body(r => getTemplate(template).process(data, r.getWriter)).flush_!
   }
-  def ftl(template: String, params: Pair[String, Any]*): String =
+  def ftl(template: String, params: (String, Any)*): String =
     ftl(template, Map[String, Any](params: _*))
   def ftl(template: String, root: Any): String = {
     val result = new StringWriter
@@ -47,22 +48,20 @@ class FTL extends Configuration {
   }
 }
 
-/**
- * This FreeMarker configuration implies following:
- * <ul>
- * <li>templates are loaded from ${webapp-Context}/templates directory or,
- * if failed, from webapp classpath;</li>
- * <li>all template errors result in exception to be thrown to controller;</li>
- * <li>character encoding defaults to UTF-8;</li>
- * <li>use Circumflex default object wrapper for Scala core types.</li>
- * </ul>
- */
+/*! The default FreeMarker configuration implies following:
+
+  * templates are loaded from `${webapp-root}/templates directory` or,
+  if failed, from webapp classpath;
+  * all template errors result in exception to be thrown to controller;
+  * character encoding defaults to UTF-8;
+  * the `ScalaObjectWrapper` is used for Scala core types.
+*/
 object FTL extends FTL {
   try {
-    addLoader(new WebappTemplateLoader(ctx.request.getSession.getServletContext, "/templates"))
+    addLoader(new WebappTemplateLoader(servletContext, "/templates"))
   } catch {
     case e =>
-      cxLog.warn("Not running in webapp context.")
+      CX_LOG.warn("Not running in webapp context.")
   }
   addLoader(new ClassTemplateLoader(getClass, "/"))
 }

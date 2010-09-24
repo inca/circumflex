@@ -75,7 +75,9 @@ This type of relationship is often referred to as *one-to-one* or *one-to-many*
 They are essentially useful in a combination with `Criteria` for fetching
 whole hierarchy of associated records in a single SQL `SELECT`.
 */
-trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T] {
+trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
+    extends Wrapper[T] {
+  def item: T = get()
   def association: Association[K, C, P]
   def record: P
   def fetch(): Seq[C] = if (record.transient_?) Nil

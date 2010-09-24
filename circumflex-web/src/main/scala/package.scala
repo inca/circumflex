@@ -56,6 +56,7 @@ package object web {
   def response = ctx("cx.response").asInstanceOf[HttpResponse]
   def filterConfig = cx("cx.filterConfig").asInstanceOf[FilterConfig]
   def filterChain = cx("cx.filterChain").asInstanceOf[FilterChain]
+  def servletContext = filterConfig.getServletContext
   def session = request.session
 
   /*!## The `cookies` Helper
@@ -153,7 +154,7 @@ package object web {
   successfully.
   */
 
-  def send(statusCode: Int = -1, text: String = ""): Nothing = {
+  def send(text: String = "", statusCode: Int = -1): Nothing = {
     if (statusCode != -1)
       response.statusCode(statusCode)
     response.body(r => r.getWriter.write(text)).flush_!

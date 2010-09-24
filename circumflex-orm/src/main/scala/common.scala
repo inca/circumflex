@@ -1,5 +1,7 @@
 package ru.circumflex.orm
 
+import ru.circumflex.core._
+
 /*!# SQLable
 
 Every object capable of rendering itself into an SQL statement
@@ -87,9 +89,11 @@ trait SchemaObject {
 Value holder is an atomic data-carrier unit of a record. Two implementations
 of `ValueHolder` are known: `Field` and `Association`.
 */
-abstract class ValueHolder[T, R <: Record[_, R]](val name: String,
-                                                 val record: R,
-                                                 val sqlType: String) extends Equals {
+abstract class ValueHolder[T, R <: Record[_, R]](
+    val name: String, val record: R, val sqlType: String)
+    extends Equals with Wrapper[Option[T]] {
+
+  def item = value
 
   /*!## Setters
 
