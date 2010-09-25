@@ -69,10 +69,16 @@ class CircumflexFilter extends Filter {
   but you can specify different location by setting the `cx.public` configuration
   parameter.
   */
-  def serveStatic(req: HttpServletRequest, res: HttpServletResponse): Boolean = {
+  def serveStatic(req: HttpServletRequest,
+                  res: HttpServletResponse,
+                  chain: FilterChain): Boolean = {
     if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
-      val uri = URLDecoder.decode(
-        cx.getOrElse("cx.public", "/public").toString + req.getRequestURI, "UTF-8")
+      val publicUri = cx.getOrElse("cx.public", "/public").toString
+      if (req.getRequestURI.startsWith(publicUri)) {
+        chain.doFilter(req, res)
+        return true
+      }
+      val uri = URLDecoder.decode(publicUri + req.getRequestURI, "UTF-8")
       val resource = new File(filterConfig.getServletContext.getRealPath(uri))
       if (resource.isFile) {
         req.getRequestDispatcher(uri).forward(req, res)
@@ -105,7 +111,7 @@ class CircumflexFilter extends Filter {
                chain: FilterChain): Unit = (req, res) match {
     case (req: HttpServletRequest, res: HttpServletResponse) =>
       // try to serve static first
-      if (serveStatic(req, res)) return
+      if (serveStatic(req, res, chain)) return
       // initialize context
       Context.executeInNew { ctx =>
         ctx("cx.request") = new HttpRequest(req)
