@@ -1,4 +1,7 @@
-package ru.circumflex.orm
+package ru.circumflex
+package orm
+
+import ru.circumflex.core._
 
 /*!# Criteria API
 
@@ -144,7 +147,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   /**
    * Add specified `association` to prefetch list.
    */
-  def prefetch[K, C <: Record[Any, C], P <: Record[K, P]](association: Association[K, C, P]): Criteria[PK, R] = {
+  def prefetch(association: Association[_, _, _]): Criteria[PK, R] = {
     if (!_prefetchSeq.contains(association)) {
       // The depth-search is used to update query plan if possible.
       _rootTree = updateRootTree(_rootTree, association)
@@ -193,7 +196,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
    * Compose an actual predicate from restrictions.
    */
   def predicate: Predicate =
-    if (_restrictions.size > 0) AND(_restrictions: _*)
+    if (_restrictions.size > 0) orm.AND(_restrictions: _*)
     else EmptyPredicate
 
   /**
@@ -251,5 +254,67 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   def toSql = mkSelect.toSql
 
   override def toString = queryPlan.toString
+
+  /*!## Criteria Merging
+
+  Several `Criteria` objects can be merged using `AND` and `OR` operators.
+  Merging implies following actions:
+
+    * this criteria object is shallowly cloned prior to merging so that the
+    source is not modified;
+    * the root aliases of both criteria must match or `ORMException` will
+    be thrown;
+    * alias counters are summed to prevent collisions;
+    * every association from specified `criteria` prefetch sequence is added to
+    the result criteria prefetch sequence, thus updating it's query plan;
+    * next, the join tree of specified `criteria` is merged with the join tree of
+    the result criteria;
+    * finally, restrictions and order specificators are copied from specified
+    `criteria` to the result criteria, specified `operator` is applied to
+    restrictions.
+
+  Note, however, that alias collision can occur while merging criteria with
+  joins. It is a best practice to assign join aliases manually.
+  */
+  protected def merge(criteria: Criteria[PK, R], operator: String): Criteria[PK, R] = {
+    val result = this.clone.asInstanceOf[Criteria[PK, R]]
+    // compare aliases
+    if (result.rootNode.alias != criteria.rootNode.alias)
+      throw new ORMException("Criteria root aliases must match for successful merging.")
+    // ensure counter integrity
+    result._counter += criteria._counter
+    // add prefetches
+    criteria._prefetchSeq.foreach(a => result.prefetch(a))
+    // update join tree
+    result._joinTree = criteria._joinTree match {
+      case j: JoinNode[PK, R, _, _] => result.replaceLeft(j.clone, result._joinTree)
+      case _ => result._joinTree
+    }
+    // copy restrictions
+    result._restrictions = List(new AggregatePredicate(
+      operator, List(result.predicate, criteria.predicate)))
+    // copy order specificators
+    criteria._orders.foreach { o =>
+      if (!result._orders.contains(o))
+        result.addOrder(o)
+    }
+    return result
+  }
+
+  def AND(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.and)
+  def OR(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.or)
+
+  /*! Criteria can be merged with inverse associations to create logical scopes. Same
+  rules are applied as with criteria merging, except that a criteria object with
+  proper restrictions is created from inverse association implicitly.
+  */
+  protected def merge(inverse: InverseAssociation[_, R, _, _], operator: String): Criteria[PK, R] = {
+    val criteria = new Criteria[PK, R](rootNode)
+    ctx("orm.lastAlias") = rootNode.alias
+    criteria.add(inverse.association.field EQ inverse.record.asInstanceOf[R].PRIMARY_KEY())
+    return merge(criteria, operator)
+  }
+  def AND(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.and)
+  def OR(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.or)
 
 }

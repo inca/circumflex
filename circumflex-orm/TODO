@@ -1,3 +1,4 @@
 [+] Invalidate inverse cache on update
 [+] Add validation
 [+] Add xml support
+[+] Add criteria merging
