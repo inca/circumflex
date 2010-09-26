@@ -20,8 +20,9 @@ Following objects configure different aspects of Circumflex ORM:
   can be overriden using the `orm.dialect` configuration parameter;
   * *transaction manager* is responsible for allocating current transactions
   for execution contexts.
+*/
 
-## Connection Provider
+/*!## Connection Provider
 
 The `ConnectionProvider` is a simple trait responsible for acquiring JDBC
 connections throughout the application.
