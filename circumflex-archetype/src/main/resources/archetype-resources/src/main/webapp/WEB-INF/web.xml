@@ -9,12 +9,12 @@
                              http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 
   <filter>
-    <filter-name>Circumflex Core Filter</filter-name>
-    <filter-class>ru.circumflex.core.CircumflexFilter</filter-class>
+    <filter-name>Circumflex Filter</filter-name>
+    <filter-class>ru.circumflex.web.CircumflexFilter</filter-class>
   </filter>
 
   <filter-mapping>
-    <filter-name>Circumflex Core Filter</filter-name>
+    <filter-name>Circumflex Filter</filter-name>
     <url-pattern>*</url-pattern>
     <dispatcher>REQUEST</dispatcher>
     <dispatcher>FORWARD</dispatcher>

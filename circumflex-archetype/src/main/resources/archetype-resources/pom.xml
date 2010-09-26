@@ -24,12 +24,12 @@
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-ftl</artifactId>
+      <artifactId>circumflex-web</artifactId>
       <version>${cx.version}</version>
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-orm</artifactId>
+      <artifactId>circumflex-ftl</artifactId>
       <version>${cx.version}</version>
     </dependency>
     <dependency>
