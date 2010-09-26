@@ -51,6 +51,8 @@ object City extends City
     with Table[Long, City]
     with Cacheable[Long, City] {
   val cityKey = UNIQUE(name, country)
+  def byName(name: String) = (City AS "ci").map(ci =>
+    ci.criteria.add(ci.name LIKE name).addOrder(ci.name ASC))
 }
 
 class Capital extends Record[String, Capital] {

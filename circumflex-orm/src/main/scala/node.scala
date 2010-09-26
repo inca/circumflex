@@ -23,6 +23,14 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
     return this
   }
 
+  /*! Relation nodes allow Scala-like syntactic sugar by using the `map` method.
+  Following example gives table `City` an alias `ci` and uses it to construct a
+  `Criteria` object.
+
+      (City AS "ci").map(ci => ci.criteria.add(ci.name LIKE "Lausanne")).list
+   */
+  def map[T](f: RelationNode[PK, R] => T): T = f(this)
+
   /*! The `*` method creates a `RecordProjection` from this node and is
   widely used in the `SELECT` clause of SQL queries.
    */

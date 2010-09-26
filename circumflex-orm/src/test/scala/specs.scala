@@ -137,6 +137,13 @@ object CircumflexORMSpec extends Specification {
     "handle limits, offsets and order-by's" in {
       SELECT(co.*).FROM(co).LIMIT(1).OFFSET(1).ORDER_BY(co.name ASC).unique.get.code() must_== "ch"
     }
+    "handle criteria and inverse association merging" in {
+      val ch = Country.get("ch").get
+      val l = (City.byName("%u%") AND ch.cities).list
+      l.size must_== 2
+      l(0).name() must_== "Lausanne"
+      l(1).name() must_== "Zurich"
+    }
   }
 
   "Transaction API" should {
