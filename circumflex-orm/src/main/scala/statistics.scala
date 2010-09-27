@@ -70,4 +70,20 @@ object Statistics {
     }
   }
 
+  def clear(): Unit = synchronized {
+    connectionsOpened.set(0)
+    connectionsClosed.set(0)
+    executions.set(0)
+    executionsSucceeded.set(0)
+    executionsFailed.set(0)
+    recordCacheHits.set(0)
+    recordCacheMisses.set(0)
+    inverseCacheHits.set(0)
+    inverseCacheMisses.set(0)
+    heaviestSql = ""
+    heaviestSqlTime = 0l
+    heaviestDml = ""
+    heaviestDmlTime = 0l
+  }
+
 }
