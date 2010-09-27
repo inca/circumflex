@@ -2,6 +2,6 @@
 [+] Validation
 [+] Xml support
 [+] Criteria merging
-[ ] Statistics
+[+] Statistics
 [ ] Query cache
 [ ] Compare with Hibernate
