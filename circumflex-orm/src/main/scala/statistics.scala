@@ -20,30 +20,25 @@ Following statistical data is available:
   `execute` method of `Transaction` objects;
   * `executionsFailed` -- the amount of failed invokations of the `execute`
   method of `Transaction` objects;
-  *
+  * `recordCacheHits` -- the amount of records successfully retrieved from cache;
+  * `recordCacheMisses` -- the amount of records retrieved from database and stored
+  in cache;
+  * `inverseCacheHits` -- the amount of inverse associations retrieved from cache;
+  * `inverseCacheMisses` -- the amount of inverse associations retrieved from database
+  and stored in cache;
 
 */
 
 object Statistics {
 
-  protected val _connectionsOpened = new AtomicInteger(0)
-  def connectionsOpened = _connectionsOpened.get
-  def connectionOpen = _connectionsOpened.incrementAndGet
-  
-  protected val _connectionsClosed = new AtomicInteger(0)
-  def connectionsClosed = _connectionsClosed.get
-  def connectionClose = _connectionsClosed.incrementAndGet
-
-  protected val _executions = new AtomicInteger(0)
-  def executions = _executions.get
-  def execution = _executions.incrementAndGet
-
-  protected val _executionsSucceeded = new AtomicInteger(0)
-  def executionsSucceeded = _executionsSucceeded.get
-  def executionSucceeded = _executionsSucceeded.incrementAndGet
-
-  protected val _executionsFailed = new AtomicInteger(0)
-  def executionsFailed = _executionsFailed.get
-  def executionFailed = _executionsFailed.incrementAndGet
+  val connectionsOpened = new AtomicInteger(0)
+  val connectionsClosed = new AtomicInteger(0)
+  val executions = new AtomicInteger(0)
+  val executionsSucceeded = new AtomicInteger(0)
+  val executionsFailed = new AtomicInteger(0)
+  val recordCacheHits = new AtomicInteger(0)
+  val recordCacheMisses = new AtomicInteger(0)
+  val inverseCacheHits = new AtomicInteger(0)
+  val inverseCacheMisses = new AtomicInteger(0)
 
 }

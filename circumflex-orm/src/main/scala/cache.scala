@@ -3,6 +3,7 @@ package ru.circumflex.orm
 import ru.circumflex.core._
 import collection.mutable.HashMap
 import net.sf.ehcache._
+import java.util.concurrent.atomic._
 import java.io.Serializable
 
 /*!# Context-Level Cache
@@ -114,7 +115,11 @@ class DefaultCacheService extends CacheService {
       case c: Cacheable[PK, R] => c.cache(id, record)
       case _ =>
         val c = _recordsCache(relation)
-        c.get(id).map(_.asInstanceOf[R]) orElse {
+        c.get(id).map { r =>
+          Statistics.recordCacheHits.incrementAndGet
+          r.asInstanceOf[R]
+        } orElse {
+          Statistics.recordCacheMisses.incrementAndGet
           val v = record
           v.map { r =>
             c.update(id, r)
@@ -130,8 +135,19 @@ class DefaultCacheService extends CacheService {
   def invalidateInverse[K, C <: Record[_, C], P <: Record[K, P]](association: Association[K, C, P]): Unit =
     _inverseCache(association).clear()
   def cacheInverse[K, C <: Record[_, C], P <: Record[K, P]](
-      parentId: K, association: Association[K, C, P], children: => Seq[C]): Seq[C] =
-    _inverseCache(association).getOrElseUpdate(parentId, children).asInstanceOf[Seq[C]]
+      parentId: K, association: Association[K, C, P], children: => Seq[C]): Seq[C] = {
+    val cache = _inverseCache(association)
+    cache.get(parentId) match {
+      case Some(children: Seq[C]) =>
+        Statistics.inverseCacheHits.incrementAndGet
+        children
+      case _ =>
+        Statistics.inverseCacheMisses.incrementAndGet
+        val c = children
+        cache.update(parentId, c)
+        c
+    }
+  }
   def evictInverse[K, C <: Record[_, C], P <: Record[K, P]](
       parentId: K, association: Association[K, C, P]): Unit =
     _inverseCache(association).remove(parentId)
@@ -168,11 +184,20 @@ modification of such records is a subject for concurrency control.
 trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   protected val _cache: Ehcache = ehcacheManager.addCacheIfAbsent(qualifiedName)
 
+  // Per-relation statistics
+  val cacheHits = new AtomicInteger(0)
+  val cacheMisses = new AtomicInteger(0)
+
   def cache(id: PK, record: => Option[R]): Option[R] = {
     var elem = _cache.get(id)
     if (elem == null) {
       elem = new Element(id, record)
       _cache.put(elem)
+      cacheMisses.incrementAndGet
+      Statistics.recordCacheMisses.incrementAndGet
+    } else {
+      cacheHits.incrementAndGet
+      Statistics.recordCacheHits.incrementAndGet
     }
     return elem.getValue().asInstanceOf[Option[R]]
   }

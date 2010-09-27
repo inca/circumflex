@@ -225,13 +225,13 @@ class Transaction {
 
   def close(): Unit = if (live_?) {
     _connection.close
-    Statistics.connectionClose
+    Statistics.connectionsClosed.incrementAndGet
   }
 
   protected def getConnection: Connection = {
     if (_connection == null || _connection.isClosed) {
       _connection = connectionProvider.openConnection
-      Statistics.connectionOpen
+      Statistics.connectionsOpened.incrementAndGet
     }
     return _connection
   }
@@ -239,13 +239,13 @@ class Transaction {
   def execute[A](connActions: Connection => A)
                 (errActions: Throwable => A): A =
     try {
-      Statistics.execution
+      Statistics.executions.incrementAndGet
       val result = connActions(getConnection)
-      Statistics.executionSucceeded
+      Statistics.executionsSucceeded.incrementAndGet
       result
     } catch {
       case e =>
-        Statistics.executionFailed
+        Statistics.executionsFailed.incrementAndGet
         errActions(e)
     }
 
