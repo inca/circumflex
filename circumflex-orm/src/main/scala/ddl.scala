@@ -116,8 +116,10 @@ class DDLUnit {
   def DROP(): this.type = {
     resetMsgs()
     _drop()
+    return this
   }
-  def _drop(): this.type = tx.execute { conn =>
+
+  def _drop(): Unit = tx.execute { conn =>
   // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
@@ -132,7 +134,6 @@ class DDLUnit {
       dropObjects(schemata)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
-    return this
   } { throw _ }
 
   /**
@@ -141,8 +142,10 @@ class DDLUnit {
   def CREATE(): this.type = {
     resetMsgs()
     _create()
+    return this
   }
-  def _create(): this.type = tx.execute { conn =>
+
+  def _create(): Unit = tx.execute { conn =>
   // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
@@ -156,7 +159,6 @@ class DDLUnit {
     createObjects(postAux)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
-    return this
   } { throw _ }
 
   /**
@@ -166,6 +168,7 @@ class DDLUnit {
     resetMsgs()
     _drop()
     _create()
+    return this
   }
 
   override def toString: String = {

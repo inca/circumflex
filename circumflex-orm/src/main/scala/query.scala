@@ -125,7 +125,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
         result ++= List(r)
       case _ =>
     }
-    return result
+    result
   }
 
   /**
@@ -134,8 +134,10 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
    * An exception is thrown if `ResultSet` yields more than one row.
    */
   def unique(): Option[T] = resultSet(rs => {
-    if (!rs.next) return None
-    else if (rs.isLast) return read(rs)
+    if (!rs.next)
+      None
+    else if (rs.isLast)
+      read(rs)
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
 

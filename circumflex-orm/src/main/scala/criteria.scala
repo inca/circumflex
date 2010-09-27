@@ -220,7 +220,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         if (!result.contains(root))
           result ++= List(root)
       }
-      return result
+      result
     }
   }
 
@@ -231,9 +231,9 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   def unique: Option[R] = {
     val q = mkSelect
     q.resultSet { rs =>
-      if (!rs.next) return None     // none records found
+      if (!rs.next) None     // none records found
       // Okay, let's grab the first one. This would be the result eventually.
-      q.read(rs) map { firstTuple =>
+      else q.read(rs) map { firstTuple =>
         processTupleTree(firstTuple, _rootTree)
         val result = firstTuple(0).asInstanceOf[Option[R]].get
         // We don't want to screw prefetches up so let's walk till the end,
