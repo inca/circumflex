@@ -39,10 +39,10 @@ package object core {
   /**
    * Executes specified `block` and counts it's execution time.
    */
-  def time(block: => Unit): Long = {
+  def time[T](block: => T): (Long, T) = {
     val startTime = System.currentTimeMillis
-    block
-    System.currentTimeMillis - startTime
+    val result = block
+    (System.currentTimeMillis - startTime, result)
   }
 
   /* Implicits */

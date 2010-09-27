@@ -15,6 +15,9 @@ you need different projections, use `Select` instead.
 class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     extends SQLable with Cloneable {
 
+  protected var _executionTime = 0l
+  def executionTime = _executionTime
+
   private var _counter = 0
   protected def nextCounter: Int = {
     _counter += 1
@@ -212,7 +215,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
    */
   def list: Seq[R] = {
     val q = mkSelect
-    q.resultSet { rs =>
+    val result = q.resultSet { rs =>
       var result: Seq[R] = Nil
       while (rs.next) q.read(rs) map { tuple =>
         processTupleTree(tuple, _rootTree)
@@ -222,6 +225,8 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
       }
       result
     }
+    _executionTime = q.executionTime
+    return result
   }
 
   /**
@@ -230,7 +235,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
    */
   def unique: Option[R] = {
     val q = mkSelect
-    q.resultSet { rs =>
+    val result = q.resultSet { rs =>
       if (!rs.next) None     // none records found
       // Okay, let's grab the first one. This would be the result eventually.
       else q.read(rs) map { firstTuple =>
@@ -249,6 +254,8 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         result
       }
     }
+    _executionTime = q.executionTime
+    return result
   }
 
   def toSql = mkSelect.toSql

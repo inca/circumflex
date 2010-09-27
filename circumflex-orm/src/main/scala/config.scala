@@ -183,8 +183,12 @@ class DefaultTypeConverter extends TypeConverter {
     case value => value
   }
 
-  def fromJDBC(value: Any): Option[Any] =
-    if (value == null) None else Some(value)
+  def fromJDBC(value: Any): Option[Any] = value match {
+    case null => None
+    case None => None
+    case Some(value) => fromJDBC(value)
+    case value => Some(value)
+  }
 
   def escape(value: Any): String = fromJDBC(value) match {
     case Some(s: String) => dialect.quoteLiteral(s)

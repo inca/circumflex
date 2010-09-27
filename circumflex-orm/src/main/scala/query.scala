@@ -1,6 +1,7 @@
 package ru.circumflex.orm
 
 import java.sql.{ResultSet, PreparedStatement}
+import ru.circumflex.core._
 
 /*!# Querying
 
@@ -20,14 +21,18 @@ the number of affected rows.
 */
 trait Query extends SQLable with ParameterizedExpression with Cloneable {
 
-  protected var aliasCounter = 0;
+  // Keep track of last execution time
+  protected var _executionTime = 0l
+  def executionTime = _executionTime
+
+  protected var _aliasCounter = 0;
 
   /**
    * Generates an alias to eliminate duplicates within query.
    */
   protected def nextAlias: String = {
-    aliasCounter += 1
-    return "this_" + aliasCounter
+    _aliasCounter += 1
+    return "this_" + _aliasCounter
   }
 
   /**
@@ -100,15 +105,22 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
   /**
    * Executes a query, opens a JDBC `ResultSet` and executes specified `actions`.
    */
-  def resultSet[A](actions: ResultSet => A): A = tx.execute(toSql) { st =>
-    setParams(st, 1)
-    val rs = st.executeQuery
-    try {
-      actions(rs)
-    } finally {
-      rs.close
+  def resultSet[A](actions: ResultSet => A): A = {
+    val result = time {
+      tx.execute(toSql) { st =>
+        setParams(st, 1)
+        val rs = st.executeQuery
+        try {
+          actions(rs)
+        } finally {
+          rs.close
+        }
+      } { throw _ }
     }
-  } { throw _ }
+    _executionTime = result._1
+    Statistics.executeSql(this)
+    return result._2
+  }
 
   /**
    * Uses the query projection to read specified `ResultSet`.
@@ -306,10 +318,17 @@ trait DMLQuery extends Query {
   /**
    * Executes a query and returns the number of affected rows.
    */
-  def execute(): Int = tx.execute(toSql){ st =>
-    setParams(st, 1)
-    st.executeUpdate
-  } { throw _ }
+  def execute(): Int = {
+    val result = time {
+      tx.execute(toSql){ st =>
+        setParams(st, 1)
+        st.executeUpdate
+      } { throw _ }
+    }
+    _executionTime = result._1
+    Statistics.executeDml(this)
+    return result._2
+  }
 }
 
 class NativeDMLQuery(expression: ParameterizedExpression) extends DMLQuery {

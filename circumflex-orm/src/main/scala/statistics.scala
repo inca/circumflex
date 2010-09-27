@@ -26,7 +26,8 @@ Following statistical data is available:
   * `inverseCacheHits` -- the amount of inverse associations retrieved from cache;
   * `inverseCacheMisses` -- the amount of inverse associations retrieved from database
   and stored in cache;
-
+  * `heaviestSqlTime` -- the time (in milliseconds) of the heaviest SQL query execution;
+  * `heaviestSql` -- the SQL statement of the heaviest data-retrieval query.
 */
 
 object Statistics {
@@ -40,5 +41,33 @@ object Statistics {
   val recordCacheMisses = new AtomicInteger(0)
   val inverseCacheHits = new AtomicInteger(0)
   val inverseCacheMisses = new AtomicInteger(0)
+
+  protected var _heaviestSqlTime = 0l
+  def heaviestSqlTime = _heaviestSqlTime
+
+  protected var _heaviestSql = ""
+  def heaviestSql = _heaviestSql
+
+  def executeSql(q: SQLQuery[_]): Unit = synchronized {
+    val t = q.executionTime
+    if (t > _heaviestSqlTime) {
+      _heaviestSqlTime = t
+      _heaviestSql = q.toInlineSql
+    }
+  }
+
+  protected var _heaviestDmlTime = 0l
+  def heaviestDmlTime = _heaviestDmlTime
+
+  protected var _heaviestDml = ""
+  def heaviestDml = _heaviestDml
+
+  def executeDml(q: DMLQuery): Unit = synchronized {
+    val t = q.executionTime
+    if (t > _heaviestDmlTime) {
+      _heaviestDmlTime = t
+      _heaviestDml = q.toInlineSql
+    }
+  }
 
 }
