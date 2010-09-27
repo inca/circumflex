@@ -5,7 +5,6 @@ import javax.sql.DataSource
 import javax.naming.InitialContext
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import java.sql._
-import jdbc._
 
 /*!# ORM Configuration Objects
 
@@ -224,28 +223,42 @@ class Transaction {
     contextCache.invalidate
   }
 
-  def close(): Unit =
-    if (live_?) _connection.close
+  def close(): Unit = if (live_?) {
+    _connection.close
+    Statistics.connectionClose
+  }
 
   protected def getConnection: Connection = {
-    if (_connection == null)
+    if (_connection == null || _connection.isClosed) {
       _connection = connectionProvider.openConnection
+      Statistics.connectionOpen
+    }
     return _connection
   }
 
   def execute[A](connActions: Connection => A)
                 (errActions: Throwable => A): A =
     try {
-      connActions(getConnection)
+      Statistics.execution
+      val result = connActions(getConnection)
+      Statistics.executionSucceeded
+      result
     } catch {
-      case e => errActions(e)
+      case e =>
+        Statistics.executionFailed
+        errActions(e)
     }
 
   def execute[A](sql: String)
                 (stActions: PreparedStatement => A)
                 (errActions: Throwable => A): A = execute { conn =>
     ORM_LOG.trace(sql)
-    autoClose(conn.prepareStatement(sql))(stActions)(errActions)
+    val st = conn.prepareStatement(sql)
+    try {
+      stActions(st)
+    } finally {
+      st.close
+    }
   } (errActions)
 
   def apply(block: => Unit): Unit = {

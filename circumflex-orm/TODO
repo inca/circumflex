@@ -1,4 +1,7 @@
 [+] Invalidate inverse cache on update
-[+] Add validation
-[+] Add xml support
-[+] Add criteria merging
+[+] Validation
+[+] Xml support
+[+] Criteria merging
+[ ] Statistics
+[ ] Query cache
+[ ] Compare with Hibernate

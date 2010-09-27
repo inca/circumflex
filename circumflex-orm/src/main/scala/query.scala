@@ -1,7 +1,6 @@
 package ru.circumflex.orm
 
 import java.sql.{ResultSet, PreparedStatement}
-import jdbc._
 
 /*!# Querying
 
@@ -103,7 +102,12 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
    */
   def resultSet[A](actions: ResultSet => A): A = tx.execute(toSql) { st =>
     setParams(st, 1)
-    autoClose(st.executeQuery)(rs => actions(rs)) { throw _ }
+    val rs = st.executeQuery
+    try {
+      actions(rs)
+    } finally {
+      rs.close
+    }
   } { throw _ }
 
   /**
