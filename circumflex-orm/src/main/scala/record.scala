@@ -98,13 +98,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   protected def _persist(fields: Seq[Field[_, R]]): Int = PRIMARY_KEY.value match {
     case Some(id: PK) =>
-      // Only not-null fields participate in query
-      val f = fields.filter(!_.null_?)
-      val sql = dialect.insertRecord(this, f)
-      val result = tx.execute(sql) { st =>
-        setParams(st, f)
-        st.executeUpdate
-      } { throw _ }
+      val result = new Insert(relation, fields.filter(!_.null_?)).execute()
       if (relation.autorefresh_?) refresh()
       result
     case _ => throw new ORMException("Application-assigned identifier is expected." +
@@ -121,12 +115,10 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     // Collect fields which will participate in query
     val f = evalFields(fields).filter(_ != PRIMARY_KEY)
     // Prepare and execute a query
-    val sql = dialect.updateRecord(this, f)
-    val result = tx.execute(sql) { st =>
-      setParams(st, f)
-      typeConverter.write(st, PRIMARY_KEY.value, f.size + 1)
-      st.executeUpdate
-    } { throw _ }
+    val q = (relation AS "root")
+        .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkUpdate
+    f.foreach(f => q.SET[Any](f.asInstanceOf[Field[Any, R]], f.value))
+    val result = q.execute()
     if (relation.autorefresh_?) refresh()
     // Invalidate inverse caches
     contextCache.evictInverse[PK, R](this)
@@ -148,11 +140,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     // Execute events
     relation.beforeDelete.foreach(c => c(this))
     // Prepare and execute query
-    val sql = dialect.deleteRecord(this)
-    val result = tx.execute(sql) { st =>
-      typeConverter.write(st, PRIMARY_KEY.value, 1)
-      st.executeUpdate
-    } { throw _ }
+    val result = (relation AS "root")
+        .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkDelete.execute()
     // Invalidate inverse caches
     contextCache.evictInverse[PK, R](this)
     // Execute events
@@ -180,9 +169,6 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   protected def evalFields(fields: Seq[Field[_, R]]): Seq[Field[_, R]] =
     (if (fields.size == 0) relation.fields else fields)
         .map(f => relation.getField(this, f))
-
-  protected def setParams(st: PreparedStatement, fields: Seq[Field[_, R]]): Unit =
-    (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).value, ix + 1))
 
   /*!## Inverse Associations
 
@@ -254,12 +240,7 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     // Make sure that PRIMARY_KEY contains `NULL`
     this.PRIMARY_KEY.setNull
     // Persist all not-null fields
-    val f = fields.filter(!_.null_?)
-    val sql = dialect.insertRecord(this, f)
-    val result = tx.execute(sql) { st =>
-      setParams(st, f)
-      st.executeUpdate
-    } { throw _ }
+    val result = new Insert(relation, fields.filter(!_.null_?)).execute()
     // Fetch either the whole record or just an identifier.
     val root = relation.AS("root")
     if (relation.autorefresh_?)
@@ -289,11 +270,7 @@ trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
             f.asInstanceOf[Field[PK, R]].set(Some(id))
           f
         }.filter(!_.null_?)
-        val sql = dialect.insertRecord(this, f)
-        val result = tx.execute(sql) { st =>
-          setParams(st, f)
-          st.executeUpdate
-        } { throw _ }
+        val result = new Insert(relation, f).execute()
         // Perform additional select if required
         if (relation.autorefresh_?)
           refresh()

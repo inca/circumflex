@@ -384,26 +384,10 @@ class Dialect {
   /**
    * Produces an `INSERT INTO .. VALUES` statement for specified `record` and specified `fields`.
    */
-  def insertRecord(record: Record[_, _], fields: Seq[Field[_, _]]) =
-    "INSERT INTO " + record.relation.qualifiedName +
-        " (" + fields.map(f => quoteIdentifer(f.name)).mkString(", ") +
-        ") VALUES (" + fields.map(f => "?").mkString(", ") + ")"
-
-  /**
-   * Produces an `UPDATE` statement with primary key criteria for specified `record` using specified
-   * `fields` in the `SET` clause.
-   */
-  def updateRecord(record: Record[_, _], fields: Seq[Field[_, _]]): String =
-    "UPDATE " + record.relation.qualifiedName +
-        " SET " + fields.map(f => quoteIdentifer(f.name) + " = ?").mkString(", ") +
-        " WHERE " + quoteIdentifer(record.PRIMARY_KEY.name) + " = ?"
-
-  /**
-   * Produces a `DELETE` statement for specified `record`.
-   */
-  def deleteRecord(record: Record[_, _]): String =
-    "DELETE FROM " + record.relation.qualifiedName +
-        " WHERE " + quoteIdentifer(record.PRIMARY_KEY.name) + " = ?"
+  def insert[PK, R <: Record[PK, R]](dml: Insert[PK, R]): String =
+    "INSERT INTO " + dml.relation.qualifiedName +
+        " (" + dml.fields.map(f => quoteIdentifer(f.name)).mkString(", ") +
+        ") VALUES (" + dml.fields.map(f => "?").mkString(", ") + ")"
 
   /**
    * Produces an `INSERT .. SELECT` statement.

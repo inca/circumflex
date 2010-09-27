@@ -179,7 +179,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
    * Make a DML `UPDATE` query from this criteria. Only `WHERE` clause is used, all the
    * other stuff is ignored.
    */
-  def mkUpdate: Update[PK, R] = UPDATE(rootNode.relation).WHERE(predicate)
+  def mkUpdate: Update[PK, R] = UPDATE(rootNode).WHERE(predicate)
 
   /**
    * Make a DML `DELETE` query from this criteria. Only `WHERE` clause is used, all the

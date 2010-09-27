@@ -336,6 +336,13 @@ class NativeDMLQuery(expression: ParameterizedExpression) extends DMLQuery {
   def toSql = expression.toSql
 }
 
+class Insert[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
+                                     val fields: Seq[Field[_, R]])
+    extends DMLQuery {
+  def parameters = fields.map(_.value)
+  def toSql: String = dialect.insert(this)
+}
+
 /**
  * Provides functionality for `INSERT ... SELECT` queries. Data is extracted using
  * specified `query` and is inserted into specified `relation`.
