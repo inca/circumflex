@@ -197,26 +197,26 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
    */
   def generate(): Unit = {
     // prepare custom resources
-    customResources ++= List("/docco/main.css")
-    customResources ++= List("/docco/highlight.js")
-    val customResDir = new File(outputDirectory, ".docco")
-    // create output directories if they do not already exist
-    FileUtils.forceMkdir(customResDir)
-    // copy resources
-    for (r <- customResources) {
-      var f = new File(r)
-      if (f.isDirectory) FileUtils.copyDirectory(f, customResDir)
-      else if (f.isFile) FileUtils.copyFile(f, customResDir)
-      else {    // try to load the resource as stream
-        val res = getClass.getResource(r)
-        if (res != null) {
-          val in = res.openStream
-          val out = new FileOutputStream(new File(customResDir, FilenameUtils.getName(r)))
-          try {
-            IOUtils.copy(in, out)
-          } finally {
-            in.close
-            out.close
+    if (customResources.size > 0) {
+      val customResDir = new File(outputDirectory, ".docco")
+      // create output directories if they do not already exist
+      FileUtils.forceMkdir(customResDir)
+      // copy resources
+      for (r <- customResources) {
+        var f = new File(r)
+        if (f.isDirectory) FileUtils.copyDirectory(f, customResDir)
+        else if (f.isFile) FileUtils.copyFile(f, customResDir)
+        else {    // try to load the resource as stream
+          val res = getClass.getResource(r)
+          if (res != null) {
+            val in = res.openStream
+            val out = new FileOutputStream(new File(customResDir, FilenameUtils.getName(r)))
+            try {
+              IOUtils.copy(in, out)
+            } finally {
+              in.close
+              out.close
+            }
           }
         }
       }
