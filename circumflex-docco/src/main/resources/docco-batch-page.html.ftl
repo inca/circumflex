@@ -37,7 +37,7 @@
       ${sec.doc}
       </td>
       <td class="code">
-        <pre><code>${sec.code?html}</code></pre>
+        <pre class="scala"><code>${sec.code?html}</code></pre>
       </td>
     </tr>
     [/#list]
