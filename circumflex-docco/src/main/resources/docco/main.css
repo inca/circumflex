@@ -20,24 +20,14 @@ body {
 }
 
 a {color: #333}
-
 a:visited {color: #555}
 
 p {margin: 0 0 16px 0}
 
 h1, h2, h3, h4, h5, h6 {margin: 16px 0 16px 0}
-
 h3, h4, h5, h6 {margin-top: 12px}
 
 #container {position: relative}
-
-#background {
-  position: fixed;
-  top: 0; left: 580px; right: 0; bottom: 0;
-  background: #f5f5ff;
-  border-left: 1px solid #e5e5ee;
-  z-index: -1;
-}
 
 table td {border: 0; outline: 0}
 
@@ -45,21 +35,28 @@ td.docs, th.docs {
   max-width: 500px;
   min-width: 500px;
   min-height: 5px;
-  padding: 10px 25px 1px 50px;
+  padding: 8px 16px 0 32px;
   vertical-align: top;
   text-align: left;
 }
 
-.docs pre {
-  margin: 15px 0 15px;
-  padding-left: 15px;
+.docs p tt, .docs p code,
+.docs h1 code, .docs h2 code,
+.docs h3 code, .docs h4 code
+.docs h5 code, .docs h6 code,
+.docs li code {
+  background: #f7fff7;
+  border: 1px solid #dedede;
+  padding: 0 .2em;
 }
 
-.docs p tt, .docs p code {
-  background: #f8f8ff;
+.docs pre {
+  margin: 16px -16px 16px -32px;
+  padding: 8px;
+  background:#f7fff7;
   border: 1px solid #dedede;
-  font-size: 12px;
-  padding: 0 0.2em;
+  border-width:1px 0 1px 0;
+  overflow-x:auto;
 }
 
 .octowrap {position: relative}
@@ -69,7 +66,8 @@ td.docs, th.docs {
   text-decoration: none;
   color: #454545;
   position: absolute;
-  top: 3px; left: -20px;
+  top: 3px;
+  left: -20px;
   padding: 1px 2px;
   opacity: 0;
   -webkit-transition: opacity 0.2s linear;
@@ -78,15 +76,15 @@ td.docs, th.docs {
 td.docs:hover .octothorpe {opacity: 1}
 
 td.code, th.code {
-  padding: 14px 15px 16px 50px;
+  padding: 8px;
   width: 100%;
   vertical-align: top;
   background: #f5f5ff;
   border-left: 1px solid #e5e5ee;
 }
 
-pre, tt, code {
-  font-size: 12px; line-height: 18px;
-  font-family: Monaco, Consolas, "Lucida Console", monospace;
-  margin: 0; padding: 0;
+.code pre code, .docs pre code {
+  font: 12px/1 Monaco, Consolas, "Lucida Console", monospace;
+  margin: 0;
+  padding: 0;
 }

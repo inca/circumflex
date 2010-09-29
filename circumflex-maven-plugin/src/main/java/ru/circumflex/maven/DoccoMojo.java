@@ -1,11 +1,13 @@
 package ru.circumflex.maven;
 
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import ru.circumflex.docco.DoccoBatch;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 /**
  * @goal docco
@@ -28,12 +30,12 @@ public class DoccoMojo extends AbstractCircumflexMojo {
     protected String outputDirectory;
 
     /**
-     * @parameter expression="${pageTemplate}" default-value="/batch-page.html.ftl"
+     * @parameter expression="${pageTemplate}" default-value="/docco-batch-page.html.ftl"
      */
     protected String pageTemplate;
 
     /**
-     * @parameter expression="${indexTemplate}" default-value="/index.html.ftl"
+     * @parameter expression="${indexTemplate}" default-value="/docco-index.html.ftl"
      */
     protected String indexTemplate;
 
@@ -48,7 +50,8 @@ public class DoccoMojo extends AbstractCircumflexMojo {
     protected String[] customResources;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if (!project.isExecutionRoot()) return;
+      prepareClassLoader();
+      if (!project.isExecutionRoot()) return;
         File base = new File(basePath);
         File outDir = new File(outputDirectory);
         if (base.isDirectory()) {
