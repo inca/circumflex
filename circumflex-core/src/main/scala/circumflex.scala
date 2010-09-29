@@ -68,6 +68,7 @@ The logic is pretty simple. Let's say an application or library expects you
 to provide an implementation of some interface, for example, `MyService`, and
 has a default implementation, for example, `DefaultMyService`:
 
+    lang:scala
     cx.instantiate[MyService]("myApp.myService", DefaultMyService)
 
 Then you can override this implementation by setting the configuration parameter
@@ -75,17 +76,20 @@ Then you can override this implementation by setting the configuration parameter
 
   * the class of the desired object, if you run some initialization code:
 
-      cx("myApp.myService") = classOf[MyServiceImpl]
+        lang:scala
+        cx("myApp.myService") = classOf[MyServiceImpl]
 
   * class name of your implementation, if you use `cx.properties`:
 
-      myApp.myService=com.myapp.MyServiceImpl
+        lang:scala
+        myApp.myService=com.myapp.MyServiceImpl
 
 Scala singletons might also work pretty fine as service implementations,
 but you should remember to add a dollar sign (`$`) to the class name.
 
 For example, if you have following singleton:
 
+    lang:scala
     package com.myapp
     object MyServiceImpl extends MyService { ... }
 

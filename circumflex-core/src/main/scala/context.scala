@@ -20,6 +20,19 @@ See [Context Lifecycle](#lifecycle) for more information.
 
 Circumflex context also extends `UntypedContainer` so you may access instantiation
 fancies as well as coercing parameters to expected types.
+
+# Context Lifecycle {#lifecycle}
+
+In order to maintain context scope an application should properly initialize
+and destroy contexts. It is done by using `Context.init` and `Context.destroy`
+methods.
+
+You can also add event listeners which will be executed after the context is
+initialized or before the context is destroyed.
+
+Context is initialized when it is first accessed via `Context.get` method.
+You can override default context implementation by setting `cx.context`
+configuration parameter.
 */
 
 /**
@@ -35,13 +48,6 @@ class Context extends HashMap[String, Any] with UntypedContainer {
   override def stringPrefix = "ctx"
 }
 
-/*!# Context Lifecycle {#lifecycle}
-
-In order to maintain context scope an application should properly initialize
-and destroy contexts. It is done by using `Context.init` and `Context.destroy`
-methods.
-*/
-
 /**
  * Singleton which is used to initialize, retrieve and destroy current contexts.
  *
@@ -55,15 +61,10 @@ methods.
  */
 object Context {
 
-  /*! We use thread-local storage so that each thread can get it's own instance
-  of context.
-  */
+  // We use thread-local storage so that each thread can get it's own instance of context.
 
   protected val threadLocal = new ThreadLocal[Context]
 
-  /*! You can also add event listeners which will be executed after the context is
-  initialized or before the context is destroyed.
-  */
   protected var initListeners: Seq[Context => Unit] = Nil
   protected var destroyListeners: Seq[Context => Unit] = Nil
 
@@ -77,11 +78,6 @@ object Context {
    */
   def addDestroyListener(listener: Context => Unit): Unit =
     destroyListeners ++= List(listener)
-
-  /*! Context is initialized when it is first accessed via `Context.get` method.
-  You can override default context implementation by setting `cx.context`
-  configuration parameter.
-  */
 
   /**
    * Returns an instance of the `Context` class bound to current thread (a.k.a. current context).
@@ -143,12 +139,14 @@ fashion.
 
 Following syntaxes are available for accessing context variables:
 
+    lang:scala
     'key.apply[T]                // T
     'key.get[T]                  // Option[T]
     'key.getOrElse(default: T)   // T
 
 Following syntaxes are available for setting context variables:
 
+    lang:scala
     'key := value
     'key.update(value)
 
