@@ -1,300 +1,282 @@
 package ru.circumflex.orm
 
-import ORM._
-import JDBC._
+import java.sql.PreparedStatement
+import ru.circumflex.core._
 
-// ## Record
+/*!# Record
 
-/**
- * *Record* is a cornerstone of relational model. In general, each instance of
- * pesistent class is stored as a single record in a relation corresponding to that
- * class. Since Circumflex ORM employs the Active Relation design approach to
- * persistence, each persistent class should subclass `Record`.
- */
-abstract class Record[R <: Record[R]] { this: R =>
+The record is a central abstraction in Circumflex ORM. Every object persisted into
+database should extend the `Record` class. It provides data definition methods
+necessary to create a domain model for your application as well as methods for
+saving and updating your record to backend database.
 
-  // ### Implicits
+Circumflex ORM is all about type safety and domain-specific languages (at a first
+glance the record definition may seem a little verbose). Here's the sample definition
+of fictional record `Country`:
+
+    class Country extends Record[String, Country] {
+      val code = "code".VARCHAR(2)
+      val name = "name".TEXT
+
+      def PRIMARY_KEY = code
+      val relation = Country
+    }
+
+*/
+abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   implicit def str2ddlHelper(str: String): DefinitionHelper[R] =
-    new DefinitionHelper(this, str)
+    new DefinitionHelper(str, this)
 
-  // ### Commons
+  /*!## Record State
 
-  /**
-   * Unique identifier based on fully-qualified class name of
-   * this record, which is used to uniquely identify this record
-   * class among others.
-   */
-  val uuid = getClass.getName
+  Records in relational theory are distinguished from each other by the value of their
+  *primary key*. You should specify what field hold the primary key of your record
+  by implementing the `PRIMARY_KEY` method.
 
-  /**
-   * A `Relation[R]` corresponding to this record.
-   *
-   * In general the relations should be the companion objects of records:
-   *
-   *     class Country extends Record[Country]  {
-   *       val name = TEXT NOT_NULL
-   * }
-   *
-   *     object Country extends Table[Country]
-   *
-   * However, if you prefer different naming conventions, you should override
-   * this method.
-   */
-  def relation = RelationRegistry.getRelation(this)
+  The `transient_?` method indicates, whether the record was not persisted into a database
+  yet or it was. The default logic is simple: if the primary key contains `null` then the
+  record is *transient* (i.e. not persisted), otherwise the record is considered persistent.
 
-  /**
-   * We only support auto-generated `BIGINT` columns as primary keys
-   * for a couple of reasons. Sorry.
-   */
-  val id = new PrimaryKeyField(this)
+  The `relation` method points to the relation from which a record came or to which it
+  should go. In general this method should point to the companion object. However, if
+  you do not convey to Circumflex ORM conventions, you may specify another object which
+  will act a relation for this type of records.
+  */
+  def PRIMARY_KEY: Field[PK, R]
+  def transient_?(): Boolean = PRIMARY_KEY.null_?
+  def relation: Relation[PK, R]
+  def uuid = getClass.getName
 
-  /**
-   * Yield `true` if `primaryKey` field is empty (contains `None`).
-   */
-  def transient_?(): Boolean = id.get() == None
+  /*!## Persistence & Validation
 
-  /**
-   * Non-DSL field creation.
-   */
-  def field[T](name: String, sqlType: String) =
-    new Field[T](name, uuid + "." + name, sqlType)
+  The `refresh` method is used to synchronize an already persisted record with its state in backend.
+  It evicts the record from cache and performs SQL `SELECT` using primary key-based predicate.
 
-  /**
-   * Inverse associations.
-   */
-  def inverse[C <: Record[C]](association: Association[C, R]): InverseAssociation[R, C] =
-    new InverseAssociation(this, association)
+  The `INSERT_!`, `UPDATE_!` and `DELETE_!` methods are used to insert, update or delete a single
+  record. The `insert` and `update` do the same as their equivalents except that validation
+  is performed before actual execution. The `refresh` method performs select with primary key
+  criteria and updates the fields with retrieved values.
 
-  // ### Validate, Insert, Update, Save and Delete
+  When inserting new record into database the primary key should be generated. It is done either
+  by polling database, by supplying `NULL` in primary key and then querying last generated identifier
+  or manually by application. The default implementation relies on application-assigned identifiers;
+  to use different strategy mix in one of the `Generator` traits or simply override the `persist`
+  method.
+  */
 
-  /**
-   * Performs record validation.
-   */
-  def validate(): Option[ValidationErrors] = {
-    val errors = relation.validation.validate(this)
-    if (errors.size == 0) None
-    else Some(new ValidationErrors(errors: _*))
+  def refresh(): this.type = if (transient_?)
+    throw new ORMException("Could not refresh transient record.")
+  else {
+    val root = relation.AS("root")
+    val id = PRIMARY_KEY()
+    contextCache.evictRecord(id, relation)
+    SELECT(root.*).FROM(root).WHERE(root.PRIMARY_KEY EQ id).unique match {
+      case Some(r: R) =>
+        relation.copyFields(r, this)
+        return this
+      case _ => throw new ORMException("Could not refresh a record because it is missing in the backend.")
+    }
   }
 
-  /**
-   * Perfoms record validation and throws `ValidationException` instead of peacefully returning
-   * `ValidationError`s.
-   */
-  def validate_!(): Unit = validate match {
-    case Some(errors) => throw errors.toException
-    case _ =>
-  }
-
-  /**
-   * Skips the validation and performs `INSERT` statement for this record.
-   * If no `fields` specified, performs full insert (except empty fields
-   * with default values), otherwise only specified `fields` participate
-   * in the statement.
-   */
-  def insert_!(fields: Field[_]*): Int = if (relation.readOnly_?)
+  def INSERT_!(fields: Field[_, R]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
+  else {
     // Execute events
     relation.beforeInsert.foreach(c => c(this))
-    // Collect fields which will participate in query
-    var f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => !f.empty_?) else fields
     // Prepare and execute query
-    val sql = dialect.insertRecord(this, f)
-    sqlLog.debug(sql)
-    val result = auto(conn.prepareStatement(sql))(st => {
-      relation.setParams(this, st, f)
-      st.executeUpdate
-    })
-    // Issue additional select to read generated ID (and default column values)
-    relation.refetchLast(this)
+    val result = _persist(evalFields(fields))
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     return result
-  })
-  def INSERT_!(fields: Field[_]*): Int = insert_!(fields: _*)
-
-  /**
-   * Validates record and executes `insert_!` on success.
-   */
-  def insert(fields: Field[_]*): Int = {
-    validate_!()
-    insert_!(fields: _*)
   }
-  def INSERT(fields: Field[_]*) = insert(fields: _*)
 
-  /**
-   * Skips the validation and performs `UPDATE` statement for this record.
-   * If no `fields` specified, performs full update, otherwise only specified
-   * `fields` participate in the statement.
-   */
-  def update_!(fields: Field[_]*): Int = if (relation.readOnly_?)
+  def INSERT(fields: Field[_, R]*): Int = {
+    validate_!
+    INSERT_!(fields: _*)
+  }
+
+  protected def _persist(fields: Seq[Field[_, R]]): Int = PRIMARY_KEY.value match {
+    case Some(id: PK) =>
+      val result = new Insert(relation, fields.filter(!_.null_?)).execute()
+      if (relation.autorefresh_?) refresh()
+      result
+    case _ => throw new ORMException("Application-assigned identifier is expected." +
+        "Use one of the generators if you wish identifiers to be generated automatically.")
+  }
+
+  def UPDATE_!(fields: Field[_, R]*): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
+  else {
+    if (PRIMARY_KEY.null_?)
+      throw new ORMException("Update is only allowed with non-null PRIMARY KEY field.")
     // Execute events
     relation.beforeUpdate.foreach(c => c(this))
     // Collect fields which will participate in query
-    val f: Seq[Field[_]] = if (fields.size == 0) _fields.filter(f => f != id) else fields
+    val f = evalFields(fields).filter(_ != PRIMARY_KEY)
     // Prepare and execute a query
-    val sql = dialect.updateRecord(this, f)
-    sqlLog.debug(sql)
-    val result = auto(conn.prepareStatement(sql))(st => {
-      relation.setParams(this, st, f)
-      typeConverter.write(st, id.getValue, f.size + 1)
-      st.executeUpdate
-    })
+    val q = (relation AS "root")
+        .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkUpdate
+    f.foreach(f => q.SET[Any](f.asInstanceOf[Field[Any, R]], f.value))
+    val result = q.execute()
+    if (relation.autorefresh_?) refresh()
+    // Invalidate inverse caches
+    contextCache.evictInverse[PK, R](this)
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     return result
-  })
-  def UPDATE_!(fields: Field[_]*): Int = update_!(fields: _*)
-
-  /**
-   * Validates record and executes `update_!` on success.
-   */
-  def update(fields: Field[_]*): Int = {
-    validate_!()
-    update_!(fields: _*)
   }
-  def UPDATE(fields: Field[_]*) = update(fields: _*)
 
-  /**
-   * Executes the `DELETE` statement for this record using primary key
-   * as delete criteria.
-   */
-  def delete_!(): Int = if (relation.readOnly_?)
+  def UPDATE(fields: Field[_, R]*): Int = {
+    validate_!
+    UPDATE_!(fields: _*)
+  }
+
+  def DELETE_!(): Int = if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
-  else transactionManager.dml(conn => {
+  else {
+    if (PRIMARY_KEY.null_?)
+      throw new ORMException("Delete is only allowed with non-null PRIMARY KEY field.")
     // Execute events
     relation.beforeDelete.foreach(c => c(this))
     // Prepare and execute query
-    val sql = dialect.deleteRecord(this)
-    sqlLog.debug(sql)
-    val result = auto(conn.prepareStatement(sql))(st => {
-      typeConverter.write(st, id.getValue, 1)
-      st.executeUpdate
-    })
+    val result = (relation AS "root")
+        .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkDelete.execute()
+    // Invalidate inverse caches
+    contextCache.evictInverse[PK, R](this)
     // Execute events
     relation.afterDelete.foreach(c => c(this))
     return result
-  })
-  def DELETE_!(): Int = delete_!()
+  }
 
-  /**
-   * If record's `id` field is not `NULL` perform `update`, otherwise perform `insert`
-   * and then refetch record using last generated identity.
-   */
-  def save_!(): Int = if (transient_?) insert_!() else update_!()
+  def validate(): Option[MsgGroup] = {
+    val errors = relation.validation.validate(this)
+    if (errors.size <= 0) None
+    else Some(new MsgGroup(errors: _*))
+  }
 
-  /**
-   * Validates record and executes `save_!` on success.
-   */
+  def validate_!(): Unit = validate.map(errors => throw new ValidationException(errors))
+
+  def save_!(): Int = if (transient_?) INSERT_!() else UPDATE_!()
+
   def save(): Int = {
     validate_!()
     save_!()
   }
 
-  /**
-   * Invalidates transaction-scoped cache for this record and refetches it from database.
-   */
-  def refresh(): this.type = if (transient_?)
-    throw new ORMException("Could not refresh transient record.")
-  else {
-    tx.evictRecordCache(this)
-    val root = relation.as("root")
-    val id = this.id()
-    SELECT (root.*) FROM root WHERE (root.id EQ id) unique match {
-      case Some(r: R) => relation.copyFields(r, this)
-      case _ =>
-        throw new ORMException("Could not locate record with id = " + id + " in database.")
-    }
-    return this
-  }
+  // Internal helpers
 
-  // ### Miscellaneous
+  protected def evalFields(fields: Seq[Field[_, R]]): Seq[Field[_, R]] =
+    (if (fields.size == 0) relation.fields else fields)
+        .map(f => relation.getField(this, f))
 
-  /**
-   * Get all fields of current record (involves some reflection).
-   */
-  protected[orm] lazy val _fields: Seq[Field[_]] = relation.fields
-      .map(f => relation.methodsMap(f).invoke(this) match {
-    case f: Field[_] => f
-    case a: Association[_, _] => a.field
-    case m => throw new ORMException("Unknown member: " + m)
-  })
+  /*!## Inverse Associations
 
-  /**
-   * Set a specified `value` to specified `holder`.
-   */
-  def setValue(vh: ValueHolder[_], value: Any): Unit = value match {
-    case Some(value) => setValue(vh, value)
-    case None => setValue(vh, null)
-    case _ => vh match {
-      case f: Field[Any] => f.setValue(value)
-      case a: Association[_, _] => value match {
-        case id: Long => setValue(a.field, id)
-        case rec: Record[_] => setValue(a.field, rec.id.getValue)
-        case _ => throw new ORMException("Could not set value " + value +
-            " to association " + a + ".")
-      }
-      case _ => throw new ORMException("Could not set value " + value +
-          " to specified value holder " + vh + ".")
-    }
-  }
+  One-to-one and one-to-many relationships can be implemented using `inverseOne`
+  or `inverseMany` methods.
+  */
+  protected def inverseOne[C <: Record[_, C]](association: Association[PK, C, R]) =
+    new InverseOne[PK, C, R](this, association)
 
-  /**
-   * Search for specified `field` among this record methods and set it's `value`.
-   */
-  def setField[T](field: Field[T], value: T): Unit = _fields.find(f => f == field) match {
-    case Some(f: Field[T]) => f.setValue(value)
-    case _ =>
-  }
+  protected def inverseMany[C <: Record[_, C]](association: Association[PK, C, R]) =
+    new InverseMany[PK, C, R](this, association)
 
-  override def equals(obj: Any) = obj match {
-    case r: R => this.id() == r.id()
+  /*!## Equality & Others
+  
+  Two record are considered equal if they share the same type and have same primary keys.
+  Transient records are never equal to each other.
+
+  The `hashCode` method delegates to record's primary key.
+
+  The `canEqual` method indicates that two records share the same type.
+
+  Finally, the default implementation of `toString` returns fully-qualified class name
+  of the record followed by "@" and it's primary key value (or `TRANSIENT` word if
+  primary key is `null`).
+  */
+  override def equals(that: Any) = that match {
+    case that: Record[_, _] =>
+      !(this.PRIMARY_KEY.null_? || that.PRIMARY_KEY.null_?) &&
+          this.PRIMARY_KEY.value == that.PRIMARY_KEY.value &&
+          this.getClass == that.getClass
     case _ => false
   }
 
-  override def hashCode = id.getOrElse(0l).hashCode
+  override def hashCode = PRIMARY_KEY.hashCode
 
-  override def toString = getClass.getSimpleName + "@" + id.toString("TRANSIENT")
+  override def canEqual(that: Any): Boolean = that match {
+    case that: Relation[_, _] =>
+      this.getClass == that.recordClass
+    case that: Record[_, _] =>
+      this.getClass == that.getClass
+    case _ => false
+  }
+
+  override def toString = getClass.getSimpleName + "@" +
+      PRIMARY_KEY.map(_.toString).getOrElse("TRANSIENT")
 
 }
 
-// ## Helper for fields DSL
+/*!# Identity Generation Strategies
 
-/**
- * A tiny builder that helps to instantiate `Field`s and `Association`s
- * in a neat DSL-like way.
- */
-class DefinitionHelper[R <: Record[R]](record: R, name: String) {
+Different identity generation strategies can be used by mixing in one of the `Generator`
+traits. Following identity generators are supported out-of-box:
 
-  def uuid = record.uuid + "." + name
+  * application-assigned identifiers (the default one, no need to mixin traits): application
+  is responsible for generating and assigning identifiers before attempting to persist a record;
+  * `IdentityGenerator` is a database-specific strategy: application should persist a record
+  with `NULL` primary key value, database is responsible for generating an identifier value and
+  for exposing last generated identifier;
+  * `SequenceGenerator` assumes that database supports sequences: the database is polled for
+  next sequence value which is then used as an identifier for persisting.
+*/
+trait Generator[PK, R <: Record[PK, R]] extends Record[PK, R] { this: R =>
+  override protected def _persist(fields: scala.Seq[Field[_, R]]): Int = persist(fields)
+  def persist(fields: Seq[Field[_, R]]): Int
+}
 
-  def integer = new IntField(name, uuid)
-  def bigint = new LongField(name, uuid)
-  def numeric(precision: Int = -1, scale: Int = 0) = new NumericField(name, uuid, precision, scale)
-  def text = new TextField(name, uuid, dialect.textType)
-  def varchar(length: Int = -1) = new TextField(name, uuid, length)
-  def boolean = new BooleanField(name, uuid)
-  def date = new DateField(name, uuid)
-  def time = new TimeField(name, uuid)
-  def timestamp = new TimestampField(name, uuid)
-  def xml = new XmlField(name, uuid)
+trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this: R =>
+  def persist(fields: scala.Seq[Field[_, R]]): Int = {
+    // Make sure that PRIMARY_KEY contains `NULL`
+    this.PRIMARY_KEY.setNull
+    // Persist all not-null fields
+    val result = new Insert(relation, fields.filter(!_.null_?)).execute()
+    // Fetch either the whole record or just an identifier.
+    val root = relation.AS("root")
+    if (relation.autorefresh_?)
+      SELECT(root.*).FROM(root).WHERE(dialect.identityLastIdPredicate(root)).unique match {
+        case Some(r) => relation.copyFields(r, this)
+        case _ => throw new ORMException("Backend didn't return last inserted record. " +
+            "Try another identifier generation strategy.")
+      }
+    else dialect.identityLastIdQuery(root).unique match {
+      case Some(id: PK) => this.PRIMARY_KEY := id
+      case _ => throw new ORMException("Backend didn't return last generated identity. " +
+          "Try another identifier generation strategy.")
+    }
+    return result
+  }
+}
 
-  def INTEGER = integer
-  def BIGINT = bigint
-  def NUMERIC(precision: Int = -1, scale: Int = 1) = numeric(precision, scale)
-  def TEXT = text
-  def VARCHAR(length: Int = -1) = varchar(length)
-  def BOOLEAN = boolean
-  def DATE = date
-  def TIME = time
-  def TIMESTAMP = timestamp
-  def XML = xml
-
-  def references[F <: Record[F]](relation: Relation[F]): Association[R, F] =
-    new Association[R, F](name, uuid, record, relation)
-  def REFERENCES[F <: Record[F]](relation: Relation[F]): Association[R, F] =
-    references(relation)
+trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this: R =>
+  def persist(fields: scala.Seq[Field[_, R]]): Int = {
+    // Poll database for next sequence value
+    val root = relation.AS("root")
+    dialect.sequenceNextValQuery(root).unique match {
+      case Some(id: PK) =>
+        // Assign retrieved id and persist all not-null fields
+        val f = fields.map { f =>
+          if (f == this.PRIMARY_KEY)
+            f.asInstanceOf[Field[PK, R]].set(Some(id))
+          f
+        }.filter(!_.null_?)
+        val result = new Insert(relation, f).execute()
+        // Perform additional select if required
+        if (relation.autorefresh_?)
+          refresh()
+        return result
+      case _ => throw new ORMException("Backend didn't return next sequence value. " +
+          "Try another identifier generation strategy.")
+    }
+  }
 }

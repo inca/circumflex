@@ -1,34 +1,47 @@
 package ru.circumflex.orm
 
-import ORM._
-import JDBC._
 import java.sql.{ResultSet, PreparedStatement}
-import collection.mutable.ListBuffer
+import ru.circumflex.core._
 
-// ## Query Commons
+/*!# Querying
 
-/**
- * The most common contract for queries.
- */
+SQL and DML queries form the heart of Circumflex ORM DSL.
+
+Common features implemented in the `Query` trait are *named parameters*
+which allow query reuse and *ensuring alias uniqueness* which prevents
+implicit relation node aliases from colliding within a single query.
+
+The `SQLQuery` trait represents data-retrieval queries which usually employ
+the `executeQuery` method of JDBC `PreparedStatement` and process JDBC
+`ResultSet`.
+
+The `DMLQuery` trait represents data-manipulation queries which usually
+employ the `executeUpdate` method of JDBC `PreparedStatement` and return
+the number of affected rows.
+*/
 trait Query extends SQLable with ParameterizedExpression with Cloneable {
 
-  protected var aliasCounter = 0;
+  // Keep track of last execution time
+  protected var _executionTime = 0l
+  def executionTime = _executionTime
+
+  protected var _aliasCounter = 0;
 
   /**
-   * Generate an alias to eliminate duplicates within query.
+   * Generates an alias to eliminate duplicates within query.
    */
   protected def nextAlias: String = {
-    aliasCounter += 1
-    return "this_" + aliasCounter
+    _aliasCounter += 1
+    return "this_" + _aliasCounter
   }
 
   /**
-   * Set prepared statement parameters of this query starting from specified index.
-   * Because `Query` objects can be nested, this method should return the new starting
-   * index of prepared statement parameter.
+   * Sets the parameters of specified `PreparedStatement` of this query starting
+   * from specified `index`. Because `Query` objects can be nested, this method returns
+   * the new starting index of prepared statement parameter.
    */
-  def setParams(st: PreparedStatement, startIndex: Int): Int = {
-    var paramsCounter = startIndex;
+  def setParams(st: PreparedStatement, index: Int): Int = {
+    var paramsCounter = index;
     parameters.foreach(p => {
       typeConverter.write(st, convertNamedParam(p), paramsCounter)
       paramsCounter += 1
@@ -36,22 +49,14 @@ trait Query extends SQLable with ParameterizedExpression with Cloneable {
     return paramsCounter
   }
 
-  // Named parameters
-
   protected var _namedParams: Map[String, Any] = Map()
 
   def renderParams: Seq[Any] = parameters.map(p => convertNamedParam(p))
 
-  /**
-   * Sets a named parameter value for this query.
-   */
   def set(name: String, value: Any): this.type = {
     _namedParams += name -> value
     return this
   }
-  def set(sym: Symbol, value: Any): this.type = set(sym.name, value)
-  def update(name: String, value: Any): Unit = set(name, value)
-  def update(sym: Symbol, value: Any): Unit = set(sym, value)
 
   protected def convertNamedParam(param: Any): Any = param match {
     case s: Symbol => lookupNamedParam(s.name)
@@ -65,35 +70,31 @@ trait Query extends SQLable with ParameterizedExpression with Cloneable {
       case _ => name
     }
 
-  // Miscellaneous
-
   override def clone(): this.type = super.clone.asInstanceOf[this.type]
 
   override def toString = toSql
 }
 
-// ## SQL Queries
-
-/**
- * A conrtact for SQL queries (data-retrieval). Specified `projection`
- * will be rendered in `SELECT` clause and will be used to read `ResultSet`.
- */
+/*! The `SQLQuery` trait defines a contract for data-retrieval queries.
+It's only type parameter `T` designates the query result type (it is
+determined by specified `projections`).
+*/
 abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   /**
-   * The `SELECT` clause of query. In normal circumstances this list should
-   * only consist of single `projection` element; but if `GROUP_BY` clause
-   * specifies projections that are not part of `projection`, than, they
-   * are added here explicitly.
+   * Forms the `SELECT` clause of query. In normal circumstances this list
+   * should only consist of single `projection` element; but if `GROUP_BY`
+   * clause specifies projections that are not yet a part of the `SELECT`
+   * clause, then they are added here implicitly but are not processed.
    */
   def projections: Seq[Projection[_]] = List(projection)
 
   /**
-   * Make sure that projections with alias `this` are assigned query-unique alias.
+   * Makes sure that `projections` with alias `this` are assigned query-unique alias.
    */
   protected def ensureProjectionAlias[T](projection: Projection[T]): Unit =
     projection match {
-      case p: AtomicProjection[_] if (p.alias == "this") => p.as(nextAlias)
+      case p: AtomicProjection[_] if (p.alias == "this") => p.AS(nextAlias)
       case p: CompositeProjection[_] =>
         p.subProjections.foreach(ensureProjectionAlias(_))
       case _ =>
@@ -101,48 +102,58 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   ensureProjectionAlias(projection)
 
-  // ### Data Retrieval Stuff
-
   /**
-   * Execute a query, open a JDBC `ResultSet` and executes specified `actions`.
+   * Executes a query, opens a JDBC `ResultSet` and executes specified `actions`.
    */
-  def resultSet[A](actions: ResultSet => A): A = transactionManager.sql(toSql)(st => {
-    sqlLog.debug(toSql)
-    setParams(st, 1)
-    auto(st.executeQuery)(actions)
-  })
-
-  // ### Executors
+  def resultSet[A](actions: ResultSet => A): A = {
+    val result = time {
+      tx.execute(toSql) { st =>
+        setParams(st, 1)
+        val rs = st.executeQuery
+        try {
+          actions(rs)
+        } finally {
+          rs.close
+        }
+      } { throw _ }
+    }
+    _executionTime = result._1
+    Statistics.executeSql(this)
+    return result._2
+  }
 
   /**
-   * Use the query projection to read
+   * Uses the query projection to read specified `ResultSet`.
    */
-  def read(rs: ResultSet): T = projection.read(rs)
+  def read(rs: ResultSet): Option[T] = projection.read(rs)
 
   /**
-   * Execute a query and return `Seq[T]`, where `T` is designated by query projection.
+   * Executes a query and returns `Seq[T]`, where `T` is designated by query `projection`.
    */
-  def list(): Seq[T] = resultSet(rs => {
-    val result = new ListBuffer[T]()
-    while (rs.next)
-      result += read(rs)
-    return result
-  })
+  def list(): Seq[T] = resultSet { rs =>
+    var result = List[T]()
+    while (rs.next) read(rs) match {
+      case Some(r) =>
+        result ++= List(r)
+      case _ =>
+    }
+    result
+  }
 
   /**
-   * Execute a query and return a unique result.
+   * Executes a query and returns a unique result.
    *
-   * An exception is thrown if result set yields more than one row.
+   * An exception is thrown if `ResultSet` yields more than one row.
    */
   def unique(): Option[T] = resultSet(rs => {
-    if (!rs.next) return None
-    else if (rs.isLast) return Some(read(rs))
+    if (!rs.next)
+      None
+    else if (rs.isLast)
+      read(rs)
     else throw new ORMException("Unique result expected, but multiple rows found.")
   })
 
 }
-
-// ## Native SQL
 
 class NativeSQLQuery[T](projection: Projection[T],
                         expression: ParameterizedExpression)
@@ -151,17 +162,13 @@ class NativeSQLQuery[T](projection: Projection[T],
   def toSql = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
 }
 
-// ## Full Select
-
-/**
- * A full-fledged `SELECT` query.
- */
 class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
 
-    // ### Commons
+  // Commons
 
+  protected var _distinct: Boolean = false
   protected var _auxProjections: Seq[Projection[_]] = Nil
-  protected var _relations: Seq[RelationNode[_]] = Nil
+  protected var _relations: Seq[RelationNode[_, _]] = Nil
   protected var _where: Predicate = EmptyPredicate
   protected var _having: Predicate = EmptyPredicate
   protected var _groupBy: Seq[Projection[_]] = Nil
@@ -170,97 +177,70 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
   protected var _limit: Int = -1
   protected var _offset: Int = 0
 
-  /**
-   * Query parameters.
-   */
   def parameters: Seq[Any] = _where.parameters ++
       _having.parameters ++
       _setOps.flatMap(p => p._2.parameters) ++
       _orders.flatMap(_.parameters)
 
-  /**
-   * Queries combined with this subselect using specific set operation
-   * (pairs, `SetOperation -> Subselect`),
-   */
   def setOps = _setOps
 
-  /**
-   * The `SELECT` clause of query.
-   */
+  // SELECT clause
+
   override def projections = List(projection) ++ _auxProjections
 
-  // ### FROM clause
+  def distinct_?(): Boolean = _distinct
+  def DISTINCT(): Select[T] = {
+    this._distinct = true
+    return this
+  }
+
+  // FROM clause
 
   def from = _relations
-
-  /**
-   * Applies specified `nodes` as this query's `FROM` clause.
-   * All nodes with `this` alias are assigned query-unique alias.
-   */
-  def from(nodes: RelationNode[_]*): Select[T] = {
+  def FROM(nodes: RelationNode[_, _]*): Select[T] = {
     this._relations = nodes.toList
     from.foreach(ensureNodeAlias(_))
     return this
   }
-  def FROM(nodes: RelationNode[_]*): Select[T] = from(nodes: _*)
 
-  protected def ensureNodeAlias(node: RelationNode[_]): RelationNode[_] =
+  protected def ensureNodeAlias(node: RelationNode[_, _]): RelationNode[_, _] =
     node match {
-      case j: JoinNode[_, _] =>
+      case j: JoinNode[_, _, _, _] =>
         ensureNodeAlias(j.left)
         ensureNodeAlias(j.right)
         j
-      case n: RelationNode[_] if (n.alias == "this") => node.as(nextAlias)
+      case n: RelationNode[_, _] if (n.alias == "this") => node.AS(nextAlias)
       case n => n
     }
 
-  // ### WHERE clause
+  // WHERE clause
 
   def where: Predicate = this._where
-
-  def where(predicate: Predicate): Select[T] = {
+  def WHERE(predicate: Predicate): Select[T] = {
     this._where = predicate
     return this
   }
-  def WHERE(predicate: Predicate): Select[T] = where(predicate)
-
-  /**
-   * Use specified `expression` as the `WHERE` clause of this query
-   * with specified named `params`.
-   */
-  def where(expression: String, params: Pair[String,Any]*): Select[T] =
-    where(prepareExpr(expression, params: _*))
   def WHERE(expression: String, params: Pair[String,Any]*): Select[T] =
-    where(expression, params: _*)
+    WHERE(prepareExpr(expression, params: _*))
 
-  // ### HAVING clause
+  // HAVING clause
 
   def having: Predicate = this._having
-
-  def having(predicate: Predicate): Select[T] = {
+  def HAVING(predicate: Predicate): Select[T] = {
     this._having = predicate
     return this
   }
-  def HAVING(predicate: Predicate): Select[T] = having(predicate)
-
-  /**
-   * Use specified `expression` as the `HAVING` clause of this query
-   * with specified named `params`.
-   */
-  def having(expression: String, params: Pair[String,Any]*): Select[T] =
-    having(prepareExpr(expression, params: _*))
   def HAVING(expression: String, params: Pair[String,Any]*): Select[T] =
-    having(expression, params: _*)
+    HAVING(prepareExpr(expression, params: _*))
 
-  // ### GROUP BY clause
+  // GROUP BY clause
 
   def groupBy: Seq[Projection[_]] = _groupBy
 
-  def groupBy(proj: Projection[_]*): Select[T] = {
+  def GROUP_BY(proj: Projection[_]*): Select[T] = {
     proj.toList.foreach(p => addGroupByProjection(p))
     return this
   }
-  def GROUP_BY(proj: Projection[_]*) = groupBy(proj: _*)
 
   protected def addGroupByProjection(proj: Projection[_]): Unit =
     findProjection(projection, p => p.equals(proj)) match {
@@ -272,7 +252,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
     }
 
   /**
-   * Search deeply for a projection that matches specified `predicate` function.
+   * Searches deeply for a `projection` that matches specified `predicate` function.
    */
   protected def findProjection(projection: Projection[_],
                                predicate: Projection[_] => Boolean): Option[Projection[_]] =
@@ -283,7 +263,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
       case _ => return None
     }
 
-  // ### Set Operations
+  // Set Operations
 
   protected def addSetOp(op: SetOperation, sql: SQLQuery[T]): Select[T] = {
     val q = clone()
@@ -291,104 +271,86 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
     return q
   }
 
-  def union(sql: SQLQuery[T]): Select[T] =
+  def UNION(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_UNION, sql)
-  def UNION(sql: SQLQuery[T]) = union(sql)
-
-  def unionAll(sql: SQLQuery[T]): Select[T] =
+  def UNION_ALL(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_UNION_ALL, sql)
-  def UNION_ALL(sql: SQLQuery[T]) =
-    unionAll(sql)
-
-  def except(sql: SQLQuery[T]): Select[T] =
+  def EXCEPT(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_EXCEPT, sql)
-  def EXCEPT(sql: SQLQuery[T]) =
-    except(sql)
-
-  def exceptAll(sql: SQLQuery[T]): Select[T] =
+  def EXCEPT_ALL(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_EXCEPT_ALL, sql)
-  def EXCEPT_ALL(sql: SQLQuery[T]) =
-    exceptAll(sql)
-
-  def intersect(sql: SQLQuery[T]): Select[T] =
+  def INTERSECT(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_INTERSECT, sql)
-  def INTERSECT(sql: SQLQuery[T]) =
-    intersect(sql)
-
-  def intersectAll(sql: SQLQuery[T]): Select[T] =
+  def INTERSECT_ALL(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_INTERSECT_ALL, sql)
-  def INTERSECT_ALL(sql: SQLQuery[T]) =
-    intersectAll(sql)
 
-  // ### ORDER BY clause
+  // ORDER BY clause
 
   def orderBy = _orders
-  def orderBy(order: Order*): Select[T] = {
+  def ORDER_BY(order: Order*): Select[T] = {
     this._orders ++= order.toList
     return this
   }
-  def ORDER_BY(order: Order*) =
-    orderBy(order: _*)
 
-  // ### LIMIT and OFFSET clauses
+  // LIMIT and OFFSET clauses
 
   def limit = this._limit
-  def limit(value: Int): Select[T] = {
+  def LIMIT(value: Int): Select[T] = {
     _limit = value
     return this
   }
-  def LIMIT(value: Int) = limit(value)
 
   def offset = this._offset
-  def offset(value: Int): Select[T] = {
+  def OFFSET(value: Int): Select[T] = {
     _offset = value
     return this
   }
-  def OFFSET(value: Int) = offset(value)
 
-  // ### Miscellaneous
+  // Miscellaneous
 
   def toSql = dialect.select(this)
 
 }
 
-// ## DML Queries
-
-/**
- * A conrtact for DML queries (data-manipulation).
- */
+/*! The `DMLQuery` trait defines a contract for data-manipulation queries. */
 trait DMLQuery extends Query {
 
   /**
-   * Execute a query and return the number of affected rows.
+   * Executes a query and returns the number of affected rows.
    */
-  def execute(): Int = transactionManager.dml(conn => {
-    val sql = toSql
-    sqlLog.debug(sql)
-    auto(conn.prepareStatement(sql))(st => {
-      setParams(st, 1)
-      st.executeUpdate
-    })
-  })
+  def execute(): Int = {
+    val result = time {
+      tx.execute(toSql){ st =>
+        setParams(st, 1)
+        st.executeUpdate
+      } { throw _ }
+    }
+    _executionTime = result._1
+    Statistics.executeDml(this)
+    return result._2
+  }
 }
-
-// ## Native DML
 
 class NativeDMLQuery(expression: ParameterizedExpression) extends DMLQuery {
   def parameters = expression.parameters
   def toSql = expression.toSql
 }
 
-// ## INSERT-SELECT query
+class Insert[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
+                                     val fields: Seq[Field[_, R]])
+    extends DMLQuery {
+  def parameters = fields.map(_.value)
+  def toSql: String = dialect.insert(this)
+}
 
 /**
- * Functionality for INSERT-SELECT query. Data extracted using specified `query`
- * and inserted into specified `relation`.
+ * Provides functionality for `INSERT ... SELECT` queries. Data is extracted using
+ * specified `query` and is inserted into specified `relation`.
  *
- * The projections of `query` must match the columns of target `relation`.
+ * The projections of `query` should match the columns of target `relation`.
  */
-class InsertSelect[R <: Record[R]](val relation: Relation[R],
-                                   val query: SQLQuery[_])
+class InsertSelect[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
+                                           val query: SQLQuery[_])
     extends DMLQuery {
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
@@ -396,87 +358,62 @@ class InsertSelect[R <: Record[R]](val relation: Relation[R],
   def toSql: String = dialect.insertSelect(this)
 }
 
-/**
- * A lil helper to keep stuff DSL'ly.
- */
-class InsertSelectHelper[R <: Record[R]](val relation: Relation[R]) {
-  def select[T](projection: Projection[T]) = new InsertSelect(relation, new Select(projection))
-  def SELECT[T](projection: Projection[T]) = select(projection)
+class InsertSelectHelper[PK, R <: Record[PK, R]](val relation: Relation[PK, R]) {
+  def SELECT[T](projection: Projection[T]) = new InsertSelect(relation, new Select(projection))
 }
 
-// ## DELETE query
-
 /**
- * Functionality for DELETE query.
+ * Provides functionality for `DELETE` queries.
  */
-class Delete[R <: Record[R]](val node: RelationNode[R])
+class Delete[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     extends DMLQuery {
   val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
-  // ### WHERE clause
-
   protected var _where: Predicate = EmptyPredicate
   def where: Predicate = this._where
-  def where(predicate: Predicate): Delete[R] = {
+  def WHERE(predicate: Predicate): Delete[PK, R] = {
     this._where = predicate
     return this
   }
-  def WHERE(predicate: Predicate) = where(predicate)
 
-  // ### Miscellaneous
   def parameters = _where.parameters
   def toSql: String = dialect.delete(this)
 }
 
-// ## UPDATE query
-
 /**
- * Functionality for UPDATE query.
+ * Provides functionality for `UPDATE` queries.
  */
-class Update[R <: Record[R]](val node: RelationNode[R])
+class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     extends DMLQuery {
   val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
-  // ### SET clause
-
-  private var _setClause: Seq[Pair[Field[_], Any]] = Nil
+  private var _setClause: Seq[(Field[_, R], Option[Any])] = Nil
   def setClause = _setClause
-  def set[T](field: Field[T], value: T): Update[R] = {
-    _setClause ++= List(field -> value)
+  def SET[T](field: Field[T, R], value: T): Update[PK, R] = {
+    _setClause ++= List(field -> Some(value))
     return this
   }
-  def SET[T](field: Field[T], value: T): Update[R] = set(field, value)
-  def set[P <: Record[P]](association: Association[R, P], value: P): Update[R]=
-    set(association.field, value.id.getValue)
-  def SET[P <: Record[P]](association: Association[R, P], value: P): Update[R] =
-    set(association, value)
-  def setNull[T](field: Field[T]): Update[R] = set(field, null.asInstanceOf[T])
-  def SET_NULL[T](field: Field[T]): Update[R] = setNull(field)
-  def setNull[P <: Record[P]](association: Association[R, P]): Update[R] =
-    setNull(association.field)
-  def SET_NULL[P <: Record[P]](association: Association[R, P]): Update[R] =
-    setNull(association)
-
-  // ### WHERE clause
+  def SET[K, P <: Record[K, P]](association: Association[K, R, P], value: P): Update[PK, R]=
+    SET(association.field.asInstanceOf[Field[Any, R]], value.PRIMARY_KEY.value)
+  def SET_NULL[T](field: Field[T, R]): Update[PK, R] = {
+    _setClause ++= List(field -> None)
+    return this
+  }
+  def SET_NULL[K, P <: Record[K, P]](association: Association[K, R, P]): Update[PK, R] =
+    SET_NULL(association.field)
 
   protected var _where: Predicate = EmptyPredicate
   def where: Predicate = this._where
-  def where(predicate: Predicate): Update[R] = {
+  def WHERE(predicate: Predicate): Update[PK, R] = {
     this._where = predicate
     return this
   }
-  def WHERE(predicate: Predicate) = where(predicate)
-
-  // ### Miscellaneous
 
   def parameters = _setClause.map(_._2) ++ _where.parameters
   def toSql: String = dialect.update(this)
 
 }
-
-
-

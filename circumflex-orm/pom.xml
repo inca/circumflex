@@ -6,26 +6,47 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-orm</artifactId>
   <packaging>jar</packaging>
-  <version>1.2</version>
+  <version>2.0</version>
   <name>Circumflex ORM Framework</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>1.2</version>
+    <version>2.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+
+  <properties>
+    <orm.connection.driver>org.h2.Driver</orm.connection.driver>
+    <orm.connection.url>jdbc:h2:mem:test</orm.connection.url>
+    <orm.connection.username>test</orm.connection.username>
+    <orm.connection.password>test</orm.connection.password>
+    <orm.dialect>ru.circumflex.orm.H2Dialect</orm.dialect>
+    <orm.defaultSchema>orm</orm.defaultSchema>
+  </properties>
 
   <dependencies>
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-core</artifactId>
-      <version>1.2</version>
+      <version>2.0</version>
     </dependency>
     <dependency>
       <groupId>c3p0</groupId>
       <artifactId>c3p0</artifactId>
       <version>0.9.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>ehcache-core</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+    <!-- Testing -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.2.142</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

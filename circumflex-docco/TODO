@@ -1,2 +1,0 @@
-[ ] command line tool or something like `mvn cx:doc ~/projects/sandbox/src/main/scala/router.scala`
-[ ] merge and refactor original docco css in default template

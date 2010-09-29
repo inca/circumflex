@@ -2,44 +2,51 @@ package ru.circumflex.orm
 
 import xml._
 import java.io.File
-import ORM._
 
-// ## XML (de)serialization
+/*!# XML (de)serialization
 
-/**
- * A trait for data holders that are capable of (de)serializing themselves (from)into
- * XML. 
- */
-trait XmlSerializable[T] {
-  def to(value: T): String
-  def from(string: String): T
+Circumflex ORM allows you to load graphs of associated records from XML files.
+This is very useful for loading test data and exchanging records between databases
+with associations preserving (in id-independent style).
+
+Every `Field` capable of (de)serializing itself (from)into XML should extend the
+`XmlSerializable` trait. A record can be read from XML format if it contains only
+`XmlSerializable` fields.
+*/
+abstract class XmlSerializable[T, R <: Record[_, R]](
+    name: String, record: R, sqlType: String)
+    extends Field[T, R](name, record, sqlType) {
+  def from(str: String): Option[T]
+  def to(value: Option[T]): String =
+    value.map(_.toString).getOrElse("")
 }
 
-/**
- * Deployment is a unit of work of XML import tool. It specifies the prefix
- * for record classes resolution, as well as the behavior, if certain records
- * already exist.
- */
+/*! Deployment is a unit of work of XML import tool. It specifies the `prefix` for record
+classes resolution, the `onExist` behavior (`keep`, `update` or `recreate`) and whether
+record validation is needed before persisting. One deployment corresponds to one transaction,
+so each deployment is executed atomically.
+*/
 class Deployment(val id: String,
                  val prefix: String,
                  val onExist: Deployment.OnExistAction,
-                 val entries: Seq[Node],
-                 val validate: Boolean = true) {
+                 val validate: Boolean = true,
+                 val entries: Seq[Node]) {
 
   def process(): Unit = try {
     entries.foreach(e => processNode(e, Nil))
-    tx.commit
+    COMMIT
   } catch {
     case e =>
-      tx.rollback
+      ROLLBACK
       throw e
   }
 
-  protected def processNode[R <: Record[R]](
+  protected def processNode[R <: Record[Any, R]](
       node: Node,
-      parentPath: Seq[Pair[Association[_, _], Record[_]]]): Record[R] = {
+      parentPath: Seq[Pair[Association[_, _, _], Record[_, _]]]): Record[Any, R] = {
     val cl = pickClass(node)
     var r = cl.newInstance.asInstanceOf[R]
+    var update = false
     // Decide, whether a record should be processed, and how exactly.
     if (node.attributes.next != null) {
       val crit = prepareCriteria(r, node)
@@ -50,44 +57,52 @@ class Deployment(val id: String,
           crit.mkDelete.execute()
         case Some(rec: R) if (onExist == Deployment.Update) =>
           r = rec
+          update = true
         case _ =>
       }
     }
-    // If we are still here, let's process the record further: set parents, attributes,
-    // subelements and foreigners.
-    parentPath.foreach(p =>
-      if (r._fields.contains(p._1.field)) r.setField(p._1.field, p._2.id.getValue))
-    var foreigns: Seq[Pair[Association[_, _], Node]] = Nil
+    // If we are still here, let's process the record further.
+    // In first place, we set provided parents
+    parentPath.foreach { p =>
+      if (r.relation.fields.contains(p._1.field))
+        r.relation.getField(r, p._1.field.asInstanceOf[Field[Any, R]]).set(p._2.PRIMARY_KEY.value)
+    }
+    var foreigns: Seq[Pair[Association[_, _, _], Node]] = Nil
+    // Secondly, we set fields provided via attributes
     node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString))
+    // Next we process element body
     node.child.foreach {
       case n: Elem => try {
         r.getClass.getMethod(n.label) match {
-          case m if (classOf[Field[_]].isAssignableFrom(m.getReturnType)) =>
+          case m if (classOf[Field[_, _]].isAssignableFrom(m.getReturnType)) =>
             setRecordField(r, n.label, n.text.trim)
-          case m if (classOf[Association[_, _]].isAssignableFrom(m.getReturnType)) =>
+          case m if (classOf[Association[_, _, _]].isAssignableFrom(m.getReturnType)) =>
             n.child.find(_.isInstanceOf[Elem]) match {
               case Some(n) =>
-                val a = m.invoke(r).asInstanceOf[Association[R, R]]
+                val a = m.invoke(r).asInstanceOf[Association[Any, R, R]]
                 val parent = processNode(n, parentPath ++ List(a -> r))
-                r.setValue(a, parent)
+                r.relation.getField(r, a.field).set(parent.PRIMARY_KEY.value)
               case None =>
                 throw new ORMException("The element <" + n.label + "> is empty.")
             }
-          case m if (classOf[InverseAssociation[_, _]].isAssignableFrom(m.getReturnType)) =>
-            val a = m.invoke(r).asInstanceOf[InverseAssociation[R, R]].association
+          case m if (classOf[InverseAssociation[_, _, _, _]].isAssignableFrom(m.getReturnType)) =>
+            val a = m.invoke(r).asInstanceOf[InverseAssociation[Any, R, R, Any]].association
             foreigns ++= n.child.filter(_.isInstanceOf[Elem]).map(n => (a -> n))
         }
       } catch {
         case e: NoSuchMethodException =>
-          ormLog.warn("Could not process '" + n.label + "' of " + r.getClass)
+          ORM_LOG.warn("Could not process '" + n.label + "' of " + r.getClass)
       }
       case _ =>
     }
-    // Now the record is ready to be saved.
-    if (validate) r.save() else r.save_!()
-    // Finally, process the foreigners.
+    // Now the record is ready to be saved
+    if (update)
+      if (validate) r.UPDATE() else r.UPDATE_!()
+    else
+      if (validate) r.INSERT() else r.INSERT_!()
+    // Finally, we process the foreigners
     foreigns.foreach(p =>
-      processNode(p._2, parentPath ++ List(p._1.asInstanceOf[Association[R, R]] -> r)))
+      processNode(p._2, parentPath ++ List(p._1.asInstanceOf[Association[Any, R, R]] -> r)))
     // And return our record.
     return r
   }
@@ -98,32 +113,29 @@ class Deployment(val id: String,
     return Class.forName(p + node.label, true, Thread.currentThread().getContextClassLoader())
   }
 
-  protected def setRecordField[R <: Record[R]](r: R, k: String, v: String): Unit = try {
+  protected def setRecordField[R <: Record[_, R]](r: R, k: String, v: String): Unit = {
     val m = r.getClass.getMethod(k)
-    if (classOf[Field[_]].isAssignableFrom(m.getReturnType)) {    // only scalar fields are accepted
-      val field = m.invoke(r).asInstanceOf[Field[Any]]
-      val value = convertValue(r, k, v)
-      r.setValue(field, value)
+    if (classOf[Field[_, _]].isAssignableFrom(m.getReturnType)) {    // only scalar fields are accepted
+      val field = m.invoke(r).asInstanceOf[Field[Any, R]]
+      val value = convertValue(field, v)
+      field.set(value)
     }
-  } catch {
-    case e: NoSuchMethodException => ormLog.warn("Could not process '" + k + "' of " + r.getClass)
   }
 
-  protected def prepareCriteria[R <: Record[R]](r: R, n: Node): Criteria[R] = {
-    val crit = r.relation.criteria
+  protected def prepareCriteria[R <: Record[Any, R]](r: R, n: Node): Criteria[Any, R] = {
+    val crit = r.relation.AS("root").criteria
     n.attributes.foreach(a => {
       val k = a.key
-      val v = convertValue(r, k, a.value.toString)
-      val field = r.getClass.getMethod(k).invoke(r).asInstanceOf[Field[Any]]
+      val field = r.relation.getClass.getMethod(k).invoke(r).asInstanceOf[Field[Any, R]]
+      val v = convertValue(field, a.value.toString)
       crit.add(field EQ v)
     })
     return crit
   }
 
-  protected def convertValue(r: Record[_], k: String, v: String): Any = try {
-    r.getClass.getMethod(k).invoke(r).asInstanceOf[XmlSerializable[Any]].from(v)
-  } catch {
-    case _ => v
+  protected def convertValue(field: Field[Any, _], v: String): Option[Any] = field match {
+    case field: XmlSerializable[Any, _] => field.from(v)
+    case _ => Some(v)
   }
 
   override def toString = id match {
@@ -153,7 +165,7 @@ object Deployment {
       case "false" | "f" | "no" | "off" => false
       case _ => true
     }
-    return new Deployment(id, prefix, onExist, n.child.filter(n => n.isInstanceOf[Elem]), validate)
+    return new Deployment(id, prefix, onExist, validate, n.child.filter(n => n.isInstanceOf[Elem]))
   } else throw new ORMException("<deployment> expected, but <" + n.label + "> found.")
 
   def readAll(n: Node): Seq[Deployment] = if (n.label == "deployments")
@@ -162,6 +174,6 @@ object Deployment {
 
 }
 
-class FileDeploymentHelper(f: File) {
-  def process(): Unit = Deployment.readAll(XML.loadFile(f)).foreach(_.process)
+class DeploymentHelper(f: File) {
+  def loadData(): Unit = Deployment.readAll(XML.loadFile(f)).foreach(_.process)
 }

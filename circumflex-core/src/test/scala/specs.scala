@@ -1,159 +1,109 @@
-package ru.circumflex.core.test
+package ru.circumflex.core
 
-import ru.circumflex.core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
+import java.util.UUID
+
+// Mocks
+
+class Dummy {
+  val uuid = UUID.randomUUID.toString
+  override def equals(obj: Any): Boolean = obj match {
+    case d: Dummy => this.uuid.equals(d.uuid)
+    case _ => false
+  }
+  override def hashCode: Int = uuid.hashCode
+}
+
+object DefaultDummy extends Dummy
+
+class CustomContext extends Context
+
+// Specs
 
 class SpecsTest extends JUnit4(CircumflexCoreSpec)
 
 object CircumflexCoreSpec extends Specification {
 
-  class MainRouter extends RequestRouter {
-    // Common stuff
-    get("/") = "preved"
-    get("/ctx") = if (!CircumflexContext.live_?) "null" else ctx.toString
-    get("/capture/(.*)"r) = "uri$1 is " + uri(1)
-    get("/decode me") = "preved"
-    post("/post") = "preved"
-    put("/put") = "preved"
-    delete("/delete") = "preved"
-    options("/options") = "preved"
-    get("/redirect") = redirect("/")
-    get("/rewrite") = rewrite("/")
-    get("/error") = error(503, "preved")
-    get("/contentType\\.(.+)"r) = {
-      ctx.contentType = uri.get(1) match {
-        case Some("html") => "text/html"
-        case Some("css") => "text/css"
-        case _ => "application/octet-stream"
-      }
-      done()
-    }
-    // Composite matchers
-    get("/composite" & Accept("text/:format") & Referer("localhost")) =
-        "3 conditions met (" + param("format") + ")"
-    get("/composite" & Accept("text/:format")) =
-        "2 conditions met (" + param("format") + ")"
-    get("/composite") = "1 condition met"
-    // Flashes
-    get("/flash-set") = {
-      flash('notice) = "preved"
-      done()
-    }
-    get("/flash-get") = flash.get('notice) match {
-      case Some(s: String) => s
-      case None => ""
-    }
-    // Simple urls
-    get("/filename/:name.:ext") = uri('name) + uri('ext)
-    get("*/one/:two/+.:three") =
-      uri(1) + uri('two) + uri(3) + uri('three)
-    // Messages
-    get("/msg") = msg("hello")
-    get("/msg/:name") = msg("parameterizedHello", "name" -> uri('name))
-  }
+  // Circumflex Configuration API
 
-  doBeforeSpec{
-    Circumflex("cx.router") = classOf[MainRouter]
-    MockApp.start
-  }
-
-  doAfterSpec { MockApp.stop }
-
-  "RequestRouter" should {
-    "match the request against it's routes until first match" in {
-      MockApp.get("/").execute().getContent must_== "preved"
+  "Circumflex Configuration" should {
+    "take params from `cx.properties`" in {
+      cx("test") must_== "preved"
     }
-    "return to the filter if no routes match (default filter's behavior is 404)" in {
-      MockApp.get("/this/does/not/match/any/routes").execute().getStatus must_== 404
+    "provide object insantiation facility" in {
+      val dummy = cx.instantiate[Dummy]("dummy", DefaultDummy)
+      dummy must notBeNull
+      dummy must_!= cx.instantiate[Dummy]("dummy", DefaultDummy)
     }
-    "decode URIs before matching" in {
-      MockApp.get("/decode%20me").execute().getContent must_== "preved"
-    }
-    "match POST requests" in {
-      MockApp.post("/post").execute().getContent must_== "preved"
-    }
-    "match PUT requests" in {
-      MockApp.put("/put").execute().getContent must_== "preved"
-    }
-    "match DELETE requests" in {
-      MockApp.delete("/delete").execute().getContent must_== "preved"
-    }
-    "match OPTIONS requests" in {
-      MockApp.options("/options").execute().getContent must_== "preved"
-    }
-    "match composite routes" in {
-      MockApp.get("/composite")
-          .setHeader("Accept","text/html")
-          .setHeader("Referer","localhost")
-          .execute().getContent must_== "3 conditions met (html)"
-      MockApp.get("/composite")
-          .setHeader("Accept","text/plain")
-          .execute().getContent must_== "2 conditions met (plain)"
-      MockApp.get("/composite")
-          .setHeader("Accept","application/xml")
-          .setHeader("Referer","localhost")
-          .execute().getContent must_== "1 condition met"
-    }
-    "interpret '_method' parameter as HTTP method" in {
-      MockApp.get("/put?_method=PUT").execute().getContent must_== "preved"
-      MockApp.post("/put")
-          .setContent("_method=PUT")
-          .execute()
-          .getContent must_== "preved"
-    }
-    "send redirects" in {
-      val r = MockApp.get("/redirect").execute()
-      r.getStatus must_== 302
-      r.getHeader("Location") must_== "http://localhost/"
-    }
-    "process rewrites" in {
-      MockApp.get("/rewrite").execute().getContent must_== "preved"
-    }
-    "process errors" in {
-      MockApp.get("/error").execute().getStatus must_== 503
-    }
-    "process messages" in {
-      MockApp.get("/msg").execute().getContent must_== "Hello!"
-      MockApp.get("/msg")
-          .setHeader("Accept-Language", "ru,en;q=0.8,en-us;q=0.2")
-          .execute().getContent must_== "Hello!"
-      MockApp.get("/msg")
-          .setHeader("Accept-Language", "pt,br;q=0.8,en-us;q=0.2")
-          .execute().getContent must_== "Hola!"
-      MockApp.get("/msg/world")
-          .setHeader("Accept-Language", "pt,br;q=0.8,en-us;q=0.2")
-          .execute().getContent must_== "Hello, world!"
+    "instantiate singletons" in {
+      cx.instantiate[Dummy]("defaultDummy") must_== cx.instantiate[Dummy]("defaultDummy")
     }
   }
 
-  "UriMatcher" should {
-    "match simplified request 1" in {
-      MockApp.get("/filename/file.txt").execute.getContent must_== "filetxt"
+  // Circumflex Context API
+
+  "Circumflex Context" should {
+    "be initialized and destroyed properly" in {
+      Context.live_? must beFalse
+      Context.init()
+      Context.live_? must beTrue
+      Context.destroy()
+      Context.live_? must beFalse
     }
-    "match simplified request 2" in {
-      MockApp.get("/aaa/one/bbb00/cc.ddd.e").execute.getContent must_== "/aaabbb00cc.ddde"
-      MockApp.get("/one/bbb00/cc.ddd.e").execute.getContent must_== "bbb00cc.ddde"
-      MockApp.get("/one/bbb00/.ddde").execute.getStatus must_== 404
+    "initialize on demand" in {
+      Context.live_? must beFalse
+      Context.get must notBeNull
+      Context.live_? must beTrue
+    }
+    "process events" in {
+      var inits = 0;
+      var destroys = 0;
+      Context.addInitListener(c => inits += 1)
+      Context.addDestroyListener(c => destroys += 1)
+      Context.init()
+      Context.destroy()
+      Context.init()
+      Context.destroy()
+      Context.init()
+      Context.destroy()
+      inits must_== 3
+      destroys must_== 3
+    }
+    "be configurable" in {
+      cx("cx.context") = classOf[CustomContext]
+      ctx.isInstanceOf[CustomContext] must beTrue
+    }
+    "provide DSL for setting and getting context variables" in {
+      'test := "preved"
+      'test.get must_== Some("preved")
+    }
+    "provide untyped container functionality" in {
+      'dummy := DefaultDummy
+      'dummy.apply[Dummy].uuid must_== DefaultDummy.uuid
+      'testInt := "0"
+      'testInt.getInt must_== 0
+      'testBoolean := "false"
+      'testBoolean.getBoolean must_== false
+      'testDate := "29.01.1988"
+      'testDate.getDate("dd.MM.yyyy").toString must_== "Fri Jan 29 00:00:00 MSK 1988"
     }
   }
 
-  "CircumflexContext" should {
-    "be available thread-locally in Circumflex application scope" in {
-      MockApp.get("/ctx").execute().getContent mustNotBe "null"
+  // Circumflex Messages API
+
+  "Circumflex Messages" should {
+    "resolve messages in different locales" in {
+      ctx("cx.locale") = "en_US"
+      msg("hello") must_== "Hello!"
+      ctx("cx.locale") = "pt"
+      msg("hello") must_== "Hola!"
     }
-    "be destroyed after the request processing has finished" in {
-      MockApp.get("/").execute
-      CircumflexContext.live_? mustBe false
+    "format messages using `MessageFormat`" in {
+      msg.format("formatHello", "dude") must_== "Hello, dude!"
     }
-    "contain captured groups from URI" in {
-      MockApp.get("/capture/preved").execute().getContent must_== "uri$1 is preved"
-    }
-    "set response content type" in {
-      MockApp.get("/contentType.html").execute()
-          .getHeader("Content-Type") must beMatching("text/html(\\s*;\\s*charset=.*)?")
-      MockApp.get("/contentType.css").execute()
-          .getHeader("Content-Type") must beMatching("text/css(\\s*;\\s*charset=.*)?")
+    "format messages using simple interpolations" in {
+      msg.fmt("fmtHello", "name" -> "dude") must_== "Hello, dude!"
     }
   }
 

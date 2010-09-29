@@ -1,161 +1,248 @@
 package ru.circumflex.orm
 
-import ORM._
-import JDBC._
-import ru.circumflex.core.Circumflex
-import ru.circumflex.core.CircumflexUtil._
+import ru.circumflex.core._
 import java.lang.reflect.Method
-import java.sql.PreparedStatement
 
-// ## Relations registry
+/*!# Relations
 
-/**
- * This singleton holds mappings between `Record` classes and their
- * corresponding relations. This provides weak coupling between the two
- * to allow proper initialization of either side.
- */
-object RelationRegistry {
+Like records, relations are alpha and omega of relational theory and, therefore,
+of Circumflex ORM API.
 
-  protected var _classToRelation: Map[Class[_], Relation[_]] = Map()
-  protected var _cacheableRelations: Seq[Cacheable[_]] = Nil
+In relational model a relation is a data structure which consists of a heading and
+an unordered set of rows which share the same type. Classic relational databases
+often support two type of relations, [tables](#table) and [views](#view).
 
-  def cacheableRelations = _cacheableRelations
+In Circumflex ORM the relation contains record metadata and various operational
+information. There should be only one relation instance per application, so
+by convention the relations should be the companion objects of corresponding
+records:
 
-  def getRelation[R <: Record[R]](r: R): Relation[R] =
-    _classToRelation.get(r.getClass) match {
-      case Some(rel: Relation[R]) => rel
-      case _ => {
-        val relClass = Circumflex.loadClass[Relation[R]](r.getClass.getName + "$")
-        val relation = relClass.getField("MODULE$").get(null).asInstanceOf[Relation[R]]
-        _classToRelation += (r.getClass -> relation)
-        relation match {
-          case c: Cacheable[_] =>
-            _cacheableRelations ++= List[Cacheable[_]](c)
-          case _ =>
-        }
-        return relation
-      }
+    // record definition
+    class Country extends Record[String, Country] {
+      val code = "code".VARCHAR(2).NOT_NULL
+      val name = "name".TEXT.NOT_NULL
+
+      def PRIMARY_KEY = code
+      def relation = Country
     }
 
-}
+    // corresponding relation definition
+    object Country extends Country with Table[String, Country] {
 
-// ## Relation
+    }
 
-abstract class Relation[R <: Record[R]] {
+The relation should also inherit the structure of corresponding record so that
+it could be used to compose predicates and other expressions in a DSL-style.
+*/
+trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject { this: R =>
 
-  // ### Commons
+  protected var _initialized = false
 
-  protected[orm] var _fields: List[Field[_]] = Nil
-  def fields: Seq[Field[_]] = _fields
+  /*!## Commons
 
-  protected[orm] var _associations: List[Association[R, _]] = Nil
-  def associations: Seq[Association[R, _]] = _associations
+ If the relation follows default conventions of Circumflex ORM (about
+ companion objects), then record class is inferred automatically. Otherwise
+ you should override the `recordClass` method.
+  */
+  val _recordClass: Class[R] = Class.forName(this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
+      .asInstanceOf[Class[R]]
+  def recordClass: Class[R] = _recordClass
 
-  protected[orm] var _constraints: List[Constraint] = Nil
-  def constraints: Seq[Constraint] = _constraints
+  /*! By default the relation name is inferred from `recordClass` by replacing
+  camelcase delimiters with underscores (for example, record with class
+  `ShoppingCartItem` will have a relation with name `shopping_cart_item`).
+  You can override `relationName` to use different name.
+  */
+  val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
+  def relationName = _relationName
+  def qualifiedName = dialect.relationQualifiedName(this)
 
-  protected[orm] var _preAux: List[SchemaObject] = Nil
-  def preAux: Seq[SchemaObject] = _preAux
-
-  protected[orm] var _postAux: List[SchemaObject] = Nil
-  def postAux: Seq[SchemaObject] = _postAux
-
-  // Since we use reflection to read `Record`s from database
-  // we need this map to remember, what `Method` on `Record`
-  // instance should we invoke for each `Field`.
-  protected[orm] var _methodsMap: Map[Field[_], Method] = Map()
-  def methodsMap: Map[Field[_], Method] = _methodsMap
-
-  /**
-   * Attempt to find a record class by convention of companion object,
-   * e.g. strip trailing `$` from `this.getClass.getName`.
-   */
-  val recordClass: Class[R] = Circumflex
-      .loadClass[R](this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
-
-  /**
-   * This sample is used to introspect record for fields, constraints and,
-   * possibly, other stuff.
-   */
-  val recordSample: R = recordClass.newInstance
-  def r: R = recordSample
-  def >() = r
-
-  /**
-   * Unique identifier based on `recordClass` to identify this relation
-   * among others.
-   */
-  val uuid = recordSample.uuid
-
-  /**
-   * Relation name defaults to record's unqualified class name, transformed
-   * with `Circumflex.camelCaseToUnderscore`.
-   */
-  protected val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
-  def relationName: String = _relationName
-
-  /**
-   * Schema is used to produce a qualified name for relation.
+  /*! Default schema name is configured via the `orm.defaultSchema` configuration property.
+  You may provide different schema for different relations by overriding their `schema` method.
    */
   def schema: Schema = defaultSchema
 
-  /**
-   * Obtain a qualified name for this relation from dialect.
+  /*! The `readOnly_?()` method is used to indicate whether the DML operations
+  are allowed with this relation. Tables usually allow them and views usually don't.
    */
-  def qualifiedName = dialect.relationQualifiedName(this)
+  def readOnly_?(): Boolean
 
-  /**
-   * Are DML statements allowed against this relation?
+  /*! The `autorefresh_?()` method is used to indicate whether the record should be immediately
+  refreshed after every successful `INSERT` or `UPDATE` operation. By default it returns `false`
+  to maximize performance. However, if the relation contains columns with auto-generated values
+  (e.g. `DEFAULT` clauses, auto-increments, triggers, etc.) then you should override this method.
    */
-  def readOnly_?(): Boolean = false
+  def autorefresh_?(): Boolean = false
 
-  /**
-   * Primary key field of this relation.
+  /*! Use the `AS` method to create a relation node from this relation with explicit alias. */
+  def AS(alias: String): RelationNode[PK, R] = new RelationNode(this).AS(alias)
+
+  def findAssociation[T, F <: Record[T, F]](relation: Relation[T, F]): Option[Association[T, R, F]] =
+    associations.find(_.parentRelation == relation)
+        .asInstanceOf[Option[Association[T, R, F]]]
+
+  protected val validation = new RecordValidator[PK, R]()
+
+  /*!## Simple queries
+
+  Following methods will help you perform common querying tasks:
+
+    * `get` retrieves a record either from cache or from database by specified `id`;
+    * `all` retrieves all records.
    */
-  def primaryKey = recordSample.id
 
-  /**
-   * Validator for this record.
-   */
-  val validation = new RecordValidator[R]()
+  def get(id: PK): Option[R] =
+    contextCache.cacheRecord(id, this, this.criteria.add(this.PRIMARY_KEY EQ id).unique)
 
-  /**
-   * Create new `RelationNode` with specified `alias`.
-   */
-  def as(alias: String) = new RelationNode[R](this).as(alias)
-  def AS(alias: String) = as(alias)
+  def all: Seq[R] = this.criteria.list
 
-  /**
-   * Try to find an association to specified `relation`.
-   */
-  def findAssociation[F <: Record[F]](relation: Relation[F]): Option[Association[R, F]] =
-    associations.find(_.foreignRelation == relation)
-        .asInstanceOf[Option[Association[R, F]]]
+  /*!## Metadata
 
-  // ### Simple queries
-
-  /**
-   * Create `Criteria` for this relation, assigning default `root` alias to it's root node.
-   */
-  def criteria = as("root").criteria
-
-  /**
-   * Retrieve the record by specified `id` from transaction-scoped cache,
-   * or fetch it from database.
-   */
-  def get(id: Long): Option[R] = tx.getCachedRecord(this, id)
-      .orElse(as("root").criteria.add("root.id" EQ id).unique)
-
-  /**
-   * Fetch all records.
-   */
-  def all(limit: Int = -1, offset: Int = 0): Seq[R] = {
-    val root = as("root")
-    SELECT (root.*) FROM root LIMIT (limit) OFFSET (offset) list
+  Relation metadata contains operational information about it's records by
+  introspecting current instance upon initialization.
+  */
+  protected var _methodsMap: Map[Field[_, R], Method] = Map()
+  def methodsMap: Map[Field[_, R], Method] = {
+    init()
+    _methodsMap
   }
 
-  // ### Events
+  protected var _fields: List[Field[_, R]] = Nil
+  def fields: Seq[Field[_, R]] = {
+    init()
+    _fields
+  }
 
+  protected var _associations: List[Association[_, R, _]] = Nil
+  def associations: Seq[Association[_, R, _]] = {
+    init()
+    _associations
+  }
+
+  protected var _constraints: List[Constraint] = Nil
+  def constraints: Seq[Constraint] = {
+    init()
+    _constraints
+  }
+
+  protected var _indexes: List[Index] = Nil
+  def indexes: Seq[Index] = {
+    init()
+    _indexes
+  }
+
+  private def findMembers(cl: Class[_]): Unit = {
+    if (cl != classOf[Any]) findMembers(cl.getSuperclass)
+    cl.getDeclaredFields
+        .flatMap(f => try Some(cl.getMethod(f.getName)) catch { case _ => None })
+        .foreach(processMember(_))
+  }
+
+  private def processMember(m: Method): Unit = {
+    val cl = m.getReturnType
+    if (classOf[Field[_, R]].isAssignableFrom(cl)) {
+      val f = m.invoke(this).asInstanceOf[Field[_, R]]
+      this._fields ++= List(f)
+      if (f.unique_?) this.UNIQUE(f)
+      this._methodsMap += (f -> m)
+    } else if (classOf[Association[_, R, _]].isAssignableFrom(cl)) {
+      val a = m.invoke(this).asInstanceOf[Association[_, R, _]]
+      this._associations ++= List[Association[_, R, _]](a)
+      this._fields ++= List(a.field)
+      this._methodsMap += (a.field -> m)
+      this._constraints ++= List(associationFK(a))
+      if (a.unique_?) this.UNIQUE(a.field)
+    } else if (classOf[Constraint].isAssignableFrom(cl)) {
+      val c = m.invoke(this).asInstanceOf[Constraint]
+      this._constraints ++= List(c)
+    } else if (classOf[Index].isAssignableFrom(cl)) {
+      val i = m.invoke(this).asInstanceOf[Index]
+      this._indexes ++= List(i)
+    }
+  }
+
+  private def associationFK(a: Association[_, R, _]) =
+    CONSTRAINT(relationName + "_" + a.name + "_fkey")
+        .FOREIGN_KEY(a.field)
+        .REFERENCES(a.parentRelation, a.parentRelation.PRIMARY_KEY)
+        .ON_DELETE(a.onDelete)
+        .ON_UPDATE(a.onUpdate)
+
+  protected[orm] def init(): Unit =
+    if (!_initialized) this.synchronized {
+      if (!_initialized) {
+        findMembers(this.getClass)
+        dialect.initializeRelation(this)
+        _fields.foreach(dialect.initializeField(_))
+        this._initialized = true
+      }
+    }
+
+  /**
+   * Copies all field values from specified `src` record to specified `dst` record.
+   */
+  protected[orm] def copyFields(src: R, dst: R): Unit = fields.foreach { f =>
+    val m = methodsMap(f)
+    val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
+    getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
+  }
+
+  /**
+   * Retrieves actual field of specified `record` which corresponds to specified
+   * `field` via reflection.
+   */
+  protected[orm] def getField[T](record: R, field: Field[T, R]): Field[T, R] =
+    methodsMap(field).invoke(record) match {
+      case a: Association[T, R, _] => a.field
+      case f: Field[T, R] => f
+      case _ => throw new ORMException("Could not retrieve a field.")
+    }
+
+  /*!## Constraints & Indexes Definition
+
+  Circumflex ORM allows you to define constraints and indexes inside the
+  relation body using DSL style.
+  */
+
+  protected def CONSTRAINT(name: String) = new ConstraintHelper(name, this)
+  protected def UNIQUE(fields: Field[_, R]*) =
+    CONSTRAINT(relationName + "_" + fields.map(_.name).mkString("_") + "_key")
+        .UNIQUE(fields: _*)
+
+  /*!## Auxiliary Objects
+
+  Auxiliary database objects like triggers, sequences and stored procedures
+  can be attached to relation using `addPreAux` and `addPostAux` methods:
+  the former one indicates that the auxiliary object will be created before
+  the creating of all the tables, the latter indicates that the auxiliary
+  object creation will be delayed until all tables are created.
+  */
+  protected[orm] var _preAux: List[SchemaObject] = Nil
+  def preAux: Seq[SchemaObject] = _preAux
+  def addPreAux(objects: SchemaObject*): this.type = {
+    objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
+    return this
+  }
+
+  protected[orm] var _postAux: List[SchemaObject] = Nil
+  def postAux: Seq[SchemaObject] = _postAux
+  def addPostAux(objects: SchemaObject*): this.type = {
+    objects.foreach(o => if (!_postAux.contains(o)) _postAux ++= List(o))
+    return this
+  }
+
+  /*!## Events
+
+  Relation allows you to attach listeners to certain lifecycle events of its records.
+  Following events are available:
+
+    * `beforeInsert`
+    * `afterInsert`
+    * `beforeUpdate`
+    * `afterUpdate`
+    * `beforeDelete`
+    * `afterDelete`
+  */
   protected var _beforeInsert: Seq[R => Unit] = Nil
   def beforeInsert = _beforeInsert
   def beforeInsert(callback: R => Unit): this.type = {
@@ -193,180 +280,82 @@ abstract class Relation[R <: Record[R]] {
     return this
   }
 
-  // ### Introspection and Initialization
+  /*!## Equality & Others
 
-  /**
-   * Inspect `recordClass` to find fields and constraints definitions.
-   */
-  private def findMembers(cl: Class[_]): Unit = {
-    if (cl != classOf[Any]) findMembers(cl.getSuperclass)
-    cl.getDeclaredFields
-        .filter(f => classOf[ValueHolder[_]].isAssignableFrom(f.getType))
-        .flatMap(f =>
-      try {
-        val m = cl.getMethod(f.getName)
-        if (classOf[ValueHolder[_]].isAssignableFrom(m.getReturnType))
-          Some(m)
-        else None
-      } catch { case e => None })
-        .foreach(m => processMember(m))
-  }
+  Two relations are considered equal if they share the record class and the same name.
 
-  private def processMember(m: Method): Unit = m.getReturnType match {
-    case cl if classOf[Field[_]].isAssignableFrom(cl) =>
-      val f = m.invoke(recordSample).asInstanceOf[Field[_]]
-      this._fields ++= List(f)
-      if (f.unique_?) this.unique(f)
-      this._methodsMap += f -> m
-    case cl if classOf[Association[R, _]].isAssignableFrom(cl) =>
-      val a = m.invoke(recordSample).asInstanceOf[Association[R, _]]
-      this._associations ++= List[Association[R, _]](a)
-      this._fields ++= List(a.field)
-      this._methodsMap += a.field -> m
-      this._constraints ++= List(associationFK(a))
-    case _ =>
-  }
+  The `hashCode` method delegates to record class.
 
-  private def associationFK(assoc: Association[_, _]): ForeignKey = {
-    val name = relationName + "_" + assoc.name + "_fkey"
-    new ForeignKey(this,
-      name,
-      assoc.foreignRelation,
-      List(assoc.field),
-      List(assoc.foreignRelation.primaryKey),
-      assoc.onDelete,
-      assoc.onUpdate)
-  }
+  The `canEqual` method indicates that two relations share the same record class.
 
-  findMembers(recordClass)
-
-  /**
-   * Allow dialects to override the initialization logic.
-   */
-  dialect.initializeRelation(this)
-
-
-  // ### Definitions
-
-  /**
-   * A helper for creating named constraints.
-   */
-  protected[orm] def constraint(name: String): ConstraintHelper =
-    new ConstraintHelper(this, name)
-  protected[orm] def CONSTRAINT(name: String): ConstraintHelper =
-    constraint(name)
-
-  /**
-   * Add a unique constraint to this relation's definition.
-   */
-  protected[orm] def unique(fields: Field[_]*): UniqueKey =
-    constraint(relationName + "_" + fields.map(_.name).mkString("_") + "_key")
-        .unique(fields: _*)
-  protected[orm] def UNIQUE(fields: Field[_]*) = unique(fields: _*)
-
-  /**
-   * Add a foreign key constraint to this relation's definition.
-   */
-  def foreignKey(localFields: Field[_]*): ForeignKeyHelper =
-    new ForeignKeyHelper(this, relationName + "_" +
-        localFields.map(_.name).mkString("_") + "_fkey", localFields)
-  def FOREIGN_KEY(localFields: Field[_]*): ForeignKeyHelper =
-    foreignKey(localFields: _*)
-
-  /**
-   * Add an index to this relation's definition.
-   */
-  def index(indexName: String, expressions: String*): Index = {
-    val idx = new Index(this, indexName, expressions: _*)
-    addPostAux(idx)
-    return idx
-  }
-  def INDEX(indexName: String, expressions: String*): Index =
-    index(indexName, expressions: _*)
-
-  /**
-   * Add specified `objects` to this relation's `preAux` queue.
-   */
-  def addPreAux(objects: SchemaObject*): this.type = {
-    objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
-    return this
-  }
-
-  /**
-   * Add specified `objects` to this relaion's `postAux` queue.
-   */
-  def addPostAux(objects: SchemaObject*): this.type = {
-    objects.foreach(o => if (!_postAux.contains(o)) _postAux ++= List(o))
-    return this
-  }
-
-  // ### Persistence
-
-  /**
-   * A helper to set parameters to `PreparedStatement`.
-   */
-  protected[orm] def setParams(record: R, st: PreparedStatement, fields: Seq[Field[_]]) =
-    (0 until fields.size).foreach(ix => typeConverter.write(st, fields(ix).getValue, ix + 1))
-
-  /**
-   * Uses last generated identity to refetch specified `record`.
-   *
-   * This method must be called immediately after `insert_!`.
-   */
-  def refetchLast(record: R): Unit = {
-    val root = as("root")
-    SELECT (root.*) FROM root WHERE (dialect.lastIdExpression(root)) unique match {
-      case Some(r: R) => copyFields(r, record)
-      case _ => throw new ORMException("Could not locate the last inserted row.")
-    }
-  }
-
-  protected[orm] def copyFields(from: R, to: R): Unit =
-    from._fields.foreach(f => to._fields.find(_ == f) match {
-      case Some(field: Field[Any]) => field.setValue(f.getValue)
-      case _ =>
-    })
-
-  // ### Equality and others
-
+  Record-specific methods derived from `Record` throw an exception when invoked against relation.
+  */
   override def equals(that: Any) = that match {
-    case r: Relation[R] => r.relationName.equalsIgnoreCase(this.relationName)
+    case that: Relation[_, _] =>
+      this.recordClass == that.recordClass &&
+          this.relationName == that.relationName
     case _ => false
   }
 
-  override def hashCode = this.relationName.toLowerCase.hashCode
+  override def hashCode = this.recordClass.hashCode
 
-  override def toString = qualifiedName
+  override def canEqual(that: Any): Boolean = that match {
+    case that: Relation[_, _] =>
+      this.recordClass == that.recordClass
+    case that: Record[_, _] =>
+      this.recordClass == that.getClass
+    case _ => false
+  }
 
+
+  override def refresh(): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
+  override def validate(): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
+  override def INSERT_!(fields: Field[_, R]*): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
+  override def UPDATE_!(fields: Field[_, R]*): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
+  override def DELETE_!(): Nothing =
+    throw new ORMException("This method cannot be invoked on relation instance.")
 }
 
-// ## Table
+/*!# Table {#table}
 
-abstract class Table[R <: Record[R]] extends Relation[R]
-    with SchemaObject {
-  val objectName = "TABLE " + qualifiedName
-  lazy val sqlDrop = dialect.dropTable(this)
-  lazy val sqlCreate = dialect.createTable(this)
+The `Table` class represents plain-old database table which will be created to store
+records.
+*/
+trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
+  def readOnly_?(): Boolean = false
+  def objectName: String = "TABLE " + qualifiedName
+  def sqlCreate: String = {
+    init()
+    dialect.createTable(this)
+  }
+  def sqlDrop: String = {
+    init()
+    dialect.dropTable(this)
+  }
 }
 
-// ## View
+/*!# View {#view}
 
-abstract class View[R <: Record[R]] extends Relation[R]
-    with SchemaObject {
-
-  /**
-   * Views are not updatable by default.
-   */
-  override def readOnly_?() = true
-
-  /**
-   * A `query` that makes up this view definition.
-   */
+The `View` class represents a database view, whose definition is designated by
+the `query` method. By default we assume that views are not updateable, so
+DML operations are not allowed on view records. If you implement updateable
+views on backend somehow (with triggers in Oracle or rules in PostgreSQL),
+override the `readOnly_?` method accordingly.
+*/
+trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
+  def readOnly_?(): Boolean = true
+  def objectName: String = "VIEW " + qualifiedName
+  def sqlDrop: String = {
+    init()
+    dialect.dropView(this)
+  }
+  def sqlCreate: String = {
+    init()
+    dialect.createView(this)
+  }
   def query: Select[_]
-
-  // ### Miscellaneous
-
-  val objectName = "VIEW " + qualifiedName
-  lazy val sqlDrop = dialect.dropView(this)
-  lazy val sqlCreate = dialect.createView(this)
 }

@@ -1,37 +1,162 @@
 package ru.circumflex.core
 
-import java.util.{Locale, ResourceBundle}
+import java.lang.String
+import collection.{Iterator, Map}
+import collection.JavaConversions._
+import collection.mutable.ArrayBuffer
+import java.util.{ResourceBundle, Locale}
+import java.text.MessageFormat
 
-class Messages(val baseName: String, val locale: Locale) extends HashModel {
-  val msgBundle: ResourceBundle = try {
-    ResourceBundle.getBundle(baseName, locale)
-  } catch {
-    case e => {
-      cxLog.debug("ResourceBundle for messages instance not found: " + baseName)
-      null
+/*!# Messages API
+
+Messages API offers you a convenient way to internationalize your application.
+
+Generally, all strings that should be presented to user are stored in
+separate `.properties`-files as suggested by [Java Internationalization][java-i18n].
+
+Circumflex Messages API goes beyound this simple approach and offers
+delegating resolving, messages grouping, parameters interpolation and formatting.
+
+  [java-i18n]: http://java.sun.com/javase/technologies/core/basic/intl
+
+The usage is pretty simple: you use the `msg` method of package object `ru.circumflex.core`
+which returns an implementation of `MessageResolver` used to retrieve messages. This instance
+is also referred to as *global messages resolver*. By default, the `DefaultMessageResolver`
+singleton is used. You can set `cx.messages` configuration parameter to use your own
+`MessageResolver` implementation as global resolver.
+
+The `resolve` method is responsible for resolving a message by `key`.
+
+Circumflex Messages API features very robust ranged resolving. The message is searched
+using the range of keys, from the most specific to the most general ones: if the message
+is not resolved with given key, then the key is truncated from the left side to
+the first dot (`.`) and the message is searched again. For example, if you are looking
+for a message with the key `com.myapp.model.Account.name.empty` (possibly while performing
+domain model validation), then following keys will be used to lookup an appropriate
+message (until first success):
+
+    com.myapp.model.Account.name.empty
+    myapp.model.Account.name.empty
+    model.Account.name.empty
+    Account.name.empty
+    name.empty
+    empty
+
+You can use the methods of Scala `Map` to retrieve messages from resolver.
+Default implementation also reports missing messages into Circumflex debug log.
+
+The locale is taken from `cx.locale` context variable (see `Context` for more details).
+If no such variable found in the context, then the platform's default locale is used.
+
+Messages can also be formatted. We support both classic `MessageFormat` style
+(you know, with `{0}`s in and varargs) and parameters interpolation (key-value pairs
+are passed as arguments to `fmt` method, each `{key}` in message is replaced by
+corresponding value).
+
+You can use `ResourceBundleMessageResolver` to resolve messages from Java `ResourceBundle`s.
+
+The default implementation (the `msg` method in package `ru.circumflex.core`)
+uses `ResourceBundle` with base name `Messages` to lookup messages. You can override
+the default implementation by setting `cx.messages` configuration parameter.
+
+If you need to search messages in different sources, you can use
+`DelegatingMessageResolver`: it tries to resolve a message using specified
+`resolvers` list, the first successively resolved message is returned.
+*/
+
+/**
+ * Provides an interface for resolving messages.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
+ */
+trait MessageResolver extends Map[String, String] {
+  def -(key: String): Map[String, String] = this
+  def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
+
+  protected def resolve(key: String): Option[String]
+
+  protected def resolveRange(key: String): Option[String] = resolve(key) orElse {
+    if (!key.contains(".")) None
+    else resolveRange(key.substring(key.indexOf(".") + 1))
+  }
+
+  def get(key: String): Option[String] = resolveRange(key) orElse {
+    CX_LOG.debug("Message with key '" + key + "' is missing.")
+    None
+  }
+
+  def locale: Locale = ctx.get("cx.locale") match {
+    case Some(l: Locale) => l
+    case Some(l: String) => new Locale(l)
+    case _ => Locale.getDefault
+  }
+
+  def fmt(key: String, params: (String, Any)*): String =
+    params.foldLeft(getOrElse(key, "")) { (result, p) =>
+      result.replaceAll("\\{" + p._1 + "\\}", p._2.toString)
     }
+  def format(key: String, params: AnyRef*): String =
+    MessageFormat.format(getOrElse(key, ""), params: _*)
+}
+
+/**
+ * Resolves messages from `ResourceBundle` with specified `bundleName`.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
+ */
+class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
+  protected def bundle = ResourceBundle.getBundle(bundleName, locale)
+  def iterator: Iterator[(String, String)] = bundle.getKeys
+      .map(k => (k -> bundle.getString(k)))
+  protected def resolve(key: String): Option[String] =
+    try { Some(bundle.getString(key)) } catch { case _ => None }
+}
+
+/**
+ * Resolves messages from `ResourceBundle` with base name `Messages`.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
+ */
+object DefaultMessageResolver extends ResourceBundleMessageResolver("Messages")
+
+/**
+ * Resolves messages by delegating calls to specified `initialResolvers`.
+ *
+ * For more information refer to
+ * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
+ */
+class DelegatingMessageResolver(initialResolvers: MessageResolver*) {
+  protected var _resolvers: Seq[MessageResolver] = initialResolvers
+  def resolvers = _resolvers
+  def addResolver(r: MessageResolver): this.type = {
+    _resolvers ++= List(r)
+    return this
   }
-  def get(key: String): Option[String] = try {
-    msgBundle.getString(key)
-  } catch {
-    case e => None
+  def iterator: Iterator[(String, String)] =
+    resolvers.map(_.iterator).reduceLeft((a, b) => a ++ b)
+  protected def resolve(key: String): Option[String] = {
+    resolvers.foreach(r => r.get(key).map(msg => return Some(msg)))
+    return None
   }
-  def get(key: String, params: Pair[String, String]*): Option[String] = get(key, Map(params: _*))
-  def get(key: String, params: Map[String, String]): Option[String] =
-    get(key).map(m => params.foldLeft(m) {
-      case (m, (name, value)) => m.replaceAll("\\{" + name + "\\}", value)
-    })
-  override def apply(key: String): String = get(key) match {
-    case Some(v) => v
-    case _ =>
-      cxLog.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)
-      ""
+}
+
+/*!## Messages Grouping
+
+Application-generated messages can be grouped using the `Msg` and `MsgGroup` classes.
+*/
+case class Msg(key: String, params: (String, Any)*) {
+  def param(key: String): Option[Any] = params.find(_._1 == key).map(_._2)
+  def hasParam(key: String): Boolean = !params.find(_._1 == key).isEmpty
+  override def toString: String = msg.fmt(key, params: _*)
+}
+
+class MsgGroup extends ArrayBuffer[Msg] {
+  def this(msgs: Msg*) = {
+    this()
+    this.addAll(msgs)
   }
-  def apply(key: String, params: Pair[String, String]*): String = apply(key, Map(params: _*))
-  def apply(key: String, params: Map[String, String]): String = get(key, params) match {
-    case Some(v) => v
-    case _ =>
-      cxLog.warn("Missing message for key {}, locale {}.", key, msgBundle.getLocale)
-      ""
-  }
+  def by[K](f: Msg => K) = groupBy(f)
 }

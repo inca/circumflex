@@ -1,96 +1,139 @@
 package ru.circumflex
 
-import _root_.ru.circumflex.orm._
-import ORM._
+import ru.circumflex.core._
+import orm._
 import java.util.regex.Pattern
+import net.sf.ehcache.CacheManager
 
-// ## ORM package object
+/*!# The `orm` Package
 
+Package `orm` contains different shortcuts, utilities, helpers and implicits --
+the basis of DSL of Circumflex ORM.
+
+You should import this package to use Circumflex ORM in your application:
+
+    import ru.circumflex.orm._
+*/
 package object orm {
 
-  // ### Implicits
+  val ORM_LOG = new Logger("ru.circumflex.orm")
 
-  implicit def relation2node[R <: Record[R]](relation: Relation[R]): RelationNode[R] =
-    relation.as("this")
-  implicit def node2relation[R <: Record[R]](node: RelationNode[R]): Relation[R] =
-    node.relation
+  // Configuration
+
+  val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
+    "orm.connectionProvider", new DefaultConnectionProvider)
+
+  val typeConverter: TypeConverter = cx.instantiate[TypeConverter](
+    "orm.typeConverter", new DefaultTypeConverter)
+
+  val dialect: Dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
+    case Some(url: String) =>
+      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
+      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
+      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
+      else if (url.startsWith("jdbc:h2:")) new H2Dialect
+      else new Dialect
+    case _ => new Dialect
+  })
+
+  val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
+    "orm.transactionManager", new DefaultTransactionManager)
+
+  val defaultSchema: Schema = new Schema(
+    cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
+
+  val ehcacheManager: CacheManager = cx.get("orm.ehcache.config") match {
+    case Some(f: String) => new CacheManager(f)
+    case _ => new CacheManager()
+  }
+
+  def contextCache = CacheService.get
+
+  def tx: Transaction = transactionManager.get
+  def COMMIT() = tx.commit()
+  def ROLLBACK() = tx.rollback()
+
+  // Implicits
+
+  // for nodes, fields and records
+
+  implicit def association2field[K, C <: Record[_, C], P <: Record[K, P]](
+      association: Association[K, C, P]): Field[K, C] = association.field
+  implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
+    new RelationNode[PK, R](relation)
+  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): R = {
+    ctx("orm.lastAlias") = node.alias
+    node.relation.asInstanceOf[R]
+  }
+  implicit def field2str(field: Field[_, _]): String = ctx.get("orm.lastAlias") match {
+    case Some(alias: String) =>
+      ctx.remove("orm.lastAlias")
+      alias + "." + field.name
+    case _ => field.name
+  }
+
+  // for predicates
+
   implicit def string2helper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
+  implicit def field2helper(field: Field[_, _]): SimpleExpressionHelper =
+    new SimpleExpressionHelper(field2str(field))
   implicit def string2predicate(expression: String): Predicate =
     new SimpleExpression(expression, Nil)
-  implicit def string2order(expression: String): Order =
-    new Order(expression, Nil)
   implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
     new SimpleExpression(expression.toSql, expression.parameters)
   implicit def predicate2aggregateHelper(predicate: Predicate) =
     new AggregatePredicateHelper(predicate)
   implicit def predicate2string(predicate: Predicate): String = predicate.toInlineSql
+
+  // for orders
+
+  implicit def string2order(expression: String): Order =
+    new Order(expression, Nil)
+  implicit def field2order(field: Field[_, _]): Order =
+    new Order(field2str(field), Nil)
+
+  // for projections
+
   implicit def string2projection(expression: String): Projection[Any] =
     new ExpressionProjection[Any](expression)
-  implicit def association2field(association: Association[_, _]): Field[Long] =
-    association.field
-  implicit def relation2recordSample[R <: Record[R]](relation: Relation[R]): R =
-    relation.r
-  implicit def field2projection[T](field: Field[T]): Projection[T] =
+  implicit def field2projection[T](field: Field[T, _]): Projection[T] =
     new ExpressionProjection[T](field2str(field))
-  // The most magical ones.
-  implicit def node2record[R <: Record[R]](node: RelationNode[R]): R = {
-    lastAlias(node.alias)
-    return node.relation.recordSample
-  }
-  implicit def field2str(field: Field[_]): String = lastAlias match {
-    case Some(alias) => alias + "." + field.name
-    case None => field.name
-  }
-  implicit def field2helper(field: Field[_]) = new SimpleExpressionHelper(field2str(field))
-  implicit def field2order(field: Field[_]): Order = new Order(field2str(field), Nil)
 
   implicit def tuple2proj[T1, T2](
-      t: Tuple2[Projection[T1],Projection[T2]]) =
+      t: (Projection[T1], Projection[T2])) =
     new Tuple2Projection(t._1, t._2)
   implicit def tuple3proj[T1, T2, T3](
-      t: Tuple3[Projection[T1], Projection[T2], Projection[T3]]) =
+      t: (Projection[T1], Projection[T2], Projection[T3])) =
     new Tuple3Projection(t._1, t._2, t._3)
   implicit def tuple4proj[T1, T2, T3, T4](
-      t: Tuple4[Projection[T1], Projection[T2], Projection[T3], Projection[T4]]) =
+      t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4])) =
     new Tuple4Projection(t._1, t._2, t._3, t._4)
   implicit def tuple5proj[T1, T2, T3, T4, T5](
-      t: Tuple5[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5]]) =
+      t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5])) =
     new Tuple5Projection(t._1, t._2, t._3, t._4, t._5)
   implicit def tuple6proj[T1, T2, T3, T4, T5, T6](
-      t: Tuple6[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6]]) =
+      t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+          Projection[T6])) =
     new Tuple6Projection(t._1, t._2, t._3, t._4, t._5, t._6)
   implicit def tuple7proj[T1, T2, T3, T4, T5, T6, T7](
-      t: Tuple7[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6], Projection[T7]]) =
+      t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+          Projection[T6], Projection[T7])) =
     new Tuple7Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7)
   implicit def tuple8proj[T1, T2, T3, T4, T5, T6, T7, T8](
-      t: Tuple8[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6], Projection[T7], Projection[T8]]) =
+      t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+          Projection[T6], Projection[T7], Projection[T8])) =
     new Tuple8Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8)
   implicit def tuple9proj[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-      t: Tuple9[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6], Projection[T7], Projection[T8], Projection[T9]]) =
+      t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+          Projection[T6], Projection[T7], Projection[T8], Projection[T9])) =
     new Tuple9Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9)
   implicit def tuple10proj[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-      t: Tuple10[Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
-          Projection[T6], Projection[T7], Projection[T8], Projection[T9], Projection[T10]]) =
+      t: (Projection[T1], Projection[T2], Projection[T3], Projection[T4], Projection[T5],
+          Projection[T6], Projection[T7], Projection[T8], Projection[T9], Projection[T10])) =
     new Tuple10Projection(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)
 
-  // ### Current Transaction Shortcuts
-
-  /**
-   * Shortcut for retrieving current transaction via `transactionManager.getTransaction`.
-   */
-  def tx = transactionManager.getTransaction
-  def TX = tx
-  def commit() = tx.commit()
-  def COMMIT() = commit()
-  def rollback() = tx.rollback()
-  def ROLLBACK() = rollback()
-
-  // ### Constants
+  // Constants
 
   val NO_ACTION = ForeignKeyAction(dialect.fkNoAction)
   val CASCADE = ForeignKeyAction(dialect.fkCascade)
@@ -110,25 +153,16 @@ package object orm {
   val OP_INTERSECT = SetOperation(dialect.intersect)
   val OP_INTERSECT_ALL = SetOperation(dialect.intersectAll)
 
-  // ### SQL shortcuts
+  // Predicates DSL
 
-  // Predicates.
-
-  def and(predicates: Predicate*) =
-    new AggregatePredicateHelper(predicates.head).and(predicates.tail: _*)
-  def AND(predicates: Predicate*) = and(predicates: _*)
-
-  def or(predicates: Predicate*) =
-    new AggregatePredicateHelper(predicates.head).or(predicates.tail: _*)
-  def OR(predicates: Predicate*) = or(predicates: _*)
-
-  def not(predicate: Predicate) =
+  def AND(predicates: Predicate*) =
+    new AggregatePredicateHelper(predicates.head).AND(predicates.tail: _*)
+  def OR(predicates: Predicate*) =
+    new AggregatePredicateHelper(predicates.head).OR(predicates.tail: _*)
+  def NOT(predicate: Predicate) =
     new SimpleExpression(dialect.not(predicate.toSql), predicate.parameters)
-  def NOT(predicate: Predicate) = not(predicate)
-
   def expr[T](expression: String): ExpressionProjection[T] =
     new ExpressionProjection[T](expression)
-
   def prepareExpr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
     var sqlText = expression
     var parameters: Seq[Any] = Nil
@@ -143,52 +177,39 @@ package object orm {
     return new SimpleExpression(sqlText, parameters)
   }
 
-  // Simple subqueries.
+  // Simple subqueries DSL
 
-  def exists(subquery: SQLQuery[_]) =
+  def EXISTS(subquery: SQLQuery[_]) =
     new SubqueryExpression(dialect.exists, subquery)
-  def EXISTS(subquery: SQLQuery[_]) = exists(subquery)
 
-  def notExists(subquery: SQLQuery[_]) =
+  def NOT_EXISTS(subquery: SQLQuery[_]) =
     new SubqueryExpression(dialect.notExists, subquery)
-  def NOT_EXISTS(subquery: SQLQuery[_]) = notExists(subquery)
 
-  // Simple projections.
+  // Simple projections
 
-  def count(expr: String) =
-    new ExpressionProjection[Int](dialect.count + "(" + expr + ")")
-  def COUNT(expr: String) = count(expr)
-
-  def countDistinct(expr: String) =
-    new ExpressionProjection[Int](
+  def COUNT(expr: String) =
+    new ExpressionProjection[Long](dialect.count + "(" + expr + ")")
+  def COUNT_DISTINCT(expr: String) =
+    new ExpressionProjection[Long](
       dialect.count + "(" + dialect.distinct + " " + expr + ")")
-  def COUNT_DISTINCT(expr: String) = countDistinct(expr)
-
-  def max(expr: String) =
+  def MAX(expr: String) =
     new ExpressionProjection[Any](dialect.max + "(" + expr + ")")
-  def MAX(expr: String) = max(expr)
-
-  def min(expr: String) =
+  def MIN(expr: String) =
     new ExpressionProjection[Any](dialect.min + "(" + expr + ")")
-  def MIN(expr: String) = min(expr)
-
-  def sum(expr: String) =
+  def SUM(expr: String) =
     new ExpressionProjection[Any](dialect.sum + "(" + expr + ")")
-  def SUM(expr: String) = sum(expr)
-
-  def avg(expr: String) =
+  def AVG(expr: String) =
     new ExpressionProjection[Any](dialect.avg + "(" + expr + ")")
-  def AVG(expr: String) = avg(expr)
 
-  // Query DSLs
+  // Queries DSL
 
-  def select[T](projection: Projection[T]) = new Select(projection)
-  def SELECT[T](projection: Projection[T]) = select(projection)
-  def insertInto[R <: Record[R]](relation: Relation[R]) = new InsertSelectHelper(relation)
-  def INSERT_INTO[R <: Record[R]](relation: Relation[R]) = insertInto(relation)
-  def update[R <: Record[R]](node: RelationNode[R]) = new Update(node)
-  def UPDATE[R <: Record[R]](node: RelationNode[R]) = update(node)
-  def delete[R <: Record[R]](node: RelationNode[R]) = new Delete(node)
-  def DELETE[R <: Record[R]](node: RelationNode[R]) = delete(node)
+  def SELECT[T](projection: Projection[T]) =
+    new Select(projection)
+  def INSERT_INTO[PK, R <: Record[PK, R]](relation: Relation[PK, R]) =
+    new InsertSelectHelper(relation)
+  def UPDATE[PK, R <: Record[PK, R]](node: RelationNode[PK, R]) =
+    new Update(node)
+  def DELETE[PK, R <: Record[PK, R]](node: RelationNode[PK, R]) =
+    new Delete(node)
 
 }

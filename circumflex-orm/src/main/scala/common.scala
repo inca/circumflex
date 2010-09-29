@@ -1,38 +1,37 @@
 package ru.circumflex.orm
 
-import org.slf4j.LoggerFactory
-import ORM._
-import ru.circumflex.core.WrapperModel
+import ru.circumflex.core._
 
-// ## Common interfaces
+/*!# SQLable
 
-/**
- * Simple interface for objects capable to render themselves into SQL statements.
- */
+Every object capable of rendering itself into an SQL statement
+should extend the `SQLable` trait.
+*/
 trait SQLable {
   def toSql: String
 }
 
-/**
- * Simple interface for expressions with JDBC-style parameters
- */
+/*!# Parameterized expressions
+
+The `ParameterizedExpression` trait provides basic functionality for dealing
+with SQL expressions with JDBC-style parameters.
+*/
 trait ParameterizedExpression extends SQLable {
+
   /**
    * The parameters associated with this expression. The order is important.
    */
   def parameters: Seq[Any]
 
   /**
-   * Render this query by replacing parameter placeholders with actual values.
+   * Renders this query by replacing parameter placeholders with actual values.
    */
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
     sql.replaceFirst("\\?", typeConverter.escape(p)))
 
-  // Equality and others.
-
   override def equals(that: Any) = that match {
     case e: ParameterizedExpression =>
-      e.toSql == this.toSql && (e.parameters.toList -- this.parameters.toList) == Nil
+      e.toSql == this.toSql && e.parameters.toList == this.parameters.toList
     case _ => false
   }
 
@@ -41,10 +40,11 @@ trait ParameterizedExpression extends SQLable {
   override def toString = toSql
 }
 
-/**
- * Simple interface for database objects capable to render themselves into DDL
- * CREATE and DROP statements.
- */
+/*!# Schema Object
+
+Every database object which could be created or dropped should
+implement the `SchemaObject` trait.
+*/
 trait SchemaObject {
   /**
    * SQL statement to create this database object.
@@ -84,170 +84,155 @@ trait SchemaObject {
   override def toString = objectName
 }
 
-/**
- * *Value holder* is designed to be an extensible atomic data carrier unit
- * of record. It is subclassed by 'Field' and 'Association'.
- */
-abstract class ValueHolder[T](val name: String, val uuid: String) extends WrapperModel {
+/*!# Value holders
 
-  // An internally stored value.
-  protected var _value: T = _
+Value holder is an atomic data-carrier unit of a record. Two implementations
+of `ValueHolder` are known: `Field` and `Association`.
+*/
+abstract class ValueHolder[T, R <: Record[_, R]](
+    val name: String, val record: R, val sqlType: String)
+    extends Equals with Wrapper[Option[T]] {
 
-  protected var _setter: T => T = t => t
+  def item = value
 
-  // This way the value will be unwrapped by FTL engine.
-  def item = getValue
+  /*!## Setters
 
-  // Should the `NOT NULL` constraint be applied to this value holder?
-  protected var _notNull: Boolean = true
-  def nullable_?(): Boolean = !_notNull
+  Setters provide a handy mechanism for preprocessing values before
+  setting them. They are functions `T => T` which are applied one-by-one
+  each time you set new non-null value. You can add a setter by invoking
+  the `addSetter` method:
 
-  def notNull: this.type = {
+      val pkg = "package".TEXT.NOT_NULL
+          .addSetter(_.trim)
+          .addSetter(_.toLowerCase)
+          .addSetter(_.replaceAll("/","."))
+
+      pkg := "  ru/circumflex/ORM  "  // "ru.circumflex.orm" will be assigned
+
+  */
+  protected var _setters: Seq[T => T] = Nil
+  def setters: Seq[T => T] = _setters
+  def addSetter(f: T => T): this.type = {
+    _setters ++= List(f)
+    return this
+  }
+
+  /*!## Accessing & Setting Values
+
+  Values are stored internally as `Option[T]`. `None` stands both for
+  uninitialized and `null` values. Following examples show how field values
+  can be accessed or set:
+
+      val id = "id" BIGINT
+
+      // accessing
+      id.value    // Option[Long]
+      id.get      // Option[Long]
+      id()        // Long or exception
+      getOrElse(default: Long)  // Long
+
+      // setting
+      id.set(Some(1l))
+      id.setNull
+      id := 1l
+
+  The `null_?` method indicates whether the underlying value is `null` or not.
+  */
+  protected var _value: Option[T] = None
+
+  // Accessing
+
+  def value: Option[T] = _value
+  def get: Option[T] = value
+  def apply(): T = value.get
+  def getOrElse(default: T): T = value.getOrElse(default)
+
+  def null_?(): Boolean = value == None
+
+  // Setting
+
+  def set(v: Option[T]): this.type = {
+    // disallow setting values on relation fields
+    if (record.isInstanceOf[Relation[_, _]])
+      throw new ORMException("Could not set the value of the field which belong to relation.")
+    // process value with setters
+    _value = v.map { v =>
+      setters.foldLeft(v) { (v, f) => f(v) }
+    }
+    return this
+  }
+  def setNull: this.type = set(None)
+  def :=(v: T): Unit = set(Some(v))
+
+  /*!## Column Definition Methods
+
+  Following methods help you construct a definition of the column where
+  the field will be persisted:
+
+    * `NOT_NULL` will render `NOT NULL` constraint in column's definition;
+    note that starting from 2.0, by default the `NOT NULL` constraint is
+    omitted and `NULLABLE` construct is no longer supported;
+    * `DEFAULT` will render the `DEFAULT` expression in column's definition
+    (if not overriden by dialect);
+    * `UNIQUE` will create a `UNIQUE` constraint for enclosing table on
+    the field.
+  */
+  protected var _notNull: Boolean = false
+  def notNull_?(): Boolean = _notNull
+  def NOT_NULL(): this.type = {
     _notNull = true
     return this
   }
-  def NOT_NULL: this.type = notNull
 
-  def nullable: this.type = {
-    _notNull = false
+  protected var _unique: Boolean = false
+  def unique_?(): Boolean = _unique
+  def UNIQUE(): this.type = {
+    _unique = true
     return this
   }
-  def NULLABLE: this.type = nullable
 
-  def setter = _setter
-  def setter(sf: T => T): this.type = {
-    _setter = sf
+  protected var _defaultExpression: Option[String] = None
+  def defaultExpression: Option[String] = _defaultExpression
+  def DEFAULT(expr: String): this.type = {
+    _defaultExpression = Some(expr)
     return this
   }
-  def SETTER(sf: T => T): this.type = setter(sf)
 
-  // Getters.
+  /*!## Methods from `Option`
 
-  def getValue(): T = _value
-  def apply(): T = getValue
-  def getOrElse(default: T) = get().getOrElse(default)
-  def get(): Option[T] = getValue match {
-    case null => None
-    case value => Some(value)
-  }
+  Since `ValueHolder` is just a wrapper around `Option`, we provide
+  some methods to work with your values in functional style
+  (they delegate to their equivalents in `Option`).
+  */
+  def map[B](f: T => B): Option[B] =
+    value.map(f)
+  def flatMap[B](f: T => Option[B]): Option[B] =
+    value.flatMap(f)
+  def orElse[B >: T](alternative: => Option[B]): Option[B] =
+    value.orElse(alternative)
 
-  def empty_?(): Boolean = getValue() == null
-  def null_?(): Boolean = empty_?
-  def NULL_?(): Boolean = empty_?
+  /*!## Equality & Others
 
-  // Setters.
+  Two fields are considered equal if they belong to the same type of records
+  and share the same name.
 
-  def setValue(newValue: T): this.type = {
-    _value = if (newValue != null) _setter(newValue) else newValue
-    return this
-  }
-  def :=(newValue: T): this.type = setValue(newValue)
-  def update(newValue: T): this.type = setValue(newValue)
+  The `hashCode` calculation is delegated to underlying `value`.
 
-  def setNull(): this.type = setValue(null.asInstanceOf[T])
-  def null_!() = setNull()
-  def NULL_!() = null_!()
+  The `canEqual` method indicates whether the two fields belong to the same
+  type of records.
 
-  // Equality methods.
-
-  override def equals(that: Any) = that match {
-    case vh: ValueHolder[T] => vh.uuid == this.uuid
+  Finally, `toString` returns the qualified name of relation which it
+  belongs to followed by a dot and the field name.
+  */
+  override def equals(that: Any): Boolean = that match {
+    case that: ValueHolder[_, _] => this.canEqual(that) &&
+      this.name == that.name
     case _ => false
   }
-
-  override def hashCode = this.uuid.hashCode
-
-  /**
-   * Return a `String` representation of internal value.
-   */
-  def toString(default: String = "") = if (getValue == null) default else getValue.toString
-
-  /**
-   * Return `uuid` as this holder's identifier.
-   */
-  override def toString = uuid
-}
-
-/**
- * An action for `ON UPDATE` and `ON DELETE` clauses of
- * foreign key definitions.
- */
-case class ForeignKeyAction(val toSql: String) extends SQLable {
-  override def toString = toSql
-}
-
-/**
- * Join types for use in `FROM` clauses of SQL queries.
- */
-case class JoinType(val toSql: String) extends SQLable {
-  override def toString = toSql
-}
-
-/**
- * Set operations for use in SQL queries.
- */
-case class SetOperation(val toSql: String) extends SQLable {
-  override def toString = toSql
-}
-
-/**
- * An expression to use in `ORDER BY` clause.
- */
-class Order(val expression: String, val parameters: Seq[Any])
-    extends ParameterizedExpression {
-
-  // Specificator (`ASC` or `DESC`).
-
-  protected[orm] var _specificator = dialect.asc
-
-  def asc: this.type = {
-    this._specificator = dialect.asc
-    return this
+  override def hashCode: Int = record.hashCode * 31 + name.hashCode
+  def canEqual(that: Any): Boolean = that match {
+    case that: ValueHolder[_, _] => this.record.canEqual(that.record)
+    case _ => false
   }
-  def ASC: this.type = asc
-
-  def desc: this.type = {
-    this._specificator = dialect.desc
-    return this
-  }
-  def DESC: this.type = desc
-
-  // Miscellaneous.
-
-  def toSql = expression + " " + _specificator
-}
-
-// ## JDBC utilities
-
-/**
- * Helper constructions that automatically close such JDBC objects as
- * `ResultSet`s and `PreparedStatement`s.
- */
-object JDBC {
-  protected[orm] val sqlLog = LoggerFactory.getLogger("ru.circumflex.orm")
-
-  def autoClose[A <: {def close(): Unit}, B](obj: A)
-                                            (actions: A => B)
-                                            (errors: Throwable => B): B =
-    try {
-      return actions(obj)
-    } catch {
-      case e => return errors(e)
-    } finally {
-      obj.close
-    }
-
-  def auto[A <: {def close(): Unit}, B](obj: A)
-                                       (actions: A => B): B =
-    autoClose(obj)(actions)(throw _)
-}
-
-// ## Exceptions
-
-/**
- * The most generic exception class.
- */
-class ORMException(msg: String, cause: Throwable) extends Exception(msg, cause) {
-  def this(msg: String) = this(msg, null)
-  def this(cause: Throwable) = this(null, cause)
+  override def toString: String = record.relation.qualifiedName + "." + name
 }

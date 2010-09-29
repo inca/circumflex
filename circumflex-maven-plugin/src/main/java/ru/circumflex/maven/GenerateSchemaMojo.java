@@ -1,9 +1,10 @@
 package ru.circumflex.maven;
 
 import org.apache.commons.io.FilenameUtils;
+import ru.circumflex.core.Msg;
 import ru.circumflex.orm.DDLUnit;
 import ru.circumflex.orm.SchemaObject;
-import ru.circumflex.orm.FileDeploymentHelper;
+import ru.circumflex.orm.DeploymentHelper;
 import org.apache.maven.plugin.MojoExecutionException;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -61,12 +62,12 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
         if (ddl.schemata().size() > 0) {
             if (drop) ddl._drop();
             ddl._create();
-            for (DDLUnit.Msg msg : ddl.msgsArray()) {
-                if (msg instanceof DDLUnit.InfoMsg)
-                    getLog().info(msg.body());
-                else if (msg instanceof DDLUnit.ErrorMsg)
-                    getLog().error(msg.body());
-                getLog().debug(msg.sql());
+            for (Msg msg : ddl.msgsArray()) {
+                if (msg.key().equals("orm.ddl.info"))
+                    getLog().info(msg.param("status").toString());
+                else if (msg.key().equals("orm.ddl.error"))
+                    getLog().error(msg.param("status").toString());
+                getLog().debug(msg.param("sql").toString());
             }
         } else {
             getLog().info("No schema objects found to export.");
@@ -153,7 +154,7 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
             return;
         }
         try {
-            new FileDeploymentHelper(f).process();
+            new DeploymentHelper(f).loadData();
             getLog().info("Deployment " + deployment + " processed successfully.");
         } catch (Exception e) {
             getLog().error("Could not process deployment " + deployment + ".", e);

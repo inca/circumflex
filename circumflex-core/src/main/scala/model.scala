@@ -1,20 +1,12 @@
 package ru.circumflex.core
 
-/**
- * A very simple model for operating with structural data.
- */
-trait HashModel {
-  def get(key: String): Option[Any]
-  def apply(key: String): Any = get(key).get
-  def getOrElse[A](key: String, default: =>A): A = get(key) match {
-    case Some(value: A) => value;
-    case _ => default
-  }
-}
+/*!# Data model support
 
-/**
- * A very simple model for operating with wrappers.
- */
-trait WrapperModel {
-  def item: Any
+To make Circumflex components independent from various view technologies
+we introduce some basic interfaces here. Different components implement
+these interfaces while view technologies should provide proper support
+for them.
+*/
+trait Wrapper[T] {
+  def item: T
 }

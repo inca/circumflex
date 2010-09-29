@@ -2,6 +2,7 @@ package ru.circumflex.maven;
 
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
@@ -22,8 +23,8 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
      */
     protected MavenProject project;
 
-    protected URLClassLoader prepareClassLoader()
-            throws MalformedURLException, DependencyResolutionRequiredException {
+    protected URLClassLoader prepareClassLoader() throws MojoExecutionException {
+      try {
         List<URL> urls = new ArrayList<URL>();
         for (Object o : project.getRuntimeClasspathElements()) {
             File f = new File(o.toString());
@@ -33,6 +34,9 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
         }
         return URLClassLoader.newInstance(urls.toArray(new URL[urls.size()]),
                 Thread.currentThread().getContextClassLoader());
+      } catch (Exception e) {
+        throw new MojoExecutionException("Could not prepare class loader.", e);
+      }
     }
 
 }

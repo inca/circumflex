@@ -6,8 +6,11 @@
 <head>
   <meta http-equiv="content-type" content="text/html;charset=utf-8">
   <title>${title}</title>
-  <link rel="stylesheet" href="${resPath}main.css"/>
-  <script type="text/javascript" src="${resPath}highlight.js">
+  <link href="http://circumflex.ru/css/docco.css"
+        rel="stylesheet"
+        type="text/css"
+        media="screen, projection"/>
+  <script type="text/javascript" src="http://circumflex.ru/js/highlight.pack.js">
   </script>
   <script type="text/javascript">
     hljs.initHighlightingOnLoad();
@@ -15,7 +18,6 @@
 </head>
 <body>
 <div id="container">
-  <div id="background"></div>
   <table cellspacing="0" cellpadding="0">
     <thead>
     <tr>

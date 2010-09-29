@@ -1,24 +1,21 @@
 package ru.circumflex.orm
 
-import java.sql.Connection
-import JDBC._
-import ORM._
+import ru.circumflex.core._
 
-// ## DDL stuff
+/*!# Exporting Database Schema
 
-/**
- * A Unit-of-Work for generating database schema.
- */
+The `DDLUnit` class provides API for creating and dropping database schema.
+It features arranging database objects in correct order (preliminary
+auxiliary objects, tables, constraints, auxiliary database objects) and
+configurable logging.
+*/
 class DDLUnit {
-  import DDLUnit._
-
-  // ### Objects
 
   protected var _schemata: Seq[Schema] = Nil
   def schemata = _schemata
-  protected var _tables: Seq[Table[_]] = Nil
+  protected var _tables: Seq[Table[_, _]] = Nil
   def tables = _tables
-  protected var _views: Seq[View[_]] = Nil
+  protected var _views: Seq[View[_, _]] = Nil
   def views = _views
   protected var _constraints: Seq[Constraint] = Nil
   def constraints = _constraints
@@ -57,19 +54,19 @@ class DDLUnit {
   }
 
   def addObject(obj: SchemaObject): this.type = {
-    def processRelation(r: Relation[_]) = {
+    def processRelation(r: Relation[_, _]) = {
       addObject(r.schema)
       r.preAux.foreach(o =>
         if (!_preAux.contains(o)) _preAux ++= List(o))
       r.postAux.foreach(o => addObject(o))
     }
     obj match {
-      case t: Table[_] => if (!_tables.contains(t)) {
+      case t: Table[_, _] => if (!_tables.contains(t)) {
         _tables ++= List(t)
         t.constraints.foreach(o => addObject(o))
         processRelation(t)
       }
-      case v: View[_] => if (!_views.contains(v)) {
+      case v: View[_, _] => if (!_views.contains(v)) {
         _views ++= List(v)
         processRelation(v)
       }
@@ -83,108 +80,112 @@ class DDLUnit {
     return this
   }
 
-  // ### Workers
+  protected def dropObjects(objects: Seq[SchemaObject]): Unit =
+    for (o <- objects.reverse) tx.execute (o.sqlDrop) { st =>
+      st.executeUpdate
+      _msgs ++= List(new Msg(
+        "orm.ddl.info",
+        "status" -> ("DROP "  + o.objectName + ": OK"),
+        "sql" -> o.sqlDrop))
+    } { e =>
+      _msgs ++= List(new Msg(
+        "orm.ddl.info",
+        "status" -> ("DROP "  + o.objectName + ": FAILED"),
+        "sql" -> o.sqlDrop,
+        "error" -> e.getMessage))
+    }
 
-  protected def dropObjects(objects: Seq[SchemaObject], conn: Connection) =
-    for (o <- objects.reverse)
-      autoClose(conn.prepareStatement(o.sqlDrop))(st => {
-        st.executeUpdate
-        _msgs ++= List(InfoMsg("DROP "  + o.objectName + ": OK", o.sqlDrop))
-      })(e =>
-        _msgs ++= List(ErrorMsg("DROP " + o.objectName + ": " + e.getMessage, o.sqlDrop)))
-
-  protected def createObjects(objects: Seq[SchemaObject], conn: Connection) =
-    for (o <- objects)
-      autoClose(conn.prepareStatement(o.sqlCreate))(st => {
-        st.executeUpdate
-        _msgs ++= List(InfoMsg("CREATE " + o.objectName + ": OK", o.sqlCreate))
-      })(e =>
-        _msgs ++= List(ErrorMsg("CREATE " + o.objectName + ": " + e.getMessage, o.sqlCreate)))
+  protected def createObjects(objects: Seq[SchemaObject]): Unit =
+    for (o <- objects) tx.execute(o.sqlCreate) { st =>
+      st.executeUpdate
+      _msgs ++= List(new Msg(
+        "orm.ddl.info",
+        "status" -> ("CREATE "  + o.objectName + ": OK"),
+        "sql" -> o.sqlCreate))
+    } { e =>
+      _msgs ++= List(new Msg(
+        "orm.ddl.error",
+        "status" -> ("CREATE "  + o.objectName + ": OK"),
+        "sql" -> o.sqlCreate,
+        "error" -> e.getMessage))
+    }
 
   /**
-   * Execute a DROP script for added objects.
+   * Executes a DROP script for added objects.
    */
-  def drop(): this.type = {
+  def DROP(): this.type = {
     resetMsgs()
     _drop()
+    return this
   }
-  def _drop(): this.type = auto(tx.connection)(conn => {
-    // We will commit every successfull statement.
+
+  def _drop(): Unit = tx.execute { conn =>
+  // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
     // Execute a script.
-    dropObjects(postAux, conn)
-    dropObjects(views, conn)
+    dropObjects(postAux)
+    dropObjects(views)
     if (dialect.supportsDropConstraints_?)
-      dropObjects(constraints, conn)
-    dropObjects(tables, conn)
-    dropObjects(preAux, conn)
+      dropObjects(constraints)
+    dropObjects(tables)
+    dropObjects(preAux)
     if (dialect.supportsSchema_?)
-      dropObjects(schemata, conn)
+      dropObjects(schemata)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
-    return this
-  })
+  } { throw _ }
 
   /**
-   * Execute a CREATE script for added objects.
+   * Executes a CREATE script for added objects.
    */
-  def create(): this.type = {
+  def CREATE(): this.type = {
     resetMsgs()
     _create()
+    return this
   }
-  def _create(): this.type = auto(tx.connection)(conn => {
-    // We will commit every successfull statement.
+
+  def _create(): Unit = tx.execute { conn =>
+  // We will commit every successfull statement.
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
     // Execute a script.
     if (dialect.supportsSchema_?)
-      createObjects(schemata, conn)
-    createObjects(preAux, conn)
-    createObjects(tables, conn)
-    createObjects(constraints, conn)
-    createObjects(views, conn)
-    createObjects(postAux, conn)
+      createObjects(schemata)
+    createObjects(preAux)
+    createObjects(tables)
+    createObjects(constraints)
+    createObjects(views)
+    createObjects(postAux)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
-    return this
-  })
+  } { throw _ }
 
   /**
-   * Execute a DROP script and then a CREATE script.
+   * Executes a DROP script and then a CREATE script.
    */
-  def dropCreate(): this.type = {
+  def DROP_CREATE(): this.type = {
     resetMsgs()
     _drop()
     _create()
+    return this
   }
 
   override def toString: String = {
     var result = "Circumflex DDL Unit: "
     if (messages.size == 0) {
-        val objectsCount = (schemata.size +
-            tables.size +
-            constraints.size +
-            views.size +
-            preAux.size +
-            postAux.size)
-         result += objectsCount + " objects in queue."
+      val objectsCount = (schemata.size +
+          tables.size +
+          constraints.size +
+          views.size +
+          preAux.size +
+          postAux.size)
+      result += objectsCount + " objects in queue."
     } else {
-      val errorsCount = messages.filter(m => m.isInstanceOf[DDLUnit.ErrorMsg]).size
-      val infoCount = messages.filter(m => m.isInstanceOf[DDLUnit.InfoMsg]).size
+      val infoCount = messages.filter(_.key == "orm.ddl.info").size
+      val errorsCount = messages.filter(_.key == "orm.ddl.error").size
       result += infoCount + " successful statements, " + errorsCount + " errors."
     }
     return result
   }
-}
-
-// ### Messages
-
-object DDLUnit {
-  trait Msg {
-    def body: String
-    def sql: String
-  }
-  case class InfoMsg(val body: String, val sql: String) extends Msg
-  case class ErrorMsg(val body: String, val sql: String) extends Msg
 }

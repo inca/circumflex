@@ -1,98 +1,117 @@
 package ru.circumflex.orm
 
-import ORM._
+import ru.circumflex.core._
 
-// ## Association
+/*!# Association
 
-class Association[R <: Record[R], F <: Record[F]](name: String,
-                                                  uuid: String,
-                                                  val record: R,
-                                                  val foreignRelation: Relation[F])
-    extends ValueHolder[F](name, uuid) { assoc =>
+The `Association` class lets you create associations between relations which are
+typically represented by foreign key constraints in database. This kind of
+relationship is often referred to as *one-to-one* or *many-to-one* (the former
+is implemented by adding a `UNIQUE` constraint).
 
-  protected var _initialized: Boolean = false
+We use some terminology when speaking about associations:
 
-  // ### Commons
+  * the `C` type parameter points to the relation which owns this association
+  (we refer to it as the *child relation*);
+  * the `P` type parameter points to the referenced relation (we refer to it as
+  the *parent relation*);
+  * the `K` type parameter is a type of this association field's value, it must
+  match the type of parent relation's primary key.
+*/
+class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C],
+                                                           val parentRelation: Relation[K, P])
+    extends ValueHolder[P, C](field.name, field.record, field.sqlType) { assoc =>
 
-  class InternalField extends Field[Long](name, uuid, dialect.longType) {
-    override def setValue(newValue: Long): this.type = {
-      super.setValue(newValue)
-      assoc._value = null.asInstanceOf[F]
-      assoc._initialized = false
-      return this
-    }
+  /*! Column definition methods delegate to underlying field. */
+  override def notNull_?(): Boolean = field.notNull_?
+  override def NOT_NULL(): this.type = {
+    field.NOT_NULL
+    return this
+  }
+  override def unique_?(): Boolean = field.unique_?
+  override def UNIQUE(): this.type = {
+    field.UNIQUE
+    return this
+  }
+  override def defaultExpression: Option[String] = field.defaultExpression
+  override def DEFAULT(expr: String): this.type = {
+    field.DEFAULT(expr)
+    return this
   }
 
-  val field = new InternalField()
-
-  override def getValue(): F = super.getValue() match {
-    case null if (!_initialized && field.get != None) =>
-      _initialized = true
-      // try to get from record cache
-      val id = field.getValue
-      _value = tx.getCachedRecord(foreignRelation, id) match {
-        case Some(record) => record
-        case None =>    // try to fetch lazily
-          val r = foreignRelation.as("root")
-          (SELECT (r.*) FROM (r) WHERE (r.id EQ id))
-              .unique
-              .getOrElse(null.asInstanceOf[F])
-      }
-      return _value
-    case value => return value
-  }
-
-  override def setValue(newValue: F): this.type = if (newValue == null) {
-    field.setValue(null.asInstanceOf[Long])
-    assoc._initialized = false
-    super.setValue(null.asInstanceOf[F])
-  } else newValue.id.get() match {
-    case None => throw new ORMException("Cannot assign transient record to association.")
-    case Some(id: Long) =>
-      field.setValue(id)
-      _initialized = true
-      super.setValue(newValue)
-  }
-
-  // ### Cascading actions for DDL
+  // Cascading actions
 
   protected var _onDelete: ForeignKeyAction = NO_ACTION
-  protected var _onUpdate: ForeignKeyAction = NO_ACTION
-
   def onDelete = _onDelete
-  def onUpdate = _onUpdate
-
-  def onDelete(action: ForeignKeyAction): this.type = {
+  def ON_DELETE(action: ForeignKeyAction): this.type = {
     _onDelete = action
     return this
   }
-  def ON_DELETE(action: ForeignKeyAction): this.type = onDelete(action)
 
-  def onUpdate(action: ForeignKeyAction): this.type = {
+  protected var _onUpdate: ForeignKeyAction = NO_ACTION
+  def onUpdate = _onUpdate
+  def ON_UPDATE(action: ForeignKeyAction): this.type = {
     _onUpdate = action
     return this
   }
-  def ON_UPDATE(action: ForeignKeyAction): this.type = onUpdate(action)
+
+  // State maintenance
+
+  override def value: Option[P] =
+    field.value.flatMap(id => parentRelation.get(id))
+
+  override def set(v: Option[P]): this.type = {
+    field.set(v.flatMap(_.PRIMARY_KEY.value))
+    return this
+  }
 
 }
 
-// ## Inverse Associations
+/*!# Inverse Associations
 
-class InverseAssociation[P <: Record[P], C <: Record[C]](val record: P,
-                                                         val association: Association[C, P]) {
-  def getValue(): Seq[C] =
-    if (record.transient_?) Nil
-    else tx.getCachedInverse(this) match {  // lookup in cache
-      case null =>                          // lazy fetch
-        val root = association.record.relation as "root"
-        lastAlias(root.alias)
-        val v = (SELECT (root.*) FROM (root) WHERE (association.field EQ record.id.getValue)).list
-        tx.updateInverseCache(this, v)
-        return v
-      case l: Seq[C] =>
-        return l
-    }
+Inverse assocations provide a way to access child records from parent relation.
+This type of relationship is often referred to as *one-to-one* or *one-to-many*
+(the former one is implemented by applying a `UNIQUE` constraint).
+They are essentially useful in a combination with `Criteria` for fetching
+whole hierarchy of associated records in a single SQL `SELECT`.
+*/
+trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
+    extends Wrapper[T] {
+  def item: T = get()
+  def association: Association[K, C, P]
+  def record: P
+  def fetch(): Seq[C] = if (record.transient_?) Nil
+  else contextCache.cacheInverse(record.PRIMARY_KEY(), association, {
+    val root = association.field.record.relation AS "root"
+    ctx("orm.lastAlias") = root.alias
+    SELECT(root.*).FROM(root).WHERE(association.field EQ record.PRIMARY_KEY()).list
+  })
+  def get(): T
+  def apply(): T = get()
 
-  def apply(): Seq[C] = getValue()
+  override def equals(that: Any): Boolean = that match {
+    case that: InverseAssociation[_, _, _, _] =>
+      that.association == this.association
+    case _ => false
+  }
+  override def hashCode: Int = association.hashCode
+}
 
+class InverseMany[K, C <: Record[_, C], P <: Record[K, P]](
+    val record: P, val association: Association[K, C, P])
+    extends InverseAssociation[K, C, P, Seq[C]] {
+  def get(): Seq[C] = fetch()
+}
+
+class InverseOne[K, C <: Record[_, C], P <: Record[K, P]](
+    val record: P, val association: Association[K, C, P])
+    extends InverseAssociation[K, C, P, Option[C]] {
+  def get(): Option[C] = {
+    val children = fetch()
+    if (children.size <= 0) return None
+    if (children.size > 1)
+      throw new ORMException("One-to-one relationship expected, by multiple records found. " +
+          "Add a UNIQUE constraint or stick with InverseMany.")
+    return Some(children(0))
+  }
 }

@@ -1,26 +1,21 @@
 package ru.circumflex.orm
 
-// ## SQL dialect
+/*!# Dialect
 
-/**
- * A default dialect singleton.
- *
- * If you feel that some of the statements do not work
- * with your RDBMS vendor, trace the exact method and provide it's
- * implementation in your own class. After that, set the `orm.dialect`
- * configuration parameter accordingly.
- */
-object DefaultDialect extends Dialect
+This little thingy does all dirty SQL rendering.
 
-/**
- * This little thingy does all dirty SQL rendering. We are orienting the default
- * dialect on the world's most advanced open-source database, [PostgreSQL][psql].
- *
- *   [psql]: http://postgresql.org
- */
+We are orienting the default dialect on the world's most advanced open-source
+database, [PostgreSQL][psql].
+
+If you feel that some of the statements do not work with your RDBMS vendor,
+trace the exact method and provide it's implementation in your own class.
+After that, set the `orm.dialect` configuration parameter accordingly.
+
+  [psql]: http://postgresql.org
+*/
 class Dialect {
 
-  // ### SQL types
+  /*!## SQL types */
 
   def longType = "BIGINT"
   def integerType = "INTEGER"
@@ -33,7 +28,7 @@ class Dialect {
   def timestampType = "TIMESTAMPTZ"
   def xmlType = "XML"
 
-  // ### Actions for foreign keys
+  /*!## Actions for Foreign Keys */
 
   def fkNoAction = "NO ACTION"
   def fkCascade = "CASCADE"
@@ -41,14 +36,14 @@ class Dialect {
   def fkSetNull = "SET NULL"
   def fkSetDefault = "SET DEFAULT"
 
-  // ### Join keywords
+  /*!## Join Keywords */
 
   def innerJoin = "INNER JOIN"
   def leftJoin = "LEFT JOIN"
   def rightJoin = "RIGHT JOIN"
   def fullJoin = "FULL JOIN"
 
-  // ### Predicates
+  /*!## Predicates */
 
   def EQ = "= ?"
   def NE = "<> ?"
@@ -78,7 +73,7 @@ class Dialect {
   def exists = "EXISTS"
   def notExists = "NOT EXISTS"
 
-  // ### Functions and others
+  /*!## Functions and others */
 
   def NULL = "NULL"
   def distinct = "DISTINCT"
@@ -88,7 +83,7 @@ class Dialect {
   def sum = "SUM"
   def avg = "AVG"
 
-  // ### Set operations
+  /*!## Set operations */
 
   def union = "UNION"
   def unionAll = "UNION ALL"
@@ -97,134 +92,130 @@ class Dialect {
   def intersect = "INTERSECT"
   def intersectAll = "INTERSECT ALL"
 
-  // ### Order specificators
+  /*!## Order specificators */
 
   def asc = "ASC"
   def desc = "DESC"
 
-  // ### Features compliance
+  /*!## Features Compliance */
 
   def supportsSchema_?(): Boolean = true
   def supportsDropConstraints_?(): Boolean = true
 
-  // ### Commons
+  /*!## Commons */
 
   /**
-   * Quote literal expression as described in SQL92 standard.
+   * Quotes literal expression as described in SQL92 standard.
    */
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
 
   /**
-   * Quote identifier for dialects that support it.
+   * Quotes identifier for dialects that support it.
    */
   def quoteIdentifer(identifier: String) = identifier
 
   /**
-   * Qualify relation name with it's schema.
+   * Qualifies relation name with it's schema.
    */
-  def relationQualifiedName(relation: Relation[_]) =
+  def relationQualifiedName(relation: Relation[_, _]) =
     quoteIdentifer(relation.schema.name) + "." + quoteIdentifer(relation.relationName)
 
   /**
-   * Just prepend specified expression with `DEFAULT` keyword.
+   * Just appends `AS` and specified `alias` to specified `expression`.
    */
-  def defaultExpression(expr: String) = "DEFAULT " + expr
+  def alias(expression: String, alias: String) =
+    expression + " AS " + quoteIdentifer(alias)
 
   /**
-   * Just append `AS` and specified `alias` to specified `expression`.
+   * Qualifies a column with table alias (e.g. "p.id")
    */
-  def alias(expression: String, alias: String) = expression + " AS " + quoteIdentifer(alias)
+  def qualifyColumn(field: Field[_, _], tableAlias: String) =
+    tableAlias + "." + quoteIdentifer(field.name)
 
   /**
-   * Qualify a column with table alias (e.g. "p.id")
-   */
-  def qualifyColumn(field: Field[_], tableAlias: String) =
-    quoteIdentifer(tableAlias) + "." + quoteIdentifer(field.name)
-
-  /**
-   * Take specified `expression` into parentheses and prepend `ON`.
+   * Takes specified `expression` into parentheses and prepend `ON`.
    */
   def on(expression: String) = "ON (" + expression + ")"
 
   /**
-   * Take specified `expression` in parentheses and prepend `NOT`.
+   * Takes specified `expression` in parentheses and prepend `NOT`.
    */
   def not(expression: String) = "NOT (" + expression + ")"
 
   /**
-   * Take specified `subquery` into parentheses and prepend with
+   * Takes specified `subquery` into parentheses and prepend with
    * specified `expression`.
    */
   def subquery(expression: String, subquery: SQLQuery[_]) =
     expression + " ( " + subquery.toSql + " )"
 
-  // ### DDL
+  /*!## Data Definition Language */
 
   /**
-   * Produce a full definition of constraint (prepends the specific definition
-   * with `CONSTRAINT` keyword and constraint name.
+   * Produces a full definition of constraint (prepends the specific definition
+   * with `CONSTRAINT` keyword and constraint name).
    */
   def constraintDefinition(constraint: Constraint) =
     "CONSTRAINT " + quoteIdentifer(constraint.constraintName) + " " + constraint.sqlDefinition
 
   /**
-   * Produce `ALTER TABLE` statement with abstract action.
+   * Produces an `ALTER TABLE` statement with specified abstract `action`.
    */
-  def alterTable(rel: Relation[_], action: String) =
+  def alterTable(rel: Relation[_, _], action: String) =
     "ALTER TABLE " + rel.qualifiedName + " " + action
 
   /**
-   * Produce `ALTER TABLE` statement with `ADD CONSTRAINT` action.
+   * Produces an `ALTER TABLE` statement with `ADD CONSTRAINT` action.
    */
   def alterTableAddConstraint(constraint: Constraint) =
     alterTable(constraint.relation, "ADD " + constraintDefinition(constraint));
 
   /**
-   * Produce `ALTER TABLE` statement with `DROP CONSTRAINT` action.
+   * Produces an `ALTER TABLE` statement with `DROP CONSTRAINT` action.
    */
   def alterTableDropConstraint(constraint: Constraint) =
     alterTable(constraint.relation, "DROP CONSTRAINT " + quoteIdentifer(constraint.constraintName));
 
   /**
-   * Produces `CREATE SCHEMA` statement.
+   * Produces a `CREATE SCHEMA` statement.
    */
   def createSchema(schema: Schema) = "CREATE SCHEMA " + quoteIdentifer(schema.name)
 
   /**
-   * Produce `DROP SCHEMA` statement.
+   * Produces `DROP SCHEMA` statement.
    */
   def dropSchema(schema: Schema) = "DROP SCHEMA " + quoteIdentifer(schema.name) + " CASCADE"
 
   /**
-   * Produce `CREATE TABLE` statement without constraints.
+   * Produces a `CREATE TABLE` statement without constraints.
    */
-  def createTable(table: Table[_]) =
+  def createTable[PK, R <: Record[PK, R]](table: Table[PK, R]) =
     "CREATE TABLE " + table.qualifiedName + " (" +
         table.fields.map(_.toSql).mkString(", ") +
-        ", PRIMARY KEY (" + quoteIdentifer(table.primaryKey.name) + "))"
+        ", PRIMARY KEY (" + quoteIdentifer(table.PRIMARY_KEY.name) + "))"
 
   /**
-   * Produce `DROP TABLE` statement.
+   * Produces a `DROP TABLE` statement.
    */
-  def dropTable(table: Table[_]) =
+  def dropTable[PK, R <: Record[PK, R]](table: Table[PK, R]) =
     "DROP TABLE " + table.qualifiedName
 
   /**
-   * Produces `CREATE VIEW` statement.
+   * Produces a `CREATE VIEW` statement.
    */
-  def createView(view: View[_]) =
+  def createView[PK, R <: Record[PK, R]](view: View[PK, R]) =
     "CREATE VIEW " + view.qualifiedName + " (" +
-        view.fields.map(field => quoteIdentifer(field.name)).mkString(", ") + ") AS " +
+        view.fields.map(f => quoteIdentifer(f.name)).mkString(", ") + ") AS " +
         view.query.toInlineSql
 
   /**
-   * Produce `DROP VIEW` statement.
+   * Produces a `DROP VIEW` statement.
    */
-  def dropView(view: View[_]) =
+  def dropView[PK, R <: Record[PK, R]](view: View[PK, R]) =
     "DROP VIEW " + quoteIdentifer(view.qualifiedName)
 
   /**
-   * Produce `CREATE INDEX` statement.
+   * Produces a `CREATE INDEX` statement.
    */
   def createIndex(idx: Index): String = {
     var result = "CREATE "
@@ -237,89 +228,98 @@ class Dialect {
   }
 
   /**
-   * Produce `DROP INDEX` statement.
+   * Produces a `DROP INDEX` statement.
    */
-  def dropIndex(idx: Index) = "DROP INDEX " + quoteIdentifer(idx.relation.schema.name) + "." + quoteIdentifer(idx.name)
+  def dropIndex(idx: Index) =
+    "DROP INDEX " + quoteIdentifer(idx.relation.schema.name) + "." + quoteIdentifer(idx.name)
 
   /**
-   * SQL definition for a column represented by specified `field`
+   * Produces an SQL definition for a column represented by specified `field`
    * (e.g. `mycolumn VARCHAR NOT NULL`).
    */
-  def columnDefinition(field: Field[_]): String = {
+  def columnDefinition[R <: Record[_, R]](field: Field[_, R]): String = {
     var result = field.name + " " + field.sqlType
-    if (!field.nullable_?) result += " NOT NULL"
-    field.default match {
-      case Some(expr) => result += " " + expr
-      case _ =>
-    }
+    if (field.notNull_?) result += " NOT NULL"
+    result += defaultExpression(field)
     return result
   }
 
   /**
-   * Make necessary stuff for relation initialization.
-   *
-   * This implementation adds an auxiliary sequence for primary key
-   * (sequences are supported by PostgreSQL, Oracle and DB2 dialects).
+   * Performs dialect-specific relation initialization.
    */
-  def initializeRelation(relation: Relation[_]): Unit = {
-    val seqName = pkSequenceName(relation)
-    val seq = new SchemaObject {
-      val objectName = "SEQUENCE " + seqName
-      val sqlDrop = "DROP SEQUENCE " + seqName
-      val sqlCreate = "CREATE SEQUENCE " + seqName
+  def initializeRelation[R <: Record[_, R]](relation: Relation[_, R]): Unit = {}
+
+  /**
+   * Performs dialect-specific field initialization.
+   */
+  def initializeField[R <: Record[_, R]](field: Field[_, R]): Unit = field match {
+    case f: AutoIncrementable[_, _] if (f.autoIncrement_?) => {
+      val seqName = sequenceName(f)
+      val seq = new SchemaObject {
+        val objectName = "SEQUENCE " + seqName
+        val sqlDrop = "DROP SEQUENCE " + seqName
+        val sqlCreate = "CREATE SEQUENCE " + seqName
+      }
+      f.record.relation.addPreAux(seq)
     }
-    relation.addPreAux(seq)
+    case _ =>
   }
 
   /**
-   * An expression for primary key column.
+   * Produces a `DEFAULT` expression for specified `field`.
    */
-  def primaryKeyExpression(record: Record[_]) =
-    "DEFAULT NEXTVAL('" + pkSequenceName(record.relation) + "')"
-
-  protected def pkSequenceName(relation: Relation[_]) = quoteIdentifer(relation.schema.name) +
-      "." + quoteIdentifer(relation.relationName + "_" + relation.primaryKey.name + "_seq")
+  def defaultExpression[R <: Record[_, R]](field: Field[_, R]): String =
+    field match {
+      case a: AutoIncrementable[_, _] if (a.autoIncrement_?) =>
+        " DEFAULT NEXTVAL('" + sequenceName(field) + "')"
+      case _ =>
+        field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
+    }
 
   /**
-   * Produce unique constraint definition (e.g. `UNIQUE (name, value)`).
+   * Produces a name for database sequence.
+   */
+  def sequenceName[R <: Record[_, R]](f: Field[_, R]) =
+    quoteIdentifer(f.record.relation.schema.name) + "." +
+        quoteIdentifer(f.record.relation.relationName + "_" + f.name + "_seq")
+
+  /**
+   * Produces a definition of unique constraint (e.g. `UNIQUE (name, value)`).
    */
   def uniqueKeyDefinition(uniq: UniqueKey) =
     "UNIQUE (" + uniq.fields.map(_.name).mkString(", ") + ")"
 
   /**
-   * Produce foreign key constraint definition for association (e.g.
+   * Produces a definition of foreign key constraint (e.g.
    * `FOREIGN KEY (country_id) REFERENCES country(id) ON DELETE CASCADE`).
    */
   def foreignKeyDefinition(fk: ForeignKey) =
-    "FOREIGN KEY (" + fk.localFields.map(_.name).mkString(", ") +
-        ") REFERENCES " + fk.foreignRelation.qualifiedName + " (" +
-        fk.foreignFields.map(_.name).mkString(", ") + ") " +
+    "FOREIGN KEY (" + fk.childFields.map(_.name).mkString(", ") +
+        ") REFERENCES " + fk.parentRelation.qualifiedName + " (" +
+        fk.parentFields.map(_.name).mkString(", ") + ") " +
         "ON DELETE " + fk.onDelete.toSql + " " +
         "ON UPDATE " + fk.onUpdate.toSql
 
   /**
-   * Produces check constraint definition (e.g. `CHECK (index > 0)`).
+   * Produces a definition of check constraint (e.g. `CHECK (index > 0)`).
    */
   def checkConstraintDefinition(check: CheckConstraint) =
     "CHECK (" + check.expression + ")"
 
-  // ### SQL
-
-  def lastIdExpression(node: RelationNode[_]) =
-    node.alias + "." + node.relation.primaryKey.name + " = LASTVAL()"
+  /*!## Structured Query Language */
 
   /**
-   * Produce SQL representation of joined tree of relations (`JoinNode` instance).
+   * Produces an SQL representation of join node.
    */
-  def join(j: JoinNode[_, _]): String = joinInternal(j, null)
+  def join(j: JoinNode[_, _, _, _]): String = joinInternal(j, null)
 
   /**
    * Some magic to convert join tree to SQL.
    */
-  protected def joinInternal(node: RelationNode[_], on: String): String = {
+  protected def joinInternal(node: RelationNode[_, _], on: String): String = {
     var result = ""
     node match {
-      case j: JoinNode[_, _] =>
+      case j: JoinNode[_, _, _, _] =>
         result += joinInternal(j.left, on) +
             " " + j.joinType.toSql + " " +
             joinInternal(j.right, j.sqlOn)
@@ -331,11 +331,13 @@ class Dialect {
   }
 
   /**
-   * Produces `SELECT` statement (without `LIMIT`, `OFFSET` and `ORDER BY`
-   * clauses).
+   * Produces a `SELECT` statement.
    */
   def select(q: Select[_]): String = {
-    var result = "SELECT " + q.projections.map(_.toSql).mkString(", ")
+    var result = "SELECT "
+    if (q.distinct_?)
+      result += "DISTINCT "
+    result += q.projections.map(_.toSql).mkString(", ")
     if (q.from.size > 0)
       result += " FROM " + q.from.map(_.toSql).mkString(", ")
     if (q.where != EmptyPredicate)
@@ -358,52 +360,56 @@ class Dialect {
     return result
   }
 
-  // ### DML
+  /**
+   * Returns a predicate expression for querying the last inserted record
+   * for `IdentityGenerator`.
+   */
+  def identityLastIdPredicate[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Predicate =
+    new SimpleExpression(node.alias + "." + node.relation.PRIMARY_KEY.name + " = LASTVAL()", Nil)
 
   /**
-   * Produce `INSERT INTO .. VALUES` statement for specified `record` and specified `fields`.
+   * Returns a query which retrieves the last generated identity value for `IdentityGenerator`.
    */
-  def insertRecord(record: Record[_], fields: Seq[Field[_]]) =
-    "INSERT INTO " + record.relation.qualifiedName +
-        " (" + fields.map(column => quoteIdentifer(column.name)).mkString(", ") +
-        ") VALUES (" + fields.map(f => "?").mkString(", ") + ")"
+  def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+    new Select(expr[PK]("LASTVAL()"))
 
   /**
-   * Produce `UPDATE` statement with primary key criteria for specified `record` using specified
-   * `fields` in the `SET` clause.
+   * Returns a query which retrieves the next sequence value for the primary key of specified `node`. 
    */
-  def updateRecord(record: Record[_], fields: Seq[Field[_]]): String =
-    "UPDATE " + record.relation.qualifiedName +
-        " SET " + fields.map(column => quoteIdentifer(column.name) + " = ?").mkString(", ") +
-        " WHERE " + quoteIdentifer(record.id.name) + " = ?"
+  def sequenceNextValQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+    new Select(expr[PK]("NEXTVAL('" + sequenceName(node.relation.PRIMARY_KEY) + "')"))
+
+  /*!## Data Manipulation Language */
 
   /**
-   * Produce `DELETE` statement for specified `record`.
+   * Produces an `INSERT INTO .. VALUES` statement for specified `record` and specified `fields`.
    */
-  def deleteRecord(record: Record[_]): String =
-    "DELETE FROM " + record.relation.qualifiedName +
-        " WHERE " + quoteIdentifer(record.id.name) + " = ?"
+  def insert[PK, R <: Record[PK, R]](dml: Insert[PK, R]): String =
+    "INSERT INTO " + dml.relation.qualifiedName +
+        " (" + dml.fields.map(f => quoteIdentifer(f.name)).mkString(", ") +
+        ") VALUES (" + dml.fields.map(f => "?").mkString(", ") + ")"
 
   /**
-   * Produce `INSERT .. SELECT` statement.
+   * Produces an `INSERT .. SELECT` statement.
    */
-  def insertSelect(dml: InsertSelect[_]) = "INSERT INTO " + dml.relation.qualifiedName + " (" +
-      dml.relation.fields.map(column => quoteIdentifer(column.name)).mkString(", ") + ") " + dml.query.toSql
+  def insertSelect[PK, R <: Record[PK, R]](dml: InsertSelect[PK, R]) =
+    "INSERT INTO " + dml.relation.qualifiedName + " (" +
+      dml.relation.fields.map(f => quoteIdentifer(f.name)).mkString(", ") + ") " + dml.query.toSql
 
   /**
-   * Produce `UPDATE` statement.
+   * Produces an `UPDATE` statement.
    */
-  def update(dml: Update[_]): String = {
+  def update[PK, R <: Record[PK, R]](dml: Update[PK, R]): String = {
     var result = "UPDATE " + dml.node.toSql + " SET " +
-        dml.setClause.map(column => quoteIdentifer(column._1.name) + " = ?").mkString(", ")
+        dml.setClause.map(f => quoteIdentifer(f._1.name) + " = ?").mkString(", ")
     if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
     return result
   }
 
   /**
-   * Produce `DELETE` statement.
+   * Produces a `DELETE` statement.
    */
-  def delete(dml: Delete[_]): String = {
+  def delete[PK, R <: Record[PK, R]](dml: Delete[PK, R]): String = {
     var result = "DELETE FROM " + dml.node.toSql
     if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
     return result

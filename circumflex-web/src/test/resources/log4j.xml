@@ -12,7 +12,9 @@
     <priority value="info"/>
     <appender-ref ref="console"/>
   </root>
-  <category name="ru.circumflex.core">
-    <priority value="debug"/>
+
+  <category name="ru.circumflex.web">
+    <priority value="trace"/>
   </category>
+
 </log4j:configuration>

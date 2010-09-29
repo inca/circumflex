@@ -1,29 +1,26 @@
 package ru.circumflex.orm
 
-import ORM._
+/*!# Predicates
 
-// ## Predicate
+`Predicate` is essentially a parameterized expression which yields boolean
+value when executed by database.
 
-/**
- * **Predicate** is essentially a `ParameterizedExpression`
- * that yields boolean value when executed by database.
- *
- * Predicates are designed to participate in `WHERE` clause of
- * SQL queries.
- */
+Predicates are designed to participate in `WHERE` clauses of SQL queries.
+*/
+
 trait Predicate extends ParameterizedExpression
 
 /**
- * A predicate that always yields `true` when executed by
- * the database, it is used when the `WHERE` clause is empty.
+ * Always yields `true` when executed by database, used to designate an empty
+ * `WHERE` clause.
  */
 object EmptyPredicate extends Predicate {
-  def toSql = dialect.emptyPredicate
-  def parameters = Nil
+  def parameters: scala.Seq[Any] = Nil
+  def toSql: String = dialect.emptyPredicate
 }
 
 /**
- * Simple expression.
+ * A predicate consisting of specified `expression` and specified `parameters`.
  */
 class SimpleExpression(val expression: String,
                        val parameters: Seq[Any])
@@ -32,7 +29,7 @@ class SimpleExpression(val expression: String,
 }
 
 /**
- * Aggregation of multiple `predicates` with specified `operator`.
+ * Aggregates specified `predicates` with specified `operator` (for example, `OR`).
  */
 class AggregatePredicate(val operator: String,
                          protected var predicates: Seq[Predicate])
@@ -48,121 +45,73 @@ class AggregatePredicate(val operator: String,
 }
 
 /**
- * An expression with subquery.
+ * A predicate which consists of specified `expression` and specified `subquery`.
  */
 class SubqueryExpression[T](expression: String,
                             val subquery: SQLQuery[T])
     extends SimpleExpression(
-      dialect.subquery(expression, subquery),
-      subquery.parameters)
+      dialect.subquery(expression, subquery), subquery.parameters)
 
-// ## Helper
-
-/**
- * A helper to construct some common predicates in a DSL-like way.
+/*! `SimpleExpressionHelper` is used to compose predicates in a DSL-style.
+`String` expressions are converted to `SimpleExpressionHelper` implicitly.
  */
 class SimpleExpressionHelper(val expr: String) {
 
-  /* ### Simple expressions */
+  // Simple expressions
 
   def EQ(value: Any) = new SimpleExpression(expr + " " + dialect.EQ, List(value))
-  def _eq(value: Any) = EQ(value)
-
   def NE(value: Any) = new SimpleExpression(expr + " " + dialect.NE, List(value))
-  def _ne(value: Any) = NE(value)
-
   def GT(value: Any) = new SimpleExpression(expr + " " + dialect.GT, List(value))
-  def _gt(value: Any) = GT(value)
-
   def GE(value: Any) = new SimpleExpression(expr + " " + dialect.GE, List(value))
-  def _ge(value: Any) = GE(value)
-
   def LT(value: Any) = new SimpleExpression(expr + " " + dialect.LT, List(value))
-  def _lt(value: Any) = LT(value)
-
   def LE(value: Any) = new SimpleExpression(expr + " " + dialect.LE, List(value))
-  def _le(value: Any) = LE(value)
-
-  def isNull = new SimpleExpression(expr + " " + dialect.isNull, Nil)
-  def IS_NULL = isNull
-
-  def isNotNull = new SimpleExpression(expr + " " + dialect.isNotNull, Nil)
-  def IS_NOT_NULL = isNotNull
-
-  def like(value: Any) = new SimpleExpression(expr + " " + dialect.like, List(value))
-  def LIKE(value: Any) = like(value)
-
-  def ilike(value: Any) = new SimpleExpression(expr + " " + dialect.ilike, List(value))
-  def ILIKE(value: Any) = ilike(value)
-
-  def in(params: Any*) =
+  def IS_NULL = new SimpleExpression(expr + " " + dialect.isNull, Nil)
+  def IS_NOT_NULL = new SimpleExpression(expr + " " + dialect.isNotNull, Nil)
+  def LIKE(value: Any) = new SimpleExpression(expr + " " + dialect.like, List(value))
+  def ILIKE(value: Any) = new SimpleExpression(expr + " " + dialect.ilike, List(value))
+  def IN(params: Any*) =
     new SimpleExpression(expr + " " + dialect.parameterizedIn(params), params.toList)
-  def IN(params: Any*) = in(params: _*)
-
-  def between(lowerValue: Any, upperValue: Any) =
+  def BETWEEN(lowerValue: Any, upperValue: Any) =
     new SimpleExpression(expr + " " + dialect.between, List(lowerValue, upperValue))
-  def BETWEEN(lowerValue: Any, upperValue: Any) = between(lowerValue, upperValue)
 
-  /* ### Simple subqueries */
+  // Simple subqueries
 
-  def in(query: SQLQuery[_]) =
+  def IN(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.in, query)
-  def IN(query: SQLQuery[_]) = in(query)
-  def notIn(query: SQLQuery[_]) =
+  def NOT_IN(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.notIn, query)
-  def NOT_IN(query: SQLQuery[_]) = notIn(query)
 
-  def eqAll(query: SQLQuery[_]) =
+  def EQ_ALL(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.EQ + " " + dialect.all, query)
-  def EQ_ALL(query: SQLQuery[_]) = eqAll(query)
-  def neAll(query: SQLQuery[_]) =
+  def NE_ALL(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.NE + " " + dialect.all, query)
-  def NE_ALL(query: SQLQuery[_]) = neAll(query)
-  def gtAll(query: SQLQuery[_]) =
+  def GT_ALL(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.GT + " " + dialect.all, query)
-  def GT_ALL(query: SQLQuery[_]) = gtAll(query)
-  def geAll(query: SQLQuery[_]) =
+  def GE_ALL(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.GE + " " + dialect.all, query)
-  def GE_ALL(query: SQLQuery[_]) = geAll(query)
-  def ltAll(query: SQLQuery[_]) =
+  def LT_ALL(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.LT + " " + dialect.all, query)
-  def LT_ALL(query: SQLQuery[_]) = ltAll(query)
-  def leAll(query: SQLQuery[_]) =
+  def LE_ALL(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.LE + " " + dialect.all, query)
-  def LE_ALL(query: SQLQuery[_]) = leAll(query)
 
-  def eqSome(query: SQLQuery[_]) =
+  def EQ_SOME(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.EQ + " " + dialect.some, query)
-  def EQ_SOME(query: SQLQuery[_]) = eqSome(query)
-  def neSome(query: SQLQuery[_]) =
+  def NE_SOME(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.NE + " " + dialect.some, query)
-  def NE_SOME(query: SQLQuery[_]) = neSome(query)
-  def gtSome(query: SQLQuery[_]) =
+  def GT_SOME(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.GT + " " + dialect.some, query)
-  def GT_SOME(query: SQLQuery[_]) = gtSome(query)
-  def geSome(query: SQLQuery[_]) =
+  def GE_SOME(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.GE + " " + dialect.some, query)
-  def GE_SOME(query: SQLQuery[_]) = geSome(query)
-  def ltSome(query: SQLQuery[_]) =
+  def LT_SOME(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.LT + " " + dialect.some, query)
-  def LT_SOME(query: SQLQuery[_]) = ltSome(query)
-  def leSome(query: SQLQuery[_]) =
+  def LE_SOME(query: SQLQuery[_]) =
     new SubqueryExpression(expr + " " + dialect.LE + " " + dialect.some, query)
-  def LE_SOME(query: SQLQuery[_]) = leSome(query)
-
 }
 
-// ## Helper
-
-/**
- * A helper to construct aggregate predicates in a DSL-like way.
- */
+/*! `AggregatePredicateHelper` is used to compose predicates using infix notation. */
 class AggregatePredicateHelper(predicate: Predicate) {
-  def and(predicates: Predicate*) =
+  def AND(predicates: Predicate*) =
     new AggregatePredicate(dialect.and, predicate::predicates.toList)
-  def AND(predicates: Predicate*) = and(predicates: _*)
-
-  def or(predicates: Predicate*) =
+  def OR(predicates: Predicate*) =
     new AggregatePredicate(dialect.or, predicate::predicates.toList)
-  def OR(predicates: Predicate*) = or(predicates: _*)
 }

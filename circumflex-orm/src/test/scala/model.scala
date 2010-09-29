@@ -1,113 +1,76 @@
 package ru.circumflex.orm
 
-import xml._
+import ru.circumflex.core._
 
-class Country extends Record[Country] {
-  // Constructor shortcuts
+class Country extends Record[String, Country] {
   def this(code: String, name: String) = {
     this()
     this.code := code
     this.name := name
   }
-  // Fields
-  val code = "code" VARCHAR(2) DEFAULT("'ch'")
-  val name = "name" TEXT
-  // Inverse associations
-  def cities = inverse(City.country)
-  // Miscellaneous
-  override def toString = name.getOrElse("Unknown")
+
+  val code = "code".VARCHAR(2).NOT_NULL
+      .addSetter(_.trim)
+      .addSetter(_.toLowerCase)
+  val name = "name".TEXT.NOT_NULL
+  def cities = inverseMany(City.country)
+  def capital = inverseOne(Capital.country)
+
+  def PRIMARY_KEY = code
+  def relation = Country
+  override def toString = name.getOrElse("<unknown>")
 }
 
-object Country extends Table[Country] {
-  INDEX("country_code_idx", "LOWER(code)") USING "btree" UNIQUE
+object Country extends Country
+    with Table[String, Country]
+    with Cacheable[String, Country] {
+  val codeKey = CONSTRAINT("code_key").UNIQUE(code)
+  val nameIdx = "name_idx".INDEX("code")
 
-  validation.notEmpty(_.code)
-      .notEmpty(_.name)
-      .pattern(_.code, "(?i:[a-z]{2})")
+  validation.notEmpty(_.code).pattern(_.code, "^[a-z]{2}$", "syntax")
 }
 
-class City extends Record[City] {
-  // Constructor shortcuts
-  def this(country: Country, name: String) = {
+class City extends Record[Long, City]
+    with IdentityGenerator[Long, City] {
+  def this(name: String, country: Country) = {
     this()
-    this.country := country
     this.name := name
+    this.country := country
   }
-  // Fields
-  val name = "name" TEXT
-  // Associations
-  val country = "country_id" REFERENCES(Country) ON_DELETE CASCADE ON_UPDATE CASCADE
-  // Miscellaneous
-  override def toString = name.getOrElse("Unknown")
+
+  val id = "id".BIGINT.NOT_NULL.AUTO_INCREMENT
+  val name = "name".TEXT.NOT_NULL
+  val country = "country_code".VARCHAR(2).NOT_NULL.REFERENCES(Country).ON_DELETE(CASCADE)
+
+  def PRIMARY_KEY = id
+  def relation = City
+  override def toString = name.getOrElse("<unknown>")
 }
 
-object City extends Table[City] {
-  validation.notEmpty(_.name)
-      .notNull(_.country.field)
+object City extends City
+    with Table[Long, City]
+    with Cacheable[Long, City] {
+  val cityKey = UNIQUE(name, country)
+  def byName(name: String) = (City AS "ci").map(ci =>
+    ci.criteria.add(ci.name LIKE name).addOrder(ci.name ASC))
 }
 
-class Capital extends Record[Capital] {
-  // Constructor shortcuts
+class Capital extends Record[String, Capital] {
   def this(country: Country, city: City) = {
     this()
     this.country := country
     this.city := city
   }
-  // Associations
-  val country = "country_id" REFERENCES(Country) ON_DELETE CASCADE
-  val city = "city_id" REFERENCES(City) ON_DELETE RESTRICT
+  val country = "country_id".VARCHAR(2).NOT_NULL.REFERENCES(Country).ON_DELETE(CASCADE)
+  val city = "city_id".BIGINT.NOT_NULL.REFERENCES(City).ON_DELETE(CASCADE)
+
+  def relation = Capital
+  def PRIMARY_KEY = country.field
+  override def toString = city().name.getOrElse("<unknown>")
 }
 
-object Capital extends Table[Capital] {
-  UNIQUE (this.country)
-  UNIQUE (this.city)
-}
-
-object Sample {
-  def schema = new DDLUnit(City, Capital, Country).dropCreate
-      .messages.foreach(msg => println(msg.body))
-  def selects = {
-    val ci = City as "ci"
-    val co = Country as "co"
-    // Select countries with corresponding cities:
-    val s1 = SELECT (co.*, ci.*) FROM (co JOIN ci) list // Seq[(Country, City)]
-    // Select countries and count their cities:
-    val s2 = SELECT (co.*, COUNT(ci.id)) FROM (co JOIN ci) GROUP_BY (co.*) list // Seq[(Country, Int)]
-    // Select all russian cities:
-    val s3 = SELECT (ci.*) FROM (ci JOIN co) WHERE (co.code LIKE "ru") ORDER_BY (ci.name ASC) list  // Seq[City]
-  }
-  def data = Deployment
-      .readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
-      .foreach(_.process)
-  def clean = {
-    Country.criteria.mkDelete.execute
-    City.criteria.mkDelete.execute
-    Capital.criteria.mkDelete.execute
-    COMMIT
-  }
-  def randomData(cardinality: Int): (Long, Int) = {
-    val startTime = System.currentTimeMillis
-    var count = 0
-    val rnd = new java.util.Random()
-    val chars = "abcdefghijklmnopqrstuvwxyz"
-    def randomName(size: Int = 6) = (0 until size)
-        .map(i => chars.charAt(rnd.nextInt(chars.length)))
-        .mkString
-    for (i <- 0 to cardinality) {
-      val co = new Country(randomName(2), randomName())
-      co.save
-      count += 1
-      for (j <- 0 to rnd.nextInt(6)) {
-        val ci = new City(co, randomName())
-        ci.save
-        count += 1
-        if (j == 3) {
-          new Capital(co, ci).insert()
-          count += 1
-        }
-      }
-    }
-    COMMIT
-    return (System.currentTimeMillis - startTime, count)
-  }
+object Capital extends Capital
+    with Table[String, Capital]
+    with Cacheable[String, Capital] {
+  val cityKey = UNIQUE(city)
 }

@@ -1,107 +1,105 @@
 package ru.circumflex.orm
 
-import ORM._
-import java.lang.String
 import java.util.Date
+import xml._
 import java.sql.ResultSet
-import xml.{Elem, XML, NodeSeq}
-// ## Field
 
-/**
- * Each field of persistent class correspond to a field of record in a relation.
+/*!# Field
+
+The `Field` class holds atomic values of records. It wraps actual value
+and provides methods for constructing column definitions for enclosing
+tables. It also contains the `REFERENCES` method which is used to create
+associations.
  */
-class Field[T](name: String,
-               uuid: String,
-               val sqlType: String)
-    extends ValueHolder[T](name, uuid) with SQLable {
+class Field[T, R <: Record[_, R]](name: String, record: R , sqlType: String)
+    extends ValueHolder[T, R](name, record, sqlType) with SQLable {
 
-  // Should the `UNIQUE` constraint be generated for this field?
-  protected var _unique: Boolean = false
-  def unique: this.type = {
-    _unique = true
+  def uuid = record.getClass.getName + "." + name
+
+  def read(rs: ResultSet, alias: String): Option[T] =
+    typeConverter.read(rs, alias).asInstanceOf[Option[T]]
+
+  def REFERENCES[P <: Record[T, P]](relation: Relation[T, P]): Association[T, R, P] =
+    new Association(this, relation)
+
+  def toSql: String = dialect.columnDefinition(this)
+}
+
+trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
+  protected var _autoIncrement: Boolean = false
+  def autoIncrement_?(): Boolean = _autoIncrement
+  def AUTO_INCREMENT(): this.type = {
+    _autoIncrement = true
     return this
   }
-  def UNIQUE: this.type = unique
-  def unique_?() = _unique
-
-  // An optional default expression for DDL.
-  protected[orm] var _defaultExpr: Option[String] = None
-  def default = _defaultExpr
-  def default(expr: String): this.type = {
-    _defaultExpr = Some(dialect.defaultExpression(expr))
-    this
-  }
-  def DEFAULT(expr: String): this.type = default(expr)
-
-  def read(rs: ResultSet, alias: String): T = typeConverter.read(rs, alias).asInstanceOf[T]
-
-  def toSql = dialect.columnDefinition(this)
 }
 
-class PrimaryKeyField(val record: Record[_])
-    extends Field[Long]("id", record.uuid + "." + "id", dialect.longType) {
-  override def default = Some(dialect.primaryKeyExpression(record))
+class IntField[R <: Record[_, R]](name: String, record: R)
+    extends XmlSerializable[Int, R](name, record, dialect.integerType)
+        with AutoIncrementable[Int, R] {
+  def from(str: String): Option[Int] =
+    try Some(str.toInt) catch { case _ => None }
 }
 
-abstract class XmlSerializableField[T](name: String, uuid: String, sqlType: String)
-    extends Field[T](name, uuid, sqlType) with XmlSerializable[T] {
-  def to(value: T) = value.toString
+class LongField[R <: Record[_, R]](name: String, record: R)
+    extends XmlSerializable[Long, R](name, record, dialect.longType)
+        with AutoIncrementable[Long, R]{
+  def from(str: String): Option[Long] =
+    try Some(str.toLong) catch { case _ => None }
 }
 
-class IntField(name: String, uuid: String)
-    extends XmlSerializableField[Int](name, uuid, dialect.integerType) {
-  def from(string: String) = string.toInt
-}
-
-class LongField(name: String, uuid: String)
-    extends XmlSerializableField[Long](name, uuid, dialect.longType) {
-  def from(string: String) = string.toLong
-}
-
-class NumericField(name: String, uuid: String, precision: Int = -1, scale: Int = 0)
-    extends XmlSerializableField[Double](
+class NumericField[R <: Record[_, R]](
+    name: String, record: R, val precision: Int = -1, val scale: Int = 0)
+    extends XmlSerializable[Double, R](
       name,
-      uuid,
+      record,
       dialect.numericType + (if (precision == -1) "" else "(" + precision + "," + scale + ")")) {
-  def from(string: String) = string.toDouble
+  def from(str: String): Option[Double] =
+    try Some(str.toDouble) catch { case _ => None }
 }
 
-class TextField(name: String, uuid: String, sqlType: String)
-    extends XmlSerializableField[String](name, uuid, sqlType) {
-  def this(name: String, uuid: String, length: Int = -1) =
-    this(name, uuid, dialect.varcharType + (if (length == -1) "" else "(" + length + ")"))
-  def from(string: String) = string
+class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
+    extends XmlSerializable[String, R](name, record, sqlType) {
+  def this(name: String, record: R, length: Int = -1) =
+    this(name, record, dialect.varcharType + (if (length == -1) "" else "(" + length + ")"))
+  def from(str: String): Option[String] =
+    if (str == "") None else Some(str)
 }
 
-class BooleanField(name: String, uuid: String)
-    extends XmlSerializableField[Boolean](name, uuid, dialect.booleanType) {
-  def from(string: String) = string.toBoolean
+class BooleanField[R <: Record[_, R]](name: String, record: R)
+    extends XmlSerializable[Boolean, R](name, record, dialect.booleanType) {
+  def from(str: String): Option[Boolean] =
+    try Some(str.toBoolean) catch { case _ => None }
 }
 
-class TimestampField(name: String, uuid: String)
-    extends XmlSerializableField[Date](name, uuid, dialect.timestampType) {
-  def from(string: String) = new Date(java.sql.Timestamp.valueOf(string).getTime)
-  override def to(value: Date) = new java.sql.Timestamp(value.getTime).toString
+class TimestampField[R <: Record[_, R]](name: String, record: R)
+    extends XmlSerializable[Date, R](name, record, dialect.timestampType) {
+  def from(str: String): Option[Date] =
+    try Some(new Date(java.sql.Timestamp.valueOf(str).getTime)) catch { case _ => None }
+  override def to(value: Option[Date]): String =
+    value.map(v => new java.sql.Timestamp(v.getTime).toString).getOrElse("")
 }
 
-class DateField(name: String, uuid: String)
-    extends XmlSerializableField[Date](name, uuid, dialect.dateType) {
-  def from(string: String) = new Date(java.sql.Date.valueOf(string).getTime)
-  override def to(value: Date) = new java.sql.Date(value.getTime).toString
+class DateField[R <: Record[_, R]](name: String, record: R)
+    extends XmlSerializable[Date, R](name, record, dialect.dateType) {
+  def from(str: String): Option[Date] =
+    try Some(new Date(java.sql.Date.valueOf(str).getTime)) catch { case _ => None }
+  override def to(value: Option[Date]): String =
+    value.map(v => new java.sql.Date(v.getTime).toString).getOrElse("")
 }
 
-class TimeField(name: String, uuid: String)
-    extends XmlSerializableField[Date](name, uuid, dialect.timeType) {
-  def from(string: String) = new Date(java.sql.Time.valueOf(string).getTime)
-  override def to(value: Date) = new java.sql.Time(value.getTime).toString
+class TimeField[R <: Record[_, R]](name: String, record: R)
+    extends XmlSerializable[Date, R](name, record, dialect.timeType) {
+  def from(str: String): Option[Date] =
+    try Some(new Date(java.sql.Time.valueOf(str).getTime)) catch { case _ => None }
+  override def to(value: Option[Date]): String =
+    value.map(v => new java.sql.Time(v.getTime).toString).getOrElse("")
 }
 
-class XmlField(name: String, uuid: String)
-    extends XmlSerializableField[NodeSeq](name, uuid, dialect.xmlType) {
-  def from(string: String) = XML.loadString(string)
-  override def read(rs: ResultSet, alias: String) = from(rs.getString(alias))
+class XmlField[R <: Record[_, R]](name: String, record: R)
+    extends XmlSerializable[NodeSeq, R](name, record, dialect.xmlType) {
+  def from(str: String): Option[NodeSeq] =
+    try Some(XML.loadString(str)) catch { case _ => None }
+  override def read(rs: ResultSet, alias: String) =
+    from(rs.getString(alias))
 }
-
-
-
-
