@@ -1,6 +1,6 @@
+
 package ru.circumflex.web
 
-import scala.collection.immutable.Map
 import scala.collection.Iterator
 import scala.collection.JavaConversions._
 import scala.xml._
@@ -11,12 +11,13 @@ import java.util.{Locale, Date}
 import javax.servlet.ServletInputStream
 import org.apache.commons.io.IOUtils
 import org.apache.commons.fileupload._
+import org.apache.commons.fileupload.disk._
 import org.apache.commons.fileupload.servlet._
 import java.io.{File, BufferedReader}
 import java.net.URLDecoder
 import java.lang.String
 import java.util.{Enumeration => JEnumeration}
-
+import collection.mutable.Map
 
 /*!# HTTP Request
 
@@ -138,8 +139,8 @@ class HttpRequest(val raw: HttpServletRequest) {
   Circumflex Web Framework lets you access request headers via the `headers` object.
   */
   object headers extends Map[String, String] {
-    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
-    def -(key: String): Map[String, String] = this
+    def +=(kv: (String, String)): this.type = this
+    def -=(key: String): this.type = this
     def iterator: Iterator[(String, String)] = raw.getHeaderNames
             .asInstanceOf[JEnumeration[String]]
             .map(k => (k -> raw.getHeader(k)))
@@ -157,11 +158,11 @@ class HttpRequest(val raw: HttpServletRequest) {
   Circumflex Web Framework lets you access request attributes via the `attrs` object.
   */
   object attrs extends Map[String, Any] with UntypedContainer {
-    def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
+    def +=(kv: (String, Any)): this.type = {
       raw.setAttribute(kv._1, kv._2)
       return this
     }
-    def -(key: String): Map[String, Any] = {
+    def -=(key: String): this.type = {
       raw.removeAttribute(key)
       return this
     }
@@ -176,8 +177,8 @@ class HttpRequest(val raw: HttpServletRequest) {
   Request parameters can be accessed via the `params` object.
   */
   object params extends Map[String, String] {
-    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
-    def -(key: String): Map[String, String] = this
+    def +=(kv: (String, String)): this.type = this
+    def -=(key: String): this.type = this
     def iterator: Iterator[(String, String)] = raw.getParameterNames
             .asInstanceOf[JEnumeration[String]]
             .map(k => (k -> raw.getParameter(k)))
@@ -200,11 +201,11 @@ class HttpRequest(val raw: HttpServletRequest) {
   will return empty values without implicitly creating a session.
   */
   object session extends Map[String, Any] with UntypedContainer {
-    def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
+    def +=(kv: (String, Any)): this.type = {
       raw.getSession(true).setAttribute(kv._1, kv._2)
       return this
     }
-    def -(key: String): Map[String, Any] = {
+    def -=(key: String): this.type = {
       val s = raw.getSession(false)
       if (s != null) s.removeAttribute(key)
       return this
@@ -303,20 +304,20 @@ class HttpRequest(val raw: HttpServletRequest) {
     def parseFileItems(factory: FileItemFactory): Seq[FileItem] =
       if (multipart_?) {
         val uploader = new ServletFileUpload(factory)
-        return asBuffer(uploader.parseRequest(raw).asInstanceOf[java.util.List[FileItem]])
+        return asScalaBuffer(uploader.parseRequest(raw).asInstanceOf[java.util.List[FileItem]])
       } else Nil
 
     /**
      * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
-     * using `DefaultFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
+     * using `DiskFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
      * `Nil` if request does not have multipart content.
      */
     def parseFileItems(sizeThreshold: Int, tempStorage: File): Seq[FileItem] =
-      parseFileItems(new DefaultFileItemFactory(sizeThreshold, tempStorage))
+      parseFileItems(new DiskFileItemFactory(sizeThreshold, tempStorage))
 
     /**
      * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
-     * using `DefaultFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
+     * using `DiskFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
      * `Nil` if request does not have multipart content.
      */
     def parseFileItems(sizeThreshold: Int, tempStorage: String): Seq[FileItem] =

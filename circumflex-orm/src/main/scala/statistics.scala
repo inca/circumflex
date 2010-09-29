@@ -80,10 +80,10 @@ object Statistics {
     recordCacheMisses.set(0)
     inverseCacheHits.set(0)
     inverseCacheMisses.set(0)
-    heaviestSql = ""
-    heaviestSqlTime = 0l
-    heaviestDml = ""
-    heaviestDmlTime = 0l
+    _heaviestSql = ""
+    _heaviestSqlTime = 0l
+    _heaviestDml = ""
+    _heaviestDmlTime = 0l
   }
 
 }

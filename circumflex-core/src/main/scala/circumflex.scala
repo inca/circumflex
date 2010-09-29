@@ -2,8 +2,7 @@ package ru.circumflex.core
 
 import java.util.{Date, ResourceBundle, Locale}
 import java.text.SimpleDateFormat
-import collection.{Map}
-import collection.mutable.{HashMap}
+import collection.mutable.{HashMap, Map}
 
 /*!# Configuration API
 

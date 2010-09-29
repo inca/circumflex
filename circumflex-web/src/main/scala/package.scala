@@ -2,11 +2,11 @@ package ru.circumflex
 
 import ru.circumflex.core._
 import javax.servlet.{FilterChain, FilterConfig}
-import collection.immutable.Map
 import collection.Iterator
 import javax.activation.MimetypesFileTypeMap
 import java.io._
 import org.apache.commons.io.IOUtils
+import collection.mutable.Map
 
 /*!# The `web` Package
 
@@ -34,11 +34,11 @@ package object web {
   and `response.headers`).
   */
   object headers extends Map[String, String] {
-    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = {
+    def +=(kv: (String, String)): this.type = {
       response.headers + kv
       return this
     }
-    def -(key: String): Map[String, String] = {
+    def -=(key: String): this.type = {
       response.headers - key
       return this
     }
@@ -66,11 +66,11 @@ package object web {
   and `response.cookies`).
   */
   object cookies extends Map[String, HttpCookie] {
-    def +[B1 >: HttpCookie](kv: (String, B1)): Map[String, B1] = {
+    def +=(kv: (String, HttpCookie)): this.type = {
       response.cookies += kv._2.asInstanceOf[HttpCookie]
       return this
     }
-    def -(key: String): Map[String, HttpCookie] = {
+    def -=(key: String): this.type = {
       response.cookies.find(_.name == key).map(c => response.cookies -= c)
       return this
     }
@@ -88,14 +88,13 @@ package object web {
   object flash extends Map[String, Any] {
     val SESSION_KEY = "cx.flash"
     protected def flashMap = session
-            .getOrElse(SESSION_KEY, Map[String, Any]())
-            .asInstanceOf[Map[String, Any]]
-
-    def +[B1 >: Any](kv: (String, B1)): Map[String, B1] = {
+        .getOrElse(SESSION_KEY, Map[String, Any]())
+        .asInstanceOf[Map[String, Any]]
+    def +=(kv: (String, Any)): this.type = {
       session(SESSION_KEY) = flashMap + (kv)
       return this
     }
-    def -(key: String): Map[String, Any] = {
+    def -=(key: String): this.type = {
       session(SESSION_KEY) = flashMap - key
       return this
     }
@@ -119,8 +118,8 @@ package object web {
   resolved from request parameters.
   */
   object param extends Map[String, String] {
-    def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
-    def -(key: String): Map[String, String] = this
+    def +=(kv: (String, String)): this.type = this
+    def -=(key: String): this.type = this
     def iterator: Iterator[(String, String)] = ctx.iterator.flatMap(p => p._2 match {
       case m: MatchResult => m.params.iterator
       case _ => Iterator.empty
