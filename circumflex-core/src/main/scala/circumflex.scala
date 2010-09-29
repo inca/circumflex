@@ -34,7 +34,7 @@ manual filtering sources and resources.
  */
 object Circumflex extends HashMap[String, Any] with UntypedContainer {
 
-  /*! The configuration object is initialized by reading `cx.properties`. */
+  // The configuration object is initialized by reading `cx.properties`.
   try {
     val bundle = ResourceBundle.getBundle("cx", Locale.getDefault)
     val keys = bundle.getKeys
@@ -125,7 +125,7 @@ trait UntypedContainer extends Map[String, Any] {
   def instantiate[C](name: String): C = instantiate[C](name, throw new CircumflexException(
     "Could not perform instantiation for parameter " + name))
 
-  /*! Internally the instantiation is performed by the `instantiateObject` method. */
+  // Internally the instantiation is performed by the `instantiateObject` method.
   protected def instantiateObject[C](name: String, c: Class[_]): C = try {
     c.getField("MODULE$").get(null).asInstanceOf[C]
   } catch {

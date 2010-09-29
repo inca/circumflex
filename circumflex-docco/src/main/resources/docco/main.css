@@ -27,8 +27,6 @@ p {margin: 0 0 16px 0}
 h1, h2, h3, h4, h5, h6 {margin: 16px 0 16px 0}
 h3, h4, h5, h6 {margin-top: 12px}
 
-#container {position: relative}
-
 table td {border: 0; outline: 0}
 
 td.docs, th.docs {
@@ -42,7 +40,7 @@ td.docs, th.docs {
 
 .docs p tt, .docs p code,
 .docs h1 code, .docs h2 code,
-.docs h3 code, .docs h4 code
+.docs h3 code, .docs h4 code,
 .docs h5 code, .docs h6 code,
 .docs li code {
   background: #f7fff7;
@@ -88,3 +86,13 @@ td.code, th.code {
   margin: 0;
   padding: 0;
 }
+
+/* Index page */
+
+#docco-index > h1 { margin: 16px 32px }
+#docco-index > ul > li { list-style:none outside }
+#docco-index > ul > li > p {
+  color: #458;
+  margin: 0;
+}
+

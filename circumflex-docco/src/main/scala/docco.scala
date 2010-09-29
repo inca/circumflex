@@ -5,9 +5,10 @@ import ru.circumflex.freemarker._
 import java.io._
 import ru.circumflex.md.Markdown
 import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}
-import java.util.{Comparator, Collection => JCollection}
+import java.util.{Collection => JCollection}
 import collection.mutable.ListBuffer
 import org.apache.commons.io.{FilenameUtils, IOUtils, FileUtils}
+import collection.immutable.ListMap
 
 /**
  * A simple wrapper over a Documentation -> Code Block tuple.
@@ -39,7 +40,7 @@ case class Section(private var _doc: String = "", private var _code: String = ""
       _md = Markdown(_doc)
     return _md
   }
-  
+
   def empty_?() = _doc == "" && _code == ""
 }
 
@@ -66,8 +67,8 @@ object Docco {
   val DEFAULT_SINGLE_PAGE_TEMPLATE = "/docco-single-page.html.ftl"
   val DEFAULT_BATCH_PAGE_TEMPLATE = "/docco-batch-page.html.ftl"
   val DEFAULT_INDEX_TEMPLATE = "/docco-index.html.ftl"
-  def apply(sourceFile: File): Docco = new Docco(sourceFile)
-  def apply(sourceFile: String): Docco = apply(new File(sourceFile))
+  def apply(sourceFile: String, stripScaladoc: Boolean = true): Docco =
+    new Docco(new File(sourceFile), stripScaladoc)
 }
 
 class Docco(val file: File, val stripScaladoc: Boolean = true) {
@@ -177,15 +178,17 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
   var customResources: List[String] = Nil
   // Title for index
   var title: String = basePath.getCanonicalFile.getName + " index"
-  // Filename comparator
-  val fileComparator = new Comparator[File] {
-    def compare(f1: File, f2: File) = f1.getName.compareTo(f2.getName)
-  }
+  // Should we strip Scaladoc ( /** ... */ ) or not?
+  var stripScaladoc: Boolean = true
+  // Should we ignore files with no docco?
+  var skipEmpty: Boolean = true
 
   // For interop with Java
   def setPageTemplate(v: String) = { pageTemplate = v }
   def setIndexTemplate(v: String) = { indexTemplate = v }
   def setFilenameRegex(v: String) = { filenameRegex = v }
+  def setStripScaladoc(v: Boolean) = { stripScaladoc = v }
+  def setSkipEmpty(v: Boolean) = { skipEmpty = v }
   def setTitle(v: String) = { title = v }
   def addCustomResource(v: String) = { customResources ++= List(v) }
 
@@ -220,6 +223,7 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
     }
     // crawl basePath for the sources
     val bp = basePath.getCanonicalPath
+    val op = outputDirectory.getCanonicalPath
     val sources = new ListBuffer[File]
     val srcIt = FileUtils.listFiles(basePath,
       new RegexFileFilter(filenameRegex),
@@ -227,33 +231,37 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
     while (srcIt.hasNext)
       sources += srcIt.next
     // generate doccos
-    val doccos = sources.map(f => {
-      val fp = f.getCanonicalPath
-      val relName = fp.substring(bp.length + 1) + ".html"
-      val outFile = new File(outputDirectory, relName)
-      FileUtils.forceMkdir(outFile.getParentFile)
-      val docco = Docco(f)
-      val out = new FileWriter(outFile)
-      try {
-        var data = Map[String, Any](
-          "title" -> f.getName,
-          "sections" -> docco.sections,
-          "depth" -> relName.toList.filter(c => c == File.separatorChar).length)
-        ftl.getTemplate(pageTemplate).process(data, out)
-      } finally {
-        out.close
-      }
-      outFile
-    })
+    val doccos = sources.flatMap { f =>
+      val docco = new Docco(f, stripScaladoc)
+      if (!skipEmpty || docco.sections.size > 1) {
+        val fp = f.getCanonicalPath
+        val relName = fp.substring(bp.length + 1) + ".html"
+        val outFile = new File(outputDirectory, relName)
+        FileUtils.forceMkdir(outFile.getParentFile)
+        val out = new FileWriter(outFile)
+        try {
+          var data = Map[String, Any](
+            "title" -> f.getName,
+            "sections" -> docco.sections,
+            "depth" -> relName.toList.filter(c => c == File.separatorChar).length)
+          ftl.getTemplate(pageTemplate).process(data, out)
+        } finally {
+          out.close
+        }
+        Some(outFile)
+      } else None
+    }
     // prepare index
-    val indexMap = sources.groupBy(f => f.getParentFile).map { p =>
-      val dirName = p._1.getCanonicalPath.substring(bp.length + 1)
-      val filenames = p._2.map(f => f.getName)
+    val indexMap = doccos
+        .groupBy(f => f.getParentFile).map { p =>
+      val dirName = p._1.getCanonicalPath.substring(op.length + 1)
+      val filenames = p._2.map(f => f.getName.replaceAll("\\.html$", ""))
       (dirName -> filenames)
     }
+    val dirs = indexMap.keys.toList.sortBy(_.toString)
     val out = new FileWriter(new File(outputDirectory, "index.html"))
     try {
-      var data = Map[String, Any]("index" -> indexMap, "title" -> title)
+      var data = Map[String, Any]("dirs" -> dirs, "index" -> indexMap, "title" -> title)
       ftl.getTemplate(indexTemplate).process(data, out)
     } finally {
       out.close

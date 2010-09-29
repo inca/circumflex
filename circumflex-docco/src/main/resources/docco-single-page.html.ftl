@@ -9,101 +9,98 @@
     hljs.initHighlightingOnLoad();
   </script>
   <style type="text/css">
-    /* Highlight JS */
+/* Highlight JS */
 
-    pre code {color: #000}
-    pre .comment, pre .javadoc {color: #998; font-style: italic}
-    pre .keyword {color: #000; font-weight: bold}
-    pre .number {color: #40a070}
-    pre .string {color: #d14}
-    pre .title {color: #900; font-weight: bold}
-    pre .class .title {color: #458; font-weight: bold}
-    pre .class {color: #458; font-weight: bold}
+pre code {color: #000}
+pre .comment, pre .javadoc {color: #998; font-style: italic}
+pre .keyword {color: #000; font-weight: bold}
+pre .number {color: #40a070}
+pre .string {color: #d14}
+pre .title {color: #900; font-weight: bold}
+pre .class .title {color: #458; font-weight: bold}
+pre .class {color: #458; font-weight: bold}
 
-    /* Typographics and layouts */
+/* Typographics and layouts */
 
-    body {
-      font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, FreeSerif, serif;
-      font-size: 16px;
-      line-height: 24px;
-      color: #252519;
-      margin: 0; padding: 0;
-    }
+body {
+  font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, FreeSerif, serif;
+  font-size: 16px;
+  line-height: 24px;
+  color: #252519;
+  margin: 0; padding: 0;
+}
 
-    a {color: #333}
-    a:visited {color: #555}
+a {color: #333}
+a:visited {color: #555}
 
-    p {margin: 0 0 16px 0}
+p {margin: 0 0 16px 0}
 
-    h1, h2, h3, h4, h5, h6 {margin: 16px 0 16px 0}
-    h3, h4, h5, h6 {margin-top: 12px}
+h1, h2, h3, h4, h5, h6 {margin: 16px 0 16px 0}
+h3, h4, h5, h6 {margin-top: 12px}
 
-    #container {position: relative}
+table td {border: 0; outline: 0}
 
-    table td {border: 0; outline: 0}
+td.docs, th.docs {
+  max-width: 500px;
+  min-width: 500px;
+  min-height: 5px;
+  padding: 8px 16px 0 32px;
+  vertical-align: top;
+  text-align: left;
+}
 
-    td.docs, th.docs {
-      max-width: 500px;
-      min-width: 500px;
-      min-height: 5px;
-      padding: 8px 16px 0 32px;
-      vertical-align: top;
-      text-align: left;
-    }
-
-    .docs p tt, .docs p code,
-    .docs h1 code, .docs h2 code,
-    .docs h3 code, .docs h4 code
+.docs p tt, .docs p code,
+.docs h1 code, .docs h2 code,
+.docs h3 code, .docs h4 code,
 .docs h5 code, .docs h6 code,
-    .docs li code {
-      background: #f7fff7;
-      border: 1px solid #dedede;
-      padding: 0 .2em;
-    }
+.docs li code {
+  background: #f7fff7;
+  border: 1px solid #dedede;
+  padding: 0 .2em;
+}
 
-    .docs pre {
-      margin: 16px -16px 16px -32px;
-      padding: 8px;
-      background:#f7fff7;
-      border: 1px solid #dedede;
-      border-width:1px 0 1px 0;
-      overflow-x:auto;
-    }
+.docs pre {
+  margin: 16px -16px 16px -32px;
+  padding: 8px;
+  background:#f7fff7;
+  border: 1px solid #dedede;
+  border-width:1px 0 1px 0;
+  overflow-x:auto;
+}
 
-    .octowrap {position: relative}
+.octowrap {position: relative}
 
-    .octothorpe {
-      font: 12px Arial;
-      text-decoration: none;
-      color: #454545;
-      position: absolute;
-      top: 3px;
-      left: -20px;
-      padding: 1px 2px;
-      opacity: 0;
-      -webkit-transition: opacity 0.2s linear;
-    }
+.octothorpe {
+  font: 12px Arial;
+  text-decoration: none;
+  color: #454545;
+  position: absolute;
+  top: 3px;
+  left: -20px;
+  padding: 1px 2px;
+  opacity: 0;
+  -webkit-transition: opacity 0.2s linear;
+}
 
-    td.docs:hover .octothorpe {opacity: 1}
+td.docs:hover .octothorpe {opacity: 1}
 
-    td.code, th.code {
-      padding: 8px;
-      width: 100%;
-      vertical-align: top;
-      background: #f5f5ff;
-      border-left: 1px solid #e5e5ee;
-    }
+td.code, th.code {
+  padding: 8px;
+  width: 100%;
+  vertical-align: top;
+  background: #f5f5ff;
+  border-left: 1px solid #e5e5ee;
+}
 
-    .code pre code, .docs pre code {
-      font: 12px/1 Monaco, Consolas, "Lucida Console", monospace;
-      margin: 0;
-      padding: 0;
-    }
+.code pre code, .docs pre code {
+  font: 12px/1 Monaco, Consolas, "Lucida Console", monospace;
+  margin: 0;
+  padding: 0;
+}
   </style>
 </head>
 <body>
-<div id="container">
-  <div id="background"></div>
+<div id="docco-page">
   <table cellspacing="0" cellpadding="0">
     <thead>
     <tr>
