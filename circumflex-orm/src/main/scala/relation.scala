@@ -44,8 +44,11 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
  companion objects), then record class is inferred automatically. Otherwise
  you should override the `recordClass` method.
   */
-  val _recordClass: Class[R] = Class.forName(this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
-      .asInstanceOf[Class[R]]
+  val _recordClass: Class[R] = Class.forName(
+    this.getClass.getName.replaceAll("\\$(?=\\Z)", ""),
+    true,
+    Thread.currentThread.getContextClassLoader
+    ).asInstanceOf[Class[R]]
   def recordClass: Class[R] = _recordClass
 
   /*! By default the relation name is inferred from `recordClass` by replacing
