@@ -75,7 +75,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
       case Some(r: R) =>
         relation.copyFields(r, this)
         return this
-      case _ => throw new ORMException("Could not refresh a record because it is missing in the backend.")
+      case _ =>
+        throw new ORMException("Could not refresh a record because it is missing in the backend.")
     }
   }
 
@@ -101,7 +102,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
       val result = new Insert(relation, fields.filter(!_.null_?)).execute()
       if (relation.autorefresh_?) refresh()
       result
-    case _ => throw new ORMException("Application-assigned identifier is expected." +
+    case _ => throw new ORMException("Application-assigned identifier is expected. " +
         "Use one of the generators if you wish identifiers to be generated automatically.")
   }
 

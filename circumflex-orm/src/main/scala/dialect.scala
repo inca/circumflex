@@ -25,7 +25,7 @@ class Dialect {
   def booleanType = "BOOLEAN"
   def dateType = "DATE"
   def timeType = "TIME"
-  def timestampType = "TIMESTAMPTZ"
+  def timestampType = "TIMESTAMP"
   def xmlType = "XML"
 
   /*!## Actions for Foreign Keys */

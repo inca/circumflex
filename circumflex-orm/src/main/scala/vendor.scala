@@ -10,14 +10,16 @@ Following vendors are currently supported by Circumflex ORM:
   * Oracle.
 */
 
-class PostgreSQLDialect extends Dialect
+class PostgreSQLDialect extends Dialect {
+  override def timestampType = "TIMESTAMPTZ"
+}
 
 class MySQLDialect extends Dialect
 
 class OracleDialect extends Dialect
 
 class H2Dialect extends Dialect {
-  override def textType = "varchar"
+  override def textType = "VARCHAR"
   override def createIndex(idx: Index): String = {
     var result = "CREATE "
     if (idx.unique_?) result += "UNIQUE "
