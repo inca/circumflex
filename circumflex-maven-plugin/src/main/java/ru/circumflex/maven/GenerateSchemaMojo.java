@@ -64,10 +64,10 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
             ddl._create();
             for (Msg msg : ddl.msgsArray()) {
                 if (msg.key().equals("orm.ddl.info"))
-                    getLog().info(msg.param("status").toString());
+                    getLog().info(msg.param("status").get().toString());
                 else if (msg.key().equals("orm.ddl.error"))
-                    getLog().error(msg.param("status").toString());
-                getLog().debug(msg.param("sql").toString());
+                    getLog().error(msg.param("status").get().toString());
+                getLog().debug(msg.param("sql").get().toString());
             }
         } else {
             getLog().info("No schema objects found to export.");
