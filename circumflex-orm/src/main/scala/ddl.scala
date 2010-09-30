@@ -171,6 +171,10 @@ class DDLUnit {
     return this
   }
 
+  def close(): Unit = {
+    connectionProvider.close()
+  }
+
   override def toString: String = {
     var result = "Circumflex DDL Unit: "
     if (messages.size == 0) {

@@ -3,8 +3,8 @@ package ru.circumflex.orm
 import ru.circumflex.core._
 import javax.sql.DataSource
 import javax.naming.InitialContext
-import com.mchange.v2.c3p0.ComboPooledDataSource
 import java.sql._
+import com.mchange.v2.c3p0.{DataSources, ComboPooledDataSource}
 
 /*!# ORM Configuration Objects
 
@@ -30,7 +30,12 @@ trait ConnectionProvider {
   /**
    * Opens new JDBC connection.
    */
-  def openConnection: Connection
+  def openConnection(): Connection
+
+  /**
+   * Closes the provider (and underlying `DataSource` if applicable).
+   */
+  def close(): Unit
 }
 
 /*! Circumflex ORM provides default `ConnectionProvider` implementation.
@@ -81,7 +86,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
    * Configure datasource instance. It is retrieved from JNDI if 'orm.connection.datasource'
    * is specified or is constructed using c3p0 otherwise.
    */
-  protected val ds: DataSource = cx.get("orm.connection.datasource") match {
+  protected def createDataSource: DataSource = cx.get("orm.connection.datasource") match {
     case Some(jndiName: String) => {
       val ctx = new InitialContext
       val ds = ctx.lookup(jndiName).asInstanceOf[DataSource]
@@ -119,16 +124,23 @@ class DefaultConnectionProvider extends ConnectionProvider {
     }
   }
 
-  def dataSource: DataSource = ds
+  protected var _ds: DataSource = null
+  def dataSource: DataSource = {
+    if (_ds == null)
+      _ds = createDataSource
+    return _ds
+  }
 
-  /**
-   * Open a new JDBC connection.
-   */
-  def openConnection: Connection = {
+  def openConnection(): Connection = {
     val conn = dataSource.getConnection
     conn.setAutoCommit(autocommit)
     conn.setTransactionIsolation(isolation)
     return conn
+  }
+
+  def close(): Unit = {
+    DataSources.destroy(_ds)
+    _ds = null
   }
 }
 
