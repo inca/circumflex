@@ -107,7 +107,8 @@ trait MessageResolver extends Map[String, String] {
  * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
  */
 class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
-  protected def bundle = ResourceBundle.getBundle(bundleName, locale)
+  protected def bundle = ResourceBundle.getBundle(
+    bundleName, locale, Thread.currentThread.getContextClassLoader)
   def iterator: Iterator[(String, String)] = bundle.getKeys
       .map(k => (k -> bundle.getString(k)))
   protected def resolve(key: String): Option[String] =

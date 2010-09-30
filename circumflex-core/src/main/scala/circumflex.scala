@@ -36,7 +36,8 @@ object Circumflex extends HashMap[String, Any] with UntypedContainer {
 
   // The configuration object is initialized by reading `cx.properties`.
   try {
-    val bundle = ResourceBundle.getBundle("cx", Locale.getDefault)
+    val bundle = ResourceBundle.getBundle(
+      "cx", Locale.getDefault, Thread.currentThread.getContextClassLoader)
     val keys = bundle.getKeys
     while (keys.hasMoreElements) {
       val k = keys.nextElement
