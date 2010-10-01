@@ -40,7 +40,7 @@ class FTL extends Configuration {
     response.body(r => getTemplate(template).process(data, r.getWriter)).flush_!
   }
   def renderFtl(template: String, params: (String, Any)*): String =
-    ftl(template, Map[String, Any](params: _*))
+    renderFtl(template, Map[String, Any](params: _*))
   def renderFtl(template: String, root: Any = ctx): String = {
     val result = new StringWriter
     getTemplate(template).process(root, result)
