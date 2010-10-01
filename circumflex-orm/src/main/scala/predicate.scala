@@ -40,10 +40,12 @@ class AggregatePredicate(val operator: String,
     _predicates ++= predicate.toList
     return this
   }
-  def predicates: Seq[Predicate] = _predicates.filter {
-    case EmptyPredicate => false
-    case p: AggregatePredicate if (p.predicates.size == 0) => false
-    case _ => true
+  def predicates: Seq[Predicate] = _predicates.flatMap {
+    case EmptyPredicate => None
+    case p: AggregatePredicate if (p.predicates.size == 0) => None
+    case p: AggregatePredicate if (p.predicates.size == 1) =>
+      Some(p.predicates(0))
+    case p => Some(p)
   }
   def toSql: String = {
     val p = predicates

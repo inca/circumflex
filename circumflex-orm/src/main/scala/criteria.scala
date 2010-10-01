@@ -205,9 +205,11 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   /**
    * Compose an actual predicate from restrictions.
    */
-  def predicate: Predicate =
-    if (_restrictions.size > 0) orm.AND(_restrictions: _*)
-    else EmptyPredicate
+  def predicate: Predicate = _restrictions.size match {
+    case 0 => EmptyPredicate
+    case 1 => _restrictions(0)
+    case _ => orm.AND(_restrictions: _*)
+  }
 
   /**
    * Merges the *join tree* with *prefetch tree* to form an actual `FROM` clause.
