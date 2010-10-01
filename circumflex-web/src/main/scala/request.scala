@@ -133,7 +133,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   */
   lazy val cookies: Seq[HttpCookie] = {
     val cs = raw.getCookies
-    if (cs == null) Nill
+    if (cs == null) Nil
     else cs.map(c => HttpCookie(c))
   }
 
