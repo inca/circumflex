@@ -32,6 +32,9 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   protected var _restrictions: Seq[Predicate] = Nil
   protected var _orders: Seq[Order] = Nil
 
+  // Process the `prefetchSeq` of root relation
+  rootNode.relation.prefetchSeq.foreach(prefetch(_))
+
   /**
    * Renumbers specified `projection` aliases and it's `subProjections` recursively
    * so that no collisions happen.
@@ -151,9 +154,13 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
    * Add specified `association` to prefetch list.
    */
   def prefetch(association: Association[_, _, _]): Criteria[PK, R] = {
-    if (!_prefetchSeq.contains(association)) {
+    val a = association.asInstanceOf[Association[PK, R, R]]
+    if (!_prefetchSeq.contains(a)) {
       // The depth-search is used to update query plan if possible.
-      _rootTree = updateRootTree(_rootTree, association)
+      _rootTree = updateRootTree(_rootTree, a)
+      // Also process `prefetchSeq` of parent and child relations
+      a.parentRelation.prefetchSeq.foreach(prefetch(_))
+      a.record.relation.prefetchSeq.foreach(prefetch(_))
     }
     return this
   }

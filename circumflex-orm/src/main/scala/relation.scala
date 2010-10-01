@@ -201,6 +201,20 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
       case _ => throw new ORMException("Could not retrieve a field.")
     }
 
+  /*! You can declare explicitly that certain associations should always be prefetched
+  whenever a relation participates in a `Criteria` query. To do so simply call the
+  `prefetch` method inside relation initialization code. Note that the order of
+  association prefetching is important; for more information refer to `Criteria`
+  documentation.
+  */
+  protected var _prefetchSeq: Seq[Association[_, _, _]] = Nil
+  def prefetchSeq = _prefetchSeq
+  def prefetch[K, C <: Record[_, C], P <: Record[K, P]](
+      association: Association[K, C, P]): this.type = {
+    this._prefetchSeq ++= List(association)
+    return this
+  }
+
   /*!## Constraints & Indexes Definition
 
   Circumflex ORM allows you to define constraints and indexes inside the
