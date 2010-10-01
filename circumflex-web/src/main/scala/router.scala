@@ -38,6 +38,8 @@ class RequestRouter(val prefix: String = "") {
     new RouteResponse(str)
   implicit def xml2response(xml: Node): RouteResponse =
     new RouteResponse("<?xml version=\"1.0\"?>\n" + xml.toString)
+  implicit def unit2response(v: => Unit): RouteResponse =
+    send()
   implicit def router2response(router: RequestRouter): RouteResponse =
     sendError(404)
 
