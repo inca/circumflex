@@ -152,9 +152,6 @@ abstract class ValueHolder[T, R <: Record[_, R]](
   // Setting
 
   def set(v: Option[T]): this.type = {
-    // disallow setting values on relation fields
-    if (record.isInstanceOf[Relation[_, _]])
-      throw new ORMException("Could not set the value of the field which belong to relation.")
     // process value with setters
     _value = v.map { v =>
       setters.foldLeft(v) { (v, f) => f(v) }

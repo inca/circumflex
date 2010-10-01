@@ -34,9 +34,6 @@ object CircumflexORMSpec extends Specification {
       City.canEqual(new City().relation) must beTrue
       Country.canEqual(new City().relation) must beFalse
     }
-    "disallow field assignment" in {
-      (Country.name := "preved") must throwA[ORMException]
-    }
     "initialize metadata" in {
       Country.fields.size must_== 2
       Country.associations.size must_== 0
