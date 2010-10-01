@@ -90,7 +90,7 @@ class DDLUnit {
     } { e =>
       _msgs ++= List(new Msg(
         "orm.ddl.info",
-        "status" -> ("DROP "  + o.objectName + "FAILED -- " + e.getMessage),
+        "status" -> ("DROP "  + o.objectName + ": " + e.getMessage),
         "sql" -> o.sqlDrop,
         "error" -> e.getMessage))
     }
@@ -105,7 +105,7 @@ class DDLUnit {
     } { e =>
       _msgs ++= List(new Msg(
         "orm.ddl.error",
-        "status" -> ("CREATE "  + o.objectName + ": FAILED -- " + e.getMessage),
+        "status" -> ("CREATE "  + o.objectName + ": " + e.getMessage),
         "sql" -> o.sqlCreate,
         "error" -> e.getMessage))
     }
