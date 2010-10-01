@@ -45,9 +45,13 @@ package object core {
     (System.currentTimeMillis - startTime, result)
   }
 
+  /**
+   * Wraps an `obj` into `Some` as long as it is not `null`; returns `None` otherwise.
+   */
+  def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
+
   /* Implicits */
 
-  @inline implicit def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
   @inline implicit def symbol2string(sym: Symbol): String = sym.name
   @inline implicit def symbol2contextVarHelper(sym: Symbol): ContextVarHelper =
     new ContextVarHelper(sym)

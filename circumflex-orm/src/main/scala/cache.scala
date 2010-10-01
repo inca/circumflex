@@ -206,8 +206,8 @@ trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   def invalidateCache(): Unit =
     _cache.removeAll()
 
-  afterInsert(r => cache(r.PRIMARY_KEY(), r))
-  afterUpdate(r => cache(r.PRIMARY_KEY(), r))
+  afterInsert(r => cache(r.PRIMARY_KEY(), Some(r)))
+  afterUpdate(r => cache(r.PRIMARY_KEY(), Some(r)))
   afterDelete(r => evict(r.PRIMARY_KEY()))
 
   Cacheable.add(this)

@@ -106,10 +106,10 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   def remoteIp: String = raw.getRemoteAddr
   def remoteHost: String = raw.getRemoteHost
-  def remoteLogin: Option[String] = raw.getRemoteUser
+  def remoteLogin: Option[String] = any2option(raw.getRemoteUser)
   def sessionId = raw.getRequestedSessionId
 
-  def userPrincipal: Option[Principal] = raw.getUserPrincipal
+  def userPrincipal: Option[Principal] = any2option(raw.getUserPrincipal)
   def userInRole_?(role: String): Boolean = raw.isUserInRole(role)
 
   /*!## Locale
@@ -144,10 +144,10 @@ class HttpRequest(val raw: HttpServletRequest) {
     def iterator: Iterator[(String, String)] = raw.getHeaderNames
             .asInstanceOf[JEnumeration[String]]
             .map(k => (k -> raw.getHeader(k)))
-    def get(key: String): Option[String] = raw.getHeader(key)
-    def getAsMillis(key: String): Option[Long] = raw.getDateHeader(key)
+    def get(key: String): Option[String] = any2option(raw.getHeader(key))
+    def getAsMillis(key: String): Option[Long] = any2option(raw.getDateHeader(key))
     def getAsDate(key: String): Option[Date] = getAsMillis(key).map(new Date(_))
-    def getAsInt(key: String): Option[Long] = raw.getIntHeader(key)
+    def getAsInt(key: String): Option[Long] = any2option(raw.getIntHeader(key))
   }
 
   /*!## Attributes
@@ -169,7 +169,7 @@ class HttpRequest(val raw: HttpServletRequest) {
     def iterator: Iterator[(String, Any)] = raw.getAttributeNames
             .asInstanceOf[JEnumeration[String]]
             .map(k => (k -> raw.getAttribute(k)))
-    def get(key: String): Option[Any] = raw.getAttribute(key)
+    def get(key: String): Option[Any] = any2option(raw.getAttribute(key))
   }
 
   /*!## Parameters
@@ -182,7 +182,7 @@ class HttpRequest(val raw: HttpServletRequest) {
     def iterator: Iterator[(String, String)] = raw.getParameterNames
             .asInstanceOf[JEnumeration[String]]
             .map(k => (k -> raw.getParameter(k)))
-    def get(key: String): Option[String] = raw.getParameter(key)
+    def get(key: String): Option[String] = any2option(raw.getParameter(key))
   }
 
   /*!## Session
@@ -220,7 +220,7 @@ class HttpRequest(val raw: HttpServletRequest) {
     }
     def get(key: String): Option[Any] = {
       val s = raw.getSession(false)
-      if (s != null) s.getAttribute(key)
+      if (s != null) any2option(s.getAttribute(key))
       else None
     }
     def invalidate: this.type = {
