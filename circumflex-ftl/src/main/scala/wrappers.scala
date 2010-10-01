@@ -2,7 +2,7 @@ package ru.circumflex.freemarker
 
 import freemarker.template._
 import java.util.Date
-import org.apache.commons.beanutils.{MethodUtils, PropertyUtils}
+import org.apache.commons.beanutils.MethodUtils
 import java.lang.reflect.{Field, Method}
 import java.lang.String
 import ru.circumflex.core.Wrapper

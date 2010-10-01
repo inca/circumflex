@@ -30,18 +30,26 @@ class SimpleExpression(val expression: String,
 
 /**
  * Aggregates specified `predicates` with specified `operator` (for example, `OR`).
+ * `EmptyPredicate` are not included into expressions.
  */
 class AggregatePredicate(val operator: String,
-                         protected var predicates: Seq[Predicate])
+                         protected var _predicates: Seq[Predicate])
     extends Predicate {
   def parameters = predicates.flatMap(_.parameters)
   def add(predicate: Predicate*): this.type = {
-    predicates ++= predicate.toList
+    _predicates ++= predicate.toList
     return this
   }
-  def toSql: String =
-    if (predicates.size == 0) EmptyPredicate.toSql
-    else "(" + predicates.map(_.toSql).mkString(" " + operator + " ") + ")"
+  def predicates: Seq[Predicate] = _predicates.filter {
+    case EmptyPredicate => false
+    case p: AggregatePredicate if (p.predicates.size == 0) => false
+    case _ => true
+  }
+  def toSql: String = {
+    val p = predicates
+    if (p.size == 0) EmptyPredicate.toSql
+    else "(" + p.map(_.toSql).mkString(" " + operator + " ") + ")"
+  }
 }
 
 /**
