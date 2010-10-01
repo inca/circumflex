@@ -34,13 +34,16 @@ class FTL extends Configuration {
 
   // Rendering methods
 
-  def ftl(template: String, data: Any = ctx, statusCode: Int = -1): Nothing = {
-    if (statusCode != -1)
-      response.statusCode(statusCode)
+  /**
+   * Renders specified `template` directly into current response;
+   * must be invoked inside a router definition.
+   */
+  def ftl(template: String, data: Any = ctx): Nothing =
     response.body(r => getTemplate(template).process(data, r.getWriter)).flush_!
-  }
-  def renderFtl(template: String, params: (String, Any)*): String =
-    renderFtl(template, Map[String, Any](params: _*))
+
+  /**
+   * Renders specified `template` and returns produced content.
+   */
   def renderFtl(template: String, root: Any = ctx): String = {
     val result = new StringWriter
     getTemplate(template).process(root, result)
