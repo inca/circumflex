@@ -213,7 +213,7 @@ abstract class ValueHolder[T, R <: Record[_, R]](
   Two fields are considered equal if they belong to the same type of records
   and share the same name.
 
-  The `hashCode` calculation is delegated to underlying `value`.
+  The `hashCode` calculation is consistent with `equals` definition.
 
   The `canEqual` method indicates whether the two fields belong to the same
   type of records.
@@ -226,7 +226,8 @@ abstract class ValueHolder[T, R <: Record[_, R]](
       this.name == that.name
     case _ => false
   }
-  override def hashCode: Int = record.hashCode * 31 + name.hashCode
+  override lazy val hashCode: Int =  record.relation.qualifiedName.hashCode * 31 +
+      name.hashCode
   def canEqual(that: Any): Boolean = that match {
     case that: ValueHolder[_, _] => this.record.canEqual(that.record)
     case _ => false

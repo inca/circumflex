@@ -191,6 +191,10 @@ package object web {
     response.body(r => streamFunc(r.getOutputStream)).flush_!
   def sendChars(writerFunc: Writer => Unit): Nothing =
     response.body(r => writerFunc(r.getWriter)).flush_!
+  def forward(url: String): Nothing = {
+    request.forward(url)
+    response.flush_!
+  }
 
   /*!## The `matchers` Helper
 

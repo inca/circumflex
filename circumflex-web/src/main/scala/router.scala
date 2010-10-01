@@ -63,10 +63,6 @@ class RequestRouter(val prefix: String = "") {
     sendError(statusCode, message)
   def redirect(url: String, flashes: (String, Any)*): Nothing =
     sendRedirect(url, flashes: _*)
-  def forward(url: String): Nothing = {
-    request.forward(url)
-    send()
-  }
   def uri: MatchResult = ctx.get("uri") match {
     case Some(m: MatchResult) => m
     case None => new MatchResult("uri", "splat" -> request.uri)
