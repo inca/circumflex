@@ -253,7 +253,8 @@ class Dialect {
    * Performs dialect-specific field initialization.
    */
   def initializeField[R <: Record[_, R]](field: Field[_, R]): Unit = field match {
-    case f: AutoIncrementable[_, _] if (f.autoIncrement_?) => {
+    case f: AutoIncrementable[_, _]
+      if (f.autoIncrement_? && !field.record.relation.isInstanceOf[View[_, R]]) => {
       val seqName = sequenceName(f)
       val seq = new SchemaObject {
         val objectName = "SEQUENCE " + seqName
@@ -394,7 +395,7 @@ class Dialect {
    */
   def insertSelect[PK, R <: Record[PK, R]](dml: InsertSelect[PK, R]) =
     "INSERT INTO " + dml.relation.qualifiedName + " (" +
-      dml.relation.fields.map(f => quoteIdentifer(f.name)).mkString(", ") + ") " + dml.query.toSql
+        dml.relation.fields.map(f => quoteIdentifer(f.name)).mkString(", ") + ") " + dml.query.toSql
 
   /**
    * Produces an `UPDATE` statement.
