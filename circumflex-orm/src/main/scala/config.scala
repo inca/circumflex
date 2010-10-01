@@ -242,12 +242,14 @@ class Transaction {
   def close(): Unit = if (live_?) {
     _connection.close
     Statistics.connectionsClosed.incrementAndGet
+    ORM_LOG.trace("Closed a JDBC connection.")
   }
 
   protected def getConnection: Connection = {
     if (_connection == null || _connection.isClosed) {
       _connection = connectionProvider.openConnection
       Statistics.connectionsOpened.incrementAndGet
+      ORM_LOG.trace("Opened a JDBC connection.")
     }
     return _connection
   }
@@ -268,7 +270,7 @@ class Transaction {
   def execute[A](sql: String)
                 (stActions: PreparedStatement => A)
                 (errActions: Throwable => A): A = execute { conn =>
-    ORM_LOG.trace(sql)
+    ORM_LOG.debug(sql)
     val st = conn.prepareStatement(sql)
     try {
       stActions(st)
