@@ -98,6 +98,7 @@ class CircumflexFilter extends Filter {
       * `cx.request` will hold current `HttpRequest`;
       * `cx.response` will hold current `HttpResponse`;
       * `cx.filterChain` will hold current `FilterChain`;
+      * other variables from `prepareContext`;
 
     3. the main router is instantiated (it's class should be specified via the
     `cx.router` configuration parameter;
@@ -117,6 +118,7 @@ class CircumflexFilter extends Filter {
         ctx("cx.request") = new HttpRequest(req)
         ctx("cx.response") = new HttpResponse(res)
         ctx("cx.filterChain") = chain
+        prepareContext(ctx)
         try {
           WEB_LOG.trace(req)
           // execute main router
@@ -135,6 +137,28 @@ class CircumflexFilter extends Filter {
         }
       }
     case _ =>
+  }
+
+  /*! The `prepareContext` method populates current context with various useful
+  shortcuts (from `web` package):
+
+    * `param` -- the `param` object;
+    * `request` -- the `request` object;
+    * `session` -- the `session` object;
+    * `cookies` -- the `cookies` object;
+    * `headers` -- the `headers` object;
+    * `flash` -- the `flash` object.
+
+  If you use custom filter implementation, you are can override this method
+  to populate current context with global variables of your application.
+  */
+  def prepareContext(ctx: Context): Unit = {
+    'param := param
+    'request := request
+    'session := session
+    'cookies := cookies
+    'headers := headers
+    'flash := flash
   }
 
   /*!## Callbacks

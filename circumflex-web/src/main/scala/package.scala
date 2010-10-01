@@ -146,7 +146,12 @@ package object web {
     of your web server to understand how it works;
     * `sendStream` accepts a function, which uses `OutputStream` to send binary
     data;
-    * `sendChars` accepts a function, which uses `Writer` to send character data.
+    * `sendChars` accepts a function, which uses `Writer` to send character data;
+    * `forward` delegates further request processing to another component located
+    at specified `url` and immediately flushes the response at the end; note that
+    if you want to forward the request to another Circumflex route, you must make
+    sure that `CircumflexFilter` is mapped with `<dispatcher>FORWARD</dispatcher>`
+    in `web.xml`.
 
   All helpers by convention throw `ResponseSentException` which is caught by
   `CircumflexFilter` to indicate that the response have been processed

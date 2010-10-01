@@ -131,7 +131,11 @@ class HttpRequest(val raw: HttpServletRequest) {
       request.cookies.filter(_.secure)
       request.cookies.groupBy(_.maxAge)
   */
-  lazy val cookies: Seq[HttpCookie] = raw.getCookies.map(c => HttpCookie(c))
+  lazy val cookies: Seq[HttpCookie] = {
+    val cs = raw.getCookies
+    if (cs == null) Nill
+    else cs.map(c => HttpCookie(c))
+  }
 
   /*!## Headers
 
