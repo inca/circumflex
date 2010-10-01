@@ -38,8 +38,6 @@ class RequestRouter(val prefix: String = "") {
     new RouteResponse(str)
   implicit def xml2response(xml: Node): RouteResponse =
     new RouteResponse("<?xml version=\"1.0\"?>\n" + xml.toString)
-  implicit def unit2response(v: => Unit): RouteResponse =
-    send()
   implicit def router2response(router: RequestRouter): RouteResponse =
     sendError(404)
 
@@ -65,6 +63,10 @@ class RequestRouter(val prefix: String = "") {
     sendError(statusCode, message)
   def redirect(url: String, flashes: (String, Any)*): Nothing =
     sendRedirect(url, flashes: _*)
+  def forward(url: String): Nothing = {
+    request.forward(url)
+    send()
+  }
   def uri: MatchResult = ctx.get("uri") match {
     case Some(m: MatchResult) => m
     case None => new MatchResult("uri", "splat" -> request.uri)
