@@ -172,6 +172,7 @@ class DDLUnit {
   }
 
   def close(): Unit = {
+    tx.close()
     connectionProvider.close()
   }
 
