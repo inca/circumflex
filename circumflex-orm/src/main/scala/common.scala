@@ -158,8 +158,9 @@ abstract class ValueHolder[T, R <: Record[_, R]](
     }
     return this
   }
+  def set(v: T): this.type = set(any2option(v))
   def setNull: this.type = set(None)
-  def :=(v: T): Unit = set(Some(v))
+  def :=(v: T): Unit = set(v)
 
   /*!## Column Definition Methods
 
