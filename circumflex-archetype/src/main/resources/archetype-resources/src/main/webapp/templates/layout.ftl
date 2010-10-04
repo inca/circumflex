@@ -19,8 +19,10 @@
         [#nested/]
       </div>
       <div id="footer">
-        <span class="copyright">2008-${currentYear}</span> ©
-        <a class="home" href="http://${host}">${host}</a>
+        <span class="copyright">2008-${currentDate?string("yyyy")}</span> ©
+        <a class="home" href="http://${headers['Host']!"localhost"}">
+          ${headers['Host']!"localhost"}
+        </a>
       </div>
     </div>
   </body>

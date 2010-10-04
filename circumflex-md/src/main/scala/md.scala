@@ -85,7 +85,7 @@ object Markdown {
   // Trailing whitespace
   val rTrailingWS = Pattern.compile("\\s+$")
   // Start of inline HTML block
-  val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^/>]*?>",
+  val rInlineHtmlStart = Pattern.compile("^<(" + blockTags.mkString("|") + ")\\b[^>]*?>",
     Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
   // HTML comments
   val rHtmlComment = Pattern.compile("^ {0,3}(<!--.*?-->)\\s*?(?=\\n+|\\Z)",
