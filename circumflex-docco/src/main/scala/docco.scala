@@ -1,7 +1,7 @@
 package ru.circumflex.docco
 
 import ru.circumflex.core._
-import ru.circumflex.freemarker._
+import ru.circumflex.ftl._
 import java.io._
 import ru.circumflex.md.Markdown
 import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}

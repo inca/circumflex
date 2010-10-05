@@ -1,4 +1,4 @@
-package ru.circumflex.freemarker
+package ru.circumflex.ftl
 
 import ru.circumflex.md.Markdown
 import ru.circumflex.core._

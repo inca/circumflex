@@ -1,4 +1,4 @@
-package ru.circumflex.freemarker
+package ru.circumflex.ftl
 
 import ru.circumflex.core._
 import org.specs.runner.JUnit4
