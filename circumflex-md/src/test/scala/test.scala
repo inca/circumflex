@@ -28,69 +28,19 @@ object MarkdownSpec extends Specification {
 
   def process = addToSusVerb("process")
 
+  val samples = "Amps and angle encoding" :: "Auto links" :: "Backslash escapes" ::
+      "Blockquotes with code blocks" :: "Hard-wrapped paragraphs with list-like lines" ::
+      "Horizontal rules" :: "Inline HTML (Advanced)" :: "Inline HTML (Simple)" ::
+      "Inline HTML comments" :: "Links, inline style" :: "Links, reference style" ::
+      "Literal quotes in titles" :: "Nested blockquotes" :: "Ordered and unordered lists" ::
+      "Strong and em together" :: "Tabs" :: "Tidyness" :: "SmartyPants" ::
+      "Markdown inside inline HTML" :: "Spans inside headers" :: "Macros" :: Nil
+
   "MarkdownProcessor" should process {
-    "Amps and angle encoding" in {
-      "Amps and angle encoding" must beFine
-    }
-    "Auto links" in {
-      "Auto links" must beFine
-    }
-    "Backslash escapes" in {
-      "Backslash escapes" must beFine
-    }
-    "Blockquotes with code blocks" in {
-      "Blockquotes with code blocks" must beFine
-    }
-    "Hard-wrapped paragraphs with list-like lines" in {
-      "Hard-wrapped paragraphs with list-like lines" must beFine
-    }
-    "Horizontal rules" in {
-      "Horizontal rules" must beFine
-    }
-    "Inline HTML (Advanced)" in {
-      "Inline HTML (Advanced)" must beFine
-    }
-    "Inline HTML (Simple)" in {
-      "Inline HTML (Simple)" must beFine
-    }
-    "Inline HTML comments" in {
-      "Inline HTML comments" must beFine
-    }
-    "Links, inline style" in {
-      "Links, inline style" must beFine
-    }
-    "Links, reference style" in {
-      "Links, reference style" must beFine
-    }
-    "Literal quotes in titles" in {
-      "Literal quotes in titles" must beFine
-    }
-    "Nested blockquotes" in {
-      "Nested blockquotes" must beFine
-    }
-    "Ordered and unordered lists" in {
-      "Ordered and unordered lists" must beFine
-    }
-    "Strong and em together" in {
-      "Strong and em together" must beFine
-    }
-    "Tabs" in {
-      "Tabs" must beFine
-    }
-    "Tidyness" in {
-      "Tidyness" must beFine
-    }
-    "SmartyPants" in {
-      "SmartyPants" must beFine
-    }
-    "Markdown inside inline HTML" in {
-      "Markdown inside inline HTML" must beFine
-    }
-    "Spans inside headers" in {
-      "Spans inside headers" must beFine
-    }
-    "Macros" in {
-      "Macros" must beFine
-    }
+    samples.map { s =>
+      s in {
+        s must beFine
+      }
+    }.apply(0)
   }
 }
