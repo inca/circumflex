@@ -16,7 +16,7 @@ object CircumflexFtlSpec extends Specification {
 
   val beFine = new Matcher[String] {
     def apply(name: => String) = {
-      val text = FTL.renderFtl("/" + name + ".ftl").trim
+      val text = ftl2string("/" + name + ".ftl").trim
       val out = FileUtils.readFileToString(
         new File(this.getClass.getResource("/" + name + ".out").toURI), "UTF-8").trim
       val diffIndex = StringUtils.indexOfDifference(text, out)

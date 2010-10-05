@@ -8,7 +8,21 @@ import freemarker.core.Environment
 import freemarker.cache._
 import java.io.StringWriter
 
-class FTL extends Configuration {
+/*!# Default FreeMarker Configuration
+
+The default FreeMarker configuration implies following:
+
+* templates are loaded from `${webapp-root}/templates directory` or,
+if failed, from application classpath;
+* all template errors result in exception to be thrown to controller;
+* character encoding defaults to UTF-8;
+* the `ScalaObjectWrapper` is used for Scala core types.
+
+You can alter template loading dynamically using `addLoader` and `setLoaders`
+methods, but in general this is only acceptable in initialization code. In any
+case make sure you know what you are doing first.
+*/
+object DefaultConfiguration extends Configuration {
 
   // Loaders
 
@@ -32,34 +46,6 @@ class FTL extends Configuration {
   setDefaultEncoding("utf-8")
   setSharedVariable("md", MarkdownDirective)
 
-  // Rendering methods
-
-  /**
-   * Renders specified `template` directly into current response;
-   * must be invoked inside a router definition.
-   */
-  def ftl(template: String, data: Any = ctx): Nothing =
-    response.body(r => getTemplate(template).process(data, r.getWriter)).flush_!
-
-  /**
-   * Renders specified `template` and returns produced content.
-   */
-  def renderFtl(template: String, root: Any = ctx): String = {
-    val result = new StringWriter
-    getTemplate(template).process(root, result)
-    return result.toString
-  }
-}
-
-/*! The default FreeMarker configuration implies following:
-
-  * templates are loaded from `${webapp-root}/templates directory` or,
-  if failed, from webapp classpath;
-  * all template errors result in exception to be thrown to controller;
-  * character encoding defaults to UTF-8;
-  * the `ScalaObjectWrapper` is used for Scala core types.
-*/
-object FTL extends FTL {
   try {
     addLoader(new WebappTemplateLoader(servletContext, "/templates"))
   } catch {
@@ -67,6 +53,7 @@ object FTL extends FTL {
       CX_LOG.warn("Not running in webapp context.")
   }
   addLoader(new ClassTemplateLoader(getClass, "/"))
+
 }
 
 object MarkdownDirective extends TemplateDirectiveModel {
