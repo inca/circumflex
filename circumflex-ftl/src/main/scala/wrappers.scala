@@ -7,6 +7,7 @@ import java.lang.reflect.{Field, Method}
 import java.lang.String
 import ru.circumflex.core.Wrapper
 import scala.collection.Map
+import scala.xml._
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any): TemplateModel = obj match {
@@ -20,6 +21,7 @@ class ScalaObjectWrapper extends ObjectWrapper {
     // Circumflex model types
     case wrapper: Wrapper[_] => wrap(wrapper.item)
     // Scala base types
+    case xml: NodeSeq => new ScalaXmlWrapper(xml, this)
     case seq: Seq[Any] => new ScalaSeqWrapper(seq, this)
     case map: Map[Any, Any] => new ScalaMapWrapper(map, this)
     case it: Iterable[Any] => new ScalaIterableWrapper(it, this)
@@ -67,6 +69,50 @@ class ScalaMethodWrapper(val target: Any,
     extends TemplateMethodModel {
   def exec(arguments: java.util.List[_]) =
     wrapper.wrap(MethodUtils.invokeMethod(target, methodName, arguments.toArray))
+}
+
+class ScalaXmlWrapper(val node: NodeSeq, val wrapper: ObjectWrapper) extends TemplateNodeModel
+    with TemplateHashModel with TemplateSequenceModel with TemplateScalarModel {
+  // as node
+  def children: Seq[Node] = node match {
+    case node: Elem => node.child.flatMap {
+      case e: Elem => Some(e)
+      case a: Attribute => Some(a)
+      case t: Text => if (t.text.trim == "") None else Some(t)
+      case _ => None
+    }
+    case _ => Nil
+  }
+  def getNodeNamespace: String = node match {
+    case e: Elem => e.namespace
+    case _ => ""
+  }
+  def getNodeType: String = node match {
+    case e: Elem => "element"
+    case t: Text => "text"
+    case a: Attribute => "attribute"
+    case _ => null
+  }
+  def getNodeName: String = node match {
+    case e: Elem => e.label
+    case _ => null
+  }
+  def getChildNodes: TemplateSequenceModel = new ScalaSeqWrapper[Node](children, wrapper)
+  // due to immutability of Scala XML API, nodes are unaware of their parents.
+  def getParentNode: TemplateNodeModel = new ScalaXmlWrapper(null, wrapper)
+  // as hash
+  def isEmpty: Boolean = node.size == 0
+  def get(key: String): TemplateModel = {
+    val children = node \ key
+    if (children.size == 0) wrapper.wrap(None)
+    if (children.size == 1) wrapper.wrap(children(0))
+    else wrapper.wrap(children)
+  }
+  // as sequence
+  def size: Int = node.size
+  def get(index: Int): TemplateModel = new ScalaXmlWrapper(node(index), wrapper)
+  // as scalar
+  def getAsString: String = node.text
 }
 
 class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends TemplateHashModel with TemplateScalarModel {
