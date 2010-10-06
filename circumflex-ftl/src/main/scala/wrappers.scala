@@ -1,4 +1,4 @@
-package ru.circumflex.ftl
+package ru.circumflex.freemarker
 
 import freemarker.template._
 import java.util.Date

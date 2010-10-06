@@ -1,12 +1,12 @@
 package ru.circumflex
 
-import core._, ftl._, web._
+import core._, freemarker._, web._
 import java.io._
-import freemarker.template._
+import _root_.freemarker.template._
 
 /*!# The `ftl` package
 
-Package `ftl` contains rendering methods, `ftl` for use in Circumflex Web Framework and
+Package `ftl` contains rendering methods, `render` for use in Circumflex Web Framework and
 `ftl2xxx` to render an FTL template into `xxx`. It also maintains Freemarker configuration,
 use `ftlConfig` to access it if you need custom operations, or use `ftl.configuration`
 configuration parameter to provide your own implementation of FreeMarker `Configuration`.
@@ -15,7 +15,7 @@ You should import this package to use Circumflex FTL in your application:
 
     import ru.circumflex.ftl._
  */
-package object ftl {
+package object freemarker {
 
   val ftlConfig: Configuration = cx.instantiate[Configuration]("ftl.configuration", DefaultConfiguration)
 
@@ -23,7 +23,7 @@ package object ftl {
    * Renders specified `template` directly into current response;
    * must be invoked inside a router definition.
    */
-  def ftl(template: String, data: Any = ctx): Nothing =
+  def render(template: String, data: Any = ctx): Nothing =
     response.body(r => ftlConfig.getTemplate(template).process(data, r.getWriter)).flush_!
 
   /**

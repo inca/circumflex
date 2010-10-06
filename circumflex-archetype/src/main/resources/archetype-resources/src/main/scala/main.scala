@@ -3,7 +3,7 @@
 #set( $symbol_escape = '\' )
 package ${package}
 
-import ru.circumflex._, core._, web._, ftl._
+import ru.circumflex._, core._, web._, freemarker._
 import java.util.Date
 
 class Main extends RequestRouter {
