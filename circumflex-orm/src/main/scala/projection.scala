@@ -135,74 +135,10 @@ class UntypedTupleProjection(val subProjections: Projection[_]*)
   def read(rs: ResultSet): Option[Array[Option[Any]]] = Some(subProjections.map(_.read(rs)).toArray)
 }
 
-case class Tuple2Projection[T1, T2] (
+case class PairProjection[T1, T2] (
     _1: Projection[T1], _2: Projection[T2])
     extends CompositeProjection[(Option[T1], Option[T2])] {
   def subProjections = List[Projection[_]](_1, _2)
   def read(rs: ResultSet): Option[(Option[T1], Option[T2])] =
     Some((_1.read(rs), _2.read(rs)))
-}
-
-case class Tuple3Projection[T1, T2, T3] (
-    _1: Projection[T1], _2: Projection[T2], _3: Projection[T3])
-    extends CompositeProjection[(Option[T1], Option[T2], Option[T3])] {
-  def subProjections = List[Projection[_]](_1, _2, _3)
-  def read(rs: ResultSet): Option[(Option[T1], Option[T2], Option[T3])] =
-    Some((_1.read(rs), _2.read(rs), _3.read(rs)))
-}
-
-case class Tuple4Projection[T1, T2, T3, T4] (
-    _1: Projection[T1], _2: Projection[T2], _3: Projection[T3], _4: Projection[T4])
-    extends CompositeProjection[(Option[T1], Option[T2], Option[T3], Option[T4])] {
-  def subProjections = List[Projection[_]](_1, _2, _3, _4)
-  def read(rs: ResultSet): Option[(Option[T1], Option[T2], Option[T3], Option[T4])] =
-    Some((_1.read(rs), _2.read(rs), _3.read(rs), _4.read(rs)))
-}
-
-case class Tuple5Projection[T1, T2, T3, T4, T5] (
-    _1: Projection[T1], _2: Projection[T2], _3: Projection[T3], _4: Projection[T4], _5: Projection[T5])
-    extends CompositeProjection[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5])] {
-  def subProjections = List[Projection[_]](_1, _2, _3, _4, _5)
-  def read(rs: ResultSet): Option[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5])] =
-    Some((_1.read(rs), _2.read(rs), _3.read(rs), _4.read(rs), _5.read(rs)))
-}
-
-case class Tuple6Projection[T1, T2, T3, T4, T5, T6] (
-    _1: Projection[T1], _2: Projection[T2], _3: Projection[T3], _4: Projection[T4], _5: Projection[T5], _6: Projection[T6])
-    extends CompositeProjection[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6])] {
-  def subProjections = List[Projection[_]](_1, _2, _3, _4, _5, _6)
-  def read(rs: ResultSet): Option[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6])] =
-    Some((_1.read(rs), _2.read(rs), _3.read(rs), _4.read(rs), _5.read(rs), _6.read(rs)))
-}
-
-case class Tuple7Projection[T1, T2, T3, T4, T5, T6, T7] (
-    _1: Projection[T1], _2: Projection[T2], _3: Projection[T3], _4: Projection[T4], _5: Projection[T5], _6: Projection[T6], _7: Projection[T7])
-    extends CompositeProjection[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6], Option[T7])] {
-  def subProjections = List[Projection[_]](_1, _2, _3, _4, _5, _6, _7)
-  def read(rs: ResultSet): Option[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6], Option[T7])] =
-    Some((_1.read(rs), _2.read(rs), _3.read(rs), _4.read(rs), _5.read(rs), _6.read(rs), _7.read(rs)))
-}
-
-case class Tuple8Projection[T1, T2, T3, T4, T5, T6, T7, T8] (
-    _1: Projection[T1], _2: Projection[T2], _3: Projection[T3], _4: Projection[T4], _5: Projection[T5], _6: Projection[T6], _7: Projection[T7], _8: Projection[T8])
-    extends CompositeProjection[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6], Option[T7], Option[T8])] {
-  def subProjections = List[Projection[_]](_1, _2, _3, _4, _5, _6, _7, _8)
-  def read(rs: ResultSet): Option[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6], Option[T7], Option[T8])] =
-    Some((_1.read(rs), _2.read(rs), _3.read(rs), _4.read(rs), _5.read(rs), _6.read(rs), _7.read(rs), _8.read(rs)))
-}
-
-case class Tuple9Projection[T1, T2, T3, T4, T5, T6, T7, T8, T9] (
-    _1: Projection[T1], _2: Projection[T2], _3: Projection[T3], _4: Projection[T4], _5: Projection[T5], _6: Projection[T6], _7: Projection[T7], _8: Projection[T8], _9: Projection[T9])
-    extends CompositeProjection[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6], Option[T7], Option[T8], Option[T9])] {
-  def subProjections = List[Projection[_]](_1, _2, _3, _4, _5, _6, _7, _8, _9)
-  def read(rs: ResultSet): Option[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6], Option[T7], Option[T8], Option[T9])] =
-    Some((_1.read(rs), _2.read(rs), _3.read(rs), _4.read(rs), _5.read(rs), _6.read(rs), _7.read(rs), _8.read(rs), _9.read(rs)))
-}
-
-case class Tuple10Projection[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] (
-    _1: Projection[T1], _2: Projection[T2], _3: Projection[T3], _4: Projection[T4], _5: Projection[T5], _6: Projection[T6], _7: Projection[T7], _8: Projection[T8], _9: Projection[T9], _10: Projection[T10])
-    extends CompositeProjection[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6], Option[T7], Option[T8], Option[T9], Option[T10])] {
-  def subProjections = List[Projection[_]](_1, _2, _3, _4, _5, _6, _7, _8, _9, _10)
-  def read(rs: ResultSet): Option[(Option[T1], Option[T2], Option[T3], Option[T4], Option[T5], Option[T6], Option[T7], Option[T8], Option[T9], Option[T10])] =
-    Some((_1.read(rs), _2.read(rs), _3.read(rs), _4.read(rs), _5.read(rs), _6.read(rs), _7.read(rs), _8.read(rs), _9.read(rs), _10.read(rs)))
 }
