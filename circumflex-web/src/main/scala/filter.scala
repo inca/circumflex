@@ -147,7 +147,8 @@ class CircumflexFilter extends Filter {
     * `session` -- the `session` object;
     * `cookies` -- the `cookies` object;
     * `headers` -- the `headers` object;
-    * `flash` -- the `flash` object.
+    * `flash` -- the `flash` object;
+    * `cfg` -- the `cx` object.
 
   If you use custom filter implementation, you are can override this method
   to populate current context with global variables of your application.
@@ -159,6 +160,7 @@ class CircumflexFilter extends Filter {
     'cookies := cookies
     'headers := headers
     'flash := flash
+    'cfg := cx
   }
 
   /*!## Callbacks

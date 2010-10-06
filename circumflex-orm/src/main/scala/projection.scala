@@ -24,18 +24,18 @@ trait Projection[T] extends SQLable {
 
   def sqlAliases: Seq[String]
 
-  override def toString = toSql
-
-}
-
-trait AtomicProjection[T] extends Projection[T] {
-
   protected[orm] var alias: String = "this"
 
   def AS(alias: String): this.type = {
     this.alias = alias
     return this
   }
+
+  override def toString = toSql
+
+}
+
+trait AtomicProjection[T] extends Projection[T] {
 
   def sqlAliases = List(alias)
 
