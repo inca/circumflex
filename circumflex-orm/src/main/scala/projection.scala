@@ -135,10 +135,19 @@ class UntypedTupleProjection(val subProjections: Projection[_]*)
   def read(rs: ResultSet): Option[Array[Option[Any]]] = Some(subProjections.map(_.read(rs)).toArray)
 }
 
-case class PairProjection[T1, T2] (
-    _1: Projection[T1], _2: Projection[T2])
+class PairProjection[T1, T2] (_1: Projection[T1], _2: Projection[T2])
     extends CompositeProjection[(Option[T1], Option[T2])] {
   def subProjections = List[Projection[_]](_1, _2)
   def read(rs: ResultSet): Option[(Option[T1], Option[T2])] =
     Some((_1.read(rs), _2.read(rs)))
+}
+
+class AliasMapProjection(val subProjections: Seq[Projection[_]])
+    extends CompositeProjection[Map[String, Any]] {
+  def read(rs: ResultSet): Option[Map[String, Any]] = {
+    val pairs = subProjections.flatMap { p =>
+      p.read(rs).map(v => p.alias -> v).asInstanceOf[Option[(String, Any)]]
+    }
+    Some(Map[String, Any](pairs: _*))
+  }
 }
