@@ -6,7 +6,7 @@ import _root_.freemarker.template._
 
 /*!# The `ftl` package
 
-Package `ftl` contains rendering methods, `render` for use in Circumflex Web Framework and
+Package `ftl` contains rendering methods, `ftl` for use in Circumflex Web Framework and
 `ftl2xxx` to render an FTL template into `xxx`. It also maintains Freemarker configuration,
 use `ftlConfig` to access it if you need custom operations, or use `ftl.configuration`
 configuration parameter to provide your own implementation of FreeMarker `Configuration`.
@@ -23,7 +23,7 @@ package object freemarker {
    * Renders specified `template` directly into current response;
    * must be invoked inside a router definition.
    */
-  def render(template: String, data: Any = ctx): Nothing =
+  def ftl(template: String, data: Any = ctx): Nothing =
     response.body(r => ftlConfig.getTemplate(template).process(data, r.getWriter)).flush_!
 
   /**
