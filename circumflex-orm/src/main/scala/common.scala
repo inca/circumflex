@@ -169,7 +169,15 @@ abstract class ValueHolder[T, R <: Record[_, R]](
 
     * `NOT_NULL` will render `NOT NULL` constraint in column's definition;
     note that starting from 2.0, by default the `NOT NULL` constraint is
-    omitted and `NULLABLE` construct is no longer supported;
+    omitted and `NULLABLE` construct is no longer supported; this method
+    can also be used as a shortcut for specifying the `NOT NULL` constraint
+    and assigning default field value:
+
+        // following declarations are identical
+        val createdAt = "created_at".TIMESTAMP.NOT_NULL.set(new Date())
+        val createdAt = "created_at".TIMESTAMP.NOT_NULL(new Date())
+        
+
     * `DEFAULT` will render the `DEFAULT` expression in column's definition
     (if not overriden by dialect);
     * `UNIQUE` will create a `UNIQUE` constraint for enclosing table on
@@ -181,6 +189,7 @@ abstract class ValueHolder[T, R <: Record[_, R]](
     _notNull = true
     return this
   }
+  def NOT_NULL(initialValue: T): this.type = NOT_NULL().set(initialValue)
 
   protected var _unique: Boolean = false
   def unique_?(): Boolean = _unique
