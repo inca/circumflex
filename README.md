@@ -26,3 +26,9 @@ Create a new project from Circumflex Archetype:
 
 and choose `circumflex-archetype` from list.
 
+## 4. Build with SBT
+
+An application skeleton for SBT has been kindly provided by
+[andreyshikov](http://github.com/andreyshikov), it shows how to configure
+simple Circumflex application to build with SBT. You can clone it from
+<http://github.com/andreyshikov/circumflex-sbt-quickstart>.
