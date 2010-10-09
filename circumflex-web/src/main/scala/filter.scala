@@ -50,7 +50,7 @@ class CircumflexFilter extends Filter {
    * parameter so that it could be accessed later.
    */
   def init(filterConfig: FilterConfig) = {
-    WEB_LOG.info("Circumflex 2.0")
+    WEB_LOG.info("Circumflex 2.0.RC1")
     cx("cx.filterConfig") = filterConfig
   }
 
