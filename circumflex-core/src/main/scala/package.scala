@@ -1,5 +1,7 @@
 package ru.circumflex
 
+import java.security.MessageDigest
+
 /*!# The `core` Package
 
 Package `core` contains different shortcuts, utilities and implicits.
@@ -29,7 +31,7 @@ package object core {
    */
   lazy val msg = cx.instantiate[MessageResolver]("cx.messages", DefaultMessageResolver)
 
-  /* Utils */
+  // Utils
 
   /**
    * Converts `ThisTypeOfIdentifiers` into `that_type_of_identifiers`.
@@ -49,6 +51,20 @@ package object core {
    * Wraps an `obj` into `Some` as long as it is not `null`; returns `None` otherwise.
    */
   def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
+
+  /**
+   * Uses `MessageDigest` to create a hash from specified `text` using specified `algorithm`.
+   */
+  def digest(algorithm: String, text: String) = {
+    val md = MessageDigest.getInstance(algorithm)
+    md.update(text.getBytes)
+    md.digest()
+        .map(b => Integer.toHexString(0xFF & b))
+        .map(b => if (b.length == 1) "0" + b else b)
+        .mkString
+  }
+  def md5(text: String) = digest("md5", text)
+  def sha256(text: String) = digest("sha-256", text)
 
   /* Implicits */
 
