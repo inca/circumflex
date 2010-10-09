@@ -167,7 +167,7 @@ trait TypeConverter {
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit =
     parameter match {
       case None | null => st.setObject(paramIndex, null)
-      case Some(v) => write(st, v, paramIndex)
+      case Some(v) => write(st, toJDBC(v), paramIndex)
       case v => st.setObject(paramIndex, toJDBC(v))
     }
 
