@@ -3,7 +3,8 @@ package ru.circumflex.orm
 import ru.circumflex.core._
 import javax.sql.DataSource
 import javax.naming.InitialContext
-import java.sql._
+import java.util.Date
+import java.sql.{Timestamp, Connection, PreparedStatement, ResultSet}
 import com.mchange.v2.c3p0.{DataSources, ComboPooledDataSource}
 
 /*!# ORM Configuration Objects
