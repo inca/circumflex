@@ -4,4 +4,5 @@
 [+] Criteria merging
 [+] Statistics
 [ ] Query cache
-[ ] Add vendors support
+[ ] Vendors support
+[ ] Inheritance support

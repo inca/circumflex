@@ -86,7 +86,7 @@ object CircumflexCoreSpec extends Specification {
       'testBoolean := "false"
       'testBoolean.getBoolean must_== false
       'testDate := "29.01.1988"
-      'testDate.getDate("dd.MM.yyyy").toString must_== "Fri Jan 29 00:00:00 MSK 1988"
+      'testDate.getDate("dd.MM.yyyy").getTime must_== 570402000000l
     }
   }
 
