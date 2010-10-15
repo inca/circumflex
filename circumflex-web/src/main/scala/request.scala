@@ -73,6 +73,9 @@ class HttpRequest(val raw: HttpServletRequest) {
   lazy val queryString = URLDecoder.decode(raw.getQueryString, "UTF-8")
   lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")
 
+  // implicitly set request encoding to UTF-8
+  raw.setCharacterEncoding("UTF-8")
+
   /*!## Client & Server Information
 
   Following methods provide information about the server:
@@ -268,9 +271,6 @@ class HttpRequest(val raw: HttpServletRequest) {
     def stream: ServletInputStream = raw.getInputStream
     lazy val asXml: Elem = XML.load(stream)
     lazy val asString = IOUtils.toString(stream, encoding)
-
-    // implicitly set request encoding to UTF-8
-    encoding = "UTF-8"
 
     /*!## Multipart Requests & File Uploading {#multipart}
 
