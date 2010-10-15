@@ -27,8 +27,8 @@ class SubMockRouter extends RequestRouter("/sub") {
 }
 
 class MatchingMockRouter extends RequestRouter("/matching") {
-  get("/uri/:name") = "preved, " + uri('name)
   get("/uri/:name.:ext") = uri('name) + "->" + uri('ext)
+  get("/uri/:name") = "preved, " + uri('name)
   get("/uri/*/one/:two/+.:three") = uri(1) + uri('two) + uri(3) + uri('three)
 
   get("/param" & HOST(":host")) = "host is " + param("host")
