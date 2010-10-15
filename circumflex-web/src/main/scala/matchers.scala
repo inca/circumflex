@@ -151,7 +151,7 @@ class RegexMatcher(val name: String,
         "\\\\" + m.group(0)
       case _ =>
         groupNames ++= List(m.group(0).substring(1))
-        "([^/?&#.]+?)"
+        "([^/?#]+?)"
     })).r
   }
   def groupName(index: Int): String=
