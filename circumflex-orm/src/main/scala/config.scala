@@ -6,6 +6,7 @@ import javax.naming.InitialContext
 import java.util.Date
 import java.sql.{Timestamp, Connection, PreparedStatement, ResultSet}
 import com.mchange.v2.c3p0.{DataSources, ComboPooledDataSource}
+import xml._
 
 /*!# ORM Configuration Objects
 
@@ -193,6 +194,7 @@ class DefaultTypeConverter extends TypeConverter {
   def toJDBC(value: Any): Any = value match {
     case Some(v) => toJDBC(v)
     case p: Date => new Timestamp(p.getTime)
+    case x: Elem => x.toString
     case value => value
   }
 
