@@ -97,7 +97,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   def get(id: PK): Option[R] =
     contextCache.cacheRecord(id, this, this.criteria.add(this.PRIMARY_KEY EQ id).unique)
 
-  def all: Seq[R] = this.criteria.list
+  def all: Seq[R] = this.AS("root").criteria.list
 
   /*!## Metadata
 
