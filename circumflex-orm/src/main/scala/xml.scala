@@ -77,14 +77,13 @@ class Deployment(val id: String,
           case m if (classOf[Field[_, _]].isAssignableFrom(m.getReturnType)) =>
             setRecordField(r, n.label, n.text.trim)
           case m if (classOf[Association[_, _, _]].isAssignableFrom(m.getReturnType)) =>
-            n.child.find(_.isInstanceOf[Elem]) match {
-              case Some(n) =>
-                val a = m.invoke(r).asInstanceOf[Association[Any, R, R]]
-                val parent = processNode(n, parentPath ++ List(a -> r))
-                r.relation.getField(r, a.field).set(parent.PRIMARY_KEY.value)
-              case None =>
-                throw new ORMException("The element <" + n.label + "> is empty.")
-            }
+            val a = m.invoke(r).asInstanceOf[Association[Any, R, R]]
+            val newPath = parentPath ++ List(a -> r)
+            val parent = if (n.child.size == 0) {
+              val newNode = Elem(null, a.parentRelation.recordClass.getSimpleName, n.attributes, n.scope)
+              Some(processNode(newNode, newPath))
+            } else n.child.find(_.isInstanceOf[Elem]).map(n => processNode(n, newPath))
+            r.relation.getField(r, a.field).set(parent.map(_.PRIMARY_KEY.value))
           case m if (classOf[InverseAssociation[_, _, _, _]].isAssignableFrom(m.getReturnType)) =>
             val a = m.invoke(r).asInstanceOf[InverseAssociation[Any, R, R, Any]].association
             foreigns ++= n.child.filter(_.isInstanceOf[Elem]).map(n => (a -> n))
@@ -99,7 +98,7 @@ class Deployment(val id: String,
     if (update)
       if (validate) r.UPDATE() else r.UPDATE_!()
     else
-      if (validate) r.INSERT() else r.INSERT_!()
+    if (validate) r.INSERT() else r.INSERT_!()
     // Finally, we process the foreigners
     foreigns.foreach(p =>
       processNode(p._2, parentPath ++ List(p._1.asInstanceOf[Association[Any, R, R]] -> r)))
