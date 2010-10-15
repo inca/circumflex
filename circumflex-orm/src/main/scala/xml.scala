@@ -76,7 +76,7 @@ class Deployment(val id: String,
       case n: Elem => try {
         r.getClass.getMethod(n.label) match {
           case m if (classOf[Field[_, _]].isAssignableFrom(m.getReturnType)) =>
-            setRecordField(r, n.label, n.text.trim)
+            setRecordField(r, n.label, n.child.mkString.trim)
           case m if (classOf[Association[_, _, _]].isAssignableFrom(m.getReturnType)) =>
             val a = m.invoke(r).asInstanceOf[Association[Any, R, R]]
             val newPath = parentPath ++ List(a -> r)
@@ -103,7 +103,7 @@ class Deployment(val id: String,
     // Finally, we process the foreigners
     foreigns.foreach(p =>
       processNode(p._2, parentPath ++ List(p._1.asInstanceOf[Association[Any, R, R]] -> r)))
-    // And return our record.
+    // And return our record
     return r
   }
 
