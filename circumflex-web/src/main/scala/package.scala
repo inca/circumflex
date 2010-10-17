@@ -151,7 +151,9 @@ package object web {
     at specified `url` and immediately flushes the response at the end; note that
     if you want to forward the request to another Circumflex route, you must make
     sure that `CircumflexFilter` is mapped with `<dispatcher>FORWARD</dispatcher>`
-    in `web.xml`.
+    in `web.xml`;
+    * `pass_!` sends request and response down the filter chain and then immediately
+    flushes response.
 
   All helpers by convention throw `ResponseSentException` which is caught by
   `CircumflexFilter` to indicate that the response have been processed
@@ -198,6 +200,10 @@ package object web {
     response.body(r => writerFunc(r.getWriter)).flush_!
   def forward(url: String): Nothing = {
     request.forward(url)
+    response.flush_!
+  }
+  def pass_!(): Nothing = {
+    filterChain.doFilter(request.raw, response.raw)
     response.flush_!
   }
 
