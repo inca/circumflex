@@ -54,8 +54,8 @@ package object web {
    */
   def request = ctx("cx.request").asInstanceOf[HttpRequest]
   def response = ctx("cx.response").asInstanceOf[HttpResponse]
+  def filterChain = ctx("cx.filterChain").asInstanceOf[FilterChain]
   def filterConfig = cx("cx.filterConfig").asInstanceOf[FilterConfig]
-  def filterChain = cx("cx.filterChain").asInstanceOf[FilterChain]
   def servletContext = filterConfig.getServletContext
   def session = request.session
 
