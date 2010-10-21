@@ -206,11 +206,11 @@ class MarkdownText(source: CharSequence) {
    * Link Definitions
    */
 
-  case class LinkDefinition(val url: String, val title: String) {
+  class LinkDefinition(val url: String, val title: String) {
     override def toString = url + " (" + title + ")"
   }
 
-  case class MacroDefinition(val pattern: String, val flags: String, val replacement: String) {
+  class MacroDefinition(val pattern: String, val flags: String, val replacement: String) {
     val regex: Pattern = {
       var f = 0;
       if (flags != null) flags.toList.foreach {
@@ -350,7 +350,7 @@ class MarkdownText(source: CharSequence) {
       val id = m.group(1).toLowerCase
       val url = m.group(2)
       val title = if (m.group(3) == null) "" else m.group(3)
-      links += id -> LinkDefinition(url, title.replaceAll("\"", "&quot;"))
+      links += id -> new LinkDefinition(url, title.replaceAll("\"", "&quot;"))
       ""
     })
 
@@ -359,7 +359,7 @@ class MarkdownText(source: CharSequence) {
    */
   protected def stripMacroDefinitions(text: StringEx) =
     text.replaceAll(rMacroDefs, m => {
-      macros ++= List(MacroDefinition(m.group(1), m.group(2), m.group(3)))
+      macros ++= List(new MacroDefinition(m.group(1), m.group(2), m.group(3)))
       ""
     })
 
