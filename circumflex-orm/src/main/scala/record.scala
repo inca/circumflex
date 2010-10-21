@@ -1,6 +1,5 @@
 package ru.circumflex.orm
 
-import java.sql.PreparedStatement
 import ru.circumflex.core._
 
 /*!# Record
