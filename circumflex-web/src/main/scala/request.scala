@@ -190,6 +190,11 @@ class HttpRequest(val raw: HttpServletRequest) {
             .asInstanceOf[JEnumeration[String]]
             .map(k => (k -> raw.getParameter(k)))
     def get(key: String): Option[String] = any2option(raw.getParameter(key))
+    def list(key: String): Seq[String] = {
+      val values = raw.getParameterValues(key)
+      if (values == null) Nil
+      else values.toList
+    }
   }
 
   /*!## Session
