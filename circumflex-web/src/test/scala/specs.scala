@@ -17,6 +17,8 @@ class MockRouter extends RequestRouter {
   get("/error") = error(503)
   get("/redirect") = redirect("/")
 
+  get("/request/multiparam") = request.params.list("test").mkString(",")
+
   any("/sub/*") = new SubMockRouter
 
   new MatchingMockRouter
@@ -107,6 +109,14 @@ object CircumflexWebSpec extends Specification {
               .setHeader("Accept","application/xml")
               .setHeader("Referer","localhost")
               .execute().getContent must_== "1 condition met"
+    }
+  }
+
+  "Request" should {
+    "deal with multiple parameter values" in {
+      MockApp.get("/request/multiparam?test=one&test=two&test=three")
+          .execute()
+          .getContent must_== "one,two,three"
     }
   }
 
