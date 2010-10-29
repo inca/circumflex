@@ -17,8 +17,6 @@ class MockRouter extends RequestRouter {
   get("/error") = error(503)
   get("/redirect") = redirect("/")
 
-  get("/request/multiparam") = request.params.list("test").mkString(",")
-
   any("/sub/*") = new SubMockRouter
 
   new MatchingMockRouter
@@ -40,6 +38,9 @@ class MatchingMockRouter extends RequestRouter("/matching") {
   get("/composite" & ACCEPT("text/:format")) =
           "2 conditions met (" + param("format") + ")"
   get("/composite") = "1 condition met"
+
+  get("/multiparam") = request.params.list("test").mkString(",")
+  get("/multiparam/:test/:test") = param.list("test").mkString(",")
 }
 
 object CircumflexWebSpec extends Specification {
@@ -110,13 +111,13 @@ object CircumflexWebSpec extends Specification {
               .setHeader("Referer","localhost")
               .execute().getContent must_== "1 condition met"
     }
-  }
-
-  "Request" should {
     "deal with multiple parameter values" in {
-      MockApp.get("/request/multiparam?test=one&test=two&test=three")
+      MockApp.get("/matching/multiparam?test=one&test=two&test=three")
           .execute()
           .getContent must_== "one,two,three"
+      MockApp.get("/matching/multiparam/one/two?test=three&test=four&test=five")
+          .execute()
+          .getContent must_== "one,two,three,four,five"
     }
   }
 

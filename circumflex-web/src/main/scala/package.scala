@@ -126,6 +126,7 @@ package object web {
     }) ++ request.params.iterator
     def get(key: String): Option[String] = iterator.find(_._1 == key).map(_._2)
     override def default(key: String): String = ""
+    def list(key: String): Seq[String] = iterator.filter(_._1 == key).map(_._2).toList
   }
 
   /*!## Response Helpers
