@@ -96,8 +96,10 @@ object CircumflexCoreSpec extends Specification {
     "resolve messages in different locales" in {
       ctx("cx.locale") = "en_US"
       msg("hello") must_== "Hello!"
+      msg("test") must_== "Preved!"
       ctx("cx.locale") = "pt"
       msg("hello") must_== "Hola!"
+      msg("test") must_== "Preved!"
     }
     "format messages using `MessageFormat`" in {
       msg.format("formatHello", "dude") must_== "Hello, dude!"
