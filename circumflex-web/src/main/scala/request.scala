@@ -70,7 +70,8 @@ class HttpRequest(val raw: HttpServletRequest) {
     case _ => raw.getMethod.toLowerCase
   }
   lazy val uri = URLDecoder.decode(raw.getRequestURI, "UTF-8")
-  lazy val queryString = URLDecoder.decode(raw.getQueryString, "UTF-8")
+  lazy val queryString = if (raw.getQueryString == null) "" else
+    URLDecoder.decode(raw.getQueryString, "UTF-8")
   lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")
 
   // implicitly set request encoding to UTF-8
