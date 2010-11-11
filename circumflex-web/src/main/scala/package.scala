@@ -85,7 +85,7 @@ package object web {
   The `flash` object provides a way to pass temporary objects between requests.
   Flash variables are stored in session until first access.
   */
-  object flash extends Map[String, Any] {
+  object flash extends Map[String, Any] with UntypedContainer {
     val SESSION_KEY = "cx.flash"
     protected def flashMap = session
         .getOrElse(SESSION_KEY, Map[String, Any]())
