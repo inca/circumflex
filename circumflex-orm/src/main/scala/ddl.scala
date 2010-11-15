@@ -63,7 +63,8 @@ class DDLUnit {
     obj match {
       case t: Table[_, _] => if (!_tables.contains(t)) {
         _tables ++= List(t)
-        t.constraints.foreach(o => addObject(o))
+        t.constraints.foreach(c => addObject(c))
+        t.indexes.foreach(i => addObject(i))
         processRelation(t)
       }
       case v: View[_, _] => if (!_views.contains(v)) {

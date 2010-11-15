@@ -295,7 +295,7 @@ class Transaction {
     stActions(st)
   } (errActions)
 
-  def apply(block: => Unit): Unit = {
+  def apply[A](block: => A): A = {
     val sp = getConnection.setSavepoint
     try {
       block
