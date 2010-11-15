@@ -54,8 +54,8 @@ package object web {
    */
   def request = ctx("cx.request").asInstanceOf[HttpRequest]
   def response = ctx("cx.response").asInstanceOf[HttpResponse]
+  def filterChain = ctx("cx.filterChain").asInstanceOf[FilterChain]
   def filterConfig = cx("cx.filterConfig").asInstanceOf[FilterConfig]
-  def filterChain = cx("cx.filterChain").asInstanceOf[FilterChain]
   def servletContext = filterConfig.getServletContext
   def session = request.session
 
@@ -85,7 +85,7 @@ package object web {
   The `flash` object provides a way to pass temporary objects between requests.
   Flash variables are stored in session until first access.
   */
-  object flash extends Map[String, Any] {
+  object flash extends Map[String, Any] with UntypedContainer {
     val SESSION_KEY = "cx.flash"
     protected def flashMap = session
         .getOrElse(SESSION_KEY, Map[String, Any]())
@@ -126,6 +126,7 @@ package object web {
     }) ++ request.params.iterator
     def get(key: String): Option[String] = iterator.find(_._1 == key).map(_._2)
     override def default(key: String): String = ""
+    def list(key: String): Seq[String] = iterator.filter(_._1 == key).map(_._2).toList
   }
 
   /*!## Response Helpers
@@ -151,7 +152,9 @@ package object web {
     at specified `url` and immediately flushes the response at the end; note that
     if you want to forward the request to another Circumflex route, you must make
     sure that `CircumflexFilter` is mapped with `<dispatcher>FORWARD</dispatcher>`
-    in `web.xml`.
+    in `web.xml`;
+    * `pass_!` sends request and response down the filter chain and then immediately
+    flushes response.
 
   All helpers by convention throw `ResponseSentException` which is caught by
   `CircumflexFilter` to indicate that the response have been processed
@@ -198,6 +201,10 @@ package object web {
     response.body(r => writerFunc(r.getWriter)).flush_!
   def forward(url: String): Nothing = {
     request.forward(url)
+    response.flush_!
+  }
+  def pass_!(): Nothing = {
+    filterChain.doFilter(request.raw, response.raw)
     response.flush_!
   }
 

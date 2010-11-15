@@ -1,5 +1,6 @@
 package ru.circumflex.orm
 
+import ru.circumflex.core._
 import java.util.Date
 import xml._
 import java.sql.ResultSet
@@ -97,9 +98,8 @@ class TimeField[R <: Record[_, R]](name: String, record: R)
 }
 
 class XmlField[R <: Record[_, R]](name: String, record: R)
-    extends XmlSerializable[NodeSeq, R](name, record, dialect.xmlType) {
-  def from(str: String): Option[NodeSeq] =
-    try Some(XML.loadString(str)) catch { case _ => None }
+    extends XmlSerializable[Elem, R](name, record, dialect.xmlType) {
+  def from(str: String): Option[Elem] = Some(XML.loadString(str))
   override def read(rs: ResultSet, alias: String) =
-    from(rs.getString(alias))
+    any2option(rs.getString(alias)).flatMap(x => from(x))
 }

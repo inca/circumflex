@@ -29,7 +29,7 @@ package object core {
   /**
    * Global messages resolver configurable via `cx.messages` configuration parameter.
    */
-  lazy val msg = cx.instantiate[MessageResolver]("cx.messages", DefaultMessageResolver)
+  lazy val msg = cx.instantiate[MessageResolver]("cx.messages", new PropertyFileResolver)
 
   // Utils
 

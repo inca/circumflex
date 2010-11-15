@@ -22,7 +22,7 @@ You can alter template loading dynamically using `addLoader` and `setLoaders`
 methods, but in general this is only acceptable in initialization code. In any
 case make sure you know what you are doing first.
 */
-object DefaultConfiguration extends Configuration {
+class DefaultConfiguration extends Configuration {
 
   // Loaders
 

@@ -6,6 +6,8 @@ import javax.naming.InitialContext
 import java.util.Date
 import java.sql.{Timestamp, Connection, PreparedStatement, ResultSet}
 import com.mchange.v2.c3p0.{DataSources, ComboPooledDataSource}
+import collection.mutable.HashMap
+import xml._
 
 /*!# ORM Configuration Objects
 
@@ -193,6 +195,7 @@ class DefaultTypeConverter extends TypeConverter {
   def toJDBC(value: Any): Any = value match {
     case Some(v) => toJDBC(v)
     case p: Date => new Timestamp(p.getTime)
+    case x: Elem => x.toString
     case value => value
   }
 
@@ -223,11 +226,17 @@ The `TransactionManager` trait is responsible for allocation current transaction
 for application's execution context. The default implementation uses `Context`,
 however, your application may require different approaches to transaction
 demarcation -- in this case you may provide your own implementation.
+
+JDBC `PreparedStatement` objects are also cached within `Transaction` for
+performance considerations.
 */
 class Transaction {
 
   // Connections are opened lazily
   protected var _connection: Connection = null
+
+  // Statements are cached by actual SQL
+  protected val _statementsCache = new HashMap[String, PreparedStatement]()
 
   def live_?(): Boolean =
     _connection != null && !_connection.isClosed
@@ -240,7 +249,13 @@ class Transaction {
     contextCache.invalidate
   }
 
-  def close(): Unit = if (live_?) {
+  def close(): Unit = if (live_?) try {
+    // close all cached statements
+    _statementsCache.values.foreach(_.close)
+  } finally {
+    // clear statements cache
+    _statementsCache.clear
+    // close connection
     _connection.close
     Statistics.connectionsClosed.incrementAndGet
     ORM_LOG.trace("Closed a JDBC connection.")
@@ -272,15 +287,15 @@ class Transaction {
                 (stActions: PreparedStatement => A)
                 (errActions: Throwable => A): A = execute { conn =>
     ORM_LOG.debug(sql)
-    val st = conn.prepareStatement(sql)
-    try {
-      stActions(st)
-    } finally {
-      st.close
+    val st =_statementsCache.get(sql).getOrElse {
+      val statement = conn.prepareStatement(sql)
+      _statementsCache.update(sql, statement)
+      statement
     }
+    stActions(st)
   } (errActions)
 
-  def apply(block: => Unit): Unit = {
+  def apply[A](block: => A): A = {
     val sp = getConnection.setSavepoint
     try {
       block

@@ -27,8 +27,8 @@ class SubMockRouter extends RequestRouter("/sub") {
 }
 
 class MatchingMockRouter extends RequestRouter("/matching") {
-  get("/uri/:name") = "preved, " + uri('name)
   get("/uri/:name.:ext") = uri('name) + "->" + uri('ext)
+  get("/uri/:name") = "preved, " + uri('name)
   get("/uri/*/one/:two/+.:three") = uri(1) + uri('two) + uri(3) + uri('three)
 
   get("/param" & HOST(":host")) = "host is " + param("host")
@@ -38,6 +38,9 @@ class MatchingMockRouter extends RequestRouter("/matching") {
   get("/composite" & ACCEPT("text/:format")) =
           "2 conditions met (" + param("format") + ")"
   get("/composite") = "1 condition met"
+
+  get("/multiparam") = request.params.list("test").mkString(",")
+  get("/multiparam/:test/:test") = param.list("test").mkString(",")
 }
 
 object CircumflexWebSpec extends Specification {
@@ -107,6 +110,14 @@ object CircumflexWebSpec extends Specification {
               .setHeader("Accept","application/xml")
               .setHeader("Referer","localhost")
               .execute().getContent must_== "1 condition met"
+    }
+    "deal with multiple parameter values" in {
+      MockApp.get("/matching/multiparam?test=one&test=two&test=three")
+          .execute()
+          .getContent must_== "one,two,three"
+      MockApp.get("/matching/multiparam/one/two?test=three&test=four&test=five")
+          .execute()
+          .getContent must_== "one,two,three,four,five"
     }
   }
 

@@ -70,7 +70,8 @@ class HttpRequest(val raw: HttpServletRequest) {
     case _ => raw.getMethod.toLowerCase
   }
   lazy val uri = URLDecoder.decode(raw.getRequestURI, "UTF-8")
-  lazy val queryString = URLDecoder.decode(raw.getQueryString, "UTF-8")
+  lazy val queryString = if (raw.getQueryString == null) "" else
+    URLDecoder.decode(raw.getQueryString, "UTF-8")
   lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")
 
   // implicitly set request encoding to UTF-8
@@ -188,8 +189,13 @@ class HttpRequest(val raw: HttpServletRequest) {
     def -=(key: String): this.type = this
     def iterator: Iterator[(String, String)] = raw.getParameterNames
             .asInstanceOf[JEnumeration[String]]
-            .map(k => (k -> raw.getParameter(k)))
+            .flatMap(k => list(k).iterator.map(v => (k -> v)))
     def get(key: String): Option[String] = any2option(raw.getParameter(key))
+    def list(key: String): Seq[String] = {
+      val values = raw.getParameterValues(key)
+      if (values == null) Nil
+      else values.toList
+    }
   }
 
   /*!## Session

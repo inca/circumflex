@@ -17,7 +17,8 @@ You should import this package to use Circumflex FTL in your application:
  */
 package object freemarker {
 
-  val ftlConfig: Configuration = cx.instantiate[Configuration]("ftl.configuration", DefaultConfiguration)
+  val ftlConfig: Configuration = cx.instantiate[Configuration](
+    "ftl.configuration", new DefaultConfiguration)
 
   /**
    * Renders specified `template` directly into current response;

@@ -85,8 +85,8 @@ object CircumflexCoreSpec extends Specification {
       'testInt.getInt must_== 0
       'testBoolean := "false"
       'testBoolean.getBoolean must_== false
-      'testDate := "29.01.1988"
-      'testDate.getDate("dd.MM.yyyy").getTime must_== 570402000000l
+      'testDate := "29.01.1988 +0300"
+      'testDate.getDate("dd.MM.yyyy ZZ").getTime must_== 570402000000l
     }
   }
 
@@ -96,8 +96,10 @@ object CircumflexCoreSpec extends Specification {
     "resolve messages in different locales" in {
       ctx("cx.locale") = "en_US"
       msg("hello") must_== "Hello!"
+      msg("test") must_== "Preved!"
       ctx("cx.locale") = "pt"
       msg("hello") must_== "Hola!"
+      msg("test") must_== "Preved!"
     }
     "format messages using `MessageFormat`" in {
       msg.format("formatHello", "dude") must_== "Hello, dude!"

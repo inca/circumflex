@@ -1,6 +1,7 @@
 package ru.circumflex.web
 
 import ru.circumflex.core._
+import util.control.ControlThrowable
 
 /*!# Exceptions
 
@@ -18,3 +19,4 @@ need to be taken.
  * <a href="http://circumflex.ru/api/2.0/circumflex-web/exception.scala">exception.scala</a>.
  */
 class ResponseSentException extends CircumflexException("The response has been sent.")
+    with ControlThrowable

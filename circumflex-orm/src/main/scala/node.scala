@@ -62,7 +62,7 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
         case Some(a: Association[PK, J, R]) =>  // one-to-many join
           new OneToManyJoin[PK, R, T, J](this, node, a, joinType)
         case _ =>
-          throw new ORMException("Could not join nodes: no associations found.")
+          new JoinNode(this, node, joinType).ON(dialect.emptyPredicate)
       }
     }
   def INNER_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =

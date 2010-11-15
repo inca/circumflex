@@ -223,6 +223,23 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
   def WHERE(expression: String, params: Pair[String,Any]*): Select[T] =
     WHERE(prepareExpr(expression, params: _*))
 
+  /**
+   * Adds specified `predicates` to restrictions list.
+   */
+  def add(predicates: Predicate*): Select[T] = {
+    where match {
+      case EmptyPredicate =>
+        this._where = AND(predicates: _*)
+      case p: AggregatePredicate if (p.operator == dialect.and) =>
+        p.add(predicates: _*)
+      case p =>
+        this._where = _where.AND(predicates: _*)
+    }
+    return this
+  }
+  def add(expression: String, params: Pair[String, Any]*): Select[T] =
+    add(prepareExpr(expression, params: _*))
+
   // HAVING clause
 
   def having: Predicate = this._having

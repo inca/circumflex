@@ -3,9 +3,11 @@ package ru.circumflex.core
 import java.lang.String
 import collection.{Iterator, Map}
 import collection.JavaConversions._
-import collection.mutable.ArrayBuffer
-import java.util.{ResourceBundle, Locale}
+import collection.mutable.{ArrayBuffer, HashMap}
+import java.util.{ResourceBundle, Locale, Properties, Enumeration => JEnumeration}
 import java.text.MessageFormat
+import java.io._
+import org.apache.commons.io.FilenameUtils
 
 /*!# Messages API
 
@@ -21,8 +23,8 @@ delegating resolving, messages grouping, parameters interpolation and formatting
 
 The usage is pretty simple: you use the `msg` method of package object `ru.circumflex.core`
 which returns an implementation of `MessageResolver` used to retrieve messages. This instance
-is also referred to as *global messages resolver*. By default, the `DefaultMessageResolver`
-singleton is used. You can set `cx.messages` configuration parameter to use your own
+is also referred to as *global messages resolver*. By default, the `PropertyFileResolver`
+is used. You can set `cx.messages` configuration parameter to use your own
 `MessageResolver` implementation as global resolver.
 
 The `resolve` method is responsible for resolving a message by `key`.
@@ -56,8 +58,13 @@ corresponding value).
 You can use `ResourceBundleMessageResolver` to resolve messages from Java `ResourceBundle`s.
 
 The default implementation (the `msg` method in package `ru.circumflex.core`)
-uses `ResourceBundle` with base name `Messages` to lookup messages. You can override
-the default implementation by setting `cx.messages` configuration parameter.
+uses uses property files with base name `Messages` to lookup messages. You can override
+the default implementation by setting `cx.messages` configuration parameter. Unlike Java
+`ResourceBundle` it effectively caches property files and allows hot editing (cache is
+based on last modified dates).
+
+You can set `cx.messages.root` to point to different directory (for example, to your webapp
+root) and `cx.messages.name` to change the default base name of property files.
 
 If you need to search messages in different sources, you can use
 `DelegatingMessageResolver`: it tries to resolve a message using specified
@@ -116,14 +123,6 @@ class ResourceBundleMessageResolver(val bundleName: String) extends MessageResol
 }
 
 /**
- * Resolves messages from `ResourceBundle` with base name `Messages`.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
- */
-object DefaultMessageResolver extends ResourceBundleMessageResolver("Messages")
-
-/**
  * Resolves messages by delegating calls to specified `initialResolvers`.
  *
  * For more information refer to
@@ -142,6 +141,88 @@ class DelegatingMessageResolver(initialResolvers: MessageResolver*) {
     resolvers.foreach(r => r.get(key).map(msg => return Some(msg)))
     return None
   }
+}
+
+class PropertyFileResolver extends MessageResolver {
+  val propsRoot = new File(
+    FilenameUtils.separatorsToSystem(
+      cx.getOrElse("cx.messages.root", "src/main/resources").toString))
+  val resourceName = cx.getOrElse("cx.messages.name", "Messages").toString
+  protected val _cache = new HashMap[String, (Properties, Long)]
+
+  protected def getFile(suffix: String) =
+    new File(propsRoot, resourceName + suffix + ".properties")
+
+  protected def getProps(suffix: String): Option[Properties] = {
+    val f = getFile(suffix)
+    _cache.get(suffix) match {
+      case Some((props: Properties, lm: Long)) =>
+        if (!f.isFile) {    // previously cached file does not exist anymore
+          _cache.remove(suffix)
+          getProps(suffix)
+        } else {
+          if (f.lastModified > lm)  // cached file has been modified
+            loadProps(f) match {
+              case Some(p: Properties) =>
+                _cache(suffix) = (p, f.lastModified)
+                Some(p)
+              case None =>    // previously cached file does not exist anymore
+                _cache.remove(suffix)
+                getProps(suffix)
+            } else Some(props)      // not modified -- return cached
+        }
+      case _ => loadProps(f) map { p =>
+        _cache(suffix) = (p, f.lastModified)
+        p
+      }
+    }
+  }
+
+  protected def loadProps(file: File): Option[Properties] = {
+    if (!file.isFile) None
+    else {
+      val is = new FileInputStream(file)
+      val props = new Properties
+      try {
+        props.load(is)
+      } finally {
+        is.close
+      }
+      return Some(props)
+    }
+  }
+
+  def fallbackSuffix(suffix: String): String = {
+    val i = suffix.lastIndexOf("_")
+    if (i == -1) return ""
+    else return suffix.substring(0, i)
+  }
+
+  def localeSuffix = "_" + locale.toString
+
+  def iterator: Iterator[(String, String)] = {
+    var suffix = ""
+    var result: Iterator[(String, String)] = iteratorInternal(suffix)
+    localeSuffix.split("_").filter(_ != "").foreach { part =>
+      suffix += "_" + part
+      getProps(suffix) map { props => result ++= iteratorInternal(suffix) }
+    }
+    return result
+  }
+
+  protected def iteratorInternal(suffix: String): Iterator[(String, String)] =
+    getProps(suffix).map { props =>
+      props.keys.asInstanceOf[JEnumeration[String]].map(k => k -> props.getProperty(k))
+    }.getOrElse(Iterator.empty)
+
+  protected def resolve(key: String): Option[String] = resolveInternal(key, localeSuffix)
+
+  protected def resolveInternal(key: String, suffix: String): Option[String] =
+    getProps(suffix).flatMap(props => any2option(props.getProperty(key))).orElse {
+      if (suffix == "") None
+      else resolveInternal(key, fallbackSuffix(suffix))
+    }
+
 }
 
 /*!## Messages Grouping
