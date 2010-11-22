@@ -4,12 +4,11 @@ import java.lang.StringBuilder
 import java.util.regex.{Pattern, Matcher}
 import Markdown._
 
-// # Character protector
+/*!# Character protector
 
-/**
- * We use character protector mechanism to ensure that certain elements of markup,
- * such as inline HTML blocks, remain undamaged when processing.
- */
+We use character protector mechanism to ensure that certain elements of markup,
+such as inline HTML blocks, remain undamaged when processing.
+*/
 class Protector {
   protected var protectHash: Map[String, CharSequence] = Map()
   protected var unprotectHash: Map[CharSequence, String] = Map()
@@ -38,17 +37,15 @@ class Protector {
   def decode(key: String): Option[CharSequence] = protectHash.get(key)
 
   /**
-   * Hash keys that are currently in use.
+   * Returns hash keys that are currently in use.
    */
   def keys = protectHash.keys
 
   override def toString = protectHash.toString
 }
 
-// # Enhanced String Builder
-
 /**
- * A simple wrapper over `StringBuilder` with utility methods.
+ * Represents a simple wrapper over `StringBuilder` with utility methods.
  */
 class StringEx(protected var text: StringBuilder) {
 
