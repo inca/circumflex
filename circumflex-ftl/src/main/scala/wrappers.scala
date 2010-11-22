@@ -3,11 +3,11 @@ package ru.circumflex.freemarker
 import freemarker.template._
 import java.util.Date
 import org.apache.commons.beanutils.MethodUtils
-import java.lang.reflect.{Field, Method}
 import java.lang.String
 import ru.circumflex.core.Wrapper
 import scala.collection.Map
 import scala.xml._
+import java.lang.reflect.{Modifier, Field, Method}
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any): TemplateModel = obj match {
@@ -115,18 +115,23 @@ class ScalaXmlWrapper(val node: NodeSeq, val wrapper: ObjectWrapper) extends Tem
   def getAsString: String = node.text
 }
 
-class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper) extends TemplateHashModel with TemplateScalarModel {
+class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper)
+    extends TemplateHashModel with TemplateScalarModel {
 
   val objectClass = obj.asInstanceOf[Object].getClass
 
   private def findMethod(cl: Class[_], name: String): Option[Method] =
-    cl.getMethods.toList.find(_.getName.equals(name)) match {
+    cl.getMethods.toList.find { m =>
+      m.getName.equals(name) && Modifier.isPublic(m.getModifiers)
+    } match {
       case None if cl != classOf[Object] => findMethod(cl.getSuperclass, name)
       case other => other
     }
 
   private def findField(cl: Class[_], name: String): Option[Field] =
-    cl.getFields.toList.find(_.getName.equals(name)) match {
+    cl.getFields.toList.find { f =>
+      f.getName.equals(name) && Modifier.isPublic(f.getModifiers)
+    } match {
       case None if cl != classOf[Object] => findField(cl.getSuperclass, name)
       case other => other
     }
