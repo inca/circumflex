@@ -347,7 +347,7 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   }
 
-  /*## Include & Forward
+  /*!## Include & Forward
 
   The methods `forward` and `include` use request dispatcher mechanism provided by Servlet API
   to forward the request processing to or to include partial result from different web application

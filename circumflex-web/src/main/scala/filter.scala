@@ -60,7 +60,7 @@ class CircumflexFilter extends Filter {
    */
   def destroy = {}
 
-  /*## Serving static  {#static}
+  /*!## Serving static  {#static}
 
   Static files are images, stylesheets, javascripts and all other application assets
   which do not require special processing and can be served to clients "as is".
