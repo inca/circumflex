@@ -5,19 +5,18 @@ import java.util.regex._
 import java.util.Random
 import java.lang.StringBuilder
 
-// # The Markdown Processor
+/*!# The Markdown Processor
 
-/**
- * This utility converts a plain text written in [Markdown][1] into HTML fragment.
- * The typical usage is:
- *
- *     val md = Markdown(myMarkdownText)
- *
- *  [1]: http://daringfireball.net/projects/markdown/syntax "Markdown Syntax"
- */
+This utility converts a plain text written in [Markdown][1] into HTML fragment.
+The typical usage is:
+
+    val md = Markdown(myMarkdownText)
+
+  [1]: http://daringfireball.net/projects/markdown/syntax "Markdown Syntax"
+*/
 object Markdown {
 
-  // ## SmartyPants chars
+  // SmartyPants chars
 
   val leftQuote = Circumflex.get("md.leftQuote") match {
     case Some(s: String) => s
@@ -56,7 +55,7 @@ object Markdown {
     case _ => "&rarr;"
   }
 
-  // ## Commons
+  // Commons
 
   val keySize = 20
   val chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -69,7 +68,7 @@ object Markdown {
       "object" ::  Nil
   val htmlNameTokenExpr = "[a-z_:][a-z0-9\\-_:.]*"
 
-  // ## Regex patterns
+  // Regex patterns
 
   // We use precompile several regular expressions that are used for typical
   // transformations.
@@ -186,25 +185,15 @@ object Markdown {
   // Macro definitions
   val rMacroDefs = Pattern.compile("<!--#md *\"{3}(.*?)\"{3}(\\?[idmsux]+)? +\"{3}(.*?)\"{3} *-->")
 
-  /**
-   * Convert the `source` from Markdown to HTML.
-   */
   def apply(source: String): String = new MarkdownText(source).toHtml
 }
 
-// # Processing Stuff
+// Processing Stuff
 
-/**
- * We collect all processing logic within this class.
- */
 class MarkdownText(source: CharSequence) {
   protected var listLevel = 0
   protected var text = new StringEx(source)
   import Markdown._
-
-  /**
-   * Link Definitions
-   */
 
   class LinkDefinition(val url: String, val title: String) {
     override def toString = url + " (" + title + ")"
@@ -233,11 +222,9 @@ class MarkdownText(source: CharSequence) {
   // Protector for HTML blocks
   val htmlProtector = new Protector
 
-  // ## Encoding methods
+  //  Encoding methods
 
-  /**
-   * All unsafe chars are encoded to SGML entities.
-   */
+  // All unsafe chars are encoded to SGML entities.
   protected def encodeUnsafeChars(code: StringEx): StringEx = code
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
@@ -246,55 +233,37 @@ class MarkdownText(source: CharSequence) {
       .replaceAll("_", "&#95;")
       .replaceAll("\\", "&#92;")
 
-  /**
-   * All characters escaped with backslash are encoded to corresponding
-   * SGML entities.
-   */
+  // All characters escaped with backslash are encoded to corresponding
+  // SGML entities.
   protected def encodeBackslashEscapes(text: StringEx): StringEx =
     backslashEscapes.foldLeft(text)((tx, p) =>
       tx.replaceAll(Pattern.compile(p._1), p._2))
 
-  /**
-   * All unsafe chars are encoded to SGML entities inside code blocks.
-   */
+  // All unsafe chars are encoded to SGML entities inside code blocks.
   protected def encodeCode(code: StringEx): StringEx = code
       .replaceAll(rEscAmp, "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
 
-  /**
-   * Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
-   */
+  // Ampersands and less-than signes are encoded to `&amp;` and `&lt;` respectively.
   protected def encodeAmpsAndLts(text: StringEx) = text
       .replaceAll(rEscAmp, "&amp;")
       .replaceAll(rEscLt, "&lt;")
 
-  /**
-   * Encodes specially-treated characters inside the HTML tags.
-   */
+  // Encodes specially-treated characters inside the HTML tags.
   protected def encodeCharsInsideTags(text: StringEx) =
     text.replaceAll(rInsideTags, m =>
       "<" + encodeUnsafeChars(new StringEx(m.group(1)))
           .replaceAll(rEscAmp, "&amp;")
           .toString + ">")
 
-  // ## Processing methods
-
-  /**
-   * Normalization includes following stuff:
-   *
-   * * replace DOS- and Mac-specific line endings with `\n`;
-   * * replace tabs with spaces;
-   * * reduce all blank lines (i.e. lines containing only spaces) to empty strings.
-   */
+  // Normalize line endings and whitespace
   protected def normalize(text: StringEx) = text
       .replaceAll(rLineEnds, "\n")
       .replaceAll(rTabs, "    ")
       .replaceAll(rBlankLines, "")
 
-  /**
-   * All inline HTML blocks are hashified, so that no harm is done to their internals.
-   */
+  // All inline HTML blocks are hashified, so that no harm is done to their internals.
   protected def hashHtmlBlocks(text: StringEx): StringEx = {
     text.replaceAll(rHtmlHr, m => htmlProtector.addToken(m.group(1)) + "\n")
     val m = text.matcher(rInlineHtmlStart)
@@ -332,19 +301,15 @@ class MarkdownText(source: CharSequence) {
     } else text
   }
 
-  /**
-   * All HTML comments are hashified too.
-   */
+  // All HTML comments are hashified too.
   protected def hashHtmlComments(text: StringEx): StringEx = text.replaceAll(rHtmlComment, m => {
     val comment = m.group(1)
     val hash = htmlProtector.addToken(comment)
     "\n" + hash + "\n"
   })
 
-  /**
-   * Standalone link definitions are added to the dictionary and then
-   * stripped from the document.
-   */
+  // Standalone link definitions are added to the dictionary and then
+  // stripped from the document.
   protected def stripLinkDefinitions(text: StringEx) =
     text.replaceAll(rLinkDefinition, m => {
       val id = m.group(1).toLowerCase
@@ -354,18 +319,14 @@ class MarkdownText(source: CharSequence) {
       ""
     })
 
-  /**
-   * Macro definitions are stripped from the document.
-   */
+  // Macro definitions are stripped from the document.
   protected def stripMacroDefinitions(text: StringEx) =
     text.replaceAll(rMacroDefs, m => {
       macros ++= List(new MacroDefinition(m.group(1), m.group(2), m.group(3)))
       ""
     })
 
-  /**
-   * Block elements are processed within specified `text`.
-   */
+  // Block elements are processed within specified `text`.
   protected def runBlockGamut(text: StringEx): StringEx = {
     var result = text
     result = doMacros(result)
@@ -379,9 +340,7 @@ class MarkdownText(source: CharSequence) {
     return result
   }
 
-  /**
-   * Process both types of headers.
-   */
+  // Process both types of headers.
   protected def doHeaders(text: StringEx): StringEx = text
       .replaceAll(rH1, m => {
     val id = m.group(3)
@@ -399,19 +358,11 @@ class MarkdownText(source: CharSequence) {
     "<h" + marker.length + idAttr + ">" + body + "</h" + marker.length + ">"
   })
 
-  /**
-   * Process horizontal rulers.
-   */
+  // Process horizontal rulers.
   protected def doHorizontalRulers(text: StringEx): StringEx =
     text.replaceAll(rHr, "\n<hr/>\n")
 
-  /**
-   * Process ordered and unordered lists and list items..
-   *
-   * It is possible to have some nested block elements inside
-   * lists, so the contents is passed to `runBlockGamut` after some
-   * minor transformations.
-   */
+  // Process ordered and unordered lists and list items.
   protected def doLists(text: StringEx): StringEx = {
     val pattern = if (listLevel == 0) rList else rSubList
     text.replaceAll(pattern, m => {
@@ -443,9 +394,7 @@ class MarkdownText(source: CharSequence) {
     return sx
   }
 
-  /**
-   * Process code blocks.
-   */
+  // Process code blocks.
   protected def doCodeBlocks(text: StringEx): StringEx =
     text.replaceAll(rCodeBlock, m => {
       var langExpr = ""
@@ -458,13 +407,7 @@ class MarkdownText(source: CharSequence) {
       "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
     })
 
-  /**
-   * Process blockquotes.
-   *
-   * It is possible to have some nested block elements inside
-   * blockquotes, so the contents is passed to `runBlockGamut` after some
-   * minor transformations.
-   */
+   // Process blockquotes.
   protected def doBlockQuotes(text: StringEx): StringEx =
     text.replaceAll(rBlockQuote, m => {
       val content = new StringEx(m.group(1))
@@ -472,10 +415,8 @@ class MarkdownText(source: CharSequence) {
       "<blockquote>\n" + runBlockGamut(content) + "\n</blockquote>\n\n"
     })
 
-  /**
-   * At this point all HTML blocks should be hashified, so we treat all lines
-   * separated by more than 2 linebreaks as paragraphs.
-   */
+   // At this point all HTML blocks should be hashified, so we treat all lines
+   // separated by more than 2 linebreaks as paragraphs.
   protected def formParagraphs(text: StringEx): StringEx = new StringEx(
     rParaSplit.split(text.toString.trim)
         .map(para => htmlProtector.decode(para) match {
@@ -483,9 +424,7 @@ class MarkdownText(source: CharSequence) {
       case _ => "<p>" + runSpanGamut(new StringEx(para)).toString + "</p>"
     }).mkString("\n\n"))
 
-  /**
-   * Span elements are processed within specified `text`.
-   */
+  // Span elements are processed within specified `text`.
   protected def runSpanGamut(text: StringEx): StringEx = {
     val protector = new Protector
     var result = protectCodeSpans(protector, text)
@@ -513,15 +452,11 @@ class MarkdownText(source: CharSequence) {
   protected def unprotect(protector: Protector, text: StringEx): StringEx =
     protector.keys.foldLeft(text)((t, k) => t.replaceAll(k, protector.decode(k).getOrElse("")))
 
-  /**
-   * Process code spans.
-   */
+  // Process code spans.
   protected def doCodeSpans(protector: Protector, text: StringEx): StringEx = text.replaceAll(rCodeSpan, m =>
     protector.addToken("<code>" + encodeCode(new StringEx(m.group(2).trim)) + "</code>"))
 
-  /**
-   * Process images.
-   */
+  // Process images.
   protected def doImages(text: StringEx): StringEx = text.replaceAll(rImage, m => {
     val alt = m.group(1)
     val src = m.group(2)
@@ -532,9 +467,7 @@ class MarkdownText(source: CharSequence) {
     result + "/>"
   })
 
-  /**
-   * Process reference-style links.
-   */
+  // Process reference-style links.
   protected def doRefLinks(text: StringEx): StringEx = text.replaceAll(rRefLinks, m => {
     val wholeMatch = m.group(1)
     val linkText = m.group(2)
@@ -555,9 +488,7 @@ class MarkdownText(source: CharSequence) {
     }
   })
 
-  /**
-   * Process inline links.
-   */
+  // Process inline links.
   protected def doInlineLinks(text: StringEx): StringEx =
     text.replaceAll(rInlineLinks, m => {
       val linkText = m.group(1)
@@ -574,9 +505,7 @@ class MarkdownText(source: CharSequence) {
       "<a href=\"" + url + "\"" + titleAttr + ">" + linkText + "</a>"
     })
 
-  /**
-   * Process autolinks.
-   */
+  // Process autolinks.
   protected def doAutoLinks(text: StringEx): StringEx = text
       .replaceAll(rAutoLinks, m => "<a href=\"" + m.group(1) + "\">" + m.group(1) + "</a>")
       .replaceAll(rAutoEmail, m => {
@@ -585,9 +514,7 @@ class MarkdownText(source: CharSequence) {
     "<a href=\"" + encodeEmail(url) + "\">" + encodeEmail(address) + "</a>"
   })
 
-  /**
-   * Process autoemails in anti-bot manner.
-   */
+  // Process autoemails in anti-bot manner.
   protected def encodeEmail(s: String) = s.toList.map(c => {
     val r = rnd.nextDouble
     if (r < 0.45) "&#" + c.toInt + ";"
@@ -595,40 +522,28 @@ class MarkdownText(source: CharSequence) {
     else c
   }).mkString
 
-  /**
-   * Process EMs and STRONGs.
-   */
+  // Process EMs and STRONGs.
   protected def doEmphasis(text: StringEx): StringEx = text
       .replaceAll(rStrong, m => "<strong>" + m.group(2) + "</strong>")
       .replaceAll(rEm, m => "<em>" + m.group(2) + "</em>")
 
-  /**
-   * Process manual linebreaks.
-   */
+  // Process manual linebreaks.
   protected def doLineBreaks(text: StringEx): StringEx = text
       .replaceAll(rBrs, " <br/>\n")
 
-  /**
-   * Process SmartyPants stuff.
-   */
+  // Process SmartyPants stuff.
   protected def doSmartyPants(text: StringEx): StringEx =
     smartyPants.foldLeft(text)((t,p) => t.replaceAll(p._1, p._2))
 
-  /**
-   * Wrap ampersands with `<span class="amp">`.
-   */
+  // Wrap ampersands with `<span class="amp">`.
   protected def doAmpSpans(text: StringEx): StringEx =
     text.replaceAll(rAmp, "<span class=\"amp\">&amp;</span>")
 
-  /**
-   * Process user-defined macros.
-   */
+  // Process user-defined macros.
   protected def doMacros(text: StringEx): StringEx =
     macros.foldLeft(text)((t, m) => t.replaceAll(m.regex, m.replacement, false))
 
-  /**
-   * Transform the Markdown source into HTML.
-   */
+  // Transform the Markdown source into HTML.
   def toHtml(): String = {
     var result = text
     result = normalize(result)

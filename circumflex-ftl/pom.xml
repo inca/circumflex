@@ -7,7 +7,7 @@
   <artifactId>circumflex-ftl</artifactId>
   <packaging>jar</packaging>
   <version>2.0</version>
-  <name>Circumflex Freemarker Views</name>
+  <name>Circumflex Freemarker Helper</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>

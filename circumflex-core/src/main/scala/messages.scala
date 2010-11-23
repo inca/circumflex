@@ -13,7 +13,7 @@ import org.apache.commons.io.FilenameUtils
 
 Messages API offers you a convenient way to internationalize your application.
 
-Generally, all strings that should be presented to user are stored in
+Generally, all strings which should be presented to user are stored in
 separate `.properties`-files as suggested by [Java Internationalization][java-i18n].
 
 Circumflex Messages API goes beyound this simple approach and offers
@@ -51,7 +51,7 @@ The locale is taken from `cx.locale` context variable (see `Context` for more de
 If no such variable found in the context, then the platform's default locale is used.
 
 Messages can also be formatted. We support both classic `MessageFormat` style
-(you know, with `{0}`s in and varargs) and parameters interpolation (key-value pairs
+(you know, with `{0}`s in text and varargs) and parameters interpolation (key-value pairs
 are passed as arguments to `fmt` method, each `{key}` in message is replaced by
 corresponding value).
 

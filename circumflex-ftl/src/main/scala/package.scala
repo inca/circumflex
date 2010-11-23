@@ -11,9 +11,9 @@ Package `ftl` contains rendering methods, `ftl` for use in Circumflex Web Framew
 use `ftlConfig` to access it if you need custom operations, or use `ftl.configuration`
 configuration parameter to provide your own implementation of FreeMarker `Configuration`.
 
-You should import this package to use Circumflex FTL in your application:
+You should import this package to use Circumflex FreeMarker Helper in your application:
 
-    import ru.circumflex.ftl._
+    import ru.circumflex.freemarker._
  */
 package object freemarker {
 
