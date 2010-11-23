@@ -88,7 +88,7 @@ class CircumflexFilter extends Filter {
     return false
   }
 
-  /*## Main Lifecycle {#lifecycle}
+  /*!## Main Lifecycle {#lifecycle}
 
   The lifecycle of `CircumflexFilter` involves following actions:
 
