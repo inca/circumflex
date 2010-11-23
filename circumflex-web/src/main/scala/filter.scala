@@ -7,7 +7,7 @@ import java.io._
 import java.net.URLDecoder
 import ru.circumflex.core._
 
-/*! Circumflex Filter
+/*!# Circumflex Filter
 
 `CircumflexFilter` is an entry point of your web application. It handles
 context lifecycle (initializes context before the request is processed and
