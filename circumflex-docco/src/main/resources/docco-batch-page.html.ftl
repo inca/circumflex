@@ -1,6 +1,5 @@
 [#ftl]
 [#assign basePath][#list 1..depth as i]../[/#list][/#assign]
-[#assign resPath]${basePath}.docco/[/#assign]
 <!DOCTYPE html>
 <html>
 <head>
