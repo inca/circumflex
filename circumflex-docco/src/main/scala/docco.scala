@@ -8,7 +8,6 @@ import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}
 import java.util.{Collection => JCollection}
 import collection.mutable.ListBuffer
 import org.apache.commons.io.{FilenameUtils, IOUtils, FileUtils}
-import collection.immutable.ListMap
 
 /**
  * A simple wrapper over a Documentation -> Code Block tuple.
@@ -64,17 +63,14 @@ FreeMarker `Configuration` and templates.
 */
 
 object Docco {
-  val DEFAULT_SINGLE_PAGE_TEMPLATE = "/docco-single-page.html.ftl"
-  val DEFAULT_BATCH_PAGE_TEMPLATE = "/docco-batch-page.html.ftl"
-  val DEFAULT_INDEX_TEMPLATE = "/docco-index.html.ftl"
   def apply(sourceFile: String, stripScaladoc: Boolean = true): Docco =
     new Docco(new File(sourceFile), stripScaladoc)
 }
 
 class Docco(val file: File, val stripScaladoc: Boolean = true) {
-  import Docco._
-  var pageTemplate: String = DEFAULT_SINGLE_PAGE_TEMPLATE
 
+  val pageTemplate: String = cx.get("docco.pageTemplate")
+      .map(_.toString).getOrElse("/docco-single-page.html.ftl")
   val docSingleLine = "^\\s*/\\*!\\s*(.*?)\\*/".r
   val docBegin = "^(\\s*)/\\*!\\s*(.*)".r
   val docEnd = "(.*?)\\*/\\s*".r
@@ -157,54 +153,61 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
 
 /*!## Batch processing
 
-This utility generates Docco for specified `basePath`. It is intended to
-build a documentation suite for arbitrary Maven project. The documentation
-is saved in `outputDirectory` and contains:
+This utility generates Docco for specified `docco.basePath` configuration parameter.
+It is intended to build a documentation suite for arbitrary Maven project.
+The documentation is saved in location defined by `docco.outputDirectory` configuration
+parameter and contains:
 
-  * `index.html`
-  * folders and subfolders with generated Docco
-  * custom resources in `.docco`
+  * `index.html`;
+  * generated subfolders and documentation;
+  * custom resources in `.docco`.
 */
-class DoccoBatch(val basePath: File, val outputDirectory: File) {
-  import Docco._
-  // FreeMarker stuff
-  var pageTemplate: String = DEFAULT_BATCH_PAGE_TEMPLATE
-  var indexTemplate: String = DEFAULT_INDEX_TEMPLATE
+class DoccoBatch {
+  // Base path for crawler
+  val basePath: File = cx.get("docco.basePath") match {
+    case Some(f: File) => f
+    case Some(s: String) => new File(s)
+    case _ => new File(".")
+  }
+  val outputDirectory = cx.get("docco.outputDirectory") match {
+    case Some(f: File) => f
+    case Some(s: String) => new File(s)
+    case _ => new File("target/docco")
+  }
+  // Where should we store results of our work?
+  // Templates
+  val pageTemplate: String = cx.get("docco.pageTemplate")
+      .map(_.toString).getOrElse("/docco-batch-page.html.ftl")
+  val indexTemplate: String = cx.get("docco.indexTemplate")
+      .map(_.toString).getOrElse("/docco-index.html.ftl")
   // Regex to filter sources
-  var filenameRegex = ".*\\.scala$"
+  val filenameRegex = cx.get("docco.filenameRegex").map(_.toString)
+      .getOrElse(".*\\.scala$")
   // Custom resources
   var customResources: List[String] = Nil
   // Title for index
-  var title: String = basePath.getCanonicalFile.getName + " index"
+  val title: String = cx.get("docco.title").map(_.toString)
+      .getOrElse(basePath.getCanonicalFile.getName + " index")
   // Should we strip Scaladoc ( /** ... */ ) or not?
-  var stripScaladoc: Boolean = true
+  val stripScaladoc: Boolean = cx.get("docco.stripScaladoc")
+      .map(_.toString.toBoolean).getOrElse(true)
   // Should we ignore files with no docco?
-  var skipEmpty: Boolean = true
+  val skipEmpty: Boolean = cx.get("docco.skipEmpty")
+      .map(_.toString.toBoolean).getOrElse(true)
 
-  // For interop with Java
-  def setPageTemplate(v: String) = { pageTemplate = v }
-  def setIndexTemplate(v: String) = { indexTemplate = v }
-  def setFilenameRegex(v: String) = { filenameRegex = v }
-  def setStripScaladoc(v: Boolean) = { stripScaladoc = v }
-  def setSkipEmpty(v: Boolean) = { skipEmpty = v }
-  def setTitle(v: String) = { title = v }
   def addCustomResource(v: String) = { customResources ++= List(v) }
 
-  /**
-   * Use this method to build the documentation suite.
-   */
-  def generate(): Unit = {
-    // prepare custom resources
+  def prepareCustomResources: Unit =
     if (customResources.size > 0) {
       val customResDir = new File(outputDirectory, ".docco")
       // create output directories if they do not already exist
       FileUtils.forceMkdir(customResDir)
       // copy resources
-      for (r <- customResources) {
+      customResources.foreach { r =>
         var f = new File(r)
         if (f.isDirectory) FileUtils.copyDirectory(f, customResDir)
         else if (f.isFile) FileUtils.copyFile(f, customResDir)
-        else {    // try to load the resource as stream
+        else { // try to load the resource as stream
           val res = getClass.getResource(r)
           if (res != null) {
             val in = res.openStream
@@ -219,6 +222,12 @@ class DoccoBatch(val basePath: File, val outputDirectory: File) {
         }
       }
     }
+
+  /**
+   * Builds the documentation suite.
+   */
+  def generate(): Unit = {
+    prepareCustomResources
     // crawl basePath for the sources
     val bp = basePath.getCanonicalPath
     val op = outputDirectory.getCanonicalPath
