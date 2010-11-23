@@ -7,12 +7,12 @@ import java.io.File;
  */
 public class TestConfigureMojo extends AbstractConfigureMojo {
 
-    /**
-     * @parameter default-value="${project.build.testOutputDirectory}/cx.properties"
-     */
-    protected File targetFile;
+  /**
+   * @parameter default-value="${project.build.testOutputDirectory}/cx.properties"
+   */
+  protected File targetFile;
 
-    public File targetFile() {
-        return targetFile;
-    }
+  public File targetFile() {
+    return targetFile;
+  }
 }

@@ -169,7 +169,7 @@ class DoccoBatch {
     case Some(s: String) => new File(s)
     case _ => new File(".")
   }
-  val outputDirectory = cx.get("docco.outputDirectory") match {
+  val outputPath = cx.get("docco.outputPath") match {
     case Some(f: File) => f
     case Some(s: String) => new File(s)
     case _ => new File("target/docco")
@@ -199,7 +199,7 @@ class DoccoBatch {
 
   def prepareCustomResources: Unit =
     if (customResources.size > 0) {
-      val customResDir = new File(outputDirectory, ".docco")
+      val customResDir = new File(outputPath, ".docco")
       // create output directories if they do not already exist
       FileUtils.forceMkdir(customResDir)
       // copy resources
@@ -230,7 +230,7 @@ class DoccoBatch {
     prepareCustomResources
     // crawl basePath for the sources
     val bp = basePath.getCanonicalPath
-    val op = outputDirectory.getCanonicalPath
+    val op = outputPath.getCanonicalPath
     val sources = new ListBuffer[File]
     val srcIt = FileUtils.listFiles(basePath,
       new RegexFileFilter(filenameRegex),
@@ -243,7 +243,7 @@ class DoccoBatch {
       if (!skipEmpty || docco.sections.size > 1) {
         val fp = f.getCanonicalPath
         val relName = fp.substring(bp.length + 1) + ".html"
-        val outFile = new File(outputDirectory, relName)
+        val outFile = new File(outputPath, relName)
         FileUtils.forceMkdir(outFile.getParentFile)
         val out = new FileWriter(outFile)
         try {
@@ -266,7 +266,7 @@ class DoccoBatch {
       (dirName -> filenames)
     }
     val dirs = indexMap.keys.toList.sortBy(_.toString)
-    val out = new FileWriter(new File(outputDirectory, "index.html"))
+    val out = new FileWriter(new File(outputPath, "index.html"))
     try {
       var data = Map[String, Any]("dirs" -> dirs, "index" -> indexMap, "title" -> title)
       ftlConfig.getTemplate(indexTemplate).process(data, out)
