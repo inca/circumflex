@@ -19,7 +19,7 @@ Refer to the documentation of your favorite web server for more information.
  * how to configure X-SendFile feature.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-web/xsendfile.scala">xsendfile.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.RC2/circumflex-web/xsendfile.scala">xsendfile.scala</a>.
  */
 trait XSendFileHeader {
   def name: String
