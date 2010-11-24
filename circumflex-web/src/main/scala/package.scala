@@ -1,6 +1,7 @@
 package ru.circumflex
 
 import ru.circumflex.core._
+import web._
 import javax.servlet.{FilterChain, FilterConfig}
 import collection.Iterator
 import javax.activation.MimetypesFileTypeMap
