@@ -7,7 +7,7 @@ import java.io._
 import java.net.URLDecoder
 import ru.circumflex.core._
 
-/*! Circumflex Filter
+/*!# Circumflex Filter
 
 `CircumflexFilter` is an entry point of your web application. It handles
 context lifecycle (initializes context before the request is processed and
@@ -60,7 +60,7 @@ class CircumflexFilter extends Filter {
    */
   def destroy = {}
 
-  /*## Serving static  {#static}
+  /*!## Serving static  {#static}
 
   Static files are images, stylesheets, javascripts and all other application assets
   which do not require special processing and can be served to clients "as is".
@@ -88,7 +88,7 @@ class CircumflexFilter extends Filter {
     return false
   }
 
-  /*## Main Lifecycle {#lifecycle}
+  /*!## Main Lifecycle {#lifecycle}
 
   The lifecycle of `CircumflexFilter` involves following actions:
 

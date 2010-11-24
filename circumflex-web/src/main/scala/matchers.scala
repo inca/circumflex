@@ -14,7 +14,7 @@ match results on successfull match and are used in routes definition.
 Match results are subsequently used inside matched route's block.
 */
 
-/*##! Match Results
+/*!## Match Results
 
 The results of matching contain information about successful match. The `name` reflects
 the name of the `Matcher` which yielded this match result, and the `params` contains

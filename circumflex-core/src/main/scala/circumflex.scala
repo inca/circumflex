@@ -18,7 +18,7 @@ Note, however, that `Circumflex` singleton is not thread-safe, so it is a best
 practice to only set configuration parameters inside some initialization block
 which will be executed only once by only one thread.
 
-[Circumflex Maven Plugin](http://circumflex.ru/maven-plugin.html)
+[Circumflex Maven Plugin](http://circumflex.ru/plugin.html)
 enables you to configure your application at build time using Maven properties
 (specified either in application's `pom.xml` or in `settings.xml`) and system
 properties (specified in command line). This is very robust production scenario,

@@ -34,7 +34,7 @@ class HttpResponse(val raw: HttpServletResponse) {
     throw new ResponseSentException
   }
 
-  def flush(): Unit = {
+  def flush(): Unit = if (!raw.isCommitted) {
     if (statusCode != -1)
       raw.setStatus(statusCode)
     if (contentLength != -1)

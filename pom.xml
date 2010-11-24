@@ -26,7 +26,7 @@
   </modules>
 
   <properties>
-    <scala.version>2.8.1.RC3</scala.version>
+    <scala.version>2.8.1</scala.version>
   </properties>
 
   <dependencies>
