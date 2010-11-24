@@ -20,12 +20,25 @@ You should import this package to use Circumflex Web Framework in your applicati
 If you don't wish to import all helpers into your global scope, then import this
 package under an alias:
 
-    import ru.circumflex.{web => cx}    // import package object under alias "cx"
-    cx.request                          // access package object members
+    import ru.circumflex.{web => cx}    // import under alias "cx"
+    cx.request                          // access members
 */
 package object web {
 
   val WEB_LOG = new Logger("ru.circumflex.web")
+
+  /*!# Heplers
+
+  Helpers are tiny methods and structures which provide common functionality
+  for web applications like accessing current request, response, session, headers, cookies
+  and other stuff.
+   */
+  def request = ctx("cx.request").asInstanceOf[HttpRequest]
+  def response = ctx("cx.response").asInstanceOf[HttpResponse]
+  def filterChain = ctx("cx.filterChain").asInstanceOf[FilterChain]
+  def filterConfig = cx("cx.filterConfig").asInstanceOf[FilterConfig]
+  def servletContext = filterConfig.getServletContext
+  def session = request.session
 
   /*!## The `headers` Helper
 
@@ -45,19 +58,6 @@ package object web {
     def iterator: Iterator[(String, String)] = request.headers.iterator
     def get(key: String): Option[String] = request.headers.get(key)
   }
-
-  /*!# Heplers
-
-  Helpers are tiny methods and structures which provide common functionality
-  for web applications like accessing current request, response, session, headers, cookies
-  and other stuff.
-   */
-  def request = ctx("cx.request").asInstanceOf[HttpRequest]
-  def response = ctx("cx.response").asInstanceOf[HttpResponse]
-  def filterChain = ctx("cx.filterChain").asInstanceOf[FilterChain]
-  def filterConfig = cx("cx.filterConfig").asInstanceOf[FilterConfig]
-  def servletContext = filterConfig.getServletContext
-  def session = request.session
 
   /*!## The `cookies` Helper
 
