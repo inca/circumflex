@@ -209,7 +209,7 @@ class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     parentNode: RelationNode[PKR, R],
     val association: Association[PKR, L, R],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](childNode, parentNode, joinType) {
-  _on = childNode.alias + "." + association.field.name + " = " +
+  override def on = childNode.alias + "." + association.field.name + " = " +
       parentNode.alias + "." + association.parentRelation.PRIMARY_KEY.name
 }
 
@@ -218,6 +218,6 @@ class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     childNode: RelationNode[PKR, R],
     val association: Association[PKL, R, L],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](parentNode, childNode, joinType) {
-  _on = childNode.alias + "." + association.field.name + " = " +
+  override def on = childNode.alias + "." + association.field.name + " = " +
       parentNode.alias + "." + association.parentRelation.PRIMARY_KEY.name
 }
