@@ -209,8 +209,11 @@ class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     parentNode: RelationNode[PKR, R],
     val association: Association[PKR, L, R],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](childNode, parentNode, joinType) {
-  _on = childNode.alias + "." + association.field.name + " = " +
-      parentNode.alias + "." + association.parentRelation.PRIMARY_KEY.name
+  override def on: String =
+    if (_on == "")
+      dialect.qualifyColumn(association.field, childNode.alias) + " = " +
+          dialect.qualifyColumn(association.parentRelation.PRIMARY_KEY, parentNode.alias)
+    else _on
 }
 
 class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
@@ -218,6 +221,9 @@ class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     childNode: RelationNode[PKR, R],
     val association: Association[PKL, R, L],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](parentNode, childNode, joinType) {
-  _on = childNode.alias + "." + association.field.name + " = " +
-      parentNode.alias + "." + association.parentRelation.PRIMARY_KEY.name
+  override def on: String =
+    if (_on == "")
+      dialect.qualifyColumn(association.field, childNode.alias) + " = " +
+          dialect.qualifyColumn(association.parentRelation.PRIMARY_KEY, parentNode.alias)
+    else _on
 }
