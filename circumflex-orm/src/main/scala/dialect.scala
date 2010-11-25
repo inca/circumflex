@@ -1,5 +1,7 @@
 package ru.circumflex.orm
 
+import java.util.Date
+
 /*!# Dialect
 
 This little thingy does all dirty SQL rendering.
@@ -19,9 +21,11 @@ class Dialect {
 
   def longType = "BIGINT"
   def integerType = "INTEGER"
-  def numericType = "NUMERIC"
+  def numericType(precision: Int, scale: Int): String =
+    "NUMERIC" + (if (precision == -1) "" else "(" + precision + "," + scale + ")")
   def textType = "TEXT"
-  def varcharType = "VARCHAR"
+  def varcharType(length: Int): String =
+    "VARCHAR" + (if (length == -1) "" else "(" + length + ")")
   def booleanType = "BOOLEAN"
   def dateType = "DATE"
   def timeType = "TIME"
@@ -113,6 +117,15 @@ class Dialect {
    * Quotes identifier for dialects that support it.
    */
   def quoteIdentifer(identifier: String) = identifier
+
+  /**
+   * Escapes JDBC-compliant parameter
+   */
+  def escapeParameter(value: Any): String = value match {
+    case Some(v) => escapeParameter(v)
+    case None | null => "NULL"
+    case v => quoteLiteral(v.toString)
+  }
 
   /**
    * Qualifies relation name with it's schema.

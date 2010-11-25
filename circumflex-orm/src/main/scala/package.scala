@@ -4,6 +4,7 @@ import ru.circumflex.core._
 import orm._
 import java.util.regex.Pattern
 import net.sf.ehcache.CacheManager
+import java.sql.ResultSet
 
 /*!# The `orm` Package
 
@@ -18,13 +19,13 @@ package object orm {
 
   val ORM_LOG = new Logger("ru.circumflex.orm")
 
-  // Configuration
+  // Commons
 
   val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
     "orm.connectionProvider", new DefaultConnectionProvider)
 
   val typeConverter: TypeConverter = cx.instantiate[TypeConverter](
-    "orm.typeConverter", new DefaultTypeConverter)
+    "orm.typeConverter", new TypeConverter)
 
   val dialect: Dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
     case Some(url: String) =>

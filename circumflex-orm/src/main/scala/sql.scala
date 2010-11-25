@@ -138,7 +138,12 @@ class ForeignKeyHelper(name: String, childRelation: Relation[_, _], childFields:
 class DefinitionHelper[R <: Record[_, R]](name: String, record: R) {
   def INTEGER = new IntField(name, record)
   def BIGINT = new LongField(name, record)
-  def NUMERIC(precision: Int = -1, scale: Int = 0) = new NumericField(name, record, precision, scale)
+  def DOUBLE(precision: Int = -1, scale: Int = 0) =
+    new DoubleField(name, record, precision, scale)
+  def NUMERIC(precision: Int = -1,
+              scale: Int = 0,
+              roundingMode: BigDecimal.RoundingMode.RoundingMode = BigDecimal.RoundingMode.HALF_EVEN) =
+    new NumericField(name, record, precision, scale, roundingMode)
   def TEXT = new TextField(name, record, dialect.textType)
   def VARCHAR(length: Int = -1) = new TextField(name, record, length)
   def BOOLEAN = new BooleanField(name, record)

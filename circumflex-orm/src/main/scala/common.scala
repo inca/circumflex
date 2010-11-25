@@ -27,7 +27,7 @@ trait ParameterizedExpression extends SQLable {
    * Renders this query by replacing parameter placeholders with actual values.
    */
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
-    sql.replaceFirst("\\?", typeConverter.escape(p)))
+    sql.replaceFirst("\\?", dialect.escapeParameter(p)))
 
   override def equals(that: Any) = that match {
     case e: ParameterizedExpression =>

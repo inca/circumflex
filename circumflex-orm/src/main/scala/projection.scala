@@ -70,7 +70,11 @@ class ExpressionProjection[T](val expression: String)
 
   def toSql = dialect.alias(expression, alias)
 
-  def read(rs: ResultSet) = typeConverter.read(rs, alias).asInstanceOf[Option[T]]
+  def read(rs: ResultSet): Option[T] = {
+    val o = rs.getObject(alias)
+    if (rs.wasNull) None
+    else Some(o.asInstanceOf[T])
+  }
 
   override def equals(obj: Any) = obj match {
     case p: ExpressionProjection[_] =>
