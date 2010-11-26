@@ -131,7 +131,7 @@ object Markdown {
   val rBlockQuoteTrims = Pattern.compile("(?:^ *> ?)|(?:^ *$)|(?-m:\\n+$)",
     Pattern.MULTILINE)
   // Tables
-  val rTable = Pattern.compile("(?<=\\n\\n|\\A\\n*) {0,3}(?:\\| *)?(<?--[-| ]*>?)( *\\{#(.+?)\\})?\\n" +
+  val rTable = Pattern.compile("(?<=\\n\\n|\\A\\n*) {0,3}(?:\\| *)?(--[-| ]*>?)( *\\{\\#(.+?)\\})?\\n" +
       "(.*\\|.*)\\n {0,3}(?:\\| *)?([-:]{2}[-| :]*)\\n((?:.*\\|.*\\n)*) {0,3}(?:\\| *)?--[-| ]*\\n(?=\\n+|\\Z)")
   // Paragraphs splitter
   val rParaSplit = Pattern.compile("\\n{2,}")
@@ -369,9 +369,7 @@ class MarkdownText(source: CharSequence) {
   // Process simple tables
   protected def doTables(text: StringEx): StringEx =
     text.replaceAll(rTable, m => {
-      val firstLine = m.group(1)
-      val widthAttr = if (firstLine.startsWith("<") && firstLine.endsWith(">"))
-        " width=\"100%\"" else ""
+      val widthAttr = if (m.group(1).endsWith(">")) " width=\"100%\"" else ""
       val id = m.group(3)
       val idAttr = if (id == null) "" else " id = \"" + id + "\""
       var result = "<table" + idAttr + widthAttr + ">\n"
