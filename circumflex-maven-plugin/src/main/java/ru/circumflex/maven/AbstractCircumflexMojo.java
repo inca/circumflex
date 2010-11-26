@@ -32,12 +32,8 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
   protected URLClassLoader prepareClassLoader() throws MojoExecutionException {
     try {
       List<URL> urls = new ArrayList<URL>();
-      for (Object o : project.getRuntimeClasspathElements()) {
-        File f = new File(o.toString());
-        String path = f.getAbsolutePath().replace(File.separatorChar, '/');
-        if (f.isDirectory()) path += "/";
-        urls.add(new URL("file", "localhost", path));
-      }
+      for (Object o : project.getRuntimeClasspathElements())
+        urls.add(new File(o.toString()).toURI().toURL());
       return URLClassLoader.newInstance(urls.toArray(new URL[urls.size()]),
           Thread.currentThread().getContextClassLoader());
     } catch (Exception e) {
