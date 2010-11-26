@@ -8,6 +8,7 @@ import javax.activation.MimetypesFileTypeMap
 import java.io._
 import org.apache.commons.io.IOUtils
 import collection.mutable.Map
+import java.net.URLEncoder._
 
 /*!# The `web` Package
 
@@ -171,7 +172,7 @@ package object web {
     response.body(r => r.sendError(statusCode, message)).flush_!
   def sendRedirect(url: String, flashes: (String, Any)*): Nothing = {
     flashes.foreach(kv => flash(kv._1) = kv._2)
-    response.body(r => r.sendRedirect(url)).flush_!
+    response.body(r => r.sendRedirect(encode(url, "UTF-8"))).flush_!
   }
   def sendFile(file: File, filename: String = ""): Nothing = {
     // if filename is provided, add `Content-Disposition` header
