@@ -376,8 +376,8 @@ class MarkdownText(source: CharSequence) {
       val heading = m.group(3)
       if (heading != null) {
         result += "  <thead>\n    <tr>\n"
-        heading.replaceAll("^ *\\|* *", "")
-            .replaceAll(" *\\|* *$", "")
+        heading.replaceAll("^ *\\|?", "")
+            .replaceAll("\\|? *$", "")
             .split("\\|")
             .foreach { th =>
           result += "      <th>" + runSpanGamut(new StringEx(th)).toString.trim + "</th>\n"
@@ -399,8 +399,8 @@ class MarkdownText(source: CharSequence) {
             .foreach { tr =>
           result += "    <tr>\n"
           var i = 0
-          tr.replaceAll("^ *\\|* *", "")
-              .replaceAll(" *\\|* *$", "")
+          tr.replaceAll("^ *\\|?", "")
+              .replaceAll("\\|? *$", "")
               .split("\\|")
               .toList
               .take(cols)
