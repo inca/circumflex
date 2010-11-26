@@ -149,20 +149,10 @@ class DefaultConnectionProvider extends ConnectionProvider {
 
 /*!## Type converter
 
-The `TypeConverter` trait is used to read atomic values from JDBC result sets and to set
-JDBC prepared statement values for execution. If you intend to use custom types,
-provide your own implementation.
+The `TypeConverter` trait is used to set JDBC prepared statement values for execution.
+If you intend to use custom types, provide your own implementation.
 */
-trait TypeConverter {
-
-  /**
-   * Reads a value from specified `ResultSet` at specified column `alias`.
-   */
-  def read(rs: ResultSet, alias: String): Option[Any] = {
-    val result = rs.getObject(alias)
-    if (rs.wasNull) return None
-    else return fromJDBC(result)
-  }
+class TypeConverter {
 
   /**
    * Writes a value to specified `PreparedStatement` at specified `paramIndex`.
@@ -170,48 +160,12 @@ trait TypeConverter {
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit =
     parameter match {
       case None | null => st.setObject(paramIndex, null)
-      case Some(v) => write(st, toJDBC(v), paramIndex)
-      case v => st.setObject(paramIndex, toJDBC(v))
+      case Some(v) => write(st, v, paramIndex)
+      case p: Date => st.setObject(paramIndex, new Timestamp(p.getTime))
+      case x: Elem => st.setString(paramIndex, x.toString)
+      case bd: BigDecimal => st.setBigDecimal(paramIndex, bd.bigDecimal)
+      case v => st.setObject(paramIndex, v)
     }
-
-  /**
-   * Converts a value from Scala type to JDBC type.
-   */
-  def toJDBC(value: Any): Any
-
-  /**
-   * Converts a value from JDBC type to Scala type.
-   */
-  def fromJDBC(value: Any): Option[Any]
-
-  /**
-   * Converts a value to string and return it with SQL-compliant escaping.
-   */
-  def escape(value: Any): String
-}
-
-class DefaultTypeConverter extends TypeConverter {
-
-  def toJDBC(value: Any): Any = value match {
-    case Some(v) => toJDBC(v)
-    case p: Date => new Timestamp(p.getTime)
-    case x: Elem => x.toString
-    case value => value
-  }
-
-  def fromJDBC(value: Any): Option[Any] = value match {
-    case null => None
-    case None => None
-    case Some(value) => fromJDBC(value)
-    case value => Some(value)
-  }
-
-  def escape(value: Any): String = fromJDBC(value) match {
-    case Some(s: String) => dialect.quoteLiteral(s)
-    case Some(d: Timestamp) => dialect.quoteLiteral(d.toString)
-    case Some(other) => other.toString
-    case _ => "NULL"
-  }
 }
 
 /*!# Transaction manager

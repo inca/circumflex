@@ -77,6 +77,14 @@ object CircumflexORMSpec extends Specification {
       c.validate.get.size must_== 1
       c.validate_! must throwA[ValidationException]
     }
+    "handle decimal types" in {
+      new DDLUnit(DecimalRecord).CREATE
+      val r = new DecimalRecord
+      r.value := BigDecimal("13.653214")
+      r.INSERT()
+      r.value() must_== BigDecimal("13.6532")
+      new DDLUnit(DecimalRecord).DROP
+    }
   }
 
   "Fields" should {
@@ -215,5 +223,18 @@ class SeqAuto extends Record[Long, SeqAuto] with SequenceGenerator[Long, SeqAuto
 
 object SeqAuto extends SeqAuto with Table[Long, SeqAuto] {
   override def schema: Schema = IdGen
+  override def autorefresh_?(): Boolean = true
+}
+
+object DecimalSchema extends Schema("decimal")
+
+class DecimalRecord extends Record[BigDecimal, DecimalRecord] {
+  val value = "value".NUMERIC(12,4).NOT_NULL
+  def PRIMARY_KEY = value
+  def relation = DecimalRecord
+}
+
+object DecimalRecord extends DecimalRecord with Table[BigDecimal, DecimalRecord] {
+  override def schema: Schema = DecimalSchema
   override def autorefresh_?(): Boolean = true
 }

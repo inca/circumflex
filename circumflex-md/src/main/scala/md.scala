@@ -103,9 +103,9 @@ object Markdown {
       "(?:" + htmlNameTokenExpr + "\\s*=\\s*[a-z0-9_:.\\-]+)" +
       ")\\s*)*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE)
   // Headers
-  val rH1 = Pattern.compile("^ {0,3}(\\S.*?)( *\\{#(.*?)\\})?\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
-  val rH2 = Pattern.compile("^ {0,3}(\\S.*?)( *\\{#(.*?)\\})?\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
-  val rHeaders = Pattern.compile("^(#{1,6}) *(\\S.*?)(?: *#*)?( *\\{#(.*?)\\})?$", Pattern.MULTILINE)
+  val rH1 = Pattern.compile("^ {0,3}(\\S.*?)( *\\{#(.+?)\\})?\\n=+(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rH2 = Pattern.compile("^ {0,3}(\\S.*?)( *\\{#(.+?)\\})?\\n-+(?=\\n+|\\Z)", Pattern.MULTILINE)
+  val rHeaders = Pattern.compile("^(#{1,6}) *(\\S.*?)(?: *#*)?( *\\{#(.+?)\\})?$", Pattern.MULTILINE)
   // Horizontal rulers
   val rHr = Pattern.compile("^ {0,3}(?:" +
       "(?:(?:\\* *){3,})|" +
@@ -118,11 +118,11 @@ object Markdown {
   val listExpr = "( {0,3}([-+*]|\\d+\\.) +(?s:.+?)" +
       "(?:\\Z|\\n{2,}(?![-+*]|\\s|\\d+\\.)))"
   val rSubList = Pattern.compile("^" + listExpr, Pattern.MULTILINE)
-  val rList = Pattern.compile("(?<=\\n\\n|\\A\\n?)" + listExpr, Pattern.MULTILINE)
+  val rList = Pattern.compile("(?<=\\n\\n|\\A\\n*)" + listExpr, Pattern.MULTILINE)
   val rListItem = Pattern.compile("(\\n)?^( *)(?:[-+*]|\\d+\\.) +" +
       "((?s:.+?)\\n{1,2})(?=\\n*(?:\\Z|\\2(?:[-+*]|\\d+\\.) +))", Pattern.MULTILINE)
   // Code blocks
-  val rCodeBlock = Pattern.compile("(?<=\\n\\n|\\A\\n?)" +
+  val rCodeBlock = Pattern.compile("(?<=\\n\\n|\\A\\n*)" +
       "(^ {4}(?s:.+?))(?=\\Z|\\n+ {0,3}\\S)", Pattern.MULTILINE)
   val rCodeLangId = Pattern.compile("^\\s*lang:(.+?)(?:\\n|\\Z)")
   // Block quotes
@@ -130,6 +130,9 @@ object Markdown {
     Pattern.MULTILINE)
   val rBlockQuoteTrims = Pattern.compile("(?:^ *> ?)|(?:^ *$)|(?-m:\\n+$)",
     Pattern.MULTILINE)
+  // Tables
+  val rTable = Pattern.compile("(?<=\\n\\n|\\A\\n*) {0,3}(?:\\| *)?--[-| ]*( *\\{#(.+?)\\})?\\n" +
+      "(.*\\|.*)\\n {0,3}(?:\\| *)?--[-| ]*\\n((?:.*\\|.*\\n)*) {0,3}(?:\\| *)?--[-| ]*\\n(?=\\n+|\\Z)")
   // Paragraphs splitter
   val rParaSplit = Pattern.compile("\\n{2,}")
   // Code spans
@@ -172,13 +175,13 @@ object Markdown {
   val rAmp = Pattern.compile("&amp;(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
   // SmartyPants
   val smartyPants = (Pattern.compile("(?<=\\s|\\A)(?:\"|&quot;)(?=\\S)") -> leftQuote) ::
-      (Pattern.compile("(?<=[\\w)?!.])(?:\"|&quot;)(?=[.,;?!*)]|\\s|\\Z)") -> rightQuote) ::
+      (Pattern.compile("(?<=[\\p{L})?!.])(?:\"|&quot;)(?=[.,;?!*)]|\\s|\\Z)") -> rightQuote) ::
       (Pattern.compile("--") -> dash) ::
       (Pattern.compile("\\(r\\)", Pattern.CASE_INSENSITIVE) -> reg) ::
       (Pattern.compile("\\(c\\)", Pattern.CASE_INSENSITIVE) -> copy) ::
       (Pattern.compile("\\(tm\\)", Pattern.CASE_INSENSITIVE) -> trademark) ::
-      (Pattern.compile("\\.{3}") -> ellipsis) :: 
-      (Pattern.compile("&lt;-|<-") -> leftArrow) :: 
+      (Pattern.compile("\\.{3}") -> ellipsis) ::
+      (Pattern.compile("&lt;-|<-") -> leftArrow) ::
       (Pattern.compile("-&gt;|->") -> rightArrow) :: Nil
   // Markdown inside inline HTML
   val rInlineMd = Pattern.compile("<!--#md-->(.*)<!--~+-->", Pattern.DOTALL)
@@ -330,6 +333,7 @@ class MarkdownText(source: CharSequence) {
   protected def runBlockGamut(text: StringEx): StringEx = {
     var result = text
     result = doMacros(result)
+    result = doTables(result)
     result = doHeaders(result)
     result = doHorizontalRulers(result)
     result = doLists(result)
@@ -361,6 +365,49 @@ class MarkdownText(source: CharSequence) {
   // Process horizontal rulers.
   protected def doHorizontalRulers(text: StringEx): StringEx =
     text.replaceAll(rHr, "\n<hr/>\n")
+
+  // Process simple tables
+  protected def doTables(text: StringEx): StringEx =
+    text.replaceAll(rTable, m => {
+      val id = m.group(2)
+      val idAttr = if (id == null) "" else " id = \"" + id + "\""
+      var result = "<table" + idAttr + ">\n"
+      var cols = 0
+      val heading = m.group(3)
+      if (heading != null) {
+        result += "  <thead>\n    <tr>\n"
+        heading.replaceAll("^ *\\|* *", "")
+            .replaceAll(" *\\|* *$", "")
+            .split("\\|")
+            .foreach { th =>
+          result += "      <th>" + runSpanGamut(new StringEx(th)).toString.trim + "</th>\n"
+          cols += 1
+        }
+        result += "    </tr>\n  </thead>\n"
+      }
+      val data = m.group(4)
+      if (data != null) {
+        result += "  <tbody>\n"
+        data.split("\\n")
+            .foreach { tr =>
+          result += "    <tr>\n"
+          tr.replaceAll("^ *\\|* *", "")
+              .replaceAll(" *\\|* *$", "")
+              .split("\\|")
+              .toList
+              .take(cols)
+              .padTo(cols, "")
+              .foreach { td =>
+            result += "      <td>" + runSpanGamut(new StringEx(td)).toString.trim + "</td>\n"
+          }
+          result += "    </tr>\n"
+        }
+        result += "  </tbody>\n"
+      }
+      result += "</table>"
+      result
+    })
+
 
   // Process ordered and unordered lists and list items.
   protected def doLists(text: StringEx): StringEx = {
@@ -407,7 +454,7 @@ class MarkdownText(source: CharSequence) {
       "<pre" + langExpr + "><code>" + code + "</code></pre>\n\n"
     })
 
-   // Process blockquotes.
+  // Process blockquotes.
   protected def doBlockQuotes(text: StringEx): StringEx =
     text.replaceAll(rBlockQuote, m => {
       val content = new StringEx(m.group(1))
@@ -415,8 +462,8 @@ class MarkdownText(source: CharSequence) {
       "<blockquote>\n" + runBlockGamut(content) + "\n</blockquote>\n\n"
     })
 
-   // At this point all HTML blocks should be hashified, so we treat all lines
-   // separated by more than 2 linebreaks as paragraphs.
+  // At this point all HTML blocks should be hashified, so we treat all lines
+  // separated by more than 2 linebreaks as paragraphs.
   protected def formParagraphs(text: StringEx): StringEx = new StringEx(
     rParaSplit.split(text.toString.trim)
         .map(para => htmlProtector.decode(para) match {

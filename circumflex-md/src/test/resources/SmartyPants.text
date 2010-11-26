@@ -4,7 +4,7 @@ Some SmartyPants stuff
 * copyright sign: (c), (C);
 * registered trademark sign: (r), (R);
 * trademark sign: (tm), (TM);
-* curly quotes: "this is some text";
+* curly quotes: "this is some text"; и с "юникодом" тоже;
 * dash: --;
 * horizontal ellipsis: ...;
 * ampersand wrapped into `span` for extra styling: &;
