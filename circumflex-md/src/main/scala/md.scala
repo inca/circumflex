@@ -131,7 +131,7 @@ object Markdown {
   val rBlockQuoteTrims = Pattern.compile("(?:^ *> ?)|(?:^ *$)|(?-m:\\n+$)",
     Pattern.MULTILINE)
   // Tables
-  val rTable = Pattern.compile("(?<=\\n\\n|\\A\\n*) {0,3}(?:\\| *)?--[-| ]*( *\\{#(.+?)\\})?\\n" +
+  val rTable = Pattern.compile("(?<=\\n\\n|\\A\\n*) {0,3}(?:\\| *)?(<?--[-| ]*>?)( *\\{#(.+?)\\})?\\n" +
       "(.*\\|.*)\\n {0,3}(?:\\| *)?([-:]{2}[-| :]*)\\n((?:.*\\|.*\\n)*) {0,3}(?:\\| *)?--[-| ]*\\n(?=\\n+|\\Z)")
   // Paragraphs splitter
   val rParaSplit = Pattern.compile("\\n{2,}")
@@ -369,11 +369,14 @@ class MarkdownText(source: CharSequence) {
   // Process simple tables
   protected def doTables(text: StringEx): StringEx =
     text.replaceAll(rTable, m => {
-      val id = m.group(2)
+      val firstLine = m.group(1)
+      val widthAttr = if (firstLine.startsWith("<") && firstLine.endsWith(">"))
+        " width=\"100%\"" else ""
+      val id = m.group(3)
       val idAttr = if (id == null) "" else " id = \"" + id + "\""
-      var result = "<table" + idAttr + ">\n"
+      var result = "<table" + idAttr + widthAttr + ">\n"
       var cols = 0
-      val heading = m.group(3)
+      val heading = m.group(4)
       if (heading != null) {
         result += "  <thead>\n    <tr>\n"
         heading.replaceAll("^ *\\|?", "")
@@ -385,14 +388,14 @@ class MarkdownText(source: CharSequence) {
         }
         result += "    </tr>\n  </thead>\n"
       }
-      val align = m.group(4).split("\\|").map { a =>
+      val align = m.group(5).split("\\|").map { a =>
         val v = a.trim
         if (v.startsWith(":") && v.endsWith(":")) " align=\"center\""
         else if (v.startsWith(":")) " align=\"left\""
         else if (v.endsWith(":")) " align=\"right\""
         else ""
       }.take(cols).padTo(cols, "")
-      val data = m.group(5)
+      val data = m.group(6)
       if (data != null) {
         result += "  <tbody>\n"
         data.split("\\n")
