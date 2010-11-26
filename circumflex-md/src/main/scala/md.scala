@@ -132,7 +132,7 @@ object Markdown {
     Pattern.MULTILINE)
   // Tables
   val rTable = Pattern.compile("(?<=\\n\\n|\\A\\n*) {0,3}(?:\\| *)?--[-| ]*( *\\{#(.+?)\\})?\\n" +
-      "(.*\\|.*)\\n {0,3}(?:\\| *)?--[-| ]*\\n((?:.*\\|.*\\n)*) {0,3}(?:\\| *)?--[-| ]*\\n(?=\\n+|\\Z)")
+      "(.*\\|.*)\\n {0,3}(?:\\| *)?([-:]{2}[-| :]*)\\n((?:.*\\|.*\\n)*) {0,3}(?:\\| *)?--[-| ]*\\n(?=\\n+|\\Z)")
   // Paragraphs splitter
   val rParaSplit = Pattern.compile("\\n{2,}")
   // Code spans
@@ -385,12 +385,20 @@ class MarkdownText(source: CharSequence) {
         }
         result += "    </tr>\n  </thead>\n"
       }
-      val data = m.group(4)
+      val align = m.group(4).split("\\|").map { a =>
+        val v = a.trim
+        if (v.startsWith(":") && v.endsWith(":")) " align=\"center\""
+        else if (v.startsWith(":")) " align=\"left\""
+        else if (v.endsWith(":")) " align=\"right\""
+        else ""
+      }.take(cols).padTo(cols, "")
+      val data = m.group(5)
       if (data != null) {
         result += "  <tbody>\n"
         data.split("\\n")
             .foreach { tr =>
           result += "    <tr>\n"
+          var i = 0
           tr.replaceAll("^ *\\|* *", "")
               .replaceAll(" *\\|* *$", "")
               .split("\\|")
@@ -398,7 +406,8 @@ class MarkdownText(source: CharSequence) {
               .take(cols)
               .padTo(cols, "")
               .foreach { td =>
-            result += "      <td>" + runSpanGamut(new StringEx(td)).toString.trim + "</td>\n"
+            result += "      <td" + align(i) + ">" + runSpanGamut(new StringEx(td)).toString.trim + "</td>\n"
+            i += 1
           }
           result += "    </tr>\n"
         }
