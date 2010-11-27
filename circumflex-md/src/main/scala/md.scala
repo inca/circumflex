@@ -18,39 +18,39 @@ object Markdown {
 
   // SmartyPants chars
 
-  val leftQuote = Circumflex.get("md.leftQuote") match {
+  val leftQuote = cx.get("md.leftQuote") match {
     case Some(s: String) => s
     case _ => "&ldquo;"
   }
-  val rightQuote = Circumflex.get("md.rightQuote") match {
+  val rightQuote = cx.get("md.rightQuote") match {
     case Some(s: String) => s
     case _ => "&rdquo;"
   }
-  val dash = Circumflex.get("md.dash") match {
+  val dash = cx.get("md.dash") match {
     case Some(s: String) => s
     case _ => "&mdash;"
   }
-  val copy = Circumflex.get("md.copy") match {
+  val copy = cx.get("md.copy") match {
     case Some(s: String) => s
     case _ => "&copy;"
   }
-  val reg = Circumflex.get("md.reg") match {
+  val reg = cx.get("md.reg") match {
     case Some(s: String) => s
     case _ => "&reg;"
   }
-  val trademark = Circumflex.get("md.trademark") match {
+  val trademark = cx.get("md.trademark") match {
     case Some(s: String) => s
     case _ => "&trade;"
   }
-  val ellipsis = Circumflex.get("md.ellipsis") match {
+  val ellipsis = cx.get("md.ellipsis") match {
     case Some(s: String) => s
     case _ => "&hellip;"
   }
-  val leftArrow = Circumflex.get("md.leftArrow") match {
+  val leftArrow = cx.get("md.leftArrow") match {
     case Some(s: String) => s
     case _ => "&larr;"
   }
-  val rightArrow = Circumflex.get("md.rightArrow") match {
+  val rightArrow = cx.get("md.rightArrow") match {
     case Some(s: String) => s
     case _ => "&rarr;"
   }
@@ -244,42 +244,34 @@ class MarkdownText(source: CharSequence) {
       .replaceAll(rBlankLines, "")
 
   // All inline HTML blocks are hashified, so that no harm is done to their internals.
-  protected def hashHtmlBlocks(text: StringEx): StringEx = {
-    text.replaceAll(rHtmlHr, m => htmlProtector.addToken(m.group(1)) + "\n")
-    val m = text.matcher(rInlineHtmlStart)
-    if (m.find) {
-      val tagName = m.group(1)
-      // This regex will match either opening or closing tag;
-      // opening tags will be captured by $1 leaving $2 empty,
-      // while closing tags will be captured by $2 leaving $1 empty
-      val mTags = text.matcher(Pattern.compile(
-        "(<" + tagName + "\\b[^/>]*?>)|(</" + tagName + "\\s*>)",
-        Pattern.CASE_INSENSITIVE))
-      // Find end index of matching closing tag
-      var depth = 1
-      var idx = m.end
-      while (depth > 0 && idx < text.length && mTags.find(idx)) {
-        if (mTags.group(2) == null) depth += 1
-        else depth -= 1
-        idx = mTags.end
-      }
-      // Having inline HTML subsequence
-      val endIdx = idx
-      val startIdx = m.start
-      val inlineHtml = new StringEx(text.subSequence(startIdx, endIdx))
-      // Process markdown inside
-      inlineHtml.replaceAll(rInlineMd, m => new MarkdownText(m.group(1)).toHtml)
-      // Hashify block
-      val key = htmlProtector.addToken(inlineHtml.toString)
-      val sb = new StringBuilder(text.subSequence(0, startIdx))
-          .append("\n")
-          .append(key)
-          .append("\n")
-          .append(text.subSequence(endIdx, text.length))
-      // Continue recursively until all blocks are processes
-      hashHtmlBlocks(new StringEx(sb))
-    } else text
-  }
+  protected def hashHtmlBlocks(text: StringEx): StringEx =text
+      .replaceAll(rHtmlHr, m => htmlProtector.addToken(m.group(1)) + "\n")
+      .replaceIndexed(rInlineHtmlStart, m => {
+    val tagName = m.group(1)
+    // This regex will match either opening or closing tag;
+    // opening tags will be captured by $1 leaving $2 empty,
+    // while closing tags will be captured by $2 leaving $1 empty
+    val mTags = Pattern.compile(
+      "(<" + tagName + "\\b[^/>]*?>)|(</" + tagName + "\\s*>)",
+      Pattern.CASE_INSENSITIVE).matcher(text.buffer)
+    // Find end index of matching closing tag
+    var depth = 1
+    var idx = m.end
+    while (depth > 0 && idx < text.length && mTags.find(idx)) {
+      if (mTags.group(2) == null) depth += 1
+      else depth -= 1
+      idx = mTags.end
+    }
+    // Having inline HTML subsequence
+    val startIdx = m.start
+    val endIdx = idx
+    val inlineHtml = new StringEx(text.buffer.subSequence(startIdx, endIdx))
+    // Process markdown inside
+    inlineHtml.replaceAll(rInlineMd, m => new MarkdownText(m.group(1)).toHtml)
+    // Hashify block
+    val key = htmlProtector.addToken(inlineHtml.toString)
+    (key, endIdx)
+  })
 
   // All HTML comments are hashified too.
   protected def hashHtmlComments(text: StringEx): StringEx = text.replaceAll(rHtmlComment, m => {

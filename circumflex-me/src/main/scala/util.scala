@@ -44,7 +44,7 @@ class Protector {
 }
 
 
-class Text(val buffer: StringBuilder) {
+class StringEx(val buffer: StringBuilder) {
   def this(cs: CharSequence) = this(new StringBuilder(cs))
 
   def replaceIndexed(pattern: Pattern, replacement: Matcher => (CharSequence, Int)): this.type = {
