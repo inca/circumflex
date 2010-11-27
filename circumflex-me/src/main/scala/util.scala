@@ -1,5 +1,8 @@
 package ru.circumflex.me
 
+import java.lang.StringBuilder
+import java.util.regex._
+
 /*!# Character protector
 
 We use character protector mechanism to ensure that certain elements of markup,
@@ -38,4 +41,22 @@ class Protector {
   def keys = protectHash.keys
 
   override def toString = protectHash.toString
+}
+
+
+class Text(protected val buffer: StringBuilder) {
+  def this(cs: CharSequence) = this(new StringBuilder(cs))
+
+  def replaceAll(pattern: Pattern, replacement: Matcher => CharSequence): this.type = {
+    var startIndex = 0
+    val m = pattern.matcher(buffer)
+    while (m.find(startIndex)) {
+      val r = replacement(m)
+      startIndex = m.start + r.length
+      buffer.replace(m.start, m.end, r.toString)
+    }
+    return this
+  }
+
+  override def toString = buffer.toString 
 }
