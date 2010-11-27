@@ -44,7 +44,7 @@ class Protector {
 }
 
 
-class Text(val buffer: StringBuilder) {
+class Text(protected val buffer: StringBuilder) {
   def this(cs: CharSequence) = this(new StringBuilder(cs))
 
   def replaceIndexed(pattern: Pattern, replacement: Matcher => (CharSequence, Int)): this.type = {
@@ -52,8 +52,19 @@ class Text(val buffer: StringBuilder) {
     val m = pattern.matcher(buffer)
     while (m.find(startIndex)) {
       val r = replacement(m)
-      startIndex = m.start + r._1.length
-      buffer.replace(m.start, r._2, r._1.toString)
+      val text = r._1.toString
+      val endIdx = r._2
+      // apply replacement
+      buffer.replace(m.start, endIdx, text)
+      // evaluate new start index
+      startIndex = endIdx
+      // a correction is required for zero-length matches
+      if (startIndex == m.start)
+        startIndex += 1
+      val offset = m.start + text.length - endIdx
+      startIndex += offset
+      // skip out when we are done
+      if (startIndex > buffer.length) return this
     }
     return this
   }
