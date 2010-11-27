@@ -65,6 +65,7 @@ class Text(val buffer: StringBuilder) {
     replaceAll(pattern, m => replacement)
 
   def replaceAll(text: String, replacement: CharSequence): this.type = {
+    if (text.length == 0) return this
     var i = buffer.indexOf(text)
     while (i != -1) {
       buffer.replace(i, i + text.length, replacement.toString)
