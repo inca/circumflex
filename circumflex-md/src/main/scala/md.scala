@@ -1,6 +1,6 @@
 package ru.circumflex.md
 
-import ru.circumflex.core._
+import ru.circumflex._, core._, me._
 import java.util.regex._
 import java.util.Random
 import java.lang.StringBuilder
@@ -57,9 +57,6 @@ object Markdown {
 
   // Commons
 
-  val keySize = 20
-  val chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  val rnd = new Random
   val blockTags = "p" :: "div" :: "h1" :: "h2" :: "h3" :: "h4" :: "h5" :: "h6" ::
       "blockquote" :: "pre" :: "table" :: "dl" :: "ol" :: "ul" :: "script" ::
       "noscript" :: "form" :: "fieldset" :: "iframe" :: "math" :: "ins" :: "del" ::
