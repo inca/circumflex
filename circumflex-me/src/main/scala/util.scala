@@ -44,19 +44,48 @@ class Protector {
 }
 
 
-class Text(protected val buffer: StringBuilder) {
+class Text(val buffer: StringBuilder) {
   def this(cs: CharSequence) = this(new StringBuilder(cs))
 
-  def replaceAll(pattern: Pattern, replacement: Matcher => CharSequence): this.type = {
+  def replaceIndexed(pattern: Pattern, replacement: Matcher => (CharSequence, Int)): this.type = {
     var startIndex = 0
     val m = pattern.matcher(buffer)
     while (m.find(startIndex)) {
       val r = replacement(m)
-      startIndex = m.start + r.length
-      buffer.replace(m.start, m.end, r.toString)
+      startIndex = m.start + r._1.length
+      buffer.replace(m.start, r._2, r._1.toString)
     }
     return this
   }
+
+  def replaceAll(pattern: Pattern, replacement: Matcher => CharSequence): this.type =
+    replaceIndexed(pattern, m => (replacement(m), m.end))
+
+  def replaceAll(pattern: Pattern, replacement: CharSequence): this.type =
+    replaceAll(pattern, m => replacement)
+
+  def replaceAll(text: String, replacement: CharSequence): this.type = {
+    var i = buffer.indexOf(text)
+    while (i != -1) {
+      buffer.replace(i, i + text.length, replacement.toString)
+      i = buffer.indexOf(text, i + replacement.length)
+    }
+    return this
+  }
+
+  def outdent(): this.type = replaceAll(regexes.outdent, m => "")
+
+  def append(cs: CharSequence): this.type = {
+    buffer.append(cs)
+    return this
+  }
+
+  def prepend(cs: CharSequence): this.type = {
+    buffer.replace(0, 0, cs.toString)
+    return this
+  }
+
+  def length: Int = buffer.length
 
   override def toString = buffer.toString 
 }
