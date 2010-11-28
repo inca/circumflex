@@ -269,8 +269,7 @@ class MarkdownText(source: CharSequence) {
     // Process markdown inside
     inlineHtml.replaceAll(rInlineMd, m => new MarkdownText(m.group(1)).toHtml)
     // Hashify block
-    val key = htmlProtector.addToken(inlineHtml.toString)
-    (key, endIdx)
+    ("\n" + htmlProtector.addToken(inlineHtml.toString) + "\n", endIdx)
   })
 
   // All HTML comments are hashified too.

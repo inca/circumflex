@@ -44,7 +44,7 @@ class Protector {
 }
 
 
-class StringEx(val buffer: StringBuilder) {
+class StringEx(var buffer: StringBuilder) {
   def this(cs: CharSequence) = this(new StringBuilder(cs))
 
   def replaceIndexed(pattern: Pattern, replacement: Matcher => (CharSequence, Int)): this.type = {
@@ -69,8 +69,19 @@ class StringEx(val buffer: StringBuilder) {
     return this
   }
 
-  def replaceAll(pattern: Pattern, replacement: Matcher => CharSequence): this.type =
-    replaceIndexed(pattern, m => (replacement(m), m.end))
+  def replaceAll(pattern: Pattern, replacement: Matcher => CharSequence): this.type = {
+    var lastIndex = 0;
+    val m = pattern.matcher(buffer)
+    val sb = new StringBuilder()
+    while (m.find()) {
+      sb.append(buffer.subSequence(lastIndex, m.start))
+      sb.append(replacement(m))
+      lastIndex = m.end
+    }
+    sb.append(buffer.subSequence(lastIndex, buffer.length))
+    this.buffer = sb
+    return this
+  }
 
   def replaceAll(pattern: Pattern, replacement: CharSequence): this.type =
     replaceAll(pattern, m => replacement)
