@@ -43,10 +43,19 @@ class Protector {
   override def toString = protectHash.toString
 }
 
+/*!# Mutable Character Buffer
 
+We use `StringEx` internally for various text processing stuff. It wraps a mutable `buffer: StringBuilder`
+and enhances it with `replaceAll` and `replaceIndexed` functionality. The rationale behind low-level replacements
+is that `java.util.regex.Matcher` supports `StringBuffer` in `appendReplacement` and `appendTail` methods.
+Since our processing environment does not support multithreading, we avoid synchronization costs using `StringBuilder`
+instead.
+*/
 class StringEx(var buffer: StringBuilder) {
   def this(cs: CharSequence) = this(new StringBuilder(cs))
 
+  // A tricky one: uses specified `pattern` to point the start of replacement and lets
+  // `replacement` function determine the end index of replacement.
   def replaceIndexed(pattern: Pattern, replacement: Matcher => (CharSequence, Int)): this.type = {
     var startIndex = 0
     val m = pattern.matcher(buffer)
@@ -57,14 +66,7 @@ class StringEx(var buffer: StringBuilder) {
       // apply replacement
       buffer.replace(m.start, endIdx, text)
       // evaluate new start index
-      startIndex = endIdx
-      // a correction is required for zero-length matches
-      if (startIndex == m.start)
-        startIndex += 1
-      val offset = m.start + text.length - endIdx
-      startIndex += offset
-      // skip out when we are done
-      if (startIndex > buffer.length) return this
+      startIndex = m.start + text.length
     }
     return this
   }

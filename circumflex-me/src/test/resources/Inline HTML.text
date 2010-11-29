@@ -1,0 +1,32 @@
+Unprotected content
+
+<a id="selfclosing"/>
+
+Unprotected content
+
+<a id="">Hello</a>
+
+Unprotected content
+
+<div id="nested-unindented">
+
+Protected content
+
+<div>
+
+Protected content
+
+</div>
+
+<div>
+
+Protected content
+
+</div>
+
+Protected content
+
+</div>
+
+<div id="nested-singleline"><div></div>Protected content<div></div></div>
+
