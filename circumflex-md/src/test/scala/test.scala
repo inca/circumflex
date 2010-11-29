@@ -34,7 +34,7 @@ object MarkdownSpec extends Specification {
       "Inline HTML comments" :: "Links, inline style" :: "Links, reference style" ::
       "Literal quotes in titles" :: "Nested blockquotes" :: "Ordered and unordered lists" ::
       "Strong and em together" :: "Tabs" :: "Tidyness" :: "SmartyPants" ::
-      "Markdown inside inline HTML" :: "Spans inside headers" :: "Macros" :: "Tables" :: Nil
+      "Markdown inside inline HTML" :: "Spans inside headers" :: "Tables" :: Nil
 
   "MarkdownProcessor" should process {
     samples.map { s =>
