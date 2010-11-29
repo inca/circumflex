@@ -102,10 +102,7 @@ class StringEx(var buffer: StringBuilder) {
   def split(pattern: Pattern): Seq[StringEx] =
     pattern.split(buffer).map(s => new StringEx(s))
 
-  def outdent(level: Int): this.type = {
-    if (level <= 0) return this
-    replaceAll(Pattern.compile("^ {1," + 4 * level + "}"), m => "")
-  }
+  def outdent(): this.type = replaceAll(regexes.outdent, m => "")
 
   def append(cs: CharSequence): this.type = {
     buffer.append(cs)
@@ -115,6 +112,18 @@ class StringEx(var buffer: StringBuilder) {
   def prepend(cs: CharSequence): this.type = {
     buffer.replace(0, 0, cs.toString)
     return this
+  }
+
+  def startsWith(cs: CharSequence): Boolean = {
+    if (cs.length == 0) return true
+    if (cs.length > buffer.length) return false
+    var i = 0
+    while (i < cs.length) {
+      if (cs.charAt(i) != buffer.charAt(i))
+        return false
+      i += 1
+    }
+    return true
   }
 
   def trim(): this.type = {

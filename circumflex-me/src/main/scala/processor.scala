@@ -60,7 +60,9 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     ("\n" + key + "\n", endIdx)
   })
 
-  def readBlocks(s: StringEx): Seq[Block] = s.split(regexes.blocks).map(s => parseBlock(s))
+  def readBlocks(s: StringEx): Seq[Block] = {
+    s.split(regexes.blocks).map(s => parseBlock(s))
+  }
 
   def parseBlock(s: StringEx): Block = {
     // assume empty block
