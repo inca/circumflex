@@ -2,6 +2,7 @@ package ru.circumflex.me
 
 import java.lang.StringBuilder
 import java.util.regex._
+import collection.mutable.ListBuffer
 
 /*!# Character protector
 
@@ -15,7 +16,7 @@ class Protector {
   /**
    * Generates a random hash key.
    */
-  def randomKey = (0 to keySize).foldLeft("")((s, i) =>
+  def randomKey = "!}" + (0 until keySize).foldLeft("")((s, i) =>
     s + chars.charAt(rnd.nextInt(keySize)))
 
   /**
@@ -45,11 +46,11 @@ class Protector {
 
 /*!# Mutable Character Buffer
 
-We use `StringEx` internally for various text processing stuff. It wraps a mutable `buffer: StringBuilder`
-and enhances it with `replaceAll` and `replaceIndexed` functionality. The rationale behind low-level replacements
-is that `java.util.regex.Matcher` supports `StringBuffer` in `appendReplacement` and `appendTail` methods.
-Since our processing environment does not support multithreading, we avoid synchronization costs using `StringBuilder`
-instead.
+We use `StringEx` internally for various text processing stuff. It wraps a mutable
+`buffer: StringBuilder` and enhances it with `replaceAll` and `replaceIndexed` functionality.
+The rationale behind low-level replacements is that `java.util.regex.Matcher` supports
+`StringBuffer` in `appendReplacement` and `appendTail` methods. Since our processing environment
+does not support multithreading, we avoid synchronization costs using `StringBuilder` instead.
 */
 class StringEx(var buffer: StringBuilder) {
   def this(cs: CharSequence) = this(new StringBuilder(cs))
@@ -74,7 +75,7 @@ class StringEx(var buffer: StringBuilder) {
   def replaceAll(pattern: Pattern, replacement: Matcher => CharSequence): this.type = {
     var lastIndex = 0;
     val m = pattern.matcher(buffer)
-    val sb = new StringBuilder()
+    val sb = new StringBuilder(buffer.length)
     while (m.find()) {
       sb.append(buffer.subSequence(lastIndex, m.start))
       sb.append(replacement(m))
@@ -98,7 +99,13 @@ class StringEx(var buffer: StringBuilder) {
     return this
   }
 
-  def outdent(): this.type = replaceAll(regexes.outdent, m => "")
+  def split(pattern: Pattern): Seq[StringEx] =
+    pattern.split(buffer).map(s => new StringEx(s))
+
+  def outdent(level: Int): this.type = {
+    if (level <= 0) return this
+    replaceAll(Pattern.compile("^ {1," + 4 * level + "}"), m => "")
+  }
 
   def append(cs: CharSequence): this.type = {
     buffer.append(cs)
@@ -107,6 +114,20 @@ class StringEx(var buffer: StringBuilder) {
 
   def prepend(cs: CharSequence): this.type = {
     buffer.replace(0, 0, cs.toString)
+    return this
+  }
+
+  def trim(): this.type = {
+    // left side
+    var i = 0
+    while ((i < buffer.length) && (buffer.charAt(i) <= ' ')) i += 1
+    if (i > 0)
+      buffer.delete(0, i)
+    // right side
+    i = buffer.length
+    while ((i > 0) && (buffer.charAt(i - 1) <= ' ')) i -= 1
+    if (i < buffer.length)
+      buffer.delete(i, buffer.length)
     return this
   }
 
