@@ -97,7 +97,7 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
       }
     // assume code block
     if (s.matches(regexes.d_code))
-      return processComplexChunk(chunks, new CodeBlock(s.outdent, selector), c => {
+      return processComplexChunk(chunks, new CodeBlock(s, selector), c => {
         c.matches(regexes.d_code)
       })
     // trim any leading whitespace
@@ -162,32 +162,17 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     return new Selector(id, classes)
   }
 
-  def process(cs: CharSequence): String = {
+  def process(cs: CharSequence): StringEx = {
     val s = new StringEx(cs)
     normalize(s)
     stripLinkDefinitions(s)
     hashHtmlBlocks(s)
     cleanEmptyLines(s)
     val blocks = readBlocks(s)
-    blocks.map(b => b.getClass.getSimpleName + " ----> " + b.selector).mkString("\n")
+    return blocks.foldLeft(new StringEx(""))((s, b) =>
+      s.append(b.toHtml(this).buffer).append("\n\n"))
   }
 
+  def toHtml(cs: CharSequence): String = process(cs).toString
+
 }
-
-abstract class Block(val text: StringEx, val selector: Selector)
-
-object EmptyBlock extends Block(new StringEx(""), new Selector)
-
-class InlineHtmlBlock(text: StringEx) extends Block(text, new Selector)
-class HorizontalRulerBlock(selector: Selector) extends Block(new StringEx(""), selector)
-class ParagraphBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-class HeadingBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-class CodeBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-class UnorderedListBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-class OrderedListBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-class DefinitionListBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-class BlockquoteBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-class SectionBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-class TableBlock(text: StringEx, selector: Selector) extends Block(text, selector)
-
-

@@ -21,6 +21,11 @@ package object me {
     val blockSelector = Pattern.compile("(?<=\\A.*?) *\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}(?=\\Z|\\n)", 
       Pattern.CASE_INSENSITIVE)
 
+    // escape patterns
+
+    val e_amp = Pattern.compile("&(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
+    val e_lt = Pattern.compile("<(?![a-z/?\\$!])")
+
     // deterministic patterns
 
     val d_code = Pattern.compile("(?: {4,}.*\\n?)+", Pattern.MULTILINE)
