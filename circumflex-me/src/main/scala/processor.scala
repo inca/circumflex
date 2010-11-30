@@ -169,9 +169,11 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     hashHtmlBlocks(s)
     cleanEmptyLines(s)
     val blocks = readBlocks(s)
-    return blocks.foldLeft(new StringEx(""))((s, b) =>
-      s.append(b.toHtml(this).buffer).append("\n\n"))
+    return formHtml(blocks) 
   }
+
+  def formHtml(blocks: Seq[Block]): StringEx =
+    blocks.foldLeft(new StringEx(""))((s, b) => s.append(b.toHtml(this).buffer).append("\n\n"))
 
   def toHtml(cs: CharSequence): String = process(cs).toString
 

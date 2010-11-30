@@ -14,6 +14,7 @@ abstract class Block(val text: StringEx, val selector: Selector) {
         .append("</")
         .append(element)
         .append(">")
+    return result
   }
 
   def processContent(mp: MarkevenProcessor): StringEx = text
@@ -30,14 +31,16 @@ abstract class NestedMarkupBlock(text: StringEx, selector: Selector)
     extends Block(text, selector) {
   def trimPattern: Pattern
 
-  def processNested(mp: MarkevenProcessor): StringEx = {
+  override def processContent(mp: MarkevenProcessor): StringEx = {
     // perform line trimming
     text.replaceAll(trimPattern, "")
+    // read nested blocks
+    val blocks = mp.readBlocks(text)
+    // do not wrap single paragraph
+    if (blocks.size == 1 && blocks(0).isInstanceOf[ParagraphBlock])
+      return blocks(0).processContent(mp)
+    else return mp.formHtml(blocks)
   }
-}
-
-object EmptyBlock extends Block(new StringEx(""), new Selector) {
-  def element = ""
 }
 
 class InlineHtmlBlock(text: StringEx) extends Block(text, new Selector) {
@@ -79,11 +82,13 @@ class DefinitionListBlock(text: StringEx, selector: Selector) extends Block(text
   def element = "dl"
 }
 
-class BlockquoteBlock(text: StringEx, selector: Selector) extends Block(text, selector) {
+class BlockquoteBlock(text: StringEx, selector: Selector) extends NestedMarkupBlock(text, selector) {
+  def trimPattern: Pattern = regexes.t_blockquote
   def element = "blockquote"
 }
 
-class SectionBlock(text: StringEx, selector: Selector) extends Block(text, selector) {
+class SectionBlock(text: StringEx, selector: Selector) extends NestedMarkupBlock(text, selector) {
+  def trimPattern: Pattern = regexes.t_div
   def element = "div"
 }
 

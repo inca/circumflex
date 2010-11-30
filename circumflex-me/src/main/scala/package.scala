@@ -33,5 +33,10 @@ package object me {
     val d_ol = Pattern.compile("^\\d+\\. +.*", Pattern.DOTALL)
     val d_table = Pattern.compile("^\\-{3}.*\\n *?-{3,}$", Pattern.DOTALL)
     val d_heading = Pattern.compile("^\\#{1,6} .*$", Pattern.DOTALL)
+
+    // trimming patterns
+
+    val t_blockquote = Pattern.compile("^ *>", Pattern.MULTILINE)
+    val t_div = Pattern.compile("^ *\\|", Pattern.MULTILINE)
   }
 }
