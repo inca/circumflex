@@ -18,10 +18,26 @@ class LinkDefinition(val url: String, val title: String)
 class MarkevenContext(var protector: Protector = new Protector,
                       var links: Map[String, LinkDefinition] = Map())
 
+class ChunkIterator(val chunks: Seq[StringEx]) {
+  private var index = -1
+  def hasNext: Boolean = (index + 1) < chunks.length
+  def next: StringEx = {
+    index += 1
+    return chunks(index)
+  }
+  def peek: StringEx = chunks(index + 1)
+  def reset: this.type = {
+    index = -1
+    return this
+  }
+}
+
 class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
 
   def normalize(s: StringEx): StringEx = s.replaceAll("\t","    ")
-      .replaceAll(regexes.normalizeLines, "\n")
+      .replaceAll(regexes.lineEnds, "\n")
+
+  def cleanEmptyLines(s: StringEx): StringEx = s.replaceAll(regexes.blankLines, "")
 
   def stripLinkDefinitions(s: StringEx): StringEx = s.replaceAll(regexes.linkDefinition, m => {
     val id = m.group(1).toLowerCase
@@ -57,58 +73,72 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     }
     // add to protector and replace
     val key = ctx.protector.addToken(s.buffer.subSequence(startIdx, endIdx))
-    ("\n" + key + "\n", endIdx)
+    ("\n\n" + key + "\n\n", endIdx)
   })
 
   def readBlocks(s: StringEx): Seq[Block] = {
-    s.split(regexes.blocks).map(s => parseBlock(s))
+    val result = new ListBuffer[Block]()
+    val chunks = new ChunkIterator(s.split(regexes.blocks))
+    while (chunks.hasNext)
+      result += readBlock(chunks)
+    return result
   }
 
-  def parseBlock(s: StringEx): Block = {
-    // assume empty block
-    if (s.length == 0) return EmptyBlock
+  def readBlock(chunks: ChunkIterator): Block = {
+    // get current chunk
+    val s = chunks.next
     // strip selector if any
     val selector = stripSelector(s)
-    // assume <hr/>
-    if (s.buffer.length == 5 && s.buffer.toString == "* * *")
-      return new HorizontalRulerBlock(selector)
     // assume hashed inline HTML
     if (s.buffer.length == keySize + 2 && s.buffer.charAt(0) == '!' && s.buffer.charAt(1) == '}')
       ctx.protector.decode(s.buffer.toString) match {
         case Some(content) => return new InlineHtmlBlock(new StringEx(content))
         case _ => return new ParagraphBlock(s, selector)
       }
-    // assume blocks determined by their first char
-    if (s.length > 2) {
-      if (s.buffer.charAt(1) == ' ') {
-        // assume unordered list
-        if (s.buffer.charAt(0) == '*')
-          return new UnorderedListBlock(s, selector)
-        // assume definition list
-        if (s.buffer.charAt(0) == ':')
-          return new DefinitionListBlock(s, selector)
-        // assume blockquote
-        if (s.buffer.charAt(0) == '>')
-          return new BlockquoteBlock(s, selector)
-        // assume section
-        if (s.buffer.charAt(0) == '|')
-          return new SectionBlock(s, selector)
-      }
-      // assume ordered list
-      if (regexes.d_ol.matcher(s.buffer).matches)
-        return new OrderedListBlock(s, selector)
-      // assume table
-      if (regexes.d_table.matcher(s.buffer).matches)
-        return new TableBlock(s, selector)
-      // assume heading
-      if (regexes.d_heading.matcher(s.buffer).matches)
-        return new HeadingBlock(s, selector)
-      // assume code block
-      if (regexes.d_code.matcher(s.buffer).matches)
-        return new CodeBlock(s, selector)
-    }
-    // nothing matched -- a paragraph is assumed
+    // assume code block
+    if (s.matches(regexes.d_code))
+      return processComplexChunk(chunks, new CodeBlock(s.outdent, selector), c => {
+        c.matches(regexes.d_code)
+      })
+    // trim any leading whitespace
+    s.trimLeft
+    // assume unordered list, ordered list and definition list
+    if (s.startsWith("* "))
+      return processComplexChunk(chunks, new UnorderedListBlock(s, selector), c => {
+        c.startsWith("* ") || c.startsWith(" ")
+      })
+    if (s.startsWith("1. "))
+      return processComplexChunk(chunks, new OrderedListBlock(s, selector), c => {
+        c.startsWith(" ") || c.matches(regexes.d_ol)
+      })
+    if (s.startsWith(": "))
+      return processComplexChunk(chunks, new DefinitionListBlock(s, selector), c => {
+        c.startsWith(" ") || c.startsWith(": ")
+      })
+    // assume blockquote and section
+    if (s.startsWith("> ")) return new BlockquoteBlock(s, selector)
+    if (s.startsWith("| ")) return new SectionBlock(s, selector)
+    // assume heading and table
+    if (s.matches(regexes.d_heading)) return new HeadingBlock(s, selector)
+    if (s.matches(regexes.d_table)) return new TableBlock(s, selector)
+    // assume hr
+    if (s.matches(regexes.d_hr)) return new HorizontalRulerBlock(selector)
+    // nothing matched -- paragraph
     return new ParagraphBlock(s, selector)
+  }
+
+  def processComplexChunk(chunks: ChunkIterator,
+                          block: Block,
+                          accept: StringEx => Boolean): Block = {
+    var eob = false
+    while (chunks.hasNext && !eob) {
+      val c = chunks.peek
+      if (accept(c)) {
+        block.text.append("\n\n").append(c.buffer)
+        chunks.next
+      } else eob = true
+    }
+    return block
   }
 
   /**
@@ -137,6 +167,7 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     normalize(s)
     stripLinkDefinitions(s)
     hashHtmlBlocks(s)
+    cleanEmptyLines(s)
     val blocks = readBlocks(s)
     blocks.map(b => b.getClass.getSimpleName + " ----> " + b.selector).mkString("\n")
   }

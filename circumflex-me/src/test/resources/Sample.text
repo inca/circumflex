@@ -8,7 +8,7 @@ klsdjf lkdsajf ldksjf aldksfjafks jladsj fdalsdkfj lakf
 
 # Complex blocks
 
-## Lists
+## Lists                                                 {#lists}
 
 sadjf kajdsf kjasdlfk jdsalkfj ksjf akldsfj
 
@@ -43,7 +43,7 @@ asdfjdskl fj dsklfj dsaklfjas dlfjasdlk fjaklsdfj adklsjf lkajf
 
 > blockquote2
 
-## More lists
+## More lists                                               {#more-lists}
 
 * list
 
@@ -53,7 +53,7 @@ asdfjdskl fj dsklfj dsaklfjas dlfjasdlk fjaklsdfj adklsjf lkajf
 
 2. same another list
 
-## Sections
+## Sections                                                 {#sections}
 
 | this is some div
 |  f dsfa sdfsad
@@ -62,7 +62,7 @@ asdfjdskl fj dsklfj dsaklfjas dlfjasdlk fjaklsdfj adklsjf lkajf
 
 No more div.
 
-# Tables
+# Tables                                                    {#tables}
 
 ----------------------------------------->         {#tab1}
  Column one  | Column two   | Column three
@@ -74,9 +74,9 @@ No more div.
  one         |     two      |        three
 ------------------------------------------
 
-* * *           {#my-hr}
+---  {#my-hr}
 
-# Inline HTML
+# Inline HTML                                                 {#inline-html}
 
 Unprotected content
 
@@ -120,7 +120,7 @@ Protected content
 
 </div>
 
-# Code blocks
+# Code blocks                                                            {#code-blocks}
 
     preved from code
 

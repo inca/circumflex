@@ -9,7 +9,8 @@ package object me {
   val rnd = new Random
 
   object regexes {
-    val normalizeLines = Pattern.compile("(?:\\r\\n|\\r|\\n) *")
+    val lineEnds = Pattern.compile("\\r\\n|\\r")
+    val blankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
     val blocks = Pattern.compile("\\n{2,}")
     val outdent = Pattern.compile("^ {1,4}", Pattern.MULTILINE)
     val htmlNameExpr = "[a-z][a-z0-9\\-_:.]*?\\b"
@@ -22,9 +23,10 @@ package object me {
 
     // deterministic patterns
 
-    val d_ol = Pattern.compile("^\\d\\. +.*", Pattern.DOTALL)
-    val d_table = Pattern.compile("^\\-{3}.*\\n\\|?-{3,}$", Pattern.DOTALL)
-    val d_heading = Pattern.compile("^\\#{1,6} .*$", Pattern.DOTALL)
     val d_code = Pattern.compile("(?: {4,}.*\\n?)+", Pattern.MULTILINE)
+    val d_hr = Pattern.compile("^-{3,} *$")
+    val d_ol = Pattern.compile("^\\d+\\. +.*", Pattern.DOTALL)
+    val d_table = Pattern.compile("^\\-{3}.*\\n *?-{3,}$", Pattern.DOTALL)
+    val d_heading = Pattern.compile("^\\#{1,6} .*$", Pattern.DOTALL)
   }
 }
