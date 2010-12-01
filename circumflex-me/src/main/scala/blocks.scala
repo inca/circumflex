@@ -16,7 +16,6 @@ abstract class Block(val text: StringEx, val selector: Selector) {
         .append(">")
     return result
   }
-
   def processContent(mp: MarkevenProcessor): StringEx = text
   def encodeUnsafeChars(s: StringEx): StringEx = s
       .replaceAll("<", "&lt;")

@@ -52,7 +52,7 @@ The rationale behind low-level replacements is that `java.util.regex.Matcher` su
 `StringBuffer` in `appendReplacement` and `appendTail` methods. Since our processing environment
 does not support multithreading, we avoid synchronization costs using `StringBuilder` instead.
 */
-class StringEx(var buffer: StringBuilder) {
+class StringEx(var buffer: StringBuilder) extends CharSequence {
   def this(cs: CharSequence) = this(new StringBuilder(cs))
 
   // A tricky one: uses specified `pattern` to point the start of replacement and lets
@@ -102,8 +102,6 @@ class StringEx(var buffer: StringBuilder) {
   def split(pattern: Pattern): Seq[StringEx] =
     pattern.split(buffer).map(s => new StringEx(s))
 
-  def outdent(): this.type = replaceAll(regexes.outdent, m => "")
-
   def append(cs: CharSequence): this.type = {
     buffer.append(cs)
     return this
@@ -143,7 +141,14 @@ class StringEx(var buffer: StringBuilder) {
   def matches(pattern: Pattern): Boolean =
     pattern.matcher(buffer).matches
 
+  // inherited from `CharSequence`
+
   def length: Int = buffer.length
 
-  override def toString = buffer.toString 
+  def subSequence(start: Int, end: Int): CharSequence = buffer.subSequence(start, end)
+
+  def charAt(index: Int): Char = buffer.charAt(index)
+
+  override def toString = buffer.toString
+
 }
