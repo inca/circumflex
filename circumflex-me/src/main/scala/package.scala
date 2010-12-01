@@ -20,6 +20,7 @@ package object me {
         "(\\n *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
     val blockSelector = Pattern.compile("(?<=\\A.*?) *\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}(?=\\Z|\\n)", 
       Pattern.CASE_INSENSITIVE)
+    val listItemSplit = Pattern.compile("\\n+(?=\\S)")
 
     // escape patterns
 
@@ -38,5 +39,11 @@ package object me {
 
     val t_blockquote = Pattern.compile("^ *>", Pattern.MULTILINE)
     val t_div = Pattern.compile("^ *\\|", Pattern.MULTILINE)
+    val t_space1 = Pattern.compile("^ ", Pattern.MULTILINE)
+    val t_space2 = Pattern.compile("^  ", Pattern.MULTILINE)
+    val t_space3 = Pattern.compile("^   ", Pattern.MULTILINE)
+    val t_ul = Pattern.compile("^\\* ")
+    val t_ol = Pattern.compile("^\\d+\\. ")
+    val t_dl = Pattern.compile("^: ")
   }
 }

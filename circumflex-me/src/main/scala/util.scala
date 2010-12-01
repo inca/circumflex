@@ -132,23 +132,13 @@ class StringEx(var buffer: StringBuilder) {
     return startsWith(cs)
   }
 
-  def trimLeft(): this.type = {
+  def trimLeft(): Int = {
     var i = 0
     while ((i < buffer.length) && (buffer.charAt(i) <= ' ')) i += 1
     if (i > 0)
       buffer.delete(0, i)
-    return this
+    return i
   }
-
-  def trimRight(): this.type = {
-    var i = buffer.length
-    while ((i > 0) && (buffer.charAt(i - 1) <= ' ')) i -= 1
-    if (i < buffer.length)
-      buffer.delete(i, buffer.length)
-    return this
-  }
-
-  def trim(): this.type = trimLeft.trimRight
 
   def matches(pattern: Pattern): Boolean =
     pattern.matcher(buffer).matches

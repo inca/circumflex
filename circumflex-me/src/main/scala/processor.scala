@@ -101,18 +101,18 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
         c.matches(regexes.d_code)
       })
     // trim any leading whitespace
-    s.trimLeft
+    val indent = s.trimLeft
     // assume unordered list, ordered list and definition list
     if (s.startsWith("* "))
-      return processComplexChunk(chunks, new UnorderedListBlock(s, selector), c => {
+      return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent), c => {
         c.startsWith("* ") || c.startsWith(" ")
       })
     if (s.startsWith("1. "))
-      return processComplexChunk(chunks, new OrderedListBlock(s, selector), c => {
+      return processComplexChunk(chunks, new OrderedListBlock(s, selector, indent), c => {
         c.startsWith(" ") || c.matches(regexes.d_ol)
       })
     if (s.startsWith(": "))
-      return processComplexChunk(chunks, new DefinitionListBlock(s, selector), c => {
+      return processComplexChunk(chunks, new DefinitionListBlock(s, selector, indent), c => {
         c.startsWith(" ") || c.startsWith(": ")
       })
     // assume blockquote and section
