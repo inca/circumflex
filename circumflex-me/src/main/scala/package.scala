@@ -32,8 +32,10 @@ package object me {
     val d_code = Pattern.compile("(?: {4,}.*\\n?)+", Pattern.MULTILINE)
     val d_hr = Pattern.compile("^-{3,} *$")
     val d_ol = Pattern.compile("^\\d+\\. +.*", Pattern.DOTALL)
-    val d_table = Pattern.compile("^\\-{3}.*\\n *?-{3,}$", Pattern.DOTALL)
-    val d_heading = Pattern.compile("^\\#{1,6} .*$", Pattern.DOTALL)
+    val d_table = Pattern.compile("^-{3,}>?\\n(.*)\\n-{3,}$", Pattern.DOTALL)
+    val d_heading = Pattern.compile("^(\\#{1,6}) (.*) *\\#*$", Pattern.DOTALL)
+    val d_h1 = Pattern.compile("^(.+)\\n=+\\n?$", Pattern.DOTALL)
+    val d_h2 = Pattern.compile("^(.+)\\n-+\\n?$", Pattern.DOTALL)
 
     // trimming patterns
 

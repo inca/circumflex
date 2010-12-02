@@ -118,13 +118,24 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     // assume blockquote and section
     if (s.startsWith("> ")) return new BlockquoteBlock(s, selector)
     if (s.startsWith("| ")) return new SectionBlock(s, selector)
-    // assume heading and table
-    if (s.matches(regexes.d_heading)) return new HeadingBlock(s, selector)
-    if (s.matches(regexes.d_table)) return new TableBlock(s, selector)
-    // assume hr
-    if (s.matches(regexes.d_hr)) return new HorizontalRulerBlock(selector)
-    // nothing matched -- paragraph
-    return new ParagraphBlock(s, selector)
+    // assume table, headings and hrs
+    s.matches(regexes.d_table, m => {
+      new TableBlock(new StringEx(m.group(1)), selector)
+    }) orElse s.matches(regexes.d_heading, m => {
+      val marker = m.group(1)
+      val body = m.group(2)
+      new HeadingBlock(new StringEx(body), selector, marker.length)
+    }) orElse s.matches(regexes.d_h1, m => {
+      new HeadingBlock(new StringEx(m.group(1)), selector, 1)
+    }) orElse s.matches(regexes.d_h2, m => {
+      new HeadingBlock(new StringEx(m.group(1)), selector, 2)
+    }) orElse s.matches(regexes.d_hr, m => {
+      new HorizontalRulerBlock(selector)
+    }) match {
+      case Some(block: Block) => block
+      case _ => // nothing matched -- paragraph
+        new ParagraphBlock(s, selector)
+    }
   }
 
   def processComplexChunk(chunks: ChunkIterator,

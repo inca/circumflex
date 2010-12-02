@@ -1,4 +1,4 @@
-# Paragraphs                   {#para}
+# Paragraphs                                             {#para}
 
 dsljifl kjasdklfj asdklfjasd lfkjsdlf asjl fjaslf sdkjf
 ksdjlfa dsfj klads jflkasdjf adklsjf aslkjf asdlfkj asl
@@ -6,34 +6,37 @@ ksdjlfa dsfj klads jflkasdjf adklsjf aslkjf asdlfkj asl
 dsfjadjk sfjsdkl fjasdkl fjsdklajf lsdkafj dsfjads lfjd  {#my-para.class1.class2}
 klsdjf lkdsajf ldksjf aldksfjafks jladsj fdalsdkfj lakf
 
-# Complex blocks
+Complex blocks
+==============
 
-## Lists                                                 {#lists}
+Lists                                                    {#lists}
+-----
 
 sadjf kajdsf kjasdlfk jdsalkfj ksjf akldsfj
 
-* listitem 1                                             {#my-ul.class1.class2}
+* listitem 1                                             {#my-li-1}{#my-ul.class1.class2}
 
-* listitem 2
+* listitem 2                                             {#my-li-2}
 
-* listitem 3
+* listitem 3                                             {#my-li-3}
 
-    listitem 3
+  listitem 3
 
-    listitem 3
+  listitem 3
 
-    * listitem 3.1
+  * listitem 3.1
 
-    * listitem 3.2
+  * listitem 3.2
 
-    * listitem 3.3
+  * listitem 3.3
 
-    listitem 3
+  listitem 3
 
 asdfjdskl fj dsklfj dsaklfjas dlfjasdlk fjaklsdfj adklsjf lkajf
 ;laskdf l;adskf ;lsksdjkfl kajsdflk jsadflkj sfl kjdslf
 
-## Blockquotes                                              {#bquotes}
+Blockquotes                                              {#bquotes}
+-----------
 
 > blockquote1
 >
@@ -43,7 +46,8 @@ asdfjdskl fj dsklfj dsaklfjas dlfjasdlk fjaklsdfj adklsjf lkajf
 
 > blockquote2
 
-## More lists                                               {#more-lists}
+More lists                                               {#more-lists}
+----------
 
 * list
 
@@ -53,7 +57,8 @@ asdfjdskl fj dsklfj dsaklfjas dlfjasdlk fjaklsdfj adklsjf lkajf
 
 2. same another list
 
-## Sections                                                 {#sections}
+Sections                                                 {#sections}
+--------
 
 | this is some div
 |  f dsfa sdfsad
@@ -62,9 +67,9 @@ asdfjdskl fj dsklfj dsaklfjas dlfjasdlk fjaklsdfj adklsjf lkajf
 
 No more div.
 
-# Tables                                                    {#tables}
+# Tables                                                 {#tables}
 
------------------------------------------>         {#tab1}
+----------------------------------------->               {#tab1}
  Column one  | Column two   | Column three
 -------------|:------------:|------------:
  one         |     two      |        three
@@ -76,7 +81,7 @@ No more div.
 
 ---  {#my-hr}
 
-# Inline HTML                                                 {#inline-html}
+# Inline HTML                                            {#inline-html}
 
 Unprotected content
 
@@ -120,7 +125,7 @@ Protected content
 
 </div>
 
-# Code blocks                                                            {#code-blocks}
+# Code blocks                                            {#code-blocks}
 
     preved from code
 

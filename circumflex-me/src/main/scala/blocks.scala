@@ -52,7 +52,7 @@ abstract class ListBlock(text: StringEx, selector: Selector, val indent: Int)
       case 1 => text.replaceAll(regexes.t_space1, "")
       case 2 => text.replaceAll(regexes.t_space2, "")
       case 3 => text.replaceAll(regexes.t_space3, "")
-      case _ => text.replaceAll(regexes.outdent, "") // should never happen, but...
+      case _ => text.replaceAll(regexes.outdent, "")    // should never happen, but...
     }
     // read list item blocks
     val blocks = text.split(regexes.listItemSplit).map { s =>
@@ -63,28 +63,33 @@ abstract class ListBlock(text: StringEx, selector: Selector, val indent: Int)
     return mp.formHtml(blocks)
   }
 
-  def createListItemBlock(t: StringEx, s: Selector): Block = new ListItemBlock(t, s)
+  def createListItemBlock(t: StringEx, s: Selector): Block =
+    new ListItemBlock(t, s)
 }
 
-class InlineHtmlBlock(text: StringEx) extends Block(text, new Selector) {
+class InlineHtmlBlock(text: StringEx)
+    extends Block(text, new Selector) {
   def element = ""
   override def toHtml(mp: MarkevenProcessor): StringEx = text
 }
 
-class HorizontalRulerBlock(selector: Selector) extends Block(new StringEx(""), selector) {
+class HorizontalRulerBlock(selector: Selector)
+    extends Block(new StringEx(""), selector) {
   def element = "hr"
 }
 
-class ParagraphBlock(text: StringEx, selector: Selector) extends Block(text, selector) {
+class ParagraphBlock(text: StringEx, selector: Selector)
+    extends Block(text, selector) {
   def element = "p"
 }
 
-class HeadingBlock(text: StringEx, selector: Selector) extends Block(text, selector) {
+class HeadingBlock(text: StringEx, selector: Selector, val level: Int)
+    extends Block(text, selector) {
   def element = "h" + level
-  def level: Int = 1
 }
 
-class CodeBlock(text: StringEx, selector: Selector) extends Block(text, selector) {
+class CodeBlock(text: StringEx, selector: Selector)
+    extends Block(text, selector) {
   def element = "code"
   override def toHtml(mp: MarkevenProcessor): StringEx = new StringEx("<pre")
       .append(selector.toString)
@@ -111,21 +116,25 @@ class DefinitionListBlock(text: StringEx, selector: Selector, indent: Int)
   def trimPattern = Some(regexes.t_dl)
 }
 
-class ListItemBlock(text: StringEx, selector: Selector) extends NestedMarkupBlock(text, selector) {
+class ListItemBlock(text: StringEx, selector: Selector)
+    extends NestedMarkupBlock(text, selector) {
   def trimPattern = None
   def element = "li"
 }
 
-class BlockquoteBlock(text: StringEx, selector: Selector) extends NestedMarkupBlock(text, selector) {
+class BlockquoteBlock(text: StringEx, selector: Selector)
+    extends NestedMarkupBlock(text, selector) {
   def trimPattern = Some(regexes.t_blockquote)
   def element = "blockquote"
 }
 
-class SectionBlock(text: StringEx, selector: Selector) extends NestedMarkupBlock(text, selector) {
+class SectionBlock(text: StringEx, selector: Selector)
+    extends NestedMarkupBlock(text, selector) {
   def trimPattern = Some(regexes.t_div)
   def element = "div"
 }
 
-class TableBlock(text: StringEx, selector: Selector) extends Block(text, selector) {
+class TableBlock(text: StringEx, selector: Selector)
+    extends Block(text, selector) {
   def element = "table"
 }

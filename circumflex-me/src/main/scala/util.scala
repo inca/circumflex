@@ -141,6 +141,12 @@ class StringEx(var buffer: StringBuilder) extends CharSequence {
   def matches(pattern: Pattern): Boolean =
     pattern.matcher(buffer).matches
 
+  def matches[B](pattern: Pattern, function: Matcher => B): Option[B] = {
+    val m = pattern.matcher(buffer)
+    if (m.matches) Some(function(m))
+    else None
+  }
+
   // inherited from `CharSequence`
 
   def length: Int = buffer.length
