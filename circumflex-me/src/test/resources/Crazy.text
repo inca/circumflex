@@ -1,0 +1,28 @@
+  * list item 1
+
+    ---------
+    one | two
+    ----|----
+    1   | 200
+    10  | 20
+    100 | 1
+    ---------
+
+    and some text
+
+  * list item 2
+    multilined
+    
+  * list item 3
+
+  * baseline
+
+    para
+
+      para
+
+        code block
+
+      para
+
+    para

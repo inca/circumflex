@@ -1,7 +1,8 @@
 package ru.circumflex.me
 
 import java.util.regex._
-import collection.mutable.ListBuffer
+import collection.mutable.{HashMap, ListBuffer}
+import ru.circumflex.core._
 
 class Selector(val id: String = "", val classes: Seq[String] = Nil) {
   override val toString = {
@@ -14,9 +15,6 @@ class Selector(val id: String = "", val classes: Seq[String] = Nil) {
 }
 
 class LinkDefinition(val url: String, val title: String)
-
-class MarkevenContext(var protector: Protector = new Protector,
-                      var links: Map[String, LinkDefinition] = Map())
 
 class ChunkIterator(val chunks: Seq[StringEx]) {
   private var index = -1
@@ -32,7 +30,15 @@ class ChunkIterator(val chunks: Seq[StringEx]) {
   }
 }
 
-class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
+class MarkevenProcessor() {
+
+  val protector = new Protector
+  val links = new HashMap[String, LinkDefinition]()
+  var level = 0
+
+  def currentIndent: String =
+    if (level <= 0) return ""
+    else "  " * level
 
   def normalize(s: StringEx): StringEx = s.replaceAll("\t","    ")
       .replaceAll(regexes.lineEnds, "\n")
@@ -45,7 +51,7 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     var title = m.group(3)
     if (title != null) title = title.replace("\"", "&quot;")
     else title = ""
-    ctx.links += id -> new LinkDefinition(url, title)
+    links += id -> new LinkDefinition(url, title)
     ""
   })
 
@@ -72,11 +78,13 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
       endIdx = idx
     }
     // add to protector and replace
-    val key = ctx.protector.addToken(s.buffer.subSequence(startIdx, endIdx))
+    val key = protector.addToken(s.buffer.subSequence(startIdx, endIdx))
     ("\n\n" + key + "\n\n", endIdx)
   })
 
   def readBlocks(s: StringEx): Seq[Block] = {
+//    println("Reading blocks\n=============\n\n" +
+//        new StringEx(s).replaceAll("\n", "~\n").replaceAll(" ", ".") + "\n\n=============\n\n\n\n")
     val result = new ListBuffer[Block]()
     val chunks = new ChunkIterator(s.split(regexes.blocks))
     while (chunks.hasNext)
@@ -91,7 +99,7 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     val selector = stripSelector(s)
     // assume hashed inline HTML
     if (s.buffer.length == keySize + 2 && s.buffer.charAt(0) == '!' && s.buffer.charAt(1) == '}')
-      ctx.protector.decode(s.buffer.toString) match {
+      protector.decode(s.buffer.toString) match {
         case Some(content) => return new InlineHtmlBlock(new StringEx(content))
         case _ => return new ParagraphBlock(s, selector)
       }
@@ -180,11 +188,16 @@ class MarkevenProcessor(val ctx: MarkevenContext = new MarkevenContext) {
     hashHtmlBlocks(s)
     cleanEmptyLines(s)
     val blocks = readBlocks(s)
-    return formHtml(blocks) 
+    return formHtml(blocks)
   }
 
-  def formHtml(blocks: Seq[Block]): StringEx =
-    blocks.foldLeft(new StringEx(""))((s, b) => s.append(b.toHtml(this).buffer).append("\n\n"))
+  def formHtml(blocks: Seq[Block], indent: Boolean = false): StringEx = {
+    val result = new StringEx("")
+    if (indent) level += 1
+    blocks.foreach(b => result.append(b.toHtml(this).buffer).append("\n\n"))
+    if (indent) level -= 1
+    return result
+  }
 
   def toHtml(cs: CharSequence): String = process(cs).toString
 
