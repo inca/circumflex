@@ -34,8 +34,6 @@ abstract class NestedMarkupBlock(text: StringEx, selector: Selector)
   override def processContent(mp: MarkevenProcessor): StringEx = {
     // perform line trimming
     trimPattern.map(p => text.replaceAll(p, ""))
-    println("Processing\n=============\n\n" +
-          new StringEx(text).replaceAll("\n", "~\n").replaceAll(" ", ".") + "\n\n=============\n\n\n\n")
     // read nested blocks
     val blocks = mp.readBlocks(text)
     // do not wrap single paragraph

@@ -83,8 +83,6 @@ class MarkevenProcessor() {
   })
 
   def readBlocks(s: StringEx): Seq[Block] = {
-//    println("Reading blocks\n=============\n\n" +
-//        new StringEx(s).replaceAll("\n", "~\n").replaceAll(" ", ".") + "\n\n=============\n\n\n\n")
     val result = new ListBuffer[Block]()
     val chunks = new ChunkIterator(s.split(regexes.blocks))
     while (chunks.hasNext)
