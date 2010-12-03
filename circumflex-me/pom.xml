@@ -4,11 +4,11 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>ru.circumflex</groupId>
-  <artifactId>circumflex-md</artifactId>
+  <artifactId>circumflex-me</artifactId>
   <packaging>jar</packaging>
   <version>2.0</version>
-  <name>Circumflex Markdown</name>
-  <description>Scala port of http://daringfireball.net/projects/markdown.</description>
+  <name>Circumflex Markeven</name>
+  <description>Circumflex-flavoured text-to-html conversion tool.</description>
 
   <parent>
     <groupId>ru.circumflex</groupId>
@@ -20,7 +20,7 @@
   <dependencies>
     <dependency>
       <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-me</artifactId>
+      <artifactId>circumflex-core</artifactId>
       <version>2.0</version>
     </dependency>
   </dependencies>
