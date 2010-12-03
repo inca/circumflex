@@ -2,7 +2,7 @@
 > |
 > |    * ------------------------>    {#table}{#ul-1-li-2}
 > |       one   |    two   | three
-> |      -------|----------|------
+> |      ------:|:--------:|:-----
 > |        50   |    250   |  34
 > |        340  |     5    |  150
 > |      -------------------------
@@ -10,6 +10,6 @@
 > |    Okay, the following list is:
 > |
 > |    1. nested inside first ordered list;
-> |    2. sibling to unordered list and paragraph.
+> |    2. a sibling to unordered list and paragraph;
 > |
 > | 2. And that's it.

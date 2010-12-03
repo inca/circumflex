@@ -4,37 +4,23 @@ import java.util.regex._
 import collection.mutable.{HashMap, ListBuffer}
 import ru.circumflex.core._
 
-class Selector(val id: String = "", val classes: Seq[String] = Nil) {
-  override val toString = {
-    var result = ""
-    if (id != "") result += " id=\"" + id + "\""
-    if (classes.size > 0)
-      result += " class=\"" + classes.mkString(" ") + "\""
-    result
-  }
-}
 
-class LinkDefinition(val url: String, val title: String)
+/*!# The Markeven Processor
 
-class ChunkIterator(val chunks: Seq[StringEx]) {
-  private var index = -1
-  def hasNext: Boolean = (index + 1) < chunks.length
-  def next: StringEx = {
-    index += 1
-    return chunks(index)
-  }
-  def peek: StringEx = chunks(index + 1)
-  def reset: this.type = {
-    index = -1
-    return this
-  }
-}
+`MarkevenProcessor` transforms text files into HTML using a set of simple rules.
+It takes most ideas from [Markdown][], but has more strict rules, which lead to better
+source structure and enhanced performance.
 
+  [Markdown]: http://daringfireball.net/projects/markdown/syntax
+*/
 class MarkevenProcessor() {
 
   val protector = new Protector
   val links = new HashMap[String, LinkDefinition]()
   var level = 0
+
+  def increaseIndent: Unit = level += 1
+  def decreaseIndent: Unit = if (level > 0) level -= 1
 
   def currentIndent: String =
     if (level <= 0) return ""
@@ -106,7 +92,7 @@ class MarkevenProcessor() {
       return processComplexChunk(chunks, new CodeBlock(s, selector), c => c.matches(regexes.d_code))
     // trim any leading whitespace
     val indent = s.trimLeft
-    // assume unordered list, ordered list and definition list
+    // assume unordered list and ordered list
     if (s.startsWith("* "))
       return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent), c => {
         c.startsWith("* ") || c.startsWith(" ")
@@ -115,16 +101,12 @@ class MarkevenProcessor() {
       return processComplexChunk(chunks, new OrderedListBlock(s, selector, indent), c => {
         c.startsWith(" ") || c.matches(regexes.d_ol)
       })
-    if (s.startsWith(": "))
-      return processComplexChunk(chunks, new DefinitionListBlock(s, selector, indent), c => {
-        c.startsWith(" ") || c.startsWith(": ")
-      })
     // assume blockquote and section
     if (s.startsWith("> ")) return new BlockquoteBlock(s, selector)
     if (s.startsWith("| ")) return new SectionBlock(s, selector)
     // assume table, headings and hrs
     s.matches(regexes.d_table, m => {
-      new TableBlock(new StringEx(m.group(1)), selector)
+      new TableBlock(s, selector)
     }) orElse s.matches(regexes.d_heading, m => {
       val marker = m.group(1)
       val body = m.group(2)
@@ -185,6 +167,11 @@ class MarkevenProcessor() {
     cleanEmptyLines(s)
     val blocks = readBlocks(s)
     return formHtml(blocks)
+  }
+
+
+  def transform(s: StringEx): StringEx = {
+    s
   }
 
   def formHtml(blocks: Seq[Block], indent: Boolean = false): StringEx = {
