@@ -103,9 +103,7 @@ class MarkevenProcessor() {
       }
     // assume code block
     if (s.matches(regexes.d_code))
-      return processComplexChunk(chunks, new CodeBlock(s, selector), c => {
-        c.matches(regexes.d_code)
-      })
+      return processComplexChunk(chunks, new CodeBlock(s, selector), c => c.matches(regexes.d_code))
     // trim any leading whitespace
     val indent = s.trimLeft
     // assume unordered list, ordered list and definition list

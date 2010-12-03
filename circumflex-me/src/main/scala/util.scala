@@ -17,7 +17,7 @@ class Protector {
    * Generates a random hash key.
    */
   def randomKey = "!}" + (0 until keySize).foldLeft("")((s, i) =>
-    s + chars.charAt(rnd.nextInt(keySize)))
+    s + chars.charAt(rnd.nextInt(chars.length)))
 
   /**
    * Adds the specified token to hash and returns the protection key.
