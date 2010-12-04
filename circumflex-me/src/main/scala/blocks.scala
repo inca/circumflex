@@ -2,9 +2,9 @@ package ru.circumflex.me
 
 import java.util.regex._
 
-class LinkDefinition(u: String, t: String) {
-  val url = new StringEx(u).replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
-  val title = new StringEx(t).replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
+class LinkDefinition(val url: StringEx, val title: StringEx) {
+  url.replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
+  title.replaceAll("*", "&#42;").replaceAll("_", "&#95;").replaceAll("\"", "&quot;").trim
 
   def toLink(linkText: String): CharSequence = {
     val result = new StringEx("<a href=\"").append(url).append("\"")
@@ -27,6 +27,7 @@ class Selector(val id: String = "", val classes: Seq[String] = Nil) {
 abstract class Block(val text: StringEx, val selector: Selector) {
   def element: String
   def toHtml(mp: MarkevenProcessor): StringEx = {
+    val content = processContent(mp)
     val result = new StringEx(mp.currentIndent)
         .append("<")
         .append(element)
@@ -34,7 +35,7 @@ abstract class Block(val text: StringEx, val selector: Selector) {
         .append(attributes)
     if (text.length == 0) result.append("/>")
     else result.append(">")
-        .append(processContent(mp).buffer)
+        .append(content)
         .append("</")
         .append(element)
         .append(">")
@@ -51,12 +52,14 @@ abstract class NestedMarkupBlock(text: StringEx, selector: Selector)
   override def processContent(mp: MarkevenProcessor): StringEx = {
     // perform line trimming
     trimPattern.map(p => text.replaceAll(p, ""))
+    // clean blank lines
+    mp.cleanEmptyLines(text)
     // read nested blocks
     val blocks = mp.readBlocks(text)
     // do not wrap single paragraph
     if (blocks.size == 1 && blocks(0).isInstanceOf[ParagraphBlock])
       return blocks(0).processContent(mp)
-    else return new StringEx("\n\n").append(mp.formHtml(blocks, true)).append(mp.currentIndent)
+    else return new StringEx(mp.newLine).append(mp.formHtml(blocks, true)).append(mp.currentIndent)
   }
 }
 
@@ -67,6 +70,8 @@ abstract class ListBlock(text: StringEx, selector: Selector, val baseline: Int)
     // strip whitespace from every line if first element was indented
     if (baseline > 0)
       text.replaceAll(regexes.outdent(baseline), "")
+    // clean blank lines
+    mp.cleanEmptyLines(text)
     // read list item blocks
     val blocks = text.split(regexes.listItemSplit).map { s =>
       val selector = mp.stripSelector(s)
@@ -74,9 +79,15 @@ abstract class ListBlock(text: StringEx, selector: Selector, val baseline: Int)
       if (indent > 0) s.replaceAll(regexes.outdent(indent), "")
       new ListItemBlock(s, selector)
     }
-    return new StringEx("\n\n").append(mp.formHtml(blocks, true)).append(mp.currentIndent)
+    return new StringEx(mp.newLine).append(mp.formHtml(blocks, true)).append(mp.currentIndent)
   }
 
+}
+
+object EmptyBlock extends Block(new StringEx(""), new Selector()) {
+  def element = ""
+  override def processContent(mp: MarkevenProcessor) = text
+  override def toHtml(mp: MarkevenProcessor) = text
 }
 
 class InlineHtmlBlock(text: StringEx)
@@ -175,16 +186,16 @@ class TableBlock(text: StringEx, selector: Selector)
       }
       // let's also flush heading
       mp.increaseIndent
-      result.append("\n\n").append(mp.currentIndent).append("<thead>")
+      result.append(mp.newLine).append(mp.currentIndent).append("<thead>")
       mp.increaseIndent
-      result.append("\n\n").append(mp.currentIndent).append("<tr>")
+      result.append(mp.newLine).append(mp.currentIndent).append("<tr>")
       mp.increaseIndent
-      cells.foreach(th => result.append("\n\n").append(mp.currentIndent).append("<th>")
+      cells.foreach(th => result.append(mp.newLine).append(mp.currentIndent).append("<th>")
           .append(mp.transform(th)).append("</th>"))
       mp.decreaseIndent
-      result.append("\n\n").append(mp.currentIndent).append("</tr>")
+      result.append(mp.newLine).append(mp.currentIndent).append("</tr>")
       mp.decreaseIndent
-      result.append("\n\n").append(mp.currentIndent).append("</thead>")
+      result.append(mp.newLine).append(mp.currentIndent).append("</thead>")
       mp.decreaseIndent
       // read first body cells for correct positioning
       cells = parseCells(mp, chunks.next)
@@ -193,19 +204,19 @@ class TableBlock(text: StringEx, selector: Selector)
     align = align.take(cols).padTo(cols, "")
     // process body
     mp.increaseIndent
-    result.append("\n\n").append(mp.currentIndent).append("<tbody>")
+    result.append(mp.newLine).append(mp.currentIndent).append("<tbody>")
     mp.increaseIndent
     while (chunks.hasNext) {
-      result.append("\n\n").append(mp.currentIndent).append("<tr>")
+      result.append(mp.newLine).append(mp.currentIndent).append("<tr>")
       mp.increaseIndent
       var i = 0
       cells.take(cols).padTo(cols, "").foreach { td =>
-        result.append("\n\n").append(mp.currentIndent).append("<td")
+        result.append(mp.newLine).append(mp.currentIndent).append("<td")
             .append(align(i)).append(">").append(td).append("</td>")
         i += 1
       }
       mp.decreaseIndent
-      result.append("\n\n").append(mp.currentIndent).append("</tr>")
+      result.append(mp.newLine).append(mp.currentIndent).append("</tr>")
       // evaluate next row
       val l = chunks.next
       if (chunks.hasNext)
@@ -213,9 +224,9 @@ class TableBlock(text: StringEx, selector: Selector)
     }
     // now close body and we're done
     mp.decreaseIndent
-    result.append("\n\n").append(mp.currentIndent).append("</tbody>")
+    result.append(mp.newLine).append(mp.currentIndent).append("</tbody>")
     mp.decreaseIndent
-    result.append("\n\n").append(mp.currentIndent)
+    result.append(mp.newLine).append(mp.currentIndent)
     return result
   }
 

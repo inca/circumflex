@@ -24,6 +24,7 @@ package object me {
     "\\#" -> "&#35;",
     "\\+" -> "&#43;",
     "\\-" -> "&#45;",
+    "\\~" -> "&#126;",
     "\\." -> "&#46;",
     "\\!" -> "&#33;")
 
@@ -38,7 +39,7 @@ package object me {
     val inlineHtmlSpanStart = Pattern.compile("<(" + htmlNameExpr + ").*?(/)?>",
       Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
     val linkDefinition = Pattern.compile("^ {0,3}\\[(.+?)\\]: *(\\S.*?)" +
-        "(\\n *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
+        "(\\n? *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
     val blockSelector = Pattern.compile("(?<=\\A.*?) *\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}(?=\\Z|\\n)",
       Pattern.CASE_INSENSITIVE)
     val listItemSplit = Pattern.compile("\\n+(?=\\S)")
@@ -48,10 +49,12 @@ package object me {
     val codeSpan = Pattern.compile("(`+)(.+?)\\1")
     val protectKey = Pattern.compile("!\\}[0-9a-zA-Z]{" + keySize + "}")
     val backslashChar = Pattern.compile("\\\\(\\S)")
-    val refLinks = Pattern.compile("\\[(.+?)\\]\\[(.+?)\\]")
-    val inlineLinks = Pattern.compile("\\[(.+?)\\]\\((.+?)( +\"(.+?)\")?\\)")
+    val refLinks = Pattern.compile("\\[(.+?)\\]\\[(.*?)\\]")
+    val inlineLinks = Pattern.compile("\\[(.+?)\\]\\((.*?)( +\"(.+?)\")?\\)")
     val emphasis = Pattern.compile("_(?=\\S)(.+?)(?<=\\S)_")
     val strong = Pattern.compile("\\*(?=\\S)(.+?)(?<=\\S)\\*")
+    val del = Pattern.compile("~(?=\\S)(.+?)(?<=\\S)~")
+    val htmlComment = Pattern.compile("^ {0,3}<!--.*?-->\\s*?(?=\\n+|\\Z)", Pattern.MULTILINE | Pattern.DOTALL)
 
     // escape patterns
 

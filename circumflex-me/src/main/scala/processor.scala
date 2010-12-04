@@ -39,10 +39,13 @@ class MarkevenProcessor() {
 
   def stripLinkDefinitions(s: StringEx): StringEx = s.replaceAll(regexes.linkDefinition, m => {
     val id = m.group(1).trim.toLowerCase
-    val url = m.group(2)
-    var title = m.group(3)
-    if (title != null) title = title.replace("\"", "&quot;")
-    else title = ""
+    val url = new StringEx(m.group(2))
+    var t = m.group(4)
+    val title = new StringEx(if (t == null) "" else t)
+    encodeChars(title)
+    encodeBackslashEscapes(title)
+    encodeChars(url)
+    encodeBackslashEscapes(url)
     links += id -> new LinkDefinition(url, title)
     ""
   })
@@ -78,6 +81,9 @@ class MarkevenProcessor() {
   def hashHtmlBlocks(s: StringEx): StringEx =
     hashInlineHtml(s, regexes.inlineHtmlBlockStart, key => "\n\n" + key + "\n\n")
 
+  def hashHtmlComments(s: StringEx): StringEx = s.replaceAll(regexes.htmlComment, m =>
+    "\n\n" + protector.addToken(m.group(0)) + "\n\n")
+
   def readBlocks(s: StringEx): Seq[Block] = {
     val result = new ListBuffer[Block]()
     val chunks = new ChunkIterator(s.split(regexes.blocks))
@@ -102,6 +108,8 @@ class MarkevenProcessor() {
       return processComplexChunk(chunks, new CodeBlock(s, selector), c => c.matches(regexes.d_code))
     // trim any leading whitespace
     val indent = s.trimLeft
+    // do not include empty freaks
+    if (s.length == 0) return EmptyBlock
     // assume unordered list and ordered list
     if (s.startsWith("* "))
       return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent), c => {
@@ -174,6 +182,7 @@ class MarkevenProcessor() {
     normalize(s)
     stripLinkDefinitions(s)
     hashHtmlBlocks(s)
+    hashHtmlComments(s)
     cleanEmptyLines(s)
     val blocks = readBlocks(s)
     return formHtml(blocks)
@@ -186,11 +195,12 @@ class MarkevenProcessor() {
     doMacros(s)
     encodeChars(s)
     doCodeSpans(s)
-    doBackslashEscapes(s)
+    encodeBackslashEscapes(s)
     doRefLinks(s)
     doInlineLinks(s)
     doEmphasis(s)
     doStrong(s)
+    doDel(s)
     return unprotect(s)
   }
 
@@ -216,14 +226,15 @@ class MarkevenProcessor() {
   def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m =>
     protector.addToken("<code>" + m.group(2).trim + "</code>"))
 
-  def doBackslashEscapes(s: StringEx): Unit = s.replaceAll(regexes.backslashChar, m => {
+  def encodeBackslashEscapes(s: StringEx): StringEx = s.replaceAll(regexes.backslashChar, m => {
     val c = m.group(0)
     escapeMap.getOrElse(c, c)
   })
 
   def doRefLinks(s: StringEx): StringEx = s.replaceAll(regexes.refLinks, m => {
     val linkText = m.group(1)
-    val id = m.group(2).trim.toLowerCase
+    var id = m.group(2).trim.toLowerCase
+    if (id == "") id = linkText
     links.get(id).map(ld => ld.toLink(linkText)).getOrElse(m.group(0))
   })
 
@@ -232,7 +243,7 @@ class MarkevenProcessor() {
     val url = m.group(2)
     var title = m.group(4)
     if (title == null) title = ""
-    new LinkDefinition(url, title).toLink(linkText)
+    new LinkDefinition(new StringEx(url), new StringEx(title)).toLink(linkText)
   })
 
   def doEmphasis(s: StringEx): StringEx = s.replaceAll(regexes.emphasis, m =>
@@ -240,6 +251,9 @@ class MarkevenProcessor() {
 
   def doStrong(s: StringEx): StringEx = s.replaceAll(regexes.strong, m =>
     "<strong>" + m.group(1) + "</strong>")
+
+  def doDel(s: StringEx): StringEx = s.replaceAll(regexes.del, m =>
+    "<del>" + m.group(1) + "</del>")
 
   def unprotect(s: StringEx): StringEx = s.replaceAll(regexes.protectKey, m => {
     val key = m.group(0)
@@ -249,10 +263,13 @@ class MarkevenProcessor() {
   def formHtml(blocks: Seq[Block], indent: Boolean = false): StringEx = {
     val result = new StringEx("")
     if (indent) level += 1
-    blocks.foreach(b => result.append(b.toHtml(this).buffer).append("\n\n"))
+    blocks.foreach(b =>
+      if (b != EmptyBlock) result.append(b.toHtml(this).buffer).append(newLine))
     if (indent) level -= 1
     return result
   }
+
+  def newLine: String = "\n"
 
   def toHtml(cs: CharSequence): String = process(cs).toString
 

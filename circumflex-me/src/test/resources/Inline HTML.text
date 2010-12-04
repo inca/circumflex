@@ -1,0 +1,25 @@
+<!-- Inline HTML comments should stay *AS IS* -->
+
+Simple selfclosing:
+
+<div id="preved"/>
+
+Multiline selfclosing:
+
+<div id="preved"
+     class="world"/>
+
+Multiline:
+
+<div>
+  </div>
+
+Complex nesting:
+
+<div>
+<div>
+</div>
+  *Protected text*
+<div>
+</div>
+</div>

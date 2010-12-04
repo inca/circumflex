@@ -5,6 +5,7 @@
 > |      ------:|:--------:|:-----
 > |        50   |    250   |  34
 > |        340  |     5    |  150
+> |        [Circumflex][cx] is awesome!
 > |      -------------------------
 > |
 > |    Okay, the following list is:
@@ -13,3 +14,5 @@
 > |    2. a sibling to unordered list and paragraph;
 > |
 > | 2. And that's it.
+
+  [cx]: http://circumflex.ru  "Circumlfex &mdash; exquisite taste of Scala development"
