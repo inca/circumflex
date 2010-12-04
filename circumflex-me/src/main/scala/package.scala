@@ -3,11 +3,29 @@ package ru.circumflex
 import java.util.Random
 import java.util.regex.Pattern
 import collection.mutable.HashMap
+import me._
 
 package object me {
   val chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   val keySize = 20
   val rnd = new Random
+
+  val escapeMap = Map[String, String](
+    "\\\\" -> "&#92;",
+    "\\`" -> "&#96;",
+    "\\_" -> "&#95;",
+    "\\*" -> "&#42;",
+    "\\{" -> "&#123;",
+    "\\}" -> "&#125;",
+    "\\[" -> "&#91;",
+    "\\]" -> "&#93;",
+    "\\(" -> "&#40;",
+    "\\)" -> "&#41;",
+    "\\#" -> "&#35;",
+    "\\+" -> "&#43;",
+    "\\-" -> "&#45;",
+    "\\." -> "&#46;",
+    "\\!" -> "&#33;")
 
   object regexes {
     val lineEnds = Pattern.compile("\\r\\n|\\r")
@@ -15,15 +33,25 @@ package object me {
     val blocks = Pattern.compile("\\n{2,}")
     val lines = Pattern.compile("\\n")
     val htmlNameExpr = "[a-z][a-z0-9\\-_:.]*?\\b"
-    val inlineHtmlStart = Pattern.compile("^<(" + htmlNameExpr + ").*?(/)?>",
+    val inlineHtmlBlockStart = Pattern.compile("^<(" + htmlNameExpr + ").*?(/)?>",
+      Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+    val inlineHtmlSpanStart = Pattern.compile("<(" + htmlNameExpr + ").*?(/)?>",
       Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
     val linkDefinition = Pattern.compile("^ {0,3}\\[(.+?)\\]: *(\\S.*?)" +
         "(\\n *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
-    val blockSelector = Pattern.compile("(?<=\\A.*?) *\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}(?=\\Z|\\n)", 
+    val blockSelector = Pattern.compile("(?<=\\A.*?) *\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}(?=\\Z|\\n)",
       Pattern.CASE_INSENSITIVE)
     val listItemSplit = Pattern.compile("\\n+(?=\\S)")
     val tableCellSplit = Pattern.compile("\\|")
     val tableSeparatorLine = Pattern.compile("^[- :|]+$")
+    val macro = Pattern.compile("(?<=\\A|\\s)\\[\\[([a-zA-Z0-9_-]+:)?(.+?)\\]\\](?=\\Z|\\s)", Pattern.DOTALL)
+    val codeSpan = Pattern.compile("(`+)(.+?)\\1")
+    val protectKey = Pattern.compile("!\\}[0-9a-zA-Z]{" + keySize + "}")
+    val backslashChar = Pattern.compile("\\\\(\\S)")
+    val refLinks = Pattern.compile("\\[(.+?)\\]\\[(.+?)\\]")
+    val inlineLinks = Pattern.compile("\\[(.+?)\\]\\((.+?)( +\"(.+?)\")?\\)")
+    val emphasis = Pattern.compile("_(?=\\S)(.+?)(?<=\\S)_")
+    val strong = Pattern.compile("\\*(?=\\S)(.+?)(?<=\\S)\\*")
 
     // escape patterns
 

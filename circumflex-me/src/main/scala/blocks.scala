@@ -2,7 +2,17 @@ package ru.circumflex.me
 
 import java.util.regex._
 
-class LinkDefinition(val url: String, val title: String)
+class LinkDefinition(u: String, t: String) {
+  val url = new StringEx(u).replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
+  val title = new StringEx(t).replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
+
+  def toLink(linkText: String): CharSequence = {
+    val result = new StringEx("<a href=\"").append(url).append("\"")
+    if (title.length > 0) result.append(" title=\"").append(title).append("\"")
+    result.append(">").append(linkText).append("</a>")
+    return result
+  }
+}
 
 class Selector(val id: String = "", val classes: Seq[String] = Nil) {
   override val toString = {
@@ -31,13 +41,6 @@ abstract class Block(val text: StringEx, val selector: Selector) {
     return result
   }
   def processContent(mp: MarkevenProcessor): StringEx = text
-  def encodeUnsafeChars(s: StringEx): StringEx = s
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll("*", "&#42;")
-      .replaceAll("`", "&#96;")
-      .replaceAll("_", "&#95;")
-      .replaceAll("\\", "&#92;")
   def attributes = ""
 }
 
@@ -109,10 +112,8 @@ class CodeBlock(text: StringEx, selector: Selector)
       .append(processContent(mp).buffer)
       .append("</code></pre>")
   override def processContent(mp: MarkevenProcessor): StringEx =
-    text.replaceAll(regexes.outdent(4), "")
-        .replaceAll(regexes.e_amp, "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
+    mp.encodeChars(text.replaceAll(regexes.outdent(4), ""))
+
 }
 
 class UnorderedListBlock(text: StringEx, selector: Selector, baseline: Int)

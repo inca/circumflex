@@ -41,6 +41,14 @@ class Protector {
    */
   def keys = protectHash.keys
 
+  /**
+   * Clears both hashes.
+   */
+  def clear: Unit = {
+    protectHash = Map()
+    unprotectHash = Map()
+  }
+
   override def toString = protectHash.toString
 }
 
@@ -128,6 +136,8 @@ class StringEx(var buffer: StringBuilder) extends CharSequence {
     buffer.replace(0, 0, cs.toString)
     return this
   }
+
+  def outdent(): this.type = replaceAll(regexes.outdent(4), "")
 
   def startsWith(cs: CharSequence): Boolean = {
     if (cs.length == 0) return true
