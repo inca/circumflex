@@ -223,8 +223,13 @@ class MarkevenProcessor() {
     protector.addToken(replacement)
   })
 
-  def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m =>
-    protector.addToken("<code>" + m.group(2).trim + "</code>"))
+  def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m => {
+    val s = new StringEx(m.group(2)).trim
+    // there can be protected content inside codespans, so decode them first
+    unprotect(s)
+    encodeChars(s)
+    protector.addToken(s.append("</code>").prepend("<code>"))
+  })
 
   def encodeBackslashEscapes(s: StringEx): StringEx = s.replaceAll(regexes.backslashChar, m => {
     val c = m.group(0)
