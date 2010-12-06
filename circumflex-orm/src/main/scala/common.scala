@@ -1,6 +1,7 @@
 package ru.circumflex.orm
 
 import ru.circumflex.core._
+import java.util.regex.Matcher
 
 /*!# SQLable
 
@@ -27,7 +28,9 @@ trait ParameterizedExpression extends SQLable {
    * Renders this query by replacing parameter placeholders with actual values.
    */
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
-    sql.replaceFirst("\\?", dialect.escapeParameter(p).replaceAll("\\$", "\\\\\\$")))
+    sql.replaceFirst("\\?", dialect.escapeParameter(p)
+        .replaceAll("\\\\", "\\\\\\\\")
+        .replaceAll("\\$", "\\\\\\$")))
 
   override def equals(that: Any) = that match {
     case e: ParameterizedExpression =>
