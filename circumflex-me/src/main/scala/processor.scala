@@ -198,10 +198,16 @@ class MarkevenProcessor() {
     encodeBackslashEscapes(s)
     doRefLinks(s)
     doInlineLinks(s)
+    doSpanEnhancements(s)
+    return unprotect(s)
+  }
+
+  def doSpanEnhancements(s: StringEx): StringEx = {
     doEmphasis(s)
     doStrong(s)
     doDel(s)
-    return unprotect(s)
+    doTypographics(s)
+    s
   }
 
   def normalizeSpan(s: StringEx): StringEx =
@@ -240,7 +246,10 @@ class MarkevenProcessor() {
     val linkText = m.group(1)
     var id = m.group(2).trim.toLowerCase
     if (id == "") id = linkText
-    links.get(id).map(ld => ld.toLink(linkText)).getOrElse(m.group(0))
+    val replacement = links.get(id)
+        .map(ld => ld.toLink(doSpanEnhancements(new StringEx(linkText))))
+        .getOrElse(m.group(0))
+    protector.addToken(replacement)
   })
 
   def doInlineLinks(s: StringEx): StringEx = s.replaceAll(regexes.inlineLinks, m => {
@@ -248,7 +257,9 @@ class MarkevenProcessor() {
     val url = m.group(2)
     var title = m.group(4)
     if (title == null) title = ""
-    new LinkDefinition(new StringEx(url), new StringEx(title)).toLink(linkText)
+    val replacement = new LinkDefinition(new StringEx(url), new StringEx(title))
+        .toLink(doSpanEnhancements(new StringEx(linkText)))
+    protector.addToken(replacement)
   })
 
   def doEmphasis(s: StringEx): StringEx = s.replaceAll(regexes.emphasis, m =>
@@ -259,6 +270,19 @@ class MarkevenProcessor() {
 
   def doDel(s: StringEx): StringEx = s.replaceAll(regexes.del, m =>
     "<del>" + m.group(1) + "</del>")
+
+  def doTypographics(s: StringEx): StringEx = {
+    s.replaceAll(regexes.ty_dash, typographics.dash)
+    s.replaceAll(regexes.ty_larr, typographics.larr)
+    s.replaceAll(regexes.ty_rarr, typographics.rarr)
+    s.replaceAll(regexes.ty_trade, typographics.trade)
+    s.replaceAll(regexes.ty_reg, typographics.reg)
+    s.replaceAll(regexes.ty_copy, typographics.copy)
+    s.replaceAll(regexes.ty_hellip, typographics.hellip)
+    s.replaceAll(regexes.ty_ldquo, typographics.ldquo)
+    s.replaceAll(regexes.ty_rdquo, typographics.rdquo)
+    s
+  }
 
   def unprotect(s: StringEx): StringEx = s.replaceAll(regexes.protectKey, m => {
     val key = m.group(0)

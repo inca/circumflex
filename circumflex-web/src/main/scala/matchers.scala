@@ -160,7 +160,7 @@ class RegexMatcher(val name: String,
   def apply(): Option[Seq[MatchResult]] = {
     val m = regex.pattern.matcher(value)
     if (m.matches) {
-      val matches = for (i <- 0 to m.groupCount) yield groupName(i) -> m.group(i)
+      val matches = (0 to m.groupCount).map(i => groupName(i) -> m.group(i))
       Some(List(new MatchResult(name, matches: _*)))
     } else None
   }
