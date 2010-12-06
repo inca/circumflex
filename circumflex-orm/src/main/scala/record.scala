@@ -86,6 +86,9 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     relation.beforeInsert.foreach(c => c(this))
     // Prepare and execute query
     val result = _persist(evalFields(fields))
+    // Update cache
+    contextCache.evictRecord(PRIMARY_KEY(), relation)
+    contextCache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     return result
@@ -120,7 +123,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     f.foreach(f => q.SET[Any](f.asInstanceOf[Field[Any, R]], f.value))
     val result = q.execute()
     if (relation.autorefresh_?) refresh()
-    // Invalidate inverse caches
+    // Invalidate caches
     contextCache.evictInverse[PK, R](this)
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
@@ -142,7 +145,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     // Prepare and execute query
     val result = (relation AS "root")
         .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkDelete.execute()
-    // Invalidate inverse caches
+    // Invalidate caches
+    contextCache.evictRecord(PRIMARY_KEY(), relation)
     contextCache.evictInverse[PK, R](this)
     // Execute events
     relation.afterDelete.foreach(c => c(this))
@@ -157,7 +161,13 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   def validate_!(): Unit = validate.map(errors => throw new ValidationException(errors))
 
-  def save_!(): Int = if (transient_?) INSERT_!() else UPDATE_!()
+  def save_!(): Int = if (transient_?)
+    throw new ORMException("Application-assigned identifier is expected. " +
+        "Use one of the generators if you wish identifiers to be generated automatically.")
+  else relation.get(PRIMARY_KEY()) match {
+    case Some(_) => UPDATE_!()
+    case _ => INSERT_!()
+  }
 
   def save(): Int = {
     validate_!()
@@ -233,6 +243,7 @@ traits. Following identity generators are supported out-of-box:
 trait Generator[PK, R <: Record[PK, R]] extends Record[PK, R] { this: R =>
   override protected def _persist(fields: scala.Seq[Field[_, R]]): Int = persist(fields)
   def persist(fields: Seq[Field[_, R]]): Int
+  override def save_!(): Int = if (transient_?) INSERT_!() else UPDATE_!()
 }
 
 trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this: R =>

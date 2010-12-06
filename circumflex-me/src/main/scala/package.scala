@@ -42,7 +42,6 @@ package object me {
         "(\\n? *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
     val blockSelector = Pattern.compile("(?<=\\A.*?) *\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}(?=\\Z|\\n)",
       Pattern.CASE_INSENSITIVE)
-    val listItemSplit = Pattern.compile("\\n+(?=\\S)")
     val tableCellSplit = Pattern.compile("\\|")
     val tableSeparatorLine = Pattern.compile("^[- :|]+$")
     val macro = Pattern.compile("(?<=\\A|\\s)\\[\\[([a-zA-Z0-9_-]+:)?(.+?)\\]\\](?=\\Z|\\s)", Pattern.DOTALL)
@@ -78,6 +77,11 @@ package object me {
     val t_ul = Pattern.compile("^(\\* +)")
     val t_ol = Pattern.compile("^(\\d+\\. +)")
     val t_tr = Pattern.compile("^\\|")
+
+    // list split patterns
+
+    val s_ul = Pattern.compile("\\n+(?=\\* )")
+    val s_ol = Pattern.compile("\\n+(?=\\d+\\. )")
 
     protected val outdentMap = new HashMap[Int, Pattern]()
     protected val placeholder = Pattern.compile("^", Pattern.MULTILINE)

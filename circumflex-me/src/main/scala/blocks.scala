@@ -66,6 +66,8 @@ abstract class NestedMarkupBlock(text: StringEx, selector: Selector)
 abstract class ListBlock(text: StringEx, selector: Selector, val baseline: Int)
     extends NestedMarkupBlock(text, selector) {
 
+  def splitPattern: Pattern
+
   override def processContent(mp: MarkevenProcessor): StringEx = {
     // strip whitespace from every line if first element was indented
     if (baseline > 0)
@@ -73,7 +75,7 @@ abstract class ListBlock(text: StringEx, selector: Selector, val baseline: Int)
     // clean blank lines
     mp.cleanEmptyLines(text)
     // read list item blocks
-    val blocks = text.split(regexes.listItemSplit).map { s =>
+    val blocks = text.split(splitPattern).map { s =>
       val selector = mp.stripSelector(s)
       val indent = trimPattern.map(p => s.replaceFirst(p, "")).getOrElse(0)
       if (indent > 0) s.replaceAll(regexes.outdent(indent), "")
@@ -131,12 +133,14 @@ class UnorderedListBlock(text: StringEx, selector: Selector, baseline: Int)
     extends ListBlock(text, selector, baseline) {
   def element = "ul"
   def trimPattern = Some(regexes.t_ul)
+  def splitPattern = regexes.s_ul
 }
 
 class OrderedListBlock(text: StringEx, selector: Selector, baseline: Int)
     extends ListBlock(text, selector, baseline) {
   def element = "ol"
   def trimPattern = Some(regexes.t_ol)
+  def splitPattern = regexes.s_ol
 }
 
 class ListItemBlock(text: StringEx, selector: Selector)
