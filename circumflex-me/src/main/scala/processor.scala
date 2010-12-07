@@ -385,10 +385,38 @@ of the block (no trailing whitespace allowed!).
 
 Inside block level elements following text enhancements occur:
 
-  * text surrounded with backtick `\`` characters is transformed into `code` span;
+  * [links](#links) are processed;
+  * text surrounded with backtick ``` characters is transformed into `code` span;
   * text surrounded with underscores `_` becomes `em` (emphasized);
   * text surrounded with asterisks `*` becomes `strong` (strongly emphasized);
   * text surrounded with asterisks `~` becomes `del` (deleted);
+  * various typographic improvements are applied to text:
+
+    * two minus chars `--` are replaces with -- (long tiret);
+    * double quotes are replaced with "curly" quotes;
+    * three consequtive dots `...` are replaced with ...;
+    * `<-` and `->` are replaced with <- and -> accordingly;
+    * `(c)`, `(r)` and `(tm)` are replaced with (c), (r), (tm);
+
+You can also use backslash escaping to prevent misinterpreting special characters.
+Following characters can be escaped: ```\`_*{}[]()#+-~.!```
+
+## Links
+
+Two style of links are supported: inline and reference.
+
+Inline links look like this: `[my text](http://my_url)` or `[some text](http://some_url "some title")`
+and are rendered into HTML `a` element: `<a href="http://my_url">my text</a>` and
+`<a href="http://some_url" title="some title">some text</a>`.
+
+Reference-style links are split into link definition and link usage. Using previous examples, here's
+how link definitions could look like:
+
+    [id1]: http://my_url
+    [id2]: http://some_url "some title"
+
+Link usages would then look like this: `[my text][id1]` and `[some text][id2]`. The generated markup
+equals to the previous one.
 
 */
 object Markeven {
