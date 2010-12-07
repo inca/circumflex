@@ -51,10 +51,8 @@ package object me {
     val backslashChar = Pattern.compile("\\\\(\\S)")
     val refLinks = Pattern.compile("\\[(.+?)\\]\\[(.*?)\\]")
     val inlineLinks = Pattern.compile("\\[(.+?)\\]\\((.*?)( +\"(.+?)\")?\\)")
-    val emphasis = Pattern.compile("(?<!>)_(?=\\S)(.+?)(?<=\\S)_")
-    val strong = Pattern.compile("(?<!>)\\*(?=\\S)(.+?)(?<=\\S)\\*")
-    val del = Pattern.compile("(?<!>)~(?=\\S)(.+?)(?<=\\S)~")
     val htmlComment = Pattern.compile("^ {0,3}<!--.*?-->\\s*?(?=\\n+|\\Z)", Pattern.MULTILINE | Pattern.DOTALL)
+    val spanEnhancements = Pattern.compile("([*_~])(?=\\S)(.+?)(?<=\\S)\\1")
 
     // escape patterns
 
