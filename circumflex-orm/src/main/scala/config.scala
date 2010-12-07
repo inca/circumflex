@@ -14,13 +14,13 @@ import xml._
 Circumflex ORM needs to know a little about your environment to operate.
 Following objects configure different aspects of Circumflex ORM:
 
-  * *connection provider* is used to acquire JDBC connections, can be
+  * _connection provider_ is used to acquire JDBC connections, can be
   overriden using the `orm.connectionProvider` configuration parameter;
-  * *type converter* handles convertions between JDBC and Scala data types,
+  * _type converter_ handles convertions between JDBC and Scala data types,
   can be overriden using the `orm.typeConverter` configuration parameter;
-  * *dialect* handles all SQL rendering throughout the framework,
+  * _dialect_ handles all SQL rendering throughout the framework,
   can be overriden using the `orm.dialect` configuration parameter;
-  * *transaction manager* is responsible for allocating current transactions
+  * _transaction manager_ is responsible for allocating current transactions
   for execution contexts.
 */
 
@@ -44,17 +44,19 @@ trait ConnectionProvider {
 /*! Circumflex ORM provides default `ConnectionProvider` implementation.
 It behaves as follows:
 
- * if `orm.connection.datasource` is set, use it to acquire data source
+  * if `orm.connection.datasource` is set, use it to acquire data source
   from JNDI;
   * if `orm.connection.datasource` is missing, construct a connection
   pool using [c3p0][] and following configuration parameters:
+
      * `orm.connection.driver`
      * `orm.connection.url`
      * `orm.connection.username`
      * `orm.connection.password`
-   * set *auto-commit* for each connection to `false`
-   * set the transaction isolation level to the value `orm.connection.isolation`
-   (or use `READ COMMITTED` by default)
+
+  * set _auto-commit_ for each connection to `false`
+  * set the transaction isolation level to the value `orm.connection.isolation`
+  (or use `READ COMMITTED` by default)
 
  If c3p0 data source is used you can fine tune it's configuration with `c3p0.properties`
  file (see [c3p0 documentation][c3p0-cfg] for more details).

@@ -56,42 +56,38 @@ object Circumflex extends HashMap[String, Any] with UntypedContainer {
   * `as[T]` returns `[T]`;
   * `getXXX` returns `XXX` trying to coerce the value to the `XXX` type.
 
-A `ClassCastException` is thrown if the configation contains the value
+A `ClassCastException` is thrown if the configuration contains the value
 with different type than you expect.
 
 Circumflex configuration (and every untyped container) also offers you a convenient
 way to configure different implementations of components and services, such as configuring
 dialects or connection providers for [Circumflex ORM](http://circumflex.ru/orm.html)
 or request routers for [Circumflex Web Framework](http://circumflex.ru/web.html).
-We call this mechanism an *instantiation facility*.
+We call this mechanism an _instantiation facility_.
 
 The logic is pretty simple. Let's say an application or library expects you
 to provide an implementation of some interface, for example, `MyService`, and
 has a default implementation, for example, `DefaultMyService`:
 
-    lang:scala
-    cx.instantiate[MyService]("myApp.myService", DefaultMyService)
+    cx.instantiate[MyService]("myApp.myService", DefaultMyService)      {.scala}
 
 Then you can override this implementation by setting the configuration parameter
 (`myApp.myService` in our example) to one of the following values:
 
   * the class of the desired object, if you run some initialization code:
 
-        lang:scala
-        cx("myApp.myService") = classOf[MyServiceImpl]
+        cx("myApp.myService") = classOf[MyServiceImpl]                  {.scala}
 
   * class name of your implementation, if you use `cx.properties`:
 
-        lang:scala
-        myApp.myService=com.myapp.MyServiceImpl
+        myApp.myService=com.myapp.MyServiceImpl                         {.scala}
 
 Scala singletons might also work pretty fine as service implementations,
 but you should remember to add a dollar sign (`$`) to the class name.
 
 For example, if you have following singleton:
 
-    lang:scala
-    package com.myapp
+    package com.myapp                                                   {.scala}
     object MyServiceImpl extends MyService { ... }
 
 then set your `myApp.myService` configuration parameter to `com.myapp.MyServiceImpl$`.

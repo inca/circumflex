@@ -139,15 +139,13 @@ fashion.
 
 Following syntaxes are available for accessing context variables:
 
-    lang:scala
-    'key.apply[T]                // T
+    'key.apply[T]                // T                                           {.scala}
     'key.get[T]                  // Option[T]
     'key.getOrElse(default: T)   // T
 
 Following syntaxes are available for setting context variables:
 
-    lang:scala
-    'key := value
+    'key := value                                                               {.scala}
     'key.update(value)
 
 The implicit conversions from `Symbol` into `ContextVarHelper` are available in the

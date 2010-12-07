@@ -7,9 +7,9 @@ import ru.circumflex.core._
 
 The `Criteria` class provides simplified API for querying records in neat
 object-oriented notation with the ability to fetch the whole hierarchy of
-records in one query via *prefetching*.
+records in one query via _prefetching_.
 
-Criteria API is deisgned to operate specifically on `Record` instances. If
+Criteria API is designed to operate specifically on `Record` instances. If
 you need different projections, use `Select` instead.
 */
 class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
@@ -212,7 +212,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   }
 
   /**
-   * Merges the *join tree* with *prefetch tree* to form an actual `FROM` clause.
+   * Merges the _join tree_ with _prefetch tree_ to form an actual `FROM` clause.
    */
   def queryPlan: RelationNode[PK, R] = _joinTree match {
     case j: JoinNode[PK, R, _, _] => replaceLeft(j.clone, _rootTree)

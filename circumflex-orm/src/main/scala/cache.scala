@@ -16,8 +16,8 @@ transaction. This functionality is required for all data-retrieval operations.
 
 The cache consists of two logical parts:
 
-  1. *record cache* holds individual records by their relations and `id`s;
-  2. *inverse cache* holds sequences of records by their associations and their parent's `id`s.
+  1. _record cache_ holds individual records by their relations and `id`s;
+  2. _inverse cache_ holds sequences of records by their associations and their parent's `id`s.
 */
 trait CacheService {
 
