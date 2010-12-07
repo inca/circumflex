@@ -1,4 +1,4 @@
-package ru.circumflex.me
+package ru.circumflex.markeven
 
 import java.lang.StringBuilder
 import java.util.regex._

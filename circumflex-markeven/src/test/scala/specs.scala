@@ -1,4 +1,4 @@
-package ru.circumflex.me
+package ru.circumflex.markeven
 
 import org.specs.runner.JUnit4
 import org.specs.Specification
