@@ -1,9 +1,10 @@
-package ru.circumflex.markeven
+package ru.circumflex
+package markeven
 
 import java.util.regex._
 import java.io._
 import collection.mutable.{HashMap, ListBuffer}
-import ru.circumflex.core._
+import org.apache.commons.io.FileUtils
 
 /*!# The Markeven Processor
 
@@ -432,7 +433,7 @@ class MarkevenProcessor() {
 
   def hashInlineHtml(s: StringEx, pattern: Pattern, out: String => String): StringEx =
     s.replaceIndexed(pattern, m => {
-      var startIdx = m.start
+      val startIdx = m.start
       var endIdx = 0
       if (m.group(2) != null) {
         // self-closing tag, escape as is
@@ -696,6 +697,21 @@ class MarkevenProcessor() {
     val out = new StringWriter(cs.length)
     process(cs, out)
     return out.toString
+  }
+
+  def renderToFile(src: File, dst: File, force: Boolean = false): Unit = {
+    if (!src.isFile)
+      throw new FileNotFoundException("File " + src.toString + " not found.")
+    if (!force && dst.isFile && src.lastModified < dst.lastModified) return
+    else {
+      val sourceText = FileUtils.readFileToString(src, "UTF-8")
+      val out = new FileWriter(dst)
+      try {
+        process(sourceText, out)
+      } finally {
+        out.close
+      }
+    }
   }
 
 }

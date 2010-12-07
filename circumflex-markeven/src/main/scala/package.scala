@@ -4,7 +4,6 @@ import java.io._
 import java.util.Random
 import java.util.regex.Pattern
 import collection.mutable.HashMap
-import org.apache.commons.io.FileUtils
 import core._
 import markeven._
 
@@ -57,22 +56,11 @@ package object markeven {
 
   def processor = cx.instantiate[MarkevenProcessor]("markeven.processor", new MarkevenProcessor)
 
-  def toHtml(source: CharSequence): String = processor.toHtml(source)
+  def toHtml(source: CharSequence): String =
+    processor.toHtml(source)
 
-  def renderToFile(src: File, dst: File, force: Boolean = false): Unit = {
-    if (!src.isFile)
-      throw new FileNotFoundException("File " + src.toString + " not found.")
-    if (!force && dst.isFile && src.lastModified < dst.lastModified) return
-    else {
-      val sourceText = FileUtils.readFileToString(src, "UTF-8")
-      val out = new FileWriter(dst)
-      try {
-        processor.process(sourceText, out)
-      } finally {
-        out.close
-      }
-    }
-  }
+  def renderToFile(src: File, dst: File, force: Boolean = false): Unit =
+    processor.renderToFile(src, dst, force)
 
   // Utilities
 
