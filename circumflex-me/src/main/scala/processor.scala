@@ -202,14 +202,6 @@ class MarkevenProcessor() {
     return unprotect(s)
   }
 
-  def doSpanEnhancements(s: StringEx): StringEx = {
-    doEmphasis(s)
-    doStrong(s)
-    doDel(s)
-    doTypographics(s)
-    s
-  }
-
   def normalizeSpan(s: StringEx): StringEx =
     s.trim.replaceAll("  \n", "<br/>\n").replaceAll("\n", " ")
 
@@ -262,14 +254,23 @@ class MarkevenProcessor() {
     protector.addToken(replacement)
   })
 
-  def doEmphasis(s: StringEx): StringEx = s.replaceAll(regexes.emphasis, m =>
-    "<em>" + m.group(1) + "</em>")
+  def doSpanEnhancements(s: StringEx): StringEx = {
+    doTypographics(s)
+    recurseSpanEnhancements(s)
+    s
+  }
 
-  def doStrong(s: StringEx): StringEx = s.replaceAll(regexes.strong, m =>
-    "<strong>" + m.group(1) + "</strong>")
-
-  def doDel(s: StringEx): StringEx = s.replaceAll(regexes.del, m =>
-    "<del>" + m.group(1) + "</del>")
+  protected def recurseSpanEnhancements(s: StringEx): StringEx = s.replaceAll(regexes.spanEnhancements, m => {
+    val element = m.group(1) match {
+      case "*" => "strong"
+      case "_" => "em"
+      case "~" => "del"
+      case _ => "span"
+    }
+    val content = new StringEx(m.group(2))
+    recurseSpanEnhancements(content)
+    new StringEx("<").append(element).append(">").append(content).append("</").append(element).append(">")
+  })
 
   def doTypographics(s: StringEx): StringEx = {
     s.replaceAll(regexes.ty_dash, typographics.dash)
