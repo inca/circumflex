@@ -3,7 +3,7 @@ package ru.circumflex.docco
 import ru.circumflex.core._
 import ru.circumflex.freemarker._
 import java.io._
-import ru.circumflex.md.Markdown
+import ru.circumflex.me.Markeven
 import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}
 import java.util.{Collection => JCollection}
 import collection.mutable.ListBuffer
@@ -36,7 +36,7 @@ case class Section(private var _doc: String = "", private var _code: String = ""
   }
   def doc: String = {
     if (_md == null)
-      _md = Markdown(_doc)
+      _md = Markeven(_doc)
     return _md
   }
 

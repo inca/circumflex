@@ -7,12 +7,148 @@ import ru.circumflex.core._
 
 /*!# The Markeven Processor
 
-`MarkevenProcessor` transforms text files into HTML using a set of simple rules.
+`Markeven` transforms text files into HTML using a set of simple rules.
 It takes most ideas from [Markdown][], but has more strict rules, which lead to better
 source structure and enhanced performance.
 
   [Markdown]: http://daringfireball.net/projects/markdown/syntax
+
+The usage is pretty simple:
+
+    val text = """
+    Hello world!              {#hi.greeting.example}
+    ============
+
+    This is a test.
+    """
+    val html = Markeven(text)
+
+The example above yields following HTML:
+
+    <h1 id="hi" class="greeting example">Hello world!</h1>
+    <p>This is a test.</p>
+
+Markeven uses `MarkevenProcessor` to perform transforming, it is instantiated upon every
+transformation. You can use your own implementation of `MarkevenProcessor`:
+
+    class MyMarkevenProcessor extends MarkevenProcessor { ... }
+
+    new MyMarkevenProcessor().toHtml(text)
+
+You can also set the `me.processor` configuration parameter to fully-qualified name of your
+processor implementation and continue to use `Markeven(text)`.
+
+# Syntax cheatsheet               {#syntax}
+
+## Block elements
+
+Markeven recognizes following block-level elements:
+
+  * [headings](#hX);
+  * [preformatted code blocks](#pre);
+  * [ordered and unordered lists](#ol-ul);
+  * [tables](#table);
+  * [blockquotes](#blockquote);
+  * [sections](#div);
+  * [horizontal rulers](#hr);
+  * [paragraphs](#p);
+  * inline HTML.
+
+Block elements are always delimited by two or more line ends (`\n\n`):
+
+    This is a paragraph
+
+        this is a code block
+
+        But this is still
+    a paragraph.
+
+This behavior is different from [Markdown][], which interprets last block as two blocks: paragraph
+and code block.
+
+## Headings                           {#hX}
+
+Markeven supports both ATX and Setex styles proposed by Markdown:
+
+    This is first-level heading
+    ===========================
+
+    This is second-level heading
+    ----------------------------
+
+    # First level again
+
+    ## Second level here
+
+    ### Third level
+
+    #### Fourth level
+
+    ##### Fifth level
+
+    ###### Sixth level
+
+Unline Markdown, Markeven do not allow closing `#`s, so following example:
+
+    # This is a heading which ends with #
+
+will be transformed into:
+
+    <h1>This is a heading which ends with #</h1>
+
+## Preformatted code blocks                    {#pre}
+
+Code blocks are used to write about programming or markup stuff. Their contents is usually
+rendered using monospaced font and is interpreted literally. To produce a code block, indent
+every line of block with at least 4 spaces or 1 tab:
+
+    Here's some code:
+    
+        println("Hello world!")
+
+Markeven will produce:
+
+    <p>Here's some code:</p>
+    <pre><code>println("Hello world!")
+    </code></pre>
+
+## Ordered and unordered lists                 {#ol-ul}
+
+Lists in Markeven have strict rules which help you build highly structured documents.
+
+The first thing to know about is _list marker_. 
+
+## Block selectors
+
+Each block can optionally have a _selector_. It is used to add `id` and `class` HTML attributes to blocks:
+
+    I have an id.                     {#para1}
+
+    I have two classes.               {.class1.class2}
+
+    I have an id and a class.         {#para3.class1}
+
+The example above will be transformed into a following HTML snippet:
+
+    <p id="para1">I have an id.</p>
+    <p class="class1 class2">I have two classes.</p>
+    <p id="para3" class="class1">I have an id and a class.</p>
+
+The most common use of selectors is to assign `id` attribute so that they can be used in [links](#links):
+
+    Now I can be referenced by id!        {#mypara}
+
+    Look! I can reference [another paragraph](#para).
+
+The selector expression is enclosed into curly braces and must be placed at the end of the first line
+of the block (no trailing whitespace allowed!).
+
 */
+object Markeven {
+  def processor = cx.instantiate[MarkevenProcessor]("me.processor", new MarkevenProcessor)
+  def apply(cs: CharSequence): String = processor.toHtml(cs)
+}
+
 class MarkevenProcessor() {
 
   val protector = new Protector
