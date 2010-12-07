@@ -509,14 +509,16 @@ class MarkevenProcessor() {
     // strip selector if any
     val selector = stripSelector(s)
     // assume hashed inline HTML
-    if (s.buffer.length == keySize + 2 && s.buffer.charAt(0) == '!' && s.buffer.charAt(1) == '}')
+    if (s.buffer.length == keySize + 2 &&
+        s.buffer.charAt(0) == '!' && s.buffer.charAt(1) == '}')
       protector.decode(s.buffer.toString) match {
         case Some(content) => return new InlineHtmlBlock(new StringEx(content))
         case _ => return new ParagraphBlock(s, selector)
       }
     // assume code block
     if (s.matches(regexes.d_code))
-      return processComplexChunk(chunks, new CodeBlock(s, selector), c => c.matches(regexes.d_code))
+      return processComplexChunk(chunks, new CodeBlock(s, selector),
+        c => c.matches(regexes.d_code))
     // trim any leading whitespace
     val indent = s.trimLeft
     // do not include empty freaks
@@ -640,7 +642,8 @@ class MarkevenProcessor() {
     protector.addToken(s.append("</code>").prepend("<code>"))
   })
 
-  def encodeBackslashEscapes(s: StringEx): StringEx = s.replaceAll(regexes.backslashChar, m => {
+  def encodeBackslashEscapes(s: StringEx): StringEx =
+    s.replaceAll(regexes.backslashChar, m => {
     val c = m.group(0)
     escapeMap.getOrElse(c, c)
   })
@@ -672,7 +675,8 @@ class MarkevenProcessor() {
     s
   }
 
-  protected def recurseSpanEnhancements(s: StringEx): StringEx = s.replaceAll(regexes.spanEnhancements, m => {
+  protected def recurseSpanEnhancements(s: StringEx): StringEx =
+    s.replaceAll(regexes.spanEnhancements, m => {
     val element = m.group(1) match {
       case "*" => "strong"
       case "_" => "em"
@@ -681,7 +685,8 @@ class MarkevenProcessor() {
     }
     val content = new StringEx(m.group(2))
     recurseSpanEnhancements(content)
-    new StringEx("<").append(element).append(">").append(content).append("</").append(element).append(">")
+    new StringEx("<").append(element).append(">")
+        .append(content).append("</").append(element).append(">")
   })
 
   def doTypographics(s: StringEx): StringEx = {
