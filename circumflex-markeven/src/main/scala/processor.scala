@@ -398,12 +398,12 @@ class MarkevenProcessor() {
   val protector = new Protector
   val links = new HashMap[String, LinkDefinition]()
   var level = 0
-  val macros = new HashMap[String, CharSequence => CharSequence]()
+  val macros = new HashMap[String, StringEx => CharSequence]()
 
   def increaseIndent: Unit = level += 1
   def decreaseIndent: Unit = if (level > 0) level -= 1
 
-  def addMacro(name: String, function: CharSequence => CharSequence): this.type = {
+  def addMacro(name: String, function: StringEx => CharSequence): this.type = {
     macros += (name -> function)
     return this
   }
@@ -596,7 +596,7 @@ class MarkevenProcessor() {
     if (name == null) name = ""
     if (name.length > 0)
       name = name.substring(0, name.length - 1)
-    val contents = m.group(2)
+    val contents = new StringEx(m.group(2))
     val replacement = macros.get(name).map(f => f(contents)).getOrElse(
       "<span class=\"" + name + "\">" + contents + "</span>")
     protector.addToken(replacement)
