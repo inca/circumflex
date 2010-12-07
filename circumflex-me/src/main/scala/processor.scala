@@ -381,6 +381,15 @@ The most common use of selectors is to assign `id` attribute so that they can be
 The selector expression is enclosed into curly braces and must be placed at the end of the first line
 of the block (no trailing whitespace allowed!).
 
+## Text enhancements
+
+Inside block level elements following text enhancements occur:
+
+  * text surrounded with backtick `\`` characters is transformed into `code` span;
+  * text surrounded with underscores `_` becomes `em` (emphasized);
+  * text surrounded with asterisks `*` becomes `strong` (strongly emphasized);
+  * text surrounded with asterisks `~` becomes `del` (deleted);
+
 */
 object Markeven {
   def processor = cx.instantiate[MarkevenProcessor]("me.processor", new MarkevenProcessor)
@@ -610,8 +619,9 @@ class MarkevenProcessor() {
 
   def doRefLinks(s: StringEx): StringEx = s.replaceAll(regexes.refLinks, m => {
     val linkText = m.group(1)
-    var id = m.group(2).trim.toLowerCase
+    var id = m.group(2)
     if (id == "") id = linkText
+    id = id.trim.toLowerCase
     val replacement = links.get(id)
         .map(ld => ld.toLink(doSpanEnhancements(new StringEx(linkText))))
         .getOrElse(m.group(0))
