@@ -1,6 +1,6 @@
 package ru.circumflex.freemarker
 
-import ru.circumflex.md.Markdown
+import ru.circumflex.me.Markeven
 import ru.circumflex.core._
 import ru.circumflex.web._
 import freemarker.template._
@@ -44,7 +44,7 @@ class DefaultConfiguration extends Configuration {
   setObjectWrapper(new ScalaObjectWrapper())
   setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER)
   setDefaultEncoding("utf-8")
-  setSharedVariable("md", MarkdownDirective)
+  setSharedVariable("me", MarkevenDirective)
 
   try {
     addLoader(new WebappTemplateLoader(servletContext, "/templates"))
@@ -56,13 +56,13 @@ class DefaultConfiguration extends Configuration {
 
 }
 
-object MarkdownDirective extends TemplateDirectiveModel {
+object MarkevenDirective extends TemplateDirectiveModel {
   def execute(env: Environment,
               params: java.util.Map[_, _],
               loopVars: Array[TemplateModel],
               body: TemplateDirectiveBody) = {
     val nested = new StringWriter
     body.render(nested)
-    env.getOut.write(Markdown(nested.toString))
+    env.getOut.write(Markeven(nested.toString))
   }
 }

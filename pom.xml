@@ -19,7 +19,6 @@
     <module>circumflex-web</module>
     <module>circumflex-orm</module>
     <module>circumflex-me</module>
-    <module>circumflex-md</module>
     <module>circumflex-docco</module>
     <module>circumflex-maven-plugin</module>
     <module>circumflex-ftl</module>
