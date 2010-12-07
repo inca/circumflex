@@ -6,15 +6,15 @@ import ru.circumflex.core._
 
 The `Association` class lets you create associations between relations which are
 typically represented by foreign key constraints in database. This kind of
-relationship is often referred to as *one-to-one* or *many-to-one* (the former
+relationship is often referred to as _one-to-one_ or _many-to-one_ (the former
 is implemented by adding a `UNIQUE` constraint).
 
 We use some terminology when speaking about associations:
 
   * the `C` type parameter points to the relation which owns this association
-  (we refer to it as the *child relation*);
+  (we refer to it as the _child relation_);
   * the `P` type parameter points to the referenced relation (we refer to it as
-  the *parent relation*);
+  the _parent relation_);
   * the `K` type parameter is a type of this association field's value, it must
   match the type of parent relation's primary key.
 */
@@ -70,7 +70,7 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
 /*!# Inverse Associations
 
 Inverse assocations provide a way to access child records from parent relation.
-This type of relationship is often referred to as *one-to-one* or *one-to-many*
+This type of relationship is often referred to as _one-to-one_ or _one-to-many_
 (the former one is implemented by applying a `UNIQUE` constraint).
 They are essentially useful in a combination with `Criteria` for fetching
 whole hierarchy of associated records in a single SQL `SELECT`.

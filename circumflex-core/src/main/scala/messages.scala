@@ -16,14 +16,14 @@ Messages API offers you a convenient way to internationalize your application.
 Generally, all strings which should be presented to user are stored in
 separate `.properties`-files as suggested by [Java Internationalization][java-i18n].
 
-Circumflex Messages API goes beyound this simple approach and offers
+Circumflex Messages API goes beyond this simple approach and offers
 delegating resolving, messages grouping, parameters interpolation and formatting.
 
   [java-i18n]: http://java.sun.com/javase/technologies/core/basic/intl
 
 The usage is pretty simple: you use the `msg` method of package object `ru.circumflex.core`
 which returns an implementation of `MessageResolver` used to retrieve messages. This instance
-is also referred to as *global messages resolver*. By default, the `PropertyFileResolver`
+is also referred to as _global messages resolver_. By default, the `PropertyFileResolver`
 is used. You can set `cx.messages` configuration parameter to use your own
 `MessageResolver` implementation as global resolver.
 
