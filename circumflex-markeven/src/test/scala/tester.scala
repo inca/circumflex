@@ -1,4 +1,4 @@
-package ru.circumflex.me
+package ru.circumflex.markeven
 
 import javax.swing._
 import java.awt._

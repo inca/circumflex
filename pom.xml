@@ -18,7 +18,7 @@
     <module>circumflex-core</module>
     <module>circumflex-web</module>
     <module>circumflex-orm</module>
-    <module>circumflex-me</module>
+    <module>circumflex-markeven</module>
     <module>circumflex-docco</module>
     <module>circumflex-maven-plugin</module>
     <module>circumflex-ftl</module>

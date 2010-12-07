@@ -1,9 +1,9 @@
-package ru.circumflex.me
+package ru.circumflex.markeven
 
 import java.util.regex._
+import java.io._
 import collection.mutable.{HashMap, ListBuffer}
 import ru.circumflex.core._
-
 
 /*!# The Markeven Processor
 
@@ -12,31 +12,6 @@ It takes most ideas from [Markdown][], but has more strict rules, which lead to 
 source structure and enhanced performance.
 
   [Markdown]: http://daringfireball.net/projects/markdown/syntax
-
-The usage is pretty simple:
-
-    val text = """                                                {.scala}
-    Hello world!              {#hi.greeting.example}
-    ============
-
-    This is a test.
-    """
-    val html = Markeven(text)
-
-The example above yields following HTML:
-
-    <h1 id="hi" class="greeting example">Hello world!</h1>        {.html}
-    <p>This is a test.</p>
-
-Markeven uses `MarkevenProcessor` to perform transforming, it is instantiated upon every
-transformation. You can use your own implementation of `MarkevenProcessor`:
-
-    class MyMarkevenProcessor extends MarkevenProcessor { ... }    {.scala}
-
-    new MyMarkevenProcessor().toHtml(text)
-
-You can also set the `me.processor` configuration parameter to fully-qualified name of your
-processor implementation and continue to use `Markeven(text)`.
 
 # Syntax cheatsheet               {#syntax}
 
@@ -417,13 +392,7 @@ how link definitions could look like:
 
 Link usages would then look like this: `[my text][id1]` and `[some text][id2]`. The generated markup
 equals to the previous one.
-
 */
-object Markeven {
-  def processor = cx.instantiate[MarkevenProcessor]("me.processor", new MarkevenProcessor)
-  def apply(cs: CharSequence): String = processor.toHtml(cs)
-}
-
 class MarkevenProcessor() {
 
   val protector = new Protector
@@ -590,15 +559,14 @@ class MarkevenProcessor() {
     return new Selector(id, classes)
   }
 
-  def process(cs: CharSequence): StringEx = {
+  def process(cs: CharSequence, out: Writer): Unit = {
     val s = new StringEx(cs)
     normalize(s)
     stripLinkDefinitions(s)
     hashHtmlBlocks(s)
     hashHtmlComments(s)
     cleanEmptyLines(s)
-    val blocks = readBlocks(s)
-    return formHtml(blocks)
+    writeHtml(readBlocks(s), out)
   }
 
   def transform(s: StringEx): StringEx = {
@@ -644,9 +612,9 @@ class MarkevenProcessor() {
 
   def encodeBackslashEscapes(s: StringEx): StringEx =
     s.replaceAll(regexes.backslashChar, m => {
-    val c = m.group(0)
-    escapeMap.getOrElse(c, c)
-  })
+      val c = m.group(0)
+      escapeMap.getOrElse(c, c)
+    })
 
   def doRefLinks(s: StringEx): StringEx = s.replaceAll(regexes.refLinks, m => {
     val linkText = m.group(1)
@@ -677,17 +645,17 @@ class MarkevenProcessor() {
 
   protected def recurseSpanEnhancements(s: StringEx): StringEx =
     s.replaceAll(regexes.spanEnhancements, m => {
-    val element = m.group(1) match {
-      case "*" => "strong"
-      case "_" => "em"
-      case "~" => "del"
-      case _ => "span"
-    }
-    val content = new StringEx(m.group(2))
-    recurseSpanEnhancements(content)
-    new StringEx("<").append(element).append(">")
-        .append(content).append("</").append(element).append(">")
-  })
+      val element = m.group(1) match {
+        case "*" => "strong"
+        case "_" => "em"
+        case "~" => "del"
+        case _ => "span"
+      }
+      val content = new StringEx(m.group(2))
+      recurseSpanEnhancements(content)
+      new StringEx("<").append(element).append(">")
+          .append(content).append("</").append(element).append(">")
+    })
 
   def doTypographics(s: StringEx): StringEx = {
     s.replaceAll(regexes.ty_dash, typographics.dash)
@@ -707,18 +675,28 @@ class MarkevenProcessor() {
     protector.decode(key).getOrElse(key)
   })
 
+  def writeHtml(blocks: Seq[Block], out: Writer): Unit =
+    blocks.foreach(b => if (b != EmptyBlock) {
+      b.writeHtml(this, out)
+      out.write(newLine)
+    })
+
   def formHtml(blocks: Seq[Block], indent: Boolean = false): StringEx = {
     val result = new StringEx("")
     if (indent) level += 1
     blocks.foreach(b =>
-      if (b != EmptyBlock) result.append(b.toHtml(this).buffer).append(newLine))
+      if (b != EmptyBlock) result.append(b.toHtml(this)).append(newLine))
     if (indent) level -= 1
     return result
   }
 
   def newLine: String = "\n"
 
-  def toHtml(cs: CharSequence): String = process(cs).toString
+  def toHtml(cs: CharSequence): String = {
+    val out = new StringWriter(cs.length)
+    process(cs, out)
+    return out.toString
+  }
 
 }
 

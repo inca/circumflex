@@ -1,12 +1,52 @@
 package ru.circumflex
 
+import java.io.File
 import java.util.Random
 import java.util.regex.Pattern
 import collection.mutable.HashMap
 import core._
-import me._
+import markeven._
 
-package object me {
+/*!# The `markeven` Package
+
+Package `markeven` contains a rendering method for Markeven Processor as well as
+utility methods and constants used under the hood.
+
+You should import this package to use Circumflex Markeven in your application:
+
+    import ru.circumflex.markeven._
+
+# Rendering methods
+
+The `toHtml` method is used to perform text-to-html conversion using default `MarkevenProcessor`.
+The usage is pretty simple:
+
+    val text = """                                                {.scala}
+    Hello world!              {#hi.greeting.example}
+    ============
+
+    This is a test.
+    """
+    val html = toHtml(text)
+
+The example above yields following HTML:
+
+    <h1 id="hi" class="greeting example">Hello world!</h1>        {.html}
+    <p>This is a test.</p>
+
+You can use your custom `MarkevenProcessor` implementation with `toHtml` method: just set the
+`me.processor` configuration parameter to fully-qualified name of your processor implementation.
+*/
+package object markeven {
+
+  // Rendering stuff
+
+  def processor = cx.instantiate[MarkevenProcessor]("me.processor", new MarkevenProcessor)
+
+  def toHtml(source: CharSequence): String = processor.toHtml(source)
+
+  // Utilities
+
   val chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   val keySize = 20
   val rnd = new Random
@@ -94,7 +134,7 @@ package object me {
     }
 
     // typographic patterns
-    
+
     val ty_dash = Pattern.compile("--")
     val ty_larr = Pattern.compile("&lt;-|<-")
     val ty_rarr = Pattern.compile("-&gt;|->")

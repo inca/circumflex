@@ -1,5 +1,6 @@
-package ru.circumflex.me
+package ru.circumflex.markeven
 
+import java.io._
 import java.util.regex._
 
 class LinkDefinition(val url: StringEx, val title: StringEx) {
@@ -41,6 +42,8 @@ abstract class Block(val text: StringEx, val selector: Selector) {
         .append(">")
     return result
   }
+  def writeHtml(mp: MarkevenProcessor, out: Writer): Unit =
+    out.write(toHtml(mp).toString)
   def processContent(mp: MarkevenProcessor): StringEx = text
   def attributes = ""
 }
@@ -92,6 +95,7 @@ object EmptyBlock extends Block(new StringEx(""), new Selector()) {
   def element = ""
   override def processContent(mp: MarkevenProcessor) = text
   override def toHtml(mp: MarkevenProcessor) = text
+  override def writeHtml(mp: MarkevenProcessor, out: Writer): Unit = {}
 }
 
 class InlineHtmlBlock(text: StringEx)

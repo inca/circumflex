@@ -1,6 +1,6 @@
 package ru.circumflex.freemarker
 
-import ru.circumflex.me.Markeven
+import ru.circumflex.markeven
 import ru.circumflex.core._
 import ru.circumflex.web._
 import freemarker.template._
@@ -63,6 +63,6 @@ object MarkevenDirective extends TemplateDirectiveModel {
               body: TemplateDirectiveBody) = {
     val nested = new StringWriter
     body.render(nested)
-    env.getOut.write(Markeven(nested.toString))
+    env.getOut.write(markeven.toHtml(nested.toString))
   }
 }
