@@ -1,9 +1,10 @@
-package ru.circumflex.markeven
+package ru.circumflex
+package markeven
 
 import java.util.regex._
 import java.io._
 import collection.mutable.{HashMap, ListBuffer}
-import ru.circumflex.core._
+import org.apache.commons.io.FileUtils
 
 /*!# The Markeven Processor
 
@@ -398,12 +399,12 @@ class MarkevenProcessor() {
   val protector = new Protector
   val links = new HashMap[String, LinkDefinition]()
   var level = 0
-  val macros = new HashMap[String, CharSequence => CharSequence]()
+  val macros = new HashMap[String, StringEx => CharSequence]()
 
   def increaseIndent: Unit = level += 1
   def decreaseIndent: Unit = if (level > 0) level -= 1
 
-  def addMacro(name: String, function: CharSequence => CharSequence): this.type = {
+  def addMacro(name: String, function: StringEx => CharSequence): this.type = {
     macros += (name -> function)
     return this
   }
@@ -432,7 +433,7 @@ class MarkevenProcessor() {
 
   def hashInlineHtml(s: StringEx, pattern: Pattern, out: String => String): StringEx =
     s.replaceIndexed(pattern, m => {
-      var startIdx = m.start
+      val startIdx = m.start
       var endIdx = 0
       if (m.group(2) != null) {
         // self-closing tag, escape as is
@@ -596,7 +597,7 @@ class MarkevenProcessor() {
     if (name == null) name = ""
     if (name.length > 0)
       name = name.substring(0, name.length - 1)
-    val contents = m.group(2)
+    val contents = new StringEx(m.group(2))
     val replacement = macros.get(name).map(f => f(contents)).getOrElse(
       "<span class=\"" + name + "\">" + contents + "</span>")
     protector.addToken(replacement)
@@ -696,6 +697,21 @@ class MarkevenProcessor() {
     val out = new StringWriter(cs.length)
     process(cs, out)
     return out.toString
+  }
+
+  def renderToFile(src: File, dst: File, force: Boolean = false): Unit = {
+    if (!src.isFile)
+      throw new FileNotFoundException("File " + src.toString + " not found.")
+    if (!force && dst.isFile && src.lastModified < dst.lastModified) return
+    else {
+      val sourceText = FileUtils.readFileToString(src, "UTF-8")
+      val out = new FileWriter(dst)
+      try {
+        process(sourceText, out)
+      } finally {
+        out.close
+      }
+    }
   }
 
 }
