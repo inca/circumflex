@@ -3,6 +3,7 @@ package ru.circumflex
 import java.util.Random
 import java.util.regex.Pattern
 import collection.mutable.HashMap
+import core._
 import me._
 
 package object me {
@@ -93,5 +94,29 @@ package object me {
         outdentMap += (level -> p)
         p
     }
+
+    // typographic patterns
+    
+    val ty_dash = Pattern.compile("--")
+    val ty_larr = Pattern.compile("&lt;-|<-")
+    val ty_rarr = Pattern.compile("-&gt;|->")
+    val ty_hellip = Pattern.compile("\\.{3}")
+    val ty_trade = Pattern.compile("\\([tT][mM]\\)")
+    val ty_reg = Pattern.compile("\\([rR]\\)")
+    val ty_copy = Pattern.compile("\\([cC]\\)")
+    val ty_ldquo = Pattern.compile("(?<=\\s|\\A)(?:\"|&quot;)(?=\\S)")
+    val ty_rdquo = Pattern.compile("(?<=[\\p{L})?!.])(?:\"|&quot;)(?=[.,;?!*)]|\\s|\\Z)")
+  }
+
+  object typographics {
+    val dash = cx.get("me.dash").map(_.toString).getOrElse("&mdash;")
+    val larr = cx.get("me.larr").map(_.toString).getOrElse("&larr;")
+    val rarr = cx.get("me.rarr").map(_.toString).getOrElse("&rarr;")
+    val hellip = cx.get("me.hellip").map(_.toString).getOrElse("&hellip;")
+    val trade = cx.get("me.trade").map(_.toString).getOrElse("&trade;")
+    val reg = cx.get("me.reg").map(_.toString).getOrElse("&reg;")
+    val copy = cx.get("me.copy").map(_.toString).getOrElse("&copy;")
+    val ldquo = cx.get("me.ldquo").map(_.toString).getOrElse("&ldquo;")
+    val rdquo = cx.get("me.rdquo").map(_.toString).getOrElse("&rdquo;")
   }
 }
