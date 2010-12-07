@@ -9,7 +9,7 @@ import collection.Iterator
 The `Matcher` trait and the `MatchResult` class are the cornerstone of request routing.
 
 Matchers define mechanisms which perform request matching. They yield zero or more
-match results on successfull match and are used in routes definition.
+match results on successful match and are used in routes definition.
 
 Match results are subsequently used inside matched route's block.
 */
@@ -106,7 +106,7 @@ matchers.
 
 It can be used either with regular expressions or with String expressions.
 
-When using regular expressions, if match is successfull, the matched groups can be
+When using regular expressions, if match is successful, the matched groups can be
 accessed using the `params` method of corresponding `MatchResult`.
 
 When using String expressions, following processing occurs:
@@ -124,7 +124,7 @@ When using String expressions, following processing occurs:
   for matching (for example, `get("/files/?")` matches both `/files` and `/files/`
   requests).
 
-Then, if match is successfull, named parameters are accessible by their name from
+Then, if match is successful, named parameters are accessible by their name from
 the corresponding `MatchResult`. All other parameters are accessible via the `params`
 method (note that named parameters are groups too, so they appear inside `params`
 and have their index as well).

@@ -7,7 +7,7 @@ import javax.servlet.http.Cookie
 HTTP is stateless protocol. [RFC2965](http://www.faqs.org/rfcs/rfc2965.html) describes
 a way for a web application to send state information to the user agent and for the user
 agent to return the state information to the origin web application. This state information
-is often referred to as *cookie*.
+is often referred to as _cookie_.
 
 Circumflex Web Framework helps you set response cookies and access request cookies
 throughout your application using case class `HttpCookie`. It is mutable and dead simple.

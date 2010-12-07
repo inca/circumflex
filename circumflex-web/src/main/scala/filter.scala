@@ -92,19 +92,19 @@ class CircumflexFilter extends Filter {
 
   The lifecycle of `CircumflexFilter` involves following actions:
 
-    1. try to serve static context and immediately exit on success;
-    2. initialize `Context` and fill it with following variables:
+  1. try to serve static context and immediately exit on success;
+  2. initialize `Context` and fill it with following variables:
 
-      * `cx.request` will hold current `HttpRequest`;
-      * `cx.response` will hold current `HttpResponse`;
-      * `cx.filterChain` will hold current `FilterChain`;
-      * other variables from `prepareContext`;
+    * `cx.request` will hold current `HttpRequest`;
+    * `cx.response` will hold current `HttpResponse`;
+    * `cx.filterChain` will hold current `FilterChain`;
+    * other variables from `prepareContext`;
 
-    3. the main router is instantiated (it's class should be specified via the
-    `cx.router` configuration parameter;
-    4. depending on the result of router's execution, either the response or
-    the error is flushed to the client;
-    5. the `Context` is destroyed.
+  3. the main router is instantiated (it's class should be specified via the
+  `cx.router` configuration parameter;
+  4. depending on the result of router's execution, either the response or
+  the error is flushed to the client;
+  5. the `Context` is destroyed.
 
   */
   def doFilter(req: ServletRequest,
@@ -142,14 +142,14 @@ class CircumflexFilter extends Filter {
   /*! The `prepareContext` method populates current context with various useful
   shortcuts (from `web` package):
 
-    * `param` -- the `param` object;
-    * `request` -- the `request` object;
-    * `session` -- the `session` object;
-    * `cookies` -- the `cookies` object;
-    * `headers` -- the `headers` object;
-    * `flash` -- the `flash` object;
-    * `cfg` -- the `cx` object;
-    * `msg` -- the `msg` object.
+  * `param` -- the `param` object;
+  * `request` -- the `request` object;
+  * `session` -- the `session` object;
+  * `cookies` -- the `cookies` object;
+  * `headers` -- the `headers` object;
+  * `flash` -- the `flash` object;
+  * `cfg` -- the `cx` object;
+  * `msg` -- the `msg` object.
 
   If you use custom filter implementation, you are can override this method
   to populate current context with global variables of your application.
@@ -169,9 +169,10 @@ class CircumflexFilter extends Filter {
 
   `CircumflexFilter` allows you to override following callbacks:
 
-    * `onNoMatch` is executed if no routes match current request;
-    * `onNotFound` is executed if a `FileNotFoundException` is thrown from a router;
-    * `onRouterError` is executed if a general exception is thrown from a router;
+  * `onNoMatch` is executed if no routes match current request;
+  * `onNotFound` is executed if a `FileNotFoundException` is thrown from a router;
+  * `onRouterError` is executed if a general exception is thrown from a router;
+
   */
 
   def onNoMatch(): Unit = {

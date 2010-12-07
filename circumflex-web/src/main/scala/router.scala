@@ -6,7 +6,7 @@ import xml.Node
 
 /*!# Routing
 
-Circumflex Web Framework is designed around the *route* concept. A route is an HTTP
+Circumflex Web Framework is designed around the _route_ concept. A route is an HTTP
 method paired with some matching mechanism and attached block.
 
 Each route defines a `Matcher` which describes the conditions a request must satisfy

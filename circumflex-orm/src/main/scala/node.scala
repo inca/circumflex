@@ -149,8 +149,8 @@ class ProxyNode[PK, R <: Record[PK, R]](protected[orm] var node: RelationNode[PK
 /*!# Joins
 
 Relations can be joined within one query to allow applying restrictions on
-associated relations. The `JoinNode` class represends a join between two relations.
-We stick to a general convention called *left associativity*: two joined nodes
+associated relations. The `JoinNode` class represents a join between two relations.
+We stick to a general convention called _left associativity_: two joined nodes
 with equal left nodes are considered equal:
 
     (ci JOIN co) == ci

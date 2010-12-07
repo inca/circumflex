@@ -30,12 +30,12 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   /*!## Record State
 
   Records in relational theory are distinguished from each other by the value of their
-  *primary key*. You should specify what field hold the primary key of your record
+  _primary key_. You should specify what field hold the primary key of your record
   by implementing the `PRIMARY_KEY` method.
 
   The `transient_?` method indicates, whether the record was not persisted into a database
   yet or it was. The default logic is simple: if the primary key contains `null` then the
-  record is *transient* (i.e. not persisted), otherwise the record is considered persistent.
+  record is _transient_ (i.e. not persisted), otherwise the record is considered persistent.
 
   The `relation` method points to the relation from which a record came or to which it
   should go. In general this method should point to the companion object. However, if
