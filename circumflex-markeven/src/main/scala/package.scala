@@ -102,7 +102,7 @@ package object markeven {
       Pattern.CASE_INSENSITIVE)
     val tableCellSplit = Pattern.compile("\\|")
     val tableSeparatorLine = Pattern.compile("^[- :|]+$")
-    val macro = Pattern.compile("(?<=\\A|\\s)\\[\\[([a-zA-Z0-9_-]+:)?(.+?)\\]\\](?=\\Z|\\s)", Pattern.DOTALL)
+    val macro = Pattern.compile("\\[\\[([a-zA-Z0-9_-]+:)?(.+?)\\]\\]", Pattern.DOTALL)
     val codeSpan = Pattern.compile("(`+)(.+?)\\1")
     val protectKey = Pattern.compile("!\\}[0-9a-zA-Z]{" + keySize + "}")
     val backslashChar = Pattern.compile("\\\\(\\S)")
