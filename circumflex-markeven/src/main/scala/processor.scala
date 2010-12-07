@@ -707,7 +707,6 @@ class MarkevenProcessor() {
       val sourceText = FileUtils.readFileToString(src, "UTF-8")
       val out = new FileWriter(dst)
       try {
-        process(sourceText, out)
       } finally {
         out.close
       }
