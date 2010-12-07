@@ -57,10 +57,12 @@ abstract class NestedMarkupBlock(text: StringEx, selector: Selector)
     // read nested blocks
     val blocks = mp.readBlocks(text)
     // do not wrap single paragraph
-    if (blocks.size == 1 && blocks(0).isInstanceOf[ParagraphBlock])
+    if (blocks.size == 1 && unwrapBlock_?(blocks(0)))
       return blocks(0).processContent(mp)
     else return new StringEx(mp.newLine).append(mp.formHtml(blocks, true)).append(mp.currentIndent)
   }
+
+  def unwrapBlock_?(block: Block): Boolean = block.isInstanceOf[ParagraphBlock]
 }
 
 abstract class ListBlock(text: StringEx, selector: Selector, val baseline: Int)
@@ -147,6 +149,8 @@ class ListItemBlock(text: StringEx, selector: Selector)
     extends NestedMarkupBlock(text, selector) {
   def trimPattern = None
   def element = "li"
+  override def unwrapBlock_?(block: Block): Boolean =
+    block.isInstanceOf[ParagraphBlock] || block.isInstanceOf[SectionBlock]
 }
 
 class BlockquoteBlock(text: StringEx, selector: Selector)

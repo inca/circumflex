@@ -15,7 +15,7 @@ source structure and enhanced performance.
 
 The usage is pretty simple:
 
-    val text = """
+    val text = """                                                {.scala}
     Hello world!              {#hi.greeting.example}
     ============
 
@@ -25,13 +25,13 @@ The usage is pretty simple:
 
 The example above yields following HTML:
 
-    <h1 id="hi" class="greeting example">Hello world!</h1>
+    <h1 id="hi" class="greeting example">Hello world!</h1>        {.html}
     <p>This is a test.</p>
 
 Markeven uses `MarkevenProcessor` to perform transforming, it is instantiated upon every
 transformation. You can use your own implementation of `MarkevenProcessor`:
 
-    class MyMarkevenProcessor extends MarkevenProcessor { ... }
+    class MyMarkevenProcessor extends MarkevenProcessor { ... }    {.scala}
 
     new MyMarkevenProcessor().toHtml(text)
 
@@ -44,19 +44,19 @@ processor implementation and continue to use `Markeven(text)`.
 
 Markeven recognizes following block-level elements:
 
+  * [paragraphs](#p);
+  * [sections (or divs)](#div);
   * [headings](#hX);
   * [preformatted code blocks](#pre);
   * [ordered and unordered lists](#ol-ul);
   * [tables](#table);
   * [blockquotes](#blockquote);
-  * [sections](#div);
   * [horizontal rulers](#hr);
-  * [paragraphs](#p);
-  * inline HTML.
+  * [inline HTML](#inline-html)
 
 Block elements are always delimited by two or more line ends (`\n\n`):
 
-    This is a paragraph
+    This is a paragraph                                       {.no-highlight}
 
         this is a code block
 
@@ -66,11 +66,53 @@ Block elements are always delimited by two or more line ends (`\n\n`):
 This behavior is different from [Markdown][], which interprets last block as two blocks: paragraph
 and code block.
 
-## Headings                           {#hX}
+### Paragraphs                         {#p}
+
+A paragraph is simply one or more lines of text. Multiple lines are joined into a single paragraph:
+
+    Paragraph one.                                             {.no-highlight}
+
+    Paragraph two.
+    More text.
+
+    Paragraph three.
+    More text.
+    Even more text.
+
+Following markup will be generated:
+
+    <p>Paragraph one.</p>                                      {.html}
+    <p>Paragraph two. More text.</p>
+    <p>Paragraph three. More text. Even more text.</p>
+
+Like in Markdown, if you wish to place linebreak, leave two or more space characters at the end of
+the line.
+
+### Sections (divs)                    {#div}
+
+Section is a block which is rendered into an HTML `div` element. Each line of a section must start
+with a pipe `|` character:
+
+    | This is a section with two paragraphs.                      {.no-highlight}
+    | I am the first one.
+    |
+    | And I am the second one.
+
+Following markup will be generated:
+
+    <div>                                                              {.html}
+      <p>This is a section with two paragraphs.  I am the first one.</p>
+      <p>And I am the second one.</p>
+    </div>
+
+Sections are frequently used in conjunction with [block selectors](#selectors) by web designers
+to achieve certain effects like styling, animating, etc.
+
+### Headings                                    {#hX}
 
 Markeven supports both ATX and Setex styles proposed by Markdown:
 
-    This is first-level heading
+    This is first-level heading                                        {.no-highlight}
     ===========================
 
     This is second-level heading
@@ -90,39 +132,234 @@ Markeven supports both ATX and Setex styles proposed by Markdown:
 
 Unline Markdown, Markeven do not allow closing `#`s, so following example:
 
-    # This is a heading which ends with #
+    # This is a heading which ends with #                               {.no-highlight}
 
 will be transformed into:
 
-    <h1>This is a heading which ends with #</h1>
+    <h1>This is a heading which ends with #</h1>                        {.html}
 
-## Preformatted code blocks                    {#pre}
+### Preformatted code blocks                    {#pre}
 
 Code blocks are used to write about programming or markup stuff. Their contents is usually
 rendered using monospaced font and is interpreted literally. To produce a code block, indent
 every line of block with at least 4 spaces or 1 tab:
 
-    Here's some code:
+    Here's some code:                                                   {.no-highlight}
     
         println("Hello world!")
 
 Markeven will produce:
 
-    <p>Here's some code:</p>
+    <p>Here's some code:</p>                                            {.html}
     <pre><code>println("Hello world!")
     </code></pre>
 
-## Ordered and unordered lists                 {#ol-ul}
+### Ordered and unordered lists                 {#ol-ul}
 
 Lists in Markeven have strict rules which help you build highly structured documents.
 
-The first thing to know about is _list marker_. 
+The first thing to know about is _a list marker_. Ordered lists _must_ start with `1.`
+followed by at least one space. Unordered lists _must_ start with `*` followed by
+at least one space. Every subsequent list item must start with the same marker (a number
+followed by a dot and whitespace in case of ordered lists):
 
-## Block selectors
+    1. list item 1                                                     {.no-highlight}
+    2. list item 2
 
-Each block can optionally have a _selector_. It is used to add `id` and `class` HTML attributes to blocks:
+    * list item 1
+    * list item 2
 
-    I have an id.                     {#para1}
+Here is generated markup for the above snippet:
+
+    <ol>                                                               {.html}
+      <li>list item 1</li>
+      <li>list item 2</li>
+    </ol>
+    <ul>
+      <li>list item 1</li>
+      <li>list item 2</li>
+    </ul>
+
+Lists items can contain another block-level elements. To interpret whitespace-sensitive blocks
+properly, you should maintain the same indentation inside list items. We refer to this indentation
+as _list item baseline_:
+
+    *  This paragraph is under first list item.                          {.no-highlight}
+
+       This paragraph is also under first list item, because
+       it is properly indented.
+
+    *     This list item has another baseline.
+
+          So we should indent our second paragraph accordingly.
+
+    This paragraph, however, is outside list.
+
+Following markup will be generated:
+
+    <ul>                                                                      {.html}
+      <li>
+        <p>This paragraph is under first list item.</p>
+        <p>This paragraph is also under first list item, because it is properly indented.</p>
+      </li>
+      <li>
+        <p>This list item has another baseline.</p>
+        <p>So we should indent our second paragraph accordingly.</p>
+      </li>
+    </ul>
+    <p>This paragraph, however, is outside list.</p>
+
+Nested lists follow the same rules:
+
+    1. List 1 item 1                                                        {.no-highlight}
+
+    2. List 1 item 2
+
+       1. List 2 item 1
+
+       2. List 2 item 2
+
+    3. List 1 item 3
+
+Codeblocks can also be nested inside list items. Each line of a code block must be indented with
+at least 4 spaces or 1 tab relatively to list item's baseline:
+
+    1.  Code inside list item:                                             {.no-highlight}
+
+            def sayHello = {
+              println("Hello world!")
+            }
+
+You can also add a visual guide indicating current list item baseline using the pipe `|` character.
+It can be useful in cases when the list item is long and its content is complex:
+
+    1.   | This is a long and complex list item.                           {.no-highlight}
+         |
+         |    code block
+         |
+         |  * another list
+         |  * ...
+
+    2. And that's it.
+
+### Tables                                        {#table}
+
+Markeven supports simple syntax for tables:
+
+    ---------------------------------------------                          {.no-highlight}
+    |   Column 1  |   Column 2   |   Column 3   |
+    --------------|--------------|---------------
+    | one         | two          | three        |
+    | four        | five         | six          |
+    ---------------------------------------------
+
+Here's the markup:
+
+    <table>                                                              {.html}
+      <thead>
+        <tr>
+          <th>Column 1</th>
+          <th>Column 2</th>
+          <th>Column 3</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>one</td>
+          <td>two</td>
+          <td>three</td>
+        </tr>
+        <tr>
+          <td>four</td>
+          <td>five</td>
+          <td>six</td>
+        </tr>
+      </tbody>
+    </table>
+
+As you can see, the first and the last line of table should consist of minus `-` characters
+only. The only exception to this rule is that the first line can optionally end with `>`
+character. If `>` character is there, the width of table will expand to its maximum.
+
+Cells are separated by the pipe `|` character, you can omit leading and trailing pipes.
+Table header is separated from table body by the separator line. This line can optionally
+contain semicolon `:` characters to express column alignment: a semicolon to the left side
+means left alignment, a semicolon to the right side means right alignment, two semicolons
+at both ends means center alignment:
+
+    ---------------------------------------------                          {.no-highlight}
+    |   Column 1  |   Column 2   |   Column 3   |
+    -------------:|:------------:|:--------------
+    |         one |      two     | three        |
+    |        four |     five     | six          |
+    ---------------------------------------------
+
+You can also omit the header, in this case you cannot specify column alignment with semicolons:
+
+    --------------------                                                   {.no-highlight}
+    one  | two  | three
+    --------------------
+
+### Blockquotes                                   {#blockquote}
+
+Blockquotes are similar to [sections](#sections), but they are rendered into HTML `blockquote`
+element. Each line of a blockquote must start with `>` character. Like sections, blockquotes
+can contain nested block elements:
+
+    > This is blockquote.                                               {.no-highlight}
+    >
+    > > This blockquote is nested.
+    >
+    > That's it.
+
+Here's generated markup:
+
+    <blockquote>                                                          {.html}
+      <p>This is blockquote.</p>
+      <blockquote>This blockquote is nested.</blockquote>
+      <p>That's it.</p>
+    </blockquote>
+
+### Horizontal rulers                             {#hr}
+
+A horizontal ruler is rendered from a block which contains three or more minus `-` characters:
+
+    This is some text.                                                  {.no-highlight}
+
+    ---
+
+    This is some more text.
+
+Following markup will be produced by Markeven:
+
+    <p>This is some text.</p>                                           {.html}
+    <hr/>
+    <p>This is some more text.</p>
+
+No other syntaxes for `<hr/>` are supported.
+
+### Inline HTML                                   {#inline-html}
+
+Markeven allows you to place HTML elements right inside your text. Their content won't get processed:
+
+    <div>                                                               {.no-highlight}
+
+        This text won't get transformed into a code block
+
+    </div>
+
+        But this will.
+
+There are no strict rules about inline HTML. The only important thing is that your markup should be
+correct (tags closed and properly nested). Markeven does not have the ability to "fix" wrong HTML
+markup yet :)
+
+### Block selectors                               {#selectors}
+
+Each block can optionally have a _selector_. It is used to add `id` and `class` HTML attributes
+to blocks:
+
+    I have an id.                     {#para1}                        {.no-highlight}
 
     I have two classes.               {.class1.class2}
 
@@ -130,18 +367,28 @@ Each block can optionally have a _selector_. It is used to add `id` and `class` 
 
 The example above will be transformed into a following HTML snippet:
 
-    <p id="para1">I have an id.</p>
+    <p id="para1">I have an id.</p>                                   {.html}
     <p class="class1 class2">I have two classes.</p>
     <p id="para3" class="class1">I have an id and a class.</p>
 
-The most common use of selectors is to assign `id` attribute so that they can be used in [links](#links):
+The most common use of selectors is to assign `id` attribute so that they can be used in
+[links](#links):
 
-    Now I can be referenced by id!        {#mypara}
+    Now I can be referenced by id!        {#mypara}                  {.no-highlight}
 
-    Look! I can reference [another paragraph](#para).
+    Look! I can reference [another paragraph](#mypara).
 
 The selector expression is enclosed into curly braces and must be placed at the end of the first line
 of the block (no trailing whitespace allowed!).
+
+## Text enhancements
+
+Inside block level elements following text enhancements occur:
+
+  * text surrounded with backtick `\`` characters is transformed into `code` span;
+  * text surrounded with underscores `_` becomes `em` (emphasized);
+  * text surrounded with asterisks `*` becomes `strong` (strongly emphasized);
+  * text surrounded with asterisks `~` becomes `del` (deleted);
 
 */
 object Markeven {
@@ -372,8 +619,9 @@ class MarkevenProcessor() {
 
   def doRefLinks(s: StringEx): StringEx = s.replaceAll(regexes.refLinks, m => {
     val linkText = m.group(1)
-    var id = m.group(2).trim.toLowerCase
+    var id = m.group(2)
     if (id == "") id = linkText
+    id = id.trim.toLowerCase
     val replacement = links.get(id)
         .map(ld => ld.toLink(doSpanEnhancements(new StringEx(linkText))))
         .getOrElse(m.group(0))
