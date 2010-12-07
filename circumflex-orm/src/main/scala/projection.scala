@@ -4,11 +4,11 @@ import java.sql.ResultSet
 
 /*!# Projections
 
-In relational algebra a *projection* is a function which describes a subset of
+In relational algebra a _projection_ is a function which describes a subset of
 columns returned from an SQL query. In Circumflex ORM instances of the `Projection`
 trait are used to process `ResultSet` and determine the result type of SQL queries.
 
-We distinguish between *atomic* and *composite* projections: the former ones
+We distinguish between _atomic_ and _composite_ projections: the former ones
 span across only one column of `ResultSet`, the latter ones contain a list of internal
 projections and therefore span across multiple columns.
 

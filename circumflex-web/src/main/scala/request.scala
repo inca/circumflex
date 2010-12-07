@@ -143,7 +143,7 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   /*!## Headers
 
-  Request headers contain operational information about the requst.
+  Request headers contain operational information about the request.
   Circumflex Web Framework lets you access request headers via the `headers` object.
   */
   object headers extends Map[String, String] {
@@ -289,11 +289,11 @@ class HttpRequest(val raw: HttpServletRequest) {
 
     Commons FileUpload offers you two approaches to deal with `multipart/form-data` requests:
 
-      * *traditional API* relies on `FileItemFactory` which can be configured to keep small files
+      * _traditional API_ relies on `FileItemFactory` which can be configured to keep small files
       in memory and to store larger files on the disk, you set threshold sizes and operate with
       convenient `FileItem` objects, which could be queried for different information, like the
       name of the corresponding field, it's size in bytes, content type, etc.
-      * *streaming API* does not use intermediate storage facilities and allows you to work with
+      * _streaming API_ does not use intermediate storage facilities and allows you to work with
       `FileItemStream` objects, which show better performance and lower memory usage.
 
     Circumflex Web Framework provides support for both FileUpload styles via `parseFileItems` and

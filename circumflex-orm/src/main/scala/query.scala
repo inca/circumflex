@@ -7,8 +7,8 @@ import ru.circumflex.core._
 
 SQL and DML queries form the heart of Circumflex ORM DSL.
 
-Common features implemented in the `Query` trait are *named parameters*
-which allow query reuse and *ensuring alias uniqueness* which prevents
+Common features implemented in the `Query` trait are _named parameters_
+which allow query reuse and _ensuring alias uniqueness_ which prevents
 implicit relation node aliases from colliding within a single query.
 
 The `SQLQuery` trait represents data-retrieval queries which usually employ
