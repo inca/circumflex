@@ -118,7 +118,9 @@ package object markeven {
 
     // deterministic patterns
 
-    val d_code = Pattern.compile("(?: {4,}.*\\n?)+", Pattern.MULTILINE)
+    val d_code = Pattern.compile("(?: {4,}.*\\n?)+")
+    val d_div = Pattern.compile("(?: {0,3}\\|.*\\n?)+")
+    val d_blockquote = Pattern.compile("(?: {0,3}>.*\\n?)+")
     val d_hr = Pattern.compile("^-{3,} *\\n?$")
     val d_ol = Pattern.compile("^\\d+\\. .*", Pattern.DOTALL)
     val d_table = Pattern.compile("^-{3,}>?\\n.+\\n *-{3,}\\n?$", Pattern.DOTALL)

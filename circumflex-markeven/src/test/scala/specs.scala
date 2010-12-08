@@ -16,7 +16,9 @@ object MarkevenSpec extends Specification {
       val textFile = new File(this.getClass.getResource("/" + name + ".text").toURI)
       val htmlFile = new File(this.getClass.getResource("/" + name + ".html").toURI)
       val text = new MarkevenProcessor().toHtml(FileUtils.readFileToString(textFile, "UTF-8")).trim
-      val html = FileUtils.readFileToString(htmlFile, "UTF-8").trim
+      val html = FileUtils.readFileToString(htmlFile, "UTF-8")
+          .trim
+          .replaceAll("\\r\\n|\\r", "\n")
       val diffIndex = StringUtils.indexOfDifference(text, html)
       val diff = StringUtils.difference(text, html)
       (diffIndex == -1,

@@ -503,8 +503,14 @@ class MarkevenProcessor() {
         c.startsWith(" ") || c.matches(regexes.d_ol)
       })
     // assume blockquote and section
-    if (s.startsWith("> ")) return new BlockquoteBlock(s, selector)
-    if (s.startsWith("| ")) return new SectionBlock(s, selector)
+    if (s.startsWith(">"))
+      if (s.matches(regexes.d_blockquote)) {
+        return new BlockquoteBlock(s, selector)
+      } else return new ParagraphBlock(s, selector)
+    if (s.startsWith("|"))
+      if (s.matches(regexes.d_div)) {
+        return new SectionBlock(s, selector)
+      } else return new ParagraphBlock(s, selector)
     // assume table, headings and hrs
     s.matches(regexes.d_table, m => {
       new TableBlock(s, selector)
