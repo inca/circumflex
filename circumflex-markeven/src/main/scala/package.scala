@@ -122,7 +122,6 @@ package object markeven {
     val d_div = Pattern.compile("(?: {0,3}\\|.*\\n?)+")
     val d_blockquote = Pattern.compile("(?: {0,3}>.*\\n?)+")
     val d_hr = Pattern.compile("^-{3,} *\\n?$")
-    val d_ol = Pattern.compile("^\\d+\\. .*", Pattern.DOTALL)
     val d_table = Pattern.compile("^-{3,}>?\\n.+\\n *-{3,}\\n?$", Pattern.DOTALL)
     val d_heading = Pattern.compile("^(\\#{1,6}) (.*) *\\#*$", Pattern.DOTALL)
     val d_h1 = Pattern.compile("^(.+)\\n=+\\n?$", Pattern.DOTALL)

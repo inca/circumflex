@@ -214,17 +214,39 @@ class StringEx(var buffer: StringBuilder) extends CharSequence {
 }
 
 class ChunkIterator(val chunks: Seq[StringEx]) {
-  private var index = -1
-  def hasNext: Boolean = (index + 1) < chunks.length
+  private var _index = -1
+  def index = _index
+  def hasNext: Boolean = (_index + 1) < chunks.length
   def next: StringEx = {
-    index += 1
-    return chunks(index)
+    _index += 1
+    return chunks(_index)
   }
-  def peek: StringEx = chunks(index + 1)
+  def peek: StringEx = chunks(_index + 1)
   def reset: this.type = {
-    index = -1
+    _index = -1
     return this
   }
-  def stepBack: Unit = if (index > -1) index -= 1
+  def stepBack: Unit = if (_index > -1) _index -= 1
   def size = chunks.size
+}
+
+class CharIterator(val chunk: StringEx) {
+  private var _index = -1
+  def index = _index
+  def hasNext: Boolean = (_index + 1) < chunk.length
+  def next: Char = {
+    _index += 1
+    return chunk.charAt(_index)
+  }
+  def peek: Char = chunk.charAt(_index + 1)
+  def reset: this.type = {
+    _index = -1
+    return this
+  }
+  def startFrom(i: Int): this.type = {
+    _index = i - 1
+    return this
+  }
+  def stepBack: Unit = if (_index > -1) _index -= 1
+  def size = chunk.length
 }
