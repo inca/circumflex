@@ -218,6 +218,31 @@ It can be useful in cases when the list item is long and its content is complex:
 
     2. And that's it.
 
+Note that list items belong to the same list only if their markers are equaly indented. Following example
+shows two different lists:
+
+      * List one item one                                                   {.no-highlight}
+
+      * List one item two
+
+    * List two item one
+
+    * List two item two
+
+    And a paragraph.
+
+Here's the markup:
+
+    <ul>                                                                     {.html}
+      <li>List one item one</li>
+      <li>List one item two</li>
+    </ul>
+    <ul>
+      <li>List two item one</li>
+      <li>List two item two</li>
+    </ul>
+    <p>And a paragraph.</p>
+
 ### Tables                                        {#table}
 
 Markeven supports simple syntax for tables:
@@ -495,13 +520,11 @@ class MarkevenProcessor() {
     if (s.length == 0) return EmptyBlock
     // assume unordered list and ordered list
     if (s.startsWith("* "))
-      return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent), c => {
-        c.startsWith("* ") || c.startsWith(" ")
-      })
+      return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent),
+        c => ul_?(c, indent))
     if (s.startsWith("1. "))
-      return processComplexChunk(chunks, new OrderedListBlock(s, selector, indent), c => {
-        c.startsWith(" ") || c.matches(regexes.d_ol)
-      })
+      return processComplexChunk(chunks, new OrderedListBlock(s, selector, indent),
+        c => ol_?(c, indent))
     // assume blockquote and section
     if (s.startsWith(">"))
       if (s.matches(regexes.d_blockquote)) {
@@ -538,11 +561,40 @@ class MarkevenProcessor() {
     while (chunks.hasNext && !eob) {
       val c = chunks.peek
       if (accept(c)) {
-        block.text.append("\n\n").append(c.buffer)
+        block.text.append("\n\n").append(c)
         chunks.next
       } else eob = true
     }
     return block
+  }
+
+  def ol_?(s: StringEx, indent: Int): Boolean = {
+    val i = new CharIterator(s)
+    while (i.hasNext && i.index < indent - 1)
+      if (i.next != ' ') return false
+    if (!i.hasNext) return false
+    // first char must be digit or space
+    var c = i.next
+    if (c == ' ') return true
+    if (!c.isDigit) return false
+    // look for more digits or `. `
+    while(i.hasNext) {
+      c = i.next
+      if (c == '.' && i.hasNext && i.peek == ' ') return true
+      else if (!c.isDigit) return false
+    }
+    return false
+  }
+
+  def ul_?(s: StringEx, indent: Int): Boolean = {
+    val i = new CharIterator(s)
+    while (i.hasNext && i.index < indent - 1)
+      if (i.next != ' ') return false
+    if (!i.hasNext) return false
+    // first char must be asterisk or space
+    var c = i.next
+    if (c == ' ') return true
+    return (c == '*' && i.hasNext && i.peek == ' ')
   }
 
   /**
