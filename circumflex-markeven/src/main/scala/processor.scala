@@ -656,8 +656,7 @@ class MarkevenProcessor() {
     if (name.length > 0)
       name = name.substring(0, name.length - 1)
     val contents = new StringEx(m.group(2))
-    val replacement = macros.get(name).map(f => f(contents)).getOrElse(
-      "<span class=\"" + name + "\">" + contents + "</span>")
+    val replacement = macros.get(name).map(f => f(contents)).getOrElse(m.group(0))
     protector.addToken(replacement)
   })
 
