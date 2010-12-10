@@ -636,8 +636,8 @@ class MarkevenProcessor() {
     encodeChars(s)
     doCodeSpans(s)
     encodeBackslashEscapes(s)
-    doRefLinks(s)
     doInlineLinks(s)
+    doRefLinks(s)
     doSpanEnhancements(s)
     return unprotect(s)
   }
