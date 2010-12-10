@@ -4,7 +4,7 @@
   <resources>
     <resource>src/main/resources/Messages.properties</resource>
     <resource>src/main/resources/cx.properties</resource>
-    <resource>src/main/resources/log4j.xml</resource>
+    <resource>src/main/resources/logback.xml</resource>
     <resource>src/main/scala/main.scala</resource>
     <resource>src/main/webapp/WEB-INF/web.xml</resource>
     <resource>src/main/webapp/static/css/main.css</resource>
