@@ -45,18 +45,6 @@
       <li><strong>resources/cx.properties</strong>
         – Circumflex configuration parameters are specified here, by default it only contains the
         <em>cx.router</em> parameter, which points to your application Request Router class;</li>
-      <li><strong>resources/log4j.xml</strong>
-        – logger configuration for your project, you may use it to obtain more verbose information
-        about the application's runtime activity, for example the following changes:
-        <pre>${'
-<category name="ru.circumflex.core">
-  <priority value="debug"/>
-</category>'?html}</pre>
-        <p>will result in every incoming request being logged to your console.
-           If you are not familiar with <em>Apache log4j</em>, take a moment to observe the
-          <a href="http://logging.apache.org/log4j/1.2/manual.html" target="_blank">
-            Short introduction to log4j</a> article.</p>
-      </li>
     </ul>
   </li>
 </ul>
