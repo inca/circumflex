@@ -92,8 +92,8 @@ package object markeven {
     val blocks = Pattern.compile("\\n{2,}")
     val lines = Pattern.compile("\\n")
     val htmlNameExpr = "[a-z][a-z0-9\\-_:.]*?\\b"
-    val inlineHtmlBlockStart = Pattern.compile("^ {0,3}<(" + htmlNameExpr + ").*?(/)?>",
-      Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+    val inlineHtmlBlockStart = Pattern.compile("(?<=\\n{2,}|\\A) {0,3}<(" + htmlNameExpr + ").*?(/)?>",
+      Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
     val inlineHtmlSpanStart = Pattern.compile("<(" + htmlNameExpr + ").*?(/)?>",
       Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
     val linkDefinition = Pattern.compile("^ {0,3}\\[(.+?)\\]: *(\\S.*?)" +

@@ -679,8 +679,12 @@ class MarkevenProcessor() {
     var id = m.group(2)
     if (id == "") id = linkText
     id = id.trim.toLowerCase
+    val linkContent = new StringEx(linkText)
+    // there can be protected content inside linktexts, so decode them first
+    unprotect(linkContent)
+    doSpanEnhancements(linkContent)
     val replacement = links.get(id)
-        .map(ld => ld.toLink(doSpanEnhancements(new StringEx(linkText))))
+        .map(ld => ld.toLink(linkContent))
         .getOrElse(m.group(0))
     protector.addToken(replacement)
   })
@@ -690,8 +694,12 @@ class MarkevenProcessor() {
     val url = m.group(2)
     var title = m.group(4)
     if (title == null) title = ""
+    val linkContent = new StringEx(linkText)
+    // there can be protected content inside linktexts, so decode them first
+    unprotect(linkContent)
+    doSpanEnhancements(linkContent)
     val replacement = new LinkDefinition(new StringEx(url), new StringEx(title))
-        .toLink(doSpanEnhancements(new StringEx(linkText)))
+        .toLink(doSpanEnhancements(new StringEx(linkContent)))
     protector.addToken(replacement)
   })
 
