@@ -162,14 +162,44 @@ class NativeSQLQuery[T](projection: Projection[T],
   def toSql = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
 }
 
-class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
+/*! `SearchQuery` represents a query with a `WHERE` clause. */
+trait SearchQuery extends Query {
+  protected var _where: Predicate = EmptyPredicate
+
+  def where: Predicate = this._where
+  def WHERE(predicate: Predicate): this.type = {
+    this._where = predicate
+    return this
+  }
+  def WHERE(expression: String, params: Pair[String,Any]*): this.type =
+    WHERE(prepareExpr(expression, params: _*))
+
+  /**
+   * Adds specified `predicates` to restrictions list.
+   */
+  def add(predicates: Predicate*): this.type = {
+    where match {
+      case EmptyPredicate =>
+        this._where = AND(predicates: _*)
+      case p: AggregatePredicate if (p.operator == dialect.and) =>
+        p.add(predicates: _*)
+      case p =>
+        this._where = _where.AND(predicates: _*)
+    }
+    return this
+  }
+  def add(expression: String, params: Pair[String, Any]*): this.type =
+    add(prepareExpr(expression, params: _*))
+}
+
+class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
+    with SearchQuery {
 
   // Commons
-
   protected var _distinct: Boolean = false
   protected var _auxProjections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_, _]] = Nil
-  protected var _where: Predicate = EmptyPredicate
+
   protected var _having: Predicate = EmptyPredicate
   protected var _groupBy: Seq[Projection[_]] = Nil
   protected var _setOps: Seq[Pair[SetOperation, SQLQuery[T]]] = Nil
@@ -177,7 +207,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
   protected var _limit: Int = -1
   protected var _offset: Int = 0
 
-  def parameters: Seq[Any] = _where.parameters ++
+  def parameters: Seq[Any] = where.parameters ++
       _having.parameters ++
       _setOps.flatMap(p => p._2.parameters) ++
       _orders.flatMap(_.parameters)
@@ -212,33 +242,6 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection) {
       case n: RelationNode[_, _] if (n.alias == "this") => node.AS(nextAlias)
       case n => n
     }
-
-  // WHERE clause
-
-  def where: Predicate = this._where
-  def WHERE(predicate: Predicate): Select[T] = {
-    this._where = predicate
-    return this
-  }
-  def WHERE(expression: String, params: Pair[String,Any]*): Select[T] =
-    WHERE(prepareExpr(expression, params: _*))
-
-  /**
-   * Adds specified `predicates` to restrictions list.
-   */
-  def add(predicates: Predicate*): Select[T] = {
-    where match {
-      case EmptyPredicate =>
-        this._where = AND(predicates: _*)
-      case p: AggregatePredicate if (p.operator == dialect.and) =>
-        p.add(predicates: _*)
-      case p =>
-        this._where = _where.AND(predicates: _*)
-    }
-    return this
-  }
-  def add(expression: String, params: Pair[String, Any]*): Select[T] =
-    add(prepareExpr(expression, params: _*))
 
   // HAVING clause
 
@@ -383,19 +386,12 @@ class InsertSelectHelper[PK, R <: Record[PK, R]](val relation: Relation[PK, R]) 
  * Provides functionality for `DELETE` queries.
  */
 class Delete[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
-    extends DMLQuery {
+    extends DMLQuery with SearchQuery {
   val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
-  protected var _where: Predicate = EmptyPredicate
-  def where: Predicate = this._where
-  def WHERE(predicate: Predicate): Delete[PK, R] = {
-    this._where = predicate
-    return this
-  }
-
-  def parameters = _where.parameters
+  def parameters = where.parameters
   def toSql: String = dialect.delete(this)
 }
 
@@ -403,7 +399,7 @@ class Delete[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
  * Provides functionality for `UPDATE` queries.
  */
 class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
-    extends DMLQuery {
+    extends DMLQuery with SearchQuery {
   val relation = node.relation
   if (relation.readOnly_?)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
@@ -423,14 +419,7 @@ class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   def SET_NULL[K, P <: Record[K, P]](association: Association[K, R, P]): Update[PK, R] =
     SET_NULL(association.field)
 
-  protected var _where: Predicate = EmptyPredicate
-  def where: Predicate = this._where
-  def WHERE(predicate: Predicate): Update[PK, R] = {
-    this._where = predicate
-    return this
-  }
-
-  def parameters = _setClause.map(_._2) ++ _where.parameters
+  def parameters = _setClause.map(_._2) ++ where.parameters
   def toSql: String = dialect.update(this)
 
 }

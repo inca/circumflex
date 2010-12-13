@@ -106,8 +106,8 @@ package object markeven {
     val codeSpan = Pattern.compile("(`+)(.+?)\\1")
     val protectKey = Pattern.compile("!\\}[0-9a-zA-Z]{" + keySize + "}")
     val backslashChar = Pattern.compile("\\\\(\\S)")
-    val refLinks = Pattern.compile("\\[(.+?)\\]\\[(.*?)\\]")
-    val inlineLinks = Pattern.compile("\\[(.+?)\\]\\((.*?)( +\"(.+?)\")?\\)")
+    val refLinks = Pattern.compile("\\[([^\\[\\]]+?)\\]\\[([^\\[\\]]*?)\\]")
+    val inlineLinks = Pattern.compile("\\[([^\\[\\]]+?)\\]\\((.*?)( +\"(.+?)\")?\\)")
     val htmlComment = Pattern.compile("^ {0,3}<!--.*?-->\\s*?(?=\\n+|\\Z)", Pattern.MULTILINE | Pattern.DOTALL)
     val spanEnhancements = Pattern.compile("([*_~])(?=\\S)(.+?)(?<=\\S)\\1")
 
