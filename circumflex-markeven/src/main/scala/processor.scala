@@ -468,8 +468,7 @@ class MarkevenProcessor() {
         val tagName = m.group(1)
         // following regex will have `group(1) == null` for closing tags;
         // `group(2)` determines if a tag is self-closing.
-        val tm = Pattern.compile("(<" + tagName + "\\b.*?(/)?>)|(</" + tagName + "\\s*>)",
-          Pattern.CASE_INSENSITIVE).matcher(s.buffer)
+        val tm = regexes.htmlTag(tagName).matcher(s.buffer)
         var depth = 1
         var idx = m.end
         while (depth > 0 && idx < s.length && tm.find(idx)) {
@@ -603,7 +602,7 @@ class MarkevenProcessor() {
   def stripSelector(s: StringEx): Selector = {
     var id = ""
     var classes = new ListBuffer[String]()
-    s.replaceAll(regexes.blockSelector, m => {
+    s.replaceFirst(regexes.blockSelector, m => {
       val idSelector = m.group(1)
       val classesSelector = m.group(2)
       if (idSelector != null)

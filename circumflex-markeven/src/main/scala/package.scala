@@ -91,29 +91,29 @@ package object markeven {
     val blankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
     val blocks = Pattern.compile("\\n{2,}")
     val lines = Pattern.compile("\\n")
-    val htmlNameExpr = "[a-z][a-z0-9\\-_:.]*?\\b"
-    val inlineHtmlBlockStart = Pattern.compile("(?<=\\n{2,}|\\A) {0,3}<(" + htmlNameExpr + ").*?(/)?>",
-      Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
-    val inlineHtmlSpanStart = Pattern.compile("<(" + htmlNameExpr + ").*?(/)?>",
-      Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+    val htmlNameExpr = "(?>[a-z][a-z0-9\\-_:.]*+\\b)"
+    val inlineHtmlBlockStart = Pattern.compile("^ {0,3}<(" + htmlNameExpr + ")[\\S\\s]*?(/)?>",
+      Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
+    val inlineHtmlSpanStart = Pattern.compile("<(" + htmlNameExpr + ")[\\S\\s]*?(/)?>",
+      Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
     val linkDefinition = Pattern.compile("^ {0,3}\\[(.+?)\\]: *(\\S.*?)" +
         "(\\n? *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
-    val blockSelector = Pattern.compile("(?<=\\A.*?) *\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}(?=\\Z|\\n)",
-      Pattern.CASE_INSENSITIVE)
+    val blockSelector = Pattern.compile(" *+\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}$",
+      Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
     val tableCellSplit = Pattern.compile("\\|")
     val tableSeparatorLine = Pattern.compile("^[- :|]+$")
-    val macro = Pattern.compile("\\[\\[([a-zA-Z0-9_-]+:)?(.+?)\\]\\]", Pattern.DOTALL)
-    val codeSpan = Pattern.compile("(`+)(.+?)\\1")
+    val macro = Pattern.compile("\\[\\[((?>[a-zA-Z0-9_-]+:))?(.*?)\\]\\]", Pattern.DOTALL)
+    val codeSpan = Pattern.compile("(`++)(.+?)\\1")
     val protectKey = Pattern.compile("!\\}[0-9a-zA-Z]{" + keySize + "}")
     val backslashChar = Pattern.compile("\\\\(\\S)")
-    val refLinks = Pattern.compile("\\[([^\\[\\]]+?)\\]\\[([^\\[\\]]*?)\\]")
-    val inlineLinks = Pattern.compile("\\[([^\\[\\]]+?)\\]\\((.*?)( +\"(.+?)\")?\\)")
+    val refLinks = Pattern.compile("\\[([^\\[\\]]++)\\]\\[([^\\[\\]]*+)\\]")
+    val inlineLinks = Pattern.compile("\\[([^\\[\\]]++)\\]\\((.*?)( +\"(.*?)\")?\\)")
     val htmlComment = Pattern.compile("^ {0,3}<!--.*?-->\\s*?(?=\\n+|\\Z)", Pattern.MULTILINE | Pattern.DOTALL)
     val spanEnhancements = Pattern.compile("([*_~])(?=\\S)(.+?)(?<=\\S)\\1")
 
     // escape patterns
 
-    val e_amp = Pattern.compile("&(?!#?[xX]?(?:[0-9a-fA-F]+|\\w+);)")
+    val e_amp = Pattern.compile("&(?!#?[xX]?[0-9a-zA-Z]+;)")
     val e_lt = Pattern.compile("<(?![a-z/?\\$!])")
 
     // deterministic patterns
@@ -140,7 +140,9 @@ package object markeven {
     val s_ul = Pattern.compile("\\n+(?=\\* )")
     val s_ol = Pattern.compile("\\n+(?=\\d+\\. )")
 
-    protected val outdentMap = new HashMap[Int, Pattern]()
+    // cache dynamic expressions
+
+    protected val outdentMap = new HashMap[Int, Pattern]
     protected val placeholder = Pattern.compile("^", Pattern.MULTILINE)
 
     def outdent(level: Int): Pattern = outdentMap.get(level) match {
@@ -150,6 +152,19 @@ package object markeven {
         outdentMap += (level -> p)
         p
     }
+
+    protected val htmlTagMap = new HashMap[String, Pattern]
+
+    protected def htmlTagInternal(tag: String): Pattern = htmlTagMap.get(tag) match {
+      case Some(p) => p
+      case _ =>
+        val p = Pattern.compile("(<" + tag + "\\b.*?(/)?>)|(</" + tag + "\\s*>)",
+          Pattern.CASE_INSENSITIVE)
+        htmlTagMap += tag -> p
+        p
+    }
+
+    def htmlTag(tag: String): Pattern = htmlTagInternal(tag.toLowerCase)
 
     // typographic patterns
 
