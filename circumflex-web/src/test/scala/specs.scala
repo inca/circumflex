@@ -19,6 +19,14 @@ class MockRouter extends RequestRouter {
 
   any("/sub/*") = new SubMockRouter
 
+  var counter = 0
+
+  filter("/filter") = {
+    counter += 1
+  }
+
+  get("/filter") = counter.toString
+
   new MatchingMockRouter
 }
 
@@ -83,6 +91,9 @@ object CircumflexWebSpec extends Specification {
     }
     "send redirects" in {
       MockApp.get("/redirect").execute().getStatus must_== 302
+    }
+    "process filter directive" in {
+      MockApp.get("/filter").execute().getContent must_== "1"
     }
   }
 
