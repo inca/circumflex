@@ -58,6 +58,9 @@ class RequestRouter(val prefix: String = "") {
   val options = new Route("options")
   val any = new Route("get", "post", "put", "patch" , "delete", "head", "options")
 
+  // Filter
+  val filter = new FilterRoute
+
   // Shortcuts
   def error(statusCode: Int = 400, message: String = "No message available."): Nothing =
     sendError(statusCode, message)
@@ -89,9 +92,23 @@ class Route(matchingMethods: String*) {
     }
 
   // DSL-like syntax (`get("/") = { ... }`)
-  def update(matcher: Matcher, response: => RouteResponse): Unit =
+  def update(matcher: Matcher, response: => RouteResponse) =
     dispatch(matcher, response)
 
+}
+
+/**
+ * @see RequestRouter
+ */
+class FilterRoute {
+  protected def dispatch(matcher: Matcher, block: => Unit): Unit =
+    matcher.apply() map { matches =>
+      matches.foreach(m => ctx.update(m.name, m))
+      block
+    }
+
+  def update(matcher: Matcher, block: => Unit) =
+    dispatch(matcher, block)
 }
 
 /**
