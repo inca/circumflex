@@ -308,12 +308,12 @@ class DiffProcessor(val timeout: Float = 0f,
         else if (done) {    // front path ran over reverse path
           v_map2 = v_map2.take(footsteps(footstep) + 1)
           return mapDiffPath1(v_map1, text1.substring(0, x), text2.substring(0, y)) ++
-              mapDiffPath2(v_map2, text2.substring(x), text2.substring(y))
+              mapDiffPath2(v_map2, text1.substring(x), text2.substring(y))
         }
       }
       if (double_end) {   // walk the reverse path, one step
         v_map_d = HashMap()
-        v_map2 += v_map_d
+        v_map2 += v_map_d  // adds at index `d`
         for (k <- Range.inclusive(-d, d, 2)) {
           x = if (k == -d || k != d && v2(k - 1) < v2(k + 1))
             v2(k + 1) else v2(k - 1) + 1
@@ -330,7 +330,7 @@ class DiffProcessor(val timeout: Float = 0f,
           v_map_d -> k -> x
           if (done) {   // reverse path ran over front path
             v_map1 = v_map1.take(footsteps(footstep) + 1)
-            return mapDiffPath1(v_map1, text1.substring(0, text1.length - x), text1.substring(0, text2.length - y)) ++
+            return mapDiffPath1(v_map1, text1.substring(0, text1.length - x), text2.substring(0, text2.length - y)) ++
                 mapDiffPath2(v_map2, text1.substring(text1.length - x), text2.substring(text2.length - y))
           }
         }
@@ -340,16 +340,98 @@ class DiffProcessor(val timeout: Float = 0f,
     return bail(text1, text2)
   }
 
+  // not revisited
   protected def mapDiffPath1(v_map: ListBuffer[HashMap[Int, Int]],
                              text1: String,
                              text2: String): Seq[Diff] = {
-    Nil
+    var path = List[Diff]()
+    var x = text1.length
+    var y = text2.length
+    var last_op: Operation = null
+    for (d <- Range.inclusive(v_map.size - 2, 0, -1)) {
+      val k = x - y
+      val v_map_d = v_map(d)
+      var found = false
+      while (!found) {
+        found = true
+        if (v_map_d.contains(k - 1) && v_map_d(k - 1) == x - 1) {
+          x -= 1
+          if (last_op == Operation.DELETE) {
+            path = Diff(Operation.DELETE, text1.charAt(x) + path.head.text) :: path.tail
+          } else {
+            path = Diff(Operation.DELETE, text1.substring(x, x + 1)) :: path
+            last_op = Operation.DELETE
+          }
+        } else if (v_map_d.contains(k + 1) && v_map_d(k + 1) == x) {
+          y -= 1
+          if (last_op == Operation.INSERT) {
+            path = Diff(Operation.INSERT, text2.charAt(y) + path.head.text) :: path.tail
+          } else {
+            path = Diff(Operation.INSERT, text2.substring(y, y + 1)) :: path
+            last_op = Operation.INSERT
+          }
+        } else {
+          x -= 1
+          y -= 1
+          assert(text1.charAt(x) == text2.charAt(y), "No diagonal -- can't happen.")
+          if (last_op == Operation.EQUAL) {
+            path = Diff(Operation.EQUAL, text1.charAt(x) + path.head.text) :: path.tail
+          } else {
+            path = Diff(Operation.EQUAL, text1.substring(x, x + 1)) :: path
+            last_op = Operation.EQUAL
+          }
+          found = false
+        }
+      }
+    }
+    return path
   }
 
+  // not revisited
   protected def mapDiffPath2(v_map: ListBuffer[HashMap[Int, Int]],
                              text1: String,
                              text2: String): Seq[Diff] = {
-    Nil
+    var path = List[Diff]()
+    var x = text1.length
+    var y = text2.length
+    var last_op: Operation = null
+    for (d <- Range.inclusive(v_map.size - 2, 0, -1)) {
+      var k = x - y
+      val v_map_d = v_map(d)
+      var found = false
+      while (!found) {
+        found = true
+        if (v_map_d.contains(k - 1) && v_map_d(k - 1) == x - 1) {
+          x -= 1
+          if (last_op == Operation.DELETE) {
+            path = Diff(Operation.DELETE, path.head.text + text1.charAt(text1.length - x - 1)) :: path.tail
+          } else {
+            path = Diff(Operation.DELETE, text1.substring(text1.length - x - 1, text1.length - x)) :: path
+            last_op = Operation.DELETE
+          }
+        } else if (v_map_d.contains(k + 1) && v_map_d(k + 1) == x) {
+          y -= 1
+          if (last_op == Operation.INSERT) {
+            path = Diff(Operation.INSERT, path.head.text + text2.charAt(text2.length - y - 1)) :: path.tail
+          } else {
+            path = Diff(Operation.INSERT, text2.substring(text2.length - y - 1, text2.length - y)) :: path
+            last_op = Operation.INSERT
+          }
+        } else {
+          x -= 1
+          y -= 1
+          assert(text1.charAt(x) == text2.charAt(y), "No diagonal -- can't happen.")
+          if (last_op == Operation.EQUAL) {
+            path = Diff(Operation.EQUAL, path.head.text + text1.charAt(text1.length - x - 1)) :: path.tail
+          } else {
+            path = Diff(Operation.EQUAL, text1.substring(text1.length - x - 1, text1.length - x)) :: path
+            last_op = Operation.EQUAL
+          }
+          found = false
+        }
+      }
+    }
+    return path.reverse
   }
 
   protected def bail(text1: String, text2: String): Seq[Diff] =
@@ -360,7 +442,7 @@ class DiffProcessor(val timeout: Float = 0f,
 
   def cleanupSemantic(diffs: Seq[Diff]): Seq[Diff] = {
     // TODO
-    return Nil
+    return diffs
   }
 
   def merge(diffs: Seq[Diff]): Seq[Diff] = {
