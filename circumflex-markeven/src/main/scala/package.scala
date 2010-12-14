@@ -98,7 +98,7 @@ package object markeven {
       Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
     val linkDefinition = Pattern.compile("^ {0,3}\\[(.+?)\\]: *(\\S.*?)" +
         "(\\n? *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
-    val blockSelector = Pattern.compile(" *+\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}$",
+    val blockSelector = Pattern.compile(" *+\\{(\\#[a-z0-9_-]+)?((?>\\.[a-z0-9_-]+)+)?\\}$",
       Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
     val tableCellSplit = Pattern.compile("\\|")
     val tableSeparatorLine = Pattern.compile("^[- :|]+$")
@@ -118,9 +118,9 @@ package object markeven {
 
     // deterministic patterns
 
-    val d_code = Pattern.compile("(?: {4,}.*\\n?)+")
-    val d_div = Pattern.compile("(?: {0,3}\\|.*\\n?)+")
-    val d_blockquote = Pattern.compile("(?: {0,3}>.*\\n?)+")
+    val d_code = Pattern.compile("(?> {4,}.*\\n?)+")
+    val d_div = Pattern.compile("(?> {0,3}\\|.*\\n?)+")
+    val d_blockquote = Pattern.compile("(?> {0,3}>.*\\n?)+")
     val d_hr = Pattern.compile("^-{3,} *\\n?$")
     val d_table = Pattern.compile("^-{3,}>?\\n.+\\n *-{3,}\\n?$", Pattern.DOTALL)
     val d_heading = Pattern.compile("^(\\#{1,6}) (.*) *\\#*$", Pattern.DOTALL)
@@ -175,8 +175,8 @@ package object markeven {
     val ty_trade = Pattern.compile("\\([tT][mM]\\)")
     val ty_reg = Pattern.compile("\\([rR]\\)")
     val ty_copy = Pattern.compile("\\([cC]\\)")
-    val ty_ldquo = Pattern.compile("(?<=\\s|\\A)(?:\"|&quot;)(?=\\S)")
-    val ty_rdquo = Pattern.compile("(?<=[\\p{L})?!.])(?:\"|&quot;)(?=[.,;?!*)]|\\s|\\Z)")
+    val ty_ldquo = Pattern.compile("(?<=\\s|\\A)(?>\"|&quot;)(?=\\S)")
+    val ty_rdquo = Pattern.compile("(?<=[\\p{L})?!.])(?>\"|&quot;)(?=[.,;?!*)]|\\s|\\Z)")
   }
 
   object typographics {

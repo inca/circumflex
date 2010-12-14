@@ -22,6 +22,7 @@
     <module>circumflex-docco</module>
     <module>circumflex-maven-plugin</module>
     <module>circumflex-ftl</module>
+    <module>circumflex-diff</module>
     <module>circumflex-archetype</module>
   </modules>
 
