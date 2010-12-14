@@ -62,7 +62,7 @@ class DiffProcessor(val timeout: Float = 0f,
     return merge(diffs)
   }
 
-  protected def commonPrefix(text1: String, text2: String): Int = {
+  def commonPrefix(text1: String, text2: String): Int = {
     val n = math.min(text1.length, text2.length)
     for (i <- 0 until n)
       if (text1.charAt(i) != text2.charAt(i))
@@ -70,7 +70,7 @@ class DiffProcessor(val timeout: Float = 0f,
     return n
   }
 
-  protected def commonSuffix(text1: String, text2: String): Int = {
+  def commonSuffix(text1: String, text2: String): Int = {
     val n = math.min(text1.length, text2.length)
     for (i <- 1 to n)
       if (text1.charAt(text1.length - i) != text2.charAt(text2.length - i))
@@ -252,10 +252,111 @@ class DiffProcessor(val timeout: Float = 0f,
     return chars.toString
   }
 
+  // find intersection points between two texts (not revisited)
   protected def mapDiff(text1: String, text2: String, deadline: Long): Seq[Diff] = {
-    // TODO
-    return Nil
+    val max_d = text1.length + text2.length - 1
+    val double_end = dualThreshold * 2 < max_d
+    var v_map_d: HashMap[Int, Int] = null
+    var v_map1: ListBuffer[HashMap[Int, Int]] = ListBuffer()
+    var v_map2: ListBuffer[HashMap[Int, Int]] = ListBuffer()
+    var v1: HashMap[Int, Int] = HashMap()
+    var v2: HashMap[Int, Int] = HashMap()
+    v1 += (1 -> 0)
+    v2 += (1 -> 0)
+    var x = 0
+    var y = 0
+    var footstep = ""
+    val footsteps: HashMap[String, Int] = HashMap() // TODO switch to [Long, Int]
+    var done = false
+    // if total number of chars is odd, then the front path will collide
+    // with reverse path
+    val front = (text1.length + text2.length) % 2 == 1
+    for (d <- 0 until max_d) {
+
+      def checkFootstep1 = if (double_end) {
+        footstep = footprint(x, y)
+        if (front && footsteps.contains(footstep)) done = true
+        if (!front) footsteps += (footstep -> d)
+      }
+      def checkFootstep2 = if (double_end) {
+        footstep = footprint(text1.length - x, text2.length - y)
+        if (!front && footsteps.contains(footstep)) done = true
+        if (front) footsteps += (footstep -> d)
+      }
+
+      if (System.currentTimeMillis > deadline)    // hit timeout
+        return bail(text1, text2)
+      // walk the front path, one step
+      v_map_d = HashMap()
+      v_map1 += v_map_d   // adds at index `d`
+      for (k <- Range.inclusive(-d, d, 2)) {
+        x = if (k == -d || k != d && v1(k - 1) < v1(k + 1))
+          v1(k + 1) else v1(k - 1) + 1
+        y = x - k
+        checkFootstep1
+        while (!done && x < text1.length
+            && y < text2.length
+            && text1.charAt(x) == text2.charAt(y)) {
+          x += 1
+          y += 1
+          checkFootstep1
+        }
+        v1 += k -> x
+        v_map_d += k -> x
+        if (x == text1.length && y == text2.length) // reached end in single-path mode
+          return mapDiffPath1(v_map1, text1, text2)
+        else if (done) {    // front path ran over reverse path
+          v_map2 = v_map2.take(footsteps(footstep) + 1)
+          return mapDiffPath1(v_map1, text1.substring(0, x), text2.substring(0, y)) ++
+              mapDiffPath2(v_map2, text2.substring(x), text2.substring(y))
+        }
+      }
+      if (double_end) {   // walk the reverse path, one step
+        v_map_d = HashMap()
+        v_map2 += v_map_d
+        for (k <- Range.inclusive(-d, d, 2)) {
+          x = if (k == -d || k != d && v2(k - 1) < v2(k + 1))
+            v2(k + 1) else v2(k - 1) + 1
+          y = x - k
+          checkFootstep2
+          while (!done && x < text1.length
+              && y < text2.length
+              && text1.charAt(text1.length - x - 1) == text2.charAt(text2.length - y - 1)) {
+            x += 1
+            y += 1
+            checkFootstep2
+          }
+          v2 += k -> x
+          v_map_d -> k -> x
+          if (done) {   // reverse path ran over front path
+            v_map1 = v_map1.take(footsteps(footstep) + 1)
+            return mapDiffPath1(v_map1, text1.substring(0, text1.length - x), text1.substring(0, text2.length - y)) ++
+                mapDiffPath2(v_map2, text1.substring(text1.length - x), text2.substring(text2.length - y))
+          }
+        }
+      }
+    }
+    // no commonalities found
+    return bail(text1, text2)
   }
+
+  protected def mapDiffPath1(v_map: ListBuffer[HashMap[Int, Int]],
+                             text1: String,
+                             text2: String): Seq[Diff] = {
+    Nil
+  }
+
+  protected def mapDiffPath2(v_map: ListBuffer[HashMap[Int, Int]],
+                             text1: String,
+                             text2: String): Seq[Diff] = {
+    Nil
+  }
+
+  protected def bail(text1: String, text2: String): Seq[Diff] =
+    List(Diff(Operation.DELETE, text1), Diff(Operation.INSERT, text2))
+
+  protected def footprint(x: Int, y: Int): String =
+    ((x.toLong << 32) + y).toString
 
   def cleanupSemantic(diffs: Seq[Diff]): Seq[Diff] = {
     // TODO
