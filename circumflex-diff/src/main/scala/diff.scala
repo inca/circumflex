@@ -43,10 +43,10 @@ class DiffProcessor(val timeout: Float = 0f,
     if (timeout <= 0) java.lang.Long.MAX_VALUE else
       System.currentTimeMillis + (timeout * 1000).toLong
 
-  def findDifference(text1: String,
-                     text2: String,
-                     checkLines: Boolean,
-                     deadline: Long = calcDeadline): Seq[Diff] = {
+  def findDifferences(text1: String,
+                      text2: String,
+                      checkLines: Boolean,
+                      deadline: Long = calcDeadline): Seq[Diff] = {
     // speedups: check for equality and trim common suffixes and prefixes
     if (text1 == text2) return List(Diff(Operation.EQUAL, text1))
     val prefix = text1.substring(0, commonPrefix(text1, text2))
@@ -123,9 +123,9 @@ class DiffProcessor(val timeout: Float = 0f,
     }
     // maybe we can split the task in two?
     halfMatch(text1, text2) map { hm =>
-      return findDifference(hm.prefix1, hm.prefix2, checkLines) ++
+      return findDifferences(hm.prefix1, hm.prefix2, checkLines) ++
           List(Diff(Operation.EQUAL, hm.common)) ++
-          findDifference(hm.suffix1, hm.suffix2, checkLines)
+          findDifferences(hm.suffix1, hm.suffix2, checkLines)
     }
     // determine if checkLines algorithm is efficient enough
     val chkLines = checkLines && (text1.length > 100) && (text2.length > 100)
@@ -157,7 +157,7 @@ class DiffProcessor(val timeout: Float = 0f,
                 pointer.previous
                 pointer.remove
               }
-              findDifference(textDelete, textInsert, false, deadline).foreach(d => pointer.add(d))
+              findDifferences(textDelete, textInsert, false, deadline).foreach(d => pointer.add(d))
             }
             countDelete = 0
             countInsert = 0
@@ -165,7 +165,7 @@ class DiffProcessor(val timeout: Float = 0f,
             textInsert = ""
         }
       }
-      return Nil
+      return pointer.all
     }
   }
 
@@ -327,7 +327,7 @@ class DiffProcessor(val timeout: Float = 0f,
             checkFootstep2
           }
           v2 += k -> x
-          v_map_d -> k -> x
+          v_map_d += k -> x
           if (done) {   // reverse path ran over front path
             v_map1 = v_map1.take(footsteps(footstep) + 1)
             return mapDiffPath1(v_map1, text1.substring(0, text1.length - x), text2.substring(0, text2.length - y)) ++
@@ -396,7 +396,7 @@ class DiffProcessor(val timeout: Float = 0f,
     var y = text2.length
     var last_op: Operation = null
     for (d <- Range.inclusive(v_map.size - 2, 0, -1)) {
-      var k = x - y
+      val k = x - y
       val v_map_d = v_map(d)
       var found = false
       while (!found) {
@@ -420,7 +420,7 @@ class DiffProcessor(val timeout: Float = 0f,
         } else {
           x -= 1
           y -= 1
-          assert(text1.charAt(x) == text2.charAt(y), "No diagonal -- can't happen.")
+          assert(text1.charAt(text1.length - x - 1) == text2.charAt(text2.length - y - 1), "No diagonal -- can't happen.")
           if (last_op == Operation.EQUAL) {
             path = Diff(Operation.EQUAL, path.head.text + text1.charAt(text1.length - x - 1)) :: path.tail
           } else {
