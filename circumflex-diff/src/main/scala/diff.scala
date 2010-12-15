@@ -1,8 +1,7 @@
 package ru.circumflex.diff
 
 import java.lang.StringBuilder
-import collection.mutable.{HashMap, ListBuffer}
-
+import collection.mutable.{LinkedList, HashMap, ListBuffer}
 /*!# Diff Utils
 
 Circumflex Diff Util is a Scala port of a part of [google-diff-patch-match][dpm] project by
@@ -184,7 +183,7 @@ class DiffProcessor(val timeout: Float = 0f,
         if (hm1.common.length > hm2.common.length) Some(hm1) else Some(hm2)
       case _ => hm1.orElse(hm2)
     }
-    // sort out halfmatch pieces
+    // sort out the internal response
     best.map { hm =>
       if (text1.length > text2.length) hm
       else hm.inverse
@@ -265,8 +264,8 @@ class DiffProcessor(val timeout: Float = 0f,
     v2 += (1 -> 0)
     var x = 0
     var y = 0
-    var footstep = ""
-    val footsteps: HashMap[String, Int] = HashMap() // TODO switch to [Long, Int]
+    var footstep = 0l
+    val footsteps: HashMap[Long, Int] = HashMap()
     var done = false
     // if total number of chars is odd, then the front path will collide
     // with reverse path
@@ -336,6 +335,8 @@ class DiffProcessor(val timeout: Float = 0f,
         }
       }
     }
+    val l = new LinkedList[Int, Int]()
+    l -= i
     // no commonalities found
     return bail(text1, text2)
   }
@@ -437,16 +438,18 @@ class DiffProcessor(val timeout: Float = 0f,
   protected def bail(text1: String, text2: String): Seq[Diff] =
     List(Diff(Operation.DELETE, text1), Diff(Operation.INSERT, text2))
 
-  protected def footprint(x: Int, y: Int): String =
-    ((x.toLong << 32) + y).toString
+  protected def footprint(x: Int, y: Int): Long = ((x.toLong << 32) + y)
 
   def cleanupSemantic(diffs: Seq[Diff]): Seq[Diff] = {
     // TODO
     return diffs
   }
 
+  // reorder edits and merge equalities
   def merge(diffs: Seq[Diff]): Seq[Diff] = {
     // TODO
+    val pointer = new DiffIterator(diffs)
+
     return diffs
   }
 
