@@ -16,51 +16,59 @@ class DiffIterator(diffs: Seq[Diff] = Nil) {
   protected val _buffer = ListBuffer[Diff](diffs: _*)
   protected var _index = -1
   def index = _index
-  def hasNext: Boolean = (index + 1) < _buffer.length
+  def hasMore(qty: Int): Boolean = (index + qty) < _buffer.length
+  def hasNext: Boolean = hasMore(1)
   def next: Diff = {
     _index += 1
     return _buffer(index)
   }
+  def hasPrevious: Boolean = index > 0
   def previous: Diff = {
     _index -= 1
     return _buffer(index)
   }
-  def remove(): Diff = _buffer.remove(index)
+  def hasCurrent: Boolean = (index >= 0 && index < _buffer.length)
+  def current: Diff = _buffer(index)
+  def remove(): Diff = {
+    val d = _buffer.remove(index)
+    _index -= 1
+    return d
+  }
   def add(d: Diff) = {
-    _buffer.insert(index, d)
     _index += 1
+    _buffer.insert(index, d)
+  }
+  def replace(diff: Diff, i: Int = index): Unit = {
+    _buffer.remove(i)
+    _buffer.insert(i, diff)
   }
   def all: Seq[Diff] = _buffer.toSeq
 }
 
 class EditCounter {
-  protected var _deleteCount = 0
-  protected var _deleteText = ""
-  protected var _insertCount = 0
-  protected var _insertText = ""
-
-  def deleteCount = _deleteCount
-  def deleteText = _deleteText
-  def insertCount = _insertCount
-  def insertText = _insertText
+  var deleteCount = 0
+  var deleteText = ""
+  var insertCount = 0
+  var insertText = ""
 
   def delete(text: String): Unit = {
-    _deleteCount += 1
-    _deleteText += text
+    deleteCount += 1
+    deleteText += text
   }
 
   def insert(text: String): Unit = {
-    _insertCount += 1
-    _insertText += text
+    insertCount += 1
+    insertText += text
   }
 
   def reset(): Unit = {
-    _deleteCount = 0
-    _deleteText = ""
-    _insertCount = 0
-    _insertText = ""
+    deleteCount = 0
+    deleteText = ""
+    insertCount = 0
+    insertText = ""
   }
 
-  def hasBoth(): Boolean = (_deleteCount > 0 && _insertCount > 0)
+  def hasBoth(): Boolean = (deleteCount > 0 && insertCount > 0)
+  def hasEither(): Boolean = (deleteCount > 0 || insertCount > 0)
 
 }

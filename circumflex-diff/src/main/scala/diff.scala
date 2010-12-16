@@ -146,10 +146,8 @@ class DiffProcessor(val timeout: Float = 0f,
           case Operation.EQUAL =>
             if (counter.hasBoth) {
               // upon reaching equality check for prior redundancies
-              (0 until (counter.deleteCount + counter.insertCount)).foreach { i =>
-                pointer.previous
-                pointer.remove
-              }
+              pointer.previous
+              (0 until (counter.deleteCount + counter.insertCount)).foreach(i => pointer.remove)
               findDifferences(counter.deleteText, counter.insertText, false, deadline).foreach(d => pointer.add(d))
             }
             counter.reset()
@@ -432,13 +430,141 @@ class DiffProcessor(val timeout: Float = 0f,
   // reorder edits and merge equalities
   def merge(diffs: Seq[Diff]): Seq[Diff] = {
     val pointer = new DiffIterator(diffs)
+    val counter = new EditCounter
+    var prevEqual: Diff = null
+    while (pointer.hasNext) {
+      val diff = pointer.next
+      diff.operation match {
+        case Operation.INSERT =>
+          counter.insert(diff.text)
+          prevEqual = null
+        case Operation.DELETE =>
+          counter.delete(diff.text)
+          prevEqual = null
+        case Operation.EQUAL =>
+          if (counter.hasEither) {
+            // remove prior redundancies
+            pointer.previous
+            (0 until (counter.deleteCount + counter.insertCount)).foreach(i => pointer.remove)
+            // factor out common prefixes
+            val prefixLength = commonPrefix(counter.insertText, counter.deleteText)
+            if (prefixLength > 0) {
+              val prefix = counter.insertText.substring(0, prefixLength)
+              if (pointer.hasCurrent) {  // append prefix to previous equality
+                val d = pointer.current
+                assert(d.operation == Operation.EQUAL, "This diff should've been an equality.")
+                pointer.replace(Diff(Operation.EQUAL, d.text + prefix))
+              } else pointer.add(Diff(Operation.EQUAL, prefix))
+            }
+            // step forward to our diff
+            pointer.next
+            // factor out common suffixes
+            val suffixLength = commonSuffix(counter.insertText, counter.deleteText)
+            if (suffixLength > 0) {
+              val suffix = counter.insertText.substring(counter.insertText.length - suffixLength)
+              // prepend suffix to this diff
+              pointer.replace(Diff(Operation.EQUAL, suffix + diff.text))
+              // strip suffix from collected edit texts
+              counter.insertText = counter.insertText.substring(0, counter.insertText.length - suffixLength)
+              counter.deleteText = counter.deleteText.substring(0, counter.deleteText.length - suffixLength)
+            }
+            // now insert merged edits before this diff
+            pointer.previous
+            if (counter.deleteText.length > 0)
+              pointer.add(Diff(Operation.DELETE, counter.deleteText))
+            if (counter.insertText.length > 0)
+              pointer.add(Diff(Operation.INSERT, counter.insertText))
+            pointer.next    // return to our equality diff
+          } else if (prevEqual != null) {  // merge this equality with previous one
+            val d = Diff(Operation.EQUAL, prevEqual.text + diff.text)
+            pointer.remove
+            pointer.replace(d)
+          }
+          counter.reset
+          prevEqual = diff
+      }
+    }
+    return pointer.all
+  }
 
+  // reduce the number of edits by eliminating semantically trivial equalities
+  def cleanupSemantic(diffs: Seq[Diff]): Seq[Diff] = {
+    if (diffs.size < 2) return diffs
+    // TODO
     return diffs
   }
 
-  def cleanupSemantic(diffs: Seq[Diff]): Seq[Diff] = {
-    // TODO
-    return diffs
+  // shift all edits to a word boundary if possible, like `The c<ins>at c</ins>ame` -> `The <ins>cat </ins>came`
+  def cleanupSemanticShift(diffs: Seq[Diff]): Seq[Diff] = {
+    if (diffs.size < 3) return diffs
+    val pointer = new DiffIterator(diffs)
+    while(pointer.hasMore(3)) {
+      val prevDiff = pointer.next
+      val thisDiff = pointer.next
+      val nextDiff = pointer.next
+      if (prevDiff.operation == Operation.EQUALS && nextDiff.operation == Operation.EQUALS) {
+        var eq1 = prevDiff.text
+        var ed = thisDiff.text
+        var eq2 = nextDiff.text
+        var score = 0
+        // shit edit to the left as far as possible
+        val commonOffset = commonSuffix(eq1, ed)
+        if (commonOffset > 0) {
+          val suffix = edit.substring(edit.length - commonOffset)
+          eq1 = eq1.substring(0, eq1.length - commonOffset)
+          ed = suffix + edit.substring(0, edit.length - commonOffset)
+          eq2 = suffix + eq2
+        }
+        // now walk char-by-char to the right looking for best fit
+        var bestEq1 = eq1
+        var bestEd = ed
+        var bestEq2 = eq2
+        var bestScore = semanticScore(eq1, ed) + semanticScore (ed, eq2)
+        while (ed.length > 0 && eq2.length > 0 && ed.charAt(0) == eq2.charAt(0)) {
+          eq1 += ed.charAt(0)
+          ed = ed.substring(1) + eq2.charAt(0)
+          eq2 = eq2.substring(1)
+          score = semanticScore(eq1, ed) + semanticScore (ed, eq2)
+          if (score >= bestScore) {
+            bestScore = score
+            bestEq1 = eq1
+            bestEd = ed
+            bestEq2 = eq2
+          }
+        }
+        // save an improvement if we got one
+        if (prevDiff.text != bestEq1) {
+          pointer.remove
+          pointer.remove
+          pointer.remove
+          if (bestEq1.length > 0) pointer.add(Operation.EQUAL, bestEq1)
+          pointer.add(Diff(thisDiff.operation, ed))
+          if (bestEq2.length > 0) pointer.add(Operation.EQUAL, bestEq2)
+          // reposition so that eq2 becomes eq1 in next iteration
+          pointer.previous
+        }
+      }
+    }
+    return pointer.all
+  }
+
+  // evaluate last char of `text1` and first char of `text2` in terms of semantic compatibility
+  def semanticScore(text1: String, text2: String): Int = {
+    if (text1.length == 0 || text2.length == 0)
+      return 4
+    val c1 = text1.charAt(text1.length - 1)
+    val c2 = text2.charAt(0)
+    var score = 0
+    if (!c1.isLetterOrDigit || !c1.isLetterOrDigit) {    // one point for non-alphanumeric
+      score += 1
+      if (c1.isWhitespace || c2.isWhitespace) {          // two points for whitespace
+        score += 1
+        if (c1.isControl || c2.isControl) {              // three points for linebreaks
+          score += 1
+        }
+      }
+    }
+    return score
   }
 
 }
