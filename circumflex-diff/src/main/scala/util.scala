@@ -32,3 +32,35 @@ class DiffIterator(diffs: Seq[Diff] = Nil) {
   }
   def all: Seq[Diff] = _buffer.toSeq
 }
+
+class EditCounter {
+  protected var _deleteCount = 0
+  protected var _deleteText = ""
+  protected var _insertCount = 0
+  protected var _insertText = ""
+
+  def deleteCount = _deleteCount
+  def deleteText = _deleteText
+  def insertCount = _insertCount
+  def insertText = _insertText
+
+  def delete(text: String): Unit = {
+    _deleteCount += 1
+    _deleteText += text
+  }
+
+  def insert(text: String): Unit = {
+    _insertCount += 1
+    _insertText += text
+  }
+
+  def reset(): Unit = {
+    _deleteCount = 0
+    _deleteText = ""
+    _insertCount = 0
+    _insertText = ""
+  }
+
+  def hasBoth(): Boolean = (_deleteCount > 0 && _insertCount > 0)
+
+}

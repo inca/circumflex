@@ -1,7 +1,8 @@
 package ru.circumflex.diff
 
 import java.lang.StringBuilder
-import collection.mutable.{LinkedList, HashMap, ListBuffer}
+import collection.mutable.{HashMap, ListBuffer}
+
 /*!# Diff Utils
 
 Circumflex Diff Util is a Scala port of a part of [google-diff-patch-match][dpm] project by
@@ -135,33 +136,23 @@ class DiffProcessor(val timeout: Float = 0f,
       diffs = decodeLineDiffs(diffs, encodedLines.lines)
       diffs = cleanupSemantic(diffs)
       // rediff replacement blocks, now char-by-char
-      var countDelete = 0
-      var countInsert = 0
-      var textDelete = ""
-      var textInsert = ""
+      val counter = new EditCounter
       val pointer = new DiffIterator(diffs)
       while (pointer.hasNext) {
         val diff = pointer.next
         diff.operation match {
-          case Operation.INSERT =>
-            countInsert += 1
-            textInsert += diff.text
-          case Operation.DELETE =>
-            countDelete += 1
-            textDelete += diff.text
+          case Operation.INSERT => counter.insert(diff.text)
+          case Operation.DELETE => counter.delete(diff.text)
           case Operation.EQUAL =>
-            if (countDelete > 0 && countInsert > 0) {
+            if (counter.hasBoth) {
               // upon reaching equality check for prior redundancies
-              (0 until (countDelete + countInsert)).foreach { i =>
+              (0 until (counter.deleteCount + counter.insertCount)).foreach { i =>
                 pointer.previous
                 pointer.remove
               }
-              findDifferences(textDelete, textInsert, false, deadline).foreach(d => pointer.add(d))
+              findDifferences(counter.deleteText, counter.insertText, false, deadline).foreach(d => pointer.add(d))
             }
-            countDelete = 0
-            countInsert = 0
-            textDelete = ""
-            textInsert = ""
+            counter.reset()
         }
       }
       return pointer.all
@@ -335,8 +326,6 @@ class DiffProcessor(val timeout: Float = 0f,
         }
       }
     }
-    val l = new LinkedList[Int, Int]()
-    l -= i
     // no commonalities found
     return bail(text1, text2)
   }
@@ -440,16 +429,15 @@ class DiffProcessor(val timeout: Float = 0f,
 
   protected def footprint(x: Int, y: Int): Long = ((x.toLong << 32) + y)
 
-  def cleanupSemantic(diffs: Seq[Diff]): Seq[Diff] = {
-    // TODO
+  // reorder edits and merge equalities
+  def merge(diffs: Seq[Diff]): Seq[Diff] = {
+    val pointer = new DiffIterator(diffs)
+
     return diffs
   }
 
-  // reorder edits and merge equalities
-  def merge(diffs: Seq[Diff]): Seq[Diff] = {
+  def cleanupSemantic(diffs: Seq[Diff]): Seq[Diff] = {
     // TODO
-    val pointer = new DiffIterator(diffs)
-
     return diffs
   }
 
