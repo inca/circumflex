@@ -50,7 +50,7 @@ package object scalate {
   }
 
   val defaultEngine = new ServletTemplateEngine(defaultConfiguration)
-  defaultEngine.bindings ::= Binding("ctx", "ru.circumflex.core.Context", true, None, "val", true)
+  defaultEngine.importStatements ::= "import ru.circumflex._, core._, web._;"
 
   val engine = cx.instantiate[TemplateEngine]("scalate.engine", defaultEngine)
 
@@ -58,7 +58,6 @@ package object scalate {
     val rctx = new ServletRenderContext(engine, response.raw.getWriter, request.raw, response.raw, servletContext)
     // add context parameters
     ctx.foreach(p => rctx.attributes(p._1) = p._2)
-    rctx.attributes("ctx") = ctx
     return rctx
   }
 
