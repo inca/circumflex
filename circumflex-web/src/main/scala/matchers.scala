@@ -26,7 +26,7 @@ unknown name (`+`, `*` or any group, if you use regular expressions).
  * Provides information about successful match.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-web/matchers.scala">matchers.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.RC3/circumflex-web/matchers.scala">matchers.scala</a>.
  */
 class MatchResult(val name: String,
                   val params: (String, String)*) extends Map[String, String] {
@@ -58,7 +58,7 @@ only yield match results if all it's matchers succeed.*/
  * Provides matching mechanism to routes.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-web/matchers.scala">matchers.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.RC3/circumflex-web/matchers.scala">matchers.scala</a>.
  */
 trait Matcher {
   def apply(): Option[Seq[MatchResult]]

@@ -11,7 +11,7 @@ The `Logger` class lets applications save some performance by introducing by-nam
  * A helper for logging.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-core/logger.scala">logger.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.RC3/circumflex-core/logger.scala">logger.scala</a>.
  */
 class Logger(val name: String) {
   protected val log = org.slf4j.LoggerFactory.getLogger(name)

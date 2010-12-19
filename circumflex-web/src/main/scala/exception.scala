@@ -16,7 +16,7 @@ need to be taken.
  * must be stopped.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-web/exception.scala">exception.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.RC3/circumflex-web/exception.scala">exception.scala</a>.
  */
 class ResponseSentException extends CircumflexException("The response has been sent.")
     with ControlThrowable
