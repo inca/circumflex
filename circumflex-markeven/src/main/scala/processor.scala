@@ -387,7 +387,7 @@ of the block (no trailing whitespace allowed!).
 Inside block level elements following text enhancements occur:
 
   * [links](#links) are processed;
-  * text surrounded with backtick ``` characters is transformed into `code` span;
+  * text surrounded with backtick `` ` `` characters is transformed into `code` span;
   * text surrounded with underscores `_` becomes `em` (emphasized);
   * text surrounded with asterisks `*` becomes `strong` (strongly emphasized);
   * text surrounded with asterisks `~` becomes `del` (deleted);
