@@ -5,7 +5,7 @@
 <p>Please take a moment to observe your project layout.</p>
 <ul>
   <li><strong>pom.xml</strong>
-    – Maven2 Project Object Model, an XML file that contains
+    &mdash; Maven2 Project Object Model, an XML file that contains
     information about the project and configuration details used by Maven to build the project.
     It contains sensible default values for most projects. Basically you configure your
     project's dependencies, build names, source and target directories and build plugins using
@@ -15,38 +15,40 @@
       Introduction to the POM</a>.
   </li>
   <li><strong>src/main</strong>
-    – main source directory of your project:
+    &mdash; main source directory of your project:
     <ul>
       <li><strong>scala/main.scala</strong>
-        – your application's entry point called <em>Request Router</em>, it handles all incoming
+        &mdash; your application's entry point called <em>Request Router</em>, it handles all incoming
         HTTP requests, matching them against <em>routes</em>: the first route that matches request
         is executed;</li>
       <li><strong>webapp</strong>
-        – your Web application context root:
+        &mdash; your Web application context root:
         <ul>
           <li><strong>WEB-INF/web.xml</strong>
-            – the Java EE <em>deployment descriptor</em>,
+            &mdash; the Java EE <em>deployment descriptor</em>,
             an XML configuration file that specifies, how your application will be deployed into
             <em>Servlet Container</em>.
             By default it just maps all URLs to <em>Circumflex Filter</em>.</li>
           <li><strong>public</strong>
-            – a directory for static resources, e.g. stylesheets,
+            &mdash; a directory for static resources, e.g. stylesheets,
             scripts, images, etc.; resources under this directory are served directly by the
             container and are not processed by <em>Circumflex Filter</em>.</li>
           <li><strong>templates</strong>
-            – a default location for FreeMarker templates; they are resolved relatively to this
+            &mdash; a default location for FreeMarker templates; they are resolved relatively to this
             location by <em>Circumflex FreeMarker helper</em>.</li>
         </ul>
       </li>
       <li><strong>resources/Messages.properties</strong>
-        – various messages for your application can be defined there for
+        &mdash; various messages for your application can be defined there for
         <a href="http://java.sun.com/docs/books/tutorial/i18n/index.html"
            target="_blank">Internationalization</a> purposes;</li>
       <li><strong>resources/cx.properties</strong>
-        – Circumflex configuration parameters are specified here, by default it only contains the
+        &mdash; Circumflex configuration parameters are specified here, by default it only contains the
         <em>cx.router</em> parameter, which points to your application Request Router class;</li>
     </ul>
   </li>
+  <li><strong>src/test/scala</strong> &mdash; your tests source directory. It contains a simple
+    spec out-of-box. You are free to add more sophisticated tests for your application.</li>
 </ul>
 <p>Please visit <a href="http://circumflex.ru" target="_blank">Circumflex website</a> for
    further information.</p>

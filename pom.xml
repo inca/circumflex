@@ -63,13 +63,13 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.5</version>
+      <version>4.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.scala-tools.testing</groupId>
-      <artifactId>specs_2.8.0.Beta1-RC8</artifactId>
-      <version>1.6.2</version>
+      <artifactId>specs_2.8.1</artifactId>
+      <version>1.6.6</version>
       <scope>test</scope>
     </dependency>
     <dependency>

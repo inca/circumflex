@@ -10,5 +10,6 @@
     <resource>src/main/webapp/static/css/main.css</resource>
     <resource>src/main/webapp/templates/index.ftl</resource>
     <resource>src/main/webapp/templates/layout.ftl</resource>
+    <resource>src/test/scala/specs.scala</resource>
   </resources>
 </archetype>
