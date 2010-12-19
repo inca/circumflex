@@ -1,5 +1,6 @@
 package ru.circumflex
 
+import core._
 import java.security.MessageDigest
 
 /*!# The `core` Package

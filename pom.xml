@@ -22,6 +22,7 @@
     <module>circumflex-docco</module>
     <module>circumflex-maven-plugin</module>
     <module>circumflex-ftl</module>
+    <module>circumflex-scalate</module>
     <module>circumflex-archetype</module>
   </modules>
 
@@ -167,7 +168,7 @@
         <plugin>
           <groupId>org.scala-tools</groupId>
           <artifactId>maven-scala-plugin</artifactId>
-          <version>2.14</version>
+          <version>2.15.0</version>
           <executions>
             <execution>
               <id>scala-compile</id>
