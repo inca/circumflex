@@ -9,7 +9,7 @@ import javax.servlet.ServletContext
 /*!# The `scalate` package
 
 Package `scalate` contains rendering methods and configuration objects
-for [Scalate Templating Engine](http://scalate.fusesource.org/).
+for [Scalate Templating Engine][scalate-home].
 
 You should import this package if you intend to use Scalate in your web application:
 
@@ -27,6 +27,17 @@ Here's the example usage from Circumflex Web Application:
     class Main extends RequestRouter {
        get("/hello/:name") = render("/templates/hello.ssp")
     }
+
+Two methods are used for rendering: `render(template: String, statusCode: Int = 200, layout: Boolean = true)`
+and `view(view: String, it: AnyRef)`. Consult [Scalate Documentation][scalate-doc] for more details.
+
+By default, the `ServletTemplateEngine` is used which resolves templates from servlet context.
+If you wish to use your own `TemplateEngine` implementation with the methods of `scalate` package,
+just set the `scalate.engine` configuration parameter to fully-qualified class name of templage
+engine implementation.
+
+  [scalate-doc]: http://scalate.fusesource.org/documentation/user-guide.html
+  [scalate-home]: http://scalate.fusesource.org/
 
 */
 package object scalate {
