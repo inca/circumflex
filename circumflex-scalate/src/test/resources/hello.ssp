@@ -1,1 +1,1 @@
-<p>Hello, ${ctx("name")}!</p>
+<p>Hello, ${'name()}!</p>

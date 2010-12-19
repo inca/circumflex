@@ -8,9 +8,19 @@ class SpecsTest extends JUnit4(CircumflexScalateSpec)
 
 class MockRouter extends RequestRouter {
 
-  get("/hello/:name") = {
+  get("/hello.ssp/:name") = {
     'name := param("name")
     render("/hello.ssp", 200, false)
+  }
+  
+  get("/hello.scaml/:name") = {
+    'name := param("name")
+    render("/hello.scaml", 200, false)
+  }
+  
+  get("/hello.jade/:name") = {
+    'name := param("name")
+    render("/hello.jade", 200, false)
   }
 
 }
@@ -24,8 +34,10 @@ object CircumflexScalateSpec extends Specification {
   }
 
   "Circumflex Scalate Views" should {
-    "render simple layouts" in {
-      MockApp.get("/hello/Hiram").execute().getContent must_== "<p>Hello, Hiram!</p>"
+    for(kind <- List("ssp", "scaml", "jade")) {
+      "render simple "+kind+" templates" in {
+        MockApp.get("/hello."+kind+"/Hiram").execute().getContent.trim must_== "<p>Hello, Hiram!</p>"
+      }
     }
   }
 
