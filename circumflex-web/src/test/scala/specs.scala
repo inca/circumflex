@@ -42,9 +42,9 @@ class MatchingMockRouter extends RequestRouter("/matching") {
   get("/param" & HOST(":host")) = "host is " + param("host")
 
   get("/composite" & ACCEPT("text/:format") & REFERER("localhost")) =
-          "3 conditions met (" + param("format") + ")"
+      "3 conditions met (" + param("format") + ")"
   get("/composite" & ACCEPT("text/:format")) =
-          "2 conditions met (" + param("format") + ")"
+      "2 conditions met (" + param("format") + ")"
   get("/composite") = "1 condition met"
 
   get("/multiparam") = request.params.list("test").mkString(",")
@@ -52,6 +52,13 @@ class MatchingMockRouter extends RequestRouter("/matching") {
 
   get("/complex/:name")
       .and(param("name").startsWith("Ch")) = "You passed a complex route."
+
+  get("/complex/:name")
+      .and(false)
+      .and({
+    println("Unreachable code.")
+    true
+  }) = "You can't be there."
 
   get("/complex/:name") = "You failed to pass complex route using '" + param("name") + "'."
 }
@@ -84,9 +91,9 @@ object CircumflexWebSpec extends Specification {
     "interpret `_method` parameter as HTTP method" in {
       MockApp.get("/?_method=PUT").execute().getContent must_== "this is a put route"
       MockApp.post("/")
-              .setContent("_method=PUT")
-              .execute()
-              .getContent must_== "this is a put route"
+          .setContent("_method=PUT")
+          .execute()
+          .getContent must_== "this is a put route"
     }
     "process subrouters" in {
       MockApp.get("/sub/").execute().getContent must_== "preved"
@@ -110,22 +117,22 @@ object CircumflexWebSpec extends Specification {
     }
     "process named parameters from current match results, delegating to request parameters on fail" in {
       MockApp.get("/matching/param")
-              .setHeader("Host", "preved")
-              .execute()
-              .getContent must_== "host is preved"
+          .setHeader("Host", "preved")
+          .execute()
+          .getContent must_== "host is preved"
     }
     "match composite routes" in {
       MockApp.get("/matching/composite")
-              .setHeader("Accept","text/html")
-              .setHeader("Referer","localhost")
-              .execute().getContent must_== "3 conditions met (html)"
+          .setHeader("Accept","text/html")
+          .setHeader("Referer","localhost")
+          .execute().getContent must_== "3 conditions met (html)"
       MockApp.get("/matching/composite")
-              .setHeader("Accept","text/plain")
-              .execute().getContent must_== "2 conditions met (plain)"
+          .setHeader("Accept","text/plain")
+          .execute().getContent must_== "2 conditions met (plain)"
       MockApp.get("/matching/composite")
-              .setHeader("Accept","application/xml")
-              .setHeader("Referer","localhost")
-              .execute().getContent must_== "1 condition met"
+          .setHeader("Accept","application/xml")
+          .setHeader("Referer","localhost")
+          .execute().getContent must_== "1 condition met"
     }
     "deal with multiple parameter values" in {
       MockApp.get("/matching/multiparam?test=one&test=two&test=three")
