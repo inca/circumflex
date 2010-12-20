@@ -4,10 +4,10 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>ru.circumflex</groupId>
-  <artifactId>circumflex-ftl</artifactId>
+  <artifactId>circumflex-scalate</artifactId>
   <packaging>jar</packaging>
   <version>2.0</version>
-  <name>Circumflex Freemarker Helper</name>
+  <name>Circumflex Scalate Views</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>
@@ -22,16 +22,11 @@
       <artifactId>circumflex-web</artifactId>
       <version>2.0</version>
     </dependency>
+    <!-- Scalate -->
     <dependency>
-      <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-markeven</artifactId>
-      <version>2.0</version>
-    </dependency>
-    <!-- Freemarker -->
-    <dependency>
-      <groupId>org.freemarker</groupId>
-      <artifactId>freemarker</artifactId>
-      <version>2.3.16</version>
+      <groupId>org.fusesource.scalate</groupId>
+      <artifactId>scalate-core</artifactId>
+      <version>1.3.2</version>
     </dependency>
   </dependencies>
 

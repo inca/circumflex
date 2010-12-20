@@ -11,6 +11,7 @@ class Main extends RequestRouter {
 
   'currentDate := new Date
 
+  get("/test") = "I'm fine, thanks!"
   get("/") = ftl("index.ftl")
 
 }
