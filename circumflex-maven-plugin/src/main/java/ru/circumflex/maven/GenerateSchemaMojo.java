@@ -116,7 +116,7 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
             }
           }
         } catch (Exception e) {
-          getLog().error("Failed to process a file: " + f.getAbsolutePath());
+          getLog().error("Failed to process a file: " + f.getAbsolutePath(), e);
         }
       } else getLog().warn("Omitting non-existent package " + pkgPath);
     } catch (Exception e) {

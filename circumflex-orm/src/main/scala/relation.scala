@@ -174,11 +174,19 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
 
   protected[orm] def init(): Unit =
     if (!_initialized) this.synchronized {
-      if (!_initialized) {
+      if (!_initialized) try {
         findMembers(this.getClass)
         dialect.initializeRelation(this)
         _fields.foreach(dialect.initializeField(_))
         this._initialized = true
+      } catch {
+        case e: NullPointerException =>
+          throw new ORMException("Failed to initialize " + relationName + ": " +
+              "possible cyclic dependency between relations. " +
+              "Make sure that at least one side uses weak reference to another " +
+              "(change `val` to `lazy val` for fields and to `def` for inverse associations).", e)
+        case e: Exception =>
+          throw new ORMException("Failed to initialize " + relationName + ".", e)
       }
     }
 
