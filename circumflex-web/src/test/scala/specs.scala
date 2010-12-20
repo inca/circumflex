@@ -49,6 +49,11 @@ class MatchingMockRouter extends RequestRouter("/matching") {
 
   get("/multiparam") = request.params.list("test").mkString(",")
   get("/multiparam/:test/:test") = param.list("test").mkString(",")
+
+  get("/complex/:name")
+      .and(param("name").startsWith("Ch")) = "You passed a complex route."
+
+  get("/complex/:name") = "You failed to pass complex route using '" + param("name") + "'."
 }
 
 object CircumflexWebSpec extends Specification {
@@ -129,6 +134,17 @@ object CircumflexWebSpec extends Specification {
       MockApp.get("/matching/multiparam/one/two?test=three&test=four&test=five")
           .execute()
           .getContent must_== "one,two,three,four,five"
+    }
+    "deal with complex route contexts" in {
+      MockApp.get("/matching/complex/Chris")
+          .execute()
+          .getContent must_== "You passed a complex route."
+      MockApp.get("/matching/complex/Chuck")
+          .execute()
+          .getContent must_== "You passed a complex route."
+      MockApp.get("/matching/complex/Joe")
+          .execute()
+          .getContent must_== "You failed to pass complex route using 'Joe'."
     }
   }
 

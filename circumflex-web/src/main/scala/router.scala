@@ -73,42 +73,40 @@ class RequestRouter(val prefix: String = "") {
 
 }
 
-/**
- * @see RequestRouter
- */
-class Route(matchingMethods: String*) {
-
-  protected def dispatch(matcher: Matcher, response: => RouteResponse): Unit =
-    matchingMethods.find(request.method.equals(_)) match {
-      case Some(_) =>
-        matcher.apply() match {
-          case None => return
-          case Some(matches: Seq[MatchResult]) =>
-            matches.foreach(m => ctx.update(m.name, m))
-            val r = response.body
-            send(text = r)
-        }
-      case _ =>
-    }
-
-  // DSL-like syntax (`get("/") = { ... }`)
-  def update(matcher: Matcher, response: => RouteResponse) =
-    dispatch(matcher, response)
-
+trait RoutingContext[-T] {
+  def matches: Boolean
+  protected def dispatch(block: => T): Unit
+  def and: RoutingContext[T] = if (matches) this else NopRoute
+  def apply(matcher: Matcher): RoutingContext[T] = matcher.apply() match {
+    case Some(matchResults) if matches =>
+      matchResults.foreach(m => ctx.update(m.name, m))
+      return this
+    case _ => return NopRoute
+  }
+  def apply(condition: => Boolean): RoutingContext[T] =
+    if (matches && condition) this else NopRoute
+  def update(matcher: Matcher, block: => T): Unit =
+    apply(matcher).dispatch(block)
+  def update(condition: => Boolean, block: => T): Unit =
+    apply(condition).dispatch(block)
 }
 
-/**
- * @see RequestRouter
- */
-class FilterRoute {
-  protected def dispatch(matcher: Matcher, block: => Unit): Unit =
-    matcher.apply() map { matches =>
-      matches.foreach(m => ctx.update(m.name, m))
-      block
-    }
+class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
+  val matches = matchingMethods.contains(request.method)
+  protected def dispatch(block: => RouteResponse): Unit = {
+    val response = block.body
+    send(response)
+  }
+}
 
-  def update(matcher: Matcher, block: => Unit) =
-    dispatch(matcher, block)
+class FilterRoute extends RoutingContext[Unit] {
+  def matches = true
+  protected def dispatch(block: => Unit) = block
+}
+
+object NopRoute extends RoutingContext[Any] {
+  protected def dispatch(block: => Any): Unit = {}
+  def matches = false
 }
 
 /**
