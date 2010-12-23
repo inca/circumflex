@@ -7,7 +7,7 @@ class LinkDefinition(val url: StringEx, val title: StringEx) {
   url.replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
   title.replaceAll("*", "&#42;").replaceAll("_", "&#95;").replaceAll("\"", "&quot;").trim
 
-  def toLink(linkText: CharSequence): CharSequence = {
+  def toLink(linkText: CharSequence): StringEx = {
     val result = new StringEx("<a href=\"").append(url).append("\"")
     if (title.length > 0) result.append(" title=\"").append(title).append("\"")
     result.append(">").append(linkText).append("</a>")

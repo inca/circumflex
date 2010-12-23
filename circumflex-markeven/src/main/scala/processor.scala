@@ -649,15 +649,21 @@ class MarkevenProcessor() {
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
 
-  def doMacros(s: StringEx): StringEx = s.replaceAll(regexes.macro, m => {
+  protected def processSingleMacro(m: Matcher): CharSequence = {
     var name = m.group(1)
     if (name == null) name = ""
     if (name.length > 0)
       name = name.substring(0, name.length - 1)
     val contents = new StringEx(m.group(2))
-    val replacement = macros.get(name).map(f => f(contents)).getOrElse(m.group(0))
-    protector.addToken(replacement)
-  })
+    val r = macros.get(name).map(f => f(contents)).getOrElse(m.group(0))
+    r
+  }
+
+  def doMacros(s: StringEx): StringEx = s.replaceAll(regexes.macro, m =>
+    protector.addToken(processSingleMacro(m)))
+
+  def doMacrosPlain(s: StringEx): StringEx = s.replaceAll(regexes.macro, m =>
+    processSingleMacro(m))
 
   def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m => {
     val s = new StringEx(m.group(2)).trim
@@ -682,10 +688,11 @@ class MarkevenProcessor() {
     // there can be protected content inside linktexts, so decode them first
     unprotect(linkContent)
     doSpanEnhancements(linkContent)
-    val replacement = links.get(id)
+    val result = links.get(id)
         .map(ld => ld.toLink(linkContent))
-        .getOrElse(m.group(0))
-    protector.addToken(replacement)
+        .getOrElse(new StringEx(m.group(0)))
+    doMacrosPlain(result)
+    protector.addToken(result)
   })
 
   def doInlineLinks(s: StringEx): StringEx = s.replaceAll(regexes.inlineLinks, m => {
