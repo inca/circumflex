@@ -1,6 +1,5 @@
 package ru.circumflex
 
-import java.io._
 import java.util.Random
 import java.util.regex.Pattern
 import collection.mutable.HashMap

@@ -4,7 +4,6 @@ package markeven
 import java.util.regex._
 import java.io._
 import collection.mutable.{HashMap, ListBuffer}
-import org.apache.commons.io.FileUtils
 
 /*!# The Markeven Processor
 

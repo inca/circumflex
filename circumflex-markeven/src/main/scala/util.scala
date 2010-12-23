@@ -2,7 +2,6 @@ package ru.circumflex.markeven
 
 import java.lang.StringBuilder
 import java.util.regex._
-import collection.mutable.ListBuffer
 
 /*!# Character protector
 
