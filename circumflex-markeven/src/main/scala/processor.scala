@@ -763,19 +763,5 @@ class MarkevenProcessor() {
     return out.toString
   }
 
-  def renderToFile(src: File, dst: File, force: Boolean = false): Unit = {
-    if (!src.isFile)
-      throw new FileNotFoundException("File " + src.toString + " not found.")
-    if (!force && dst.isFile && src.lastModified < dst.lastModified) return
-    else {
-      val sourceText = FileUtils.readFileToString(src, "UTF-8")
-      val out = new FileWriter(dst)
-      try {
-      } finally {
-        out.close
-      }
-    }
-  }
-
 }
 

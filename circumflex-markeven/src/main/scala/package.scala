@@ -16,7 +16,7 @@ You should import this package to use Circumflex Markeven in your application:
 
     import ru.circumflex.markeven._
 
-# Rendering methods
+# Rendering HTML
 
 The `toHtml` method is used to perform text-to-html conversion using default `MarkevenProcessor`.
 The usage is pretty simple:
@@ -34,19 +34,6 @@ The example above yields following HTML:
     <h1 id="hi" class="greeting example">Hello world!</h1>        {.html}
     <p>This is a test.</p>
 
-You can also use handy `renderToFile` method, which renders the contents of specified `src`
-file into specified `dst` file:
-
-    val src = new File("/path/to/my/text/file.txt")
-    val dst = new File("/path/to/my/text/file.txt.html")
-    markeven.renderToFile(src, dst)
-
-It also performs last modified timestamps checking to avoid unnecessary transformation,
-allowing effective caching of static content. If you do not need this caching behavior,
-set the `force` parameter to `true`:
-
-    markeven.renderToFile(src, dst, true)
-
 You can use your custom `MarkevenProcessor` implementation with rendering methods: just set the
 `markeven.processor` configuration parameter to fully-qualified name of your processor implementation.
 */
@@ -56,11 +43,7 @@ package object markeven {
 
   def processor = cx.instantiate[MarkevenProcessor]("markeven.processor", new MarkevenProcessor)
 
-  def toHtml(source: CharSequence): String =
-    processor.toHtml(source)
-
-  def renderToFile(src: File, dst: File, force: Boolean = false): Unit =
-    processor.renderToFile(src, dst, force)
+  def toHtml(source: CharSequence): String = processor.toHtml(source)
 
   // Utilities
 
