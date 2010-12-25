@@ -389,7 +389,7 @@ Inside block level elements following text enhancements occur:
   * text surrounded with backtick `` ` `` characters is transformed into `code` span;
   * text surrounded with underscores `_` becomes `em` (emphasized);
   * text surrounded with asterisks `*` becomes `strong` (strongly emphasized);
-  * text surrounded with asterisks `~` becomes `del` (deleted);
+  * text surrounded with tildas `~` becomes `del` (deleted);
   * various typographic improvements are applied to text:
 
     * two minus chars `--` are replaces with -- (long tiret);
