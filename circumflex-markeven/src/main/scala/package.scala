@@ -80,8 +80,8 @@ package object markeven {
       Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
     val linkDefinition = Pattern.compile("^ {0,3}\\[(.+?)\\]: *(\\S.*?)" +
         "(\\n? *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
-    val blockSelector = Pattern.compile(" *+\\{(\\#[a-z0-9_-]+)?((?:\\.[a-z0-9_-]+)+)?\\}$",
-      Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
+    val blockSelector = Pattern.compile("(?<=\\A[^\\n]*?) *?\\{(\\#[a-zA-Z0-9_-]+)?((?:\\.[a-zA-Z0-9_-]+)+)?\\}$",
+      Pattern.MULTILINE)
     val tableCellSplit = Pattern.compile("\\|")
     val tableSeparatorLine = Pattern.compile("^[- :|]+$")
     val macro = Pattern.compile("\\[\\[((?>[a-zA-Z0-9_-]+:))?(.*?)\\]\\]", Pattern.DOTALL)
