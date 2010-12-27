@@ -7,7 +7,7 @@
   <artifactId>circumflex-scalate</artifactId>
   <packaging>jar</packaging>
   <version>2.0</version>
-  <name>Circumflex Scalate Views</name>
+  <name>Circumflex Scalate Helper</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>

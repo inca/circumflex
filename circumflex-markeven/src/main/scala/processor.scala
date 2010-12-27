@@ -4,7 +4,6 @@ package markeven
 import java.util.regex._
 import java.io._
 import collection.mutable.{HashMap, ListBuffer}
-import org.apache.commons.io.FileUtils
 
 /*!# The Markeven Processor
 
@@ -390,7 +389,7 @@ Inside block level elements following text enhancements occur:
   * text surrounded with backtick `` ` `` characters is transformed into `code` span;
   * text surrounded with underscores `_` becomes `em` (emphasized);
   * text surrounded with asterisks `*` becomes `strong` (strongly emphasized);
-  * text surrounded with asterisks `~` becomes `del` (deleted);
+  * text surrounded with tildas `~` becomes `del` (deleted);
   * various typographic improvements are applied to text:
 
     * two minus chars `--` are replaces with -- (long tiret);
@@ -649,15 +648,21 @@ class MarkevenProcessor() {
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
 
-  def doMacros(s: StringEx): StringEx = s.replaceAll(regexes.macro, m => {
+  protected def processSingleMacro(m: Matcher): CharSequence = {
     var name = m.group(1)
     if (name == null) name = ""
     if (name.length > 0)
       name = name.substring(0, name.length - 1)
     val contents = new StringEx(m.group(2))
-    val replacement = macros.get(name).map(f => f(contents)).getOrElse(m.group(0))
-    protector.addToken(replacement)
-  })
+    val r = macros.get(name).map(f => f(contents)).getOrElse(m.group(0))
+    r
+  }
+
+  def doMacros(s: StringEx): StringEx = s.replaceAll(regexes.macro, m =>
+    protector.addToken(processSingleMacro(m)))
+
+  def doMacrosPlain(s: StringEx): StringEx = s.replaceAll(regexes.macro, m =>
+    processSingleMacro(m))
 
   def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m => {
     val s = new StringEx(m.group(2)).trim
@@ -682,10 +687,11 @@ class MarkevenProcessor() {
     // there can be protected content inside linktexts, so decode them first
     unprotect(linkContent)
     doSpanEnhancements(linkContent)
-    val replacement = links.get(id)
+    val result = links.get(id)
         .map(ld => ld.toLink(linkContent))
-        .getOrElse(m.group(0))
-    protector.addToken(replacement)
+        .getOrElse(new StringEx(m.group(0)))
+    doMacrosPlain(result)
+    protector.addToken(result)
   })
 
   def doInlineLinks(s: StringEx): StringEx = s.replaceAll(regexes.inlineLinks, m => {
@@ -761,20 +767,6 @@ class MarkevenProcessor() {
     val out = new StringWriter(cs.length)
     process(cs, out)
     return out.toString
-  }
-
-  def renderToFile(src: File, dst: File, force: Boolean = false): Unit = {
-    if (!src.isFile)
-      throw new FileNotFoundException("File " + src.toString + " not found.")
-    if (!force && dst.isFile && src.lastModified < dst.lastModified) return
-    else {
-      val sourceText = FileUtils.readFileToString(src, "UTF-8")
-      val out = new FileWriter(dst)
-      try {
-      } finally {
-        out.close
-      }
-    }
   }
 
 }
