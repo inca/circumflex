@@ -451,7 +451,7 @@ class MarkevenProcessor() {
     encodeBackslashEscapes(title)
     encodeChars(url)
     encodeBackslashEscapes(url)
-    links += id -> new LinkDefinition(url, title)
+    links += id -> createLinkDefinition(url, title)
     ""
   })
 
@@ -703,9 +703,9 @@ class MarkevenProcessor() {
     // there can be protected content inside linktexts, so decode them first
     unprotect(linkContent)
     doSpanEnhancements(linkContent)
-    val replacement = new LinkDefinition(new StringEx(url), new StringEx(title))
-        .toLink(doSpanEnhancements(new StringEx(linkContent)))
-    protector.addToken(replacement)
+    val result = createLinkDefinition(new StringEx(url), new StringEx(title)).toLink(linkContent)
+    doMacrosPlain(result)
+    protector.addToken(result)
   })
 
   def doSpanEnhancements(s: StringEx): StringEx = {
@@ -713,6 +713,9 @@ class MarkevenProcessor() {
     recurseSpanEnhancements(s)
     s
   }
+
+  def createLinkDefinition(url: StringEx, title: StringEx): LinkDefinition =
+    new LinkDefinition(url, title)
 
   protected def recurseSpanEnhancements(s: StringEx): StringEx =
     s.replaceAll(regexes.spanEnhancements, m => {
