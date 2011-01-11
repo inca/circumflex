@@ -401,7 +401,7 @@ Inside block level elements following text enhancements occur:
 You can also use backslash escaping to prevent misinterpreting special characters.
 Following characters can be escaped: ```\`_*{}[]()#+-~.!```
 
-## Links
+## Links & Images
 
 Two style of links are supported: inline and reference.
 
@@ -412,11 +412,25 @@ and are rendered into HTML `a` element: `<a href="http://my_url">my text</a>` an
 Reference-style links are split into link definition and link usage. Using previous examples, here's
 how link definitions could look like:
 
-    [id1]: http://my_url
+    [id1]: http://my_url                                                   {.no-highlight}
     [id2]: http://some_url "some title"
 
 Link usages would then look like this: `[my text][id1]` and `[some text][id2]`. The generated markup
-equals to the previous one.
+is equal to the previous one.
+
+The syntax for images is similar to the one for links: the exclamation `!` sign immediately before
+opening bracket tells markeven to interpret the link as an image. Link text becomes the value of
+`alt` attribute:
+
+    Inline image: ![some image](/img/hello.png "Hello")                             {.no-highlight}
+
+    Or reference-style image: ![some image][img]
+
+      [img]: /img/hello.png "Hello"
+
+Both cases generate following markup for image:
+
+    <img src="/img/hello.png" title="Hello" alt="some image"/>
 */
 class MarkevenProcessor() {
 
@@ -444,7 +458,7 @@ class MarkevenProcessor() {
 
   def stripLinkDefinitions(s: StringEx): StringEx = s.replaceAll(regexes.linkDefinition, m => {
     val id = m.group(1).trim.toLowerCase
-    val url = new StringEx(m.group(2))
+    val url = processUrl(m.group(2))
     var t = m.group(4)
     val title = new StringEx(if (t == null) "" else t)
     encodeChars(title)
@@ -634,6 +648,8 @@ class MarkevenProcessor() {
     encodeChars(s)
     doCodeSpans(s)
     encodeBackslashEscapes(s)
+    doInlineImages(s)
+    doRefImages(s)
     doInlineLinks(s)
     doRefLinks(s)
     doSpanEnhancements(s)
@@ -694,18 +710,40 @@ class MarkevenProcessor() {
     protector.addToken(result)
   })
 
+  def doRefImages(s: StringEx): StringEx = s.replaceAll(regexes.refImages, m => {
+    val altText = m.group(1)
+    var id = m.group(2)
+    if (id == "") id = altText
+    id = id.trim.toLowerCase
+    val result = links.get(id)
+        .map(ld => ld.toImageLink(altText))
+        .getOrElse(new StringEx(m.group(0)))
+    doMacrosPlain(result)
+    protector.addToken(result)
+  })
+
   def doInlineLinks(s: StringEx): StringEx = s.replaceAll(regexes.inlineLinks, m => {
     val linkText = m.group(1)
-    val url = m.group(2)
+    val url = processUrl(m.group(2))
     var title = m.group(4)
     if (title == null) title = ""
     val linkContent = new StringEx(linkText)
     // there can be protected content inside linktexts, so decode them first
     unprotect(linkContent)
     doSpanEnhancements(linkContent)
-    val replacement = new LinkDefinition(new StringEx(url), new StringEx(title))
-        .toLink(doSpanEnhancements(new StringEx(linkContent)))
-    protector.addToken(replacement)
+    val result = new LinkDefinition(url, new StringEx(title)).toLink(linkContent)
+    doMacrosPlain(result)
+    protector.addToken(result)
+  })
+
+  def doInlineImages(s: StringEx): StringEx = s.replaceAll(regexes.inlineImages, m => {
+    val altText = m.group(1)
+    val url = processUrl(m.group(2))
+    var title = m.group(4)
+    if (title == null) title = ""
+    val result = new LinkDefinition(url, new StringEx(title)).toImageLink(altText)
+    doMacrosPlain(result)
+    protector.addToken(result)
   })
 
   def doSpanEnhancements(s: StringEx): StringEx = {
@@ -713,6 +751,8 @@ class MarkevenProcessor() {
     recurseSpanEnhancements(s)
     s
   }
+
+  protected def processUrl(url: CharSequence): StringEx = new StringEx(url)
 
   protected def recurseSpanEnhancements(s: StringEx): StringEx =
     s.replaceAll(regexes.spanEnhancements, m => {

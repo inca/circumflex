@@ -42,9 +42,10 @@ class RequestRouter(val prefix: String = "") {
     sendError(404)
 
   implicit def string2uriMatcher(str: String): RegexMatcher =
-    new RegexMatcher("uri", request.uri, prefix + str)
+    new RegexMatcher("uri", request.uri, servletContext.getContextPath + prefix + str)
   implicit def regex2uriMatcher(regex: Regex): RegexMatcher =
-    new RegexMatcher("uri", request.uri, new Regex(prefix + regex.toString))
+    new RegexMatcher("uri", request.uri,
+      new Regex(servletContext.getContextPath + prefix + regex.toString))
 
   // Routes
   val get = new Route("get")

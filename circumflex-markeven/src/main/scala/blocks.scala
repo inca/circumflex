@@ -13,6 +13,14 @@ class LinkDefinition(val url: StringEx, val title: StringEx) {
     result.append(">").append(linkText).append("</a>")
     return result
   }
+
+  def toImageLink(alt: CharSequence): StringEx = {
+    val result = new StringEx("<img src=\"").append(url).append("\"")
+    if (title.length > 0) result.append(" title=\"").append(title).append("\"")
+    if (alt.length > 0) result.append(" alt=\"").append(alt).append("\"")
+    result.append("/>")
+    return result
+  }
 }
 
 class Selector(val id: String = "", val classes: Seq[String] = Nil) {
