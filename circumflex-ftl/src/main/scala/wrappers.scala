@@ -27,7 +27,7 @@ class ScalaObjectWrapper extends ObjectWrapper {
     case it: Iterable[Any] => new ScalaIterableWrapper(it, this)
     case it: Iterator[Any] => new ScalaIteratorWrapper(it, this)
     case str: String => new SimpleScalar(str)
-    case date: Date => new ScalaDateWrapper(date)
+    case date: Date => new ScalaDateWrapper(date, this)
     case num: Number => new SimpleNumber(num)
     case bool: Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
     // Everything else
@@ -35,8 +35,8 @@ class ScalaObjectWrapper extends ObjectWrapper {
   }
 }
 
-class ScalaDateWrapper(val date: Date)
-    extends TemplateDateModel with ScalaBaseWrapper {
+class ScalaDateWrapper(val date: Date, wrapper: ObjectWrapper)
+    extends ScalaBaseWrapper(date, wrapper) with TemplateDateModel {
   def getDateType = TemplateDateModel.UNKNOWN
   def getAsDate = date
 }
