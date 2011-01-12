@@ -4,7 +4,7 @@ import java.lang.String
 import collection.{Iterator, Map}
 import collection.JavaConversions._
 import collection.mutable.{ArrayBuffer, HashMap}
-import java.util.{ResourceBundle, Locale, Properties, Enumeration => JEnumeration}
+import java.util.{ResourceBundle, Locale, Properties, Enumeration => JEnumeration, Date}
 import java.text.MessageFormat
 import java.io._
 import org.apache.commons.io.FilenameUtils
@@ -78,6 +78,9 @@ If you need to search messages in different sources, you can use
  * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
  */
 trait MessageResolver extends Map[String, String] {
+  protected var _lastUpdated = new Date()
+  def lastUpdated = _lastUpdated
+
   def -(key: String): Map[String, String] = this
   def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
 
@@ -128,11 +131,12 @@ class ResourceBundleMessageResolver(val bundleName: String) extends MessageResol
  * For more information refer to
  * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
  */
-class DelegatingMessageResolver(initialResolvers: MessageResolver*) {
+class DelegatingMessageResolver(initialResolvers: MessageResolver*) extends MessageResolver {
   protected var _resolvers: Seq[MessageResolver] = initialResolvers
   def resolvers = _resolvers
   def addResolver(r: MessageResolver): this.type = {
     _resolvers ++= List(r)
+    _lastUpdated = new Date()
     return this
   }
   def iterator: Iterator[(String, String)] =
@@ -159,9 +163,11 @@ class PropertyFileResolver extends MessageResolver {
       case Some((props: Properties, lm: Long)) =>
         if (!f.isFile) {    // previously cached file does not exist anymore
           _cache.remove(suffix)
+          _lastUpdated = new Date()
           getProps(suffix)
         } else {
-          if (f.lastModified > lm)  // cached file has been modified
+          if (f.lastModified > lm) {  // cached file has been modified
+            _lastUpdated = new Date()
             loadProps(f) match {
               case Some(p: Properties) =>
                 _cache(suffix) = (p, f.lastModified)
@@ -169,7 +175,8 @@ class PropertyFileResolver extends MessageResolver {
               case None =>    // previously cached file does not exist anymore
                 _cache.remove(suffix)
                 getProps(suffix)
-            } else Some(props)      // not modified -- return cached
+            }
+          } else Some(props)      // not modified -- return cached
         }
       case _ => loadProps(f) map { p =>
         _cache(suffix) = (p, f.lastModified)
