@@ -78,8 +78,8 @@ If you need to search messages in different sources, you can use
  * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
  */
 trait MessageResolver extends Map[String, String] {
-  protected var _lastUpdated = new Date()
-  def lastUpdated = _lastUpdated
+  protected var _lastModified = new Date()
+  def lastModified = _lastModified
 
   def -(key: String): Map[String, String] = this
   def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
@@ -136,7 +136,7 @@ class DelegatingMessageResolver(initialResolvers: MessageResolver*) extends Mess
   def resolvers = _resolvers
   def addResolver(r: MessageResolver): this.type = {
     _resolvers ++= List(r)
-    _lastUpdated = new Date()
+    _lastModified = new Date()
     return this
   }
   def iterator: Iterator[(String, String)] =
@@ -163,11 +163,11 @@ class PropertyFileResolver extends MessageResolver {
       case Some((props: Properties, lm: Long)) =>
         if (!f.isFile) {    // previously cached file does not exist anymore
           _cache.remove(suffix)
-          _lastUpdated = new Date()
+          _lastModified = new Date()
           getProps(suffix)
         } else {
           if (f.lastModified > lm) {  // cached file has been modified
-            _lastUpdated = new Date()
+            _lastModified = new Date()
             loadProps(f) match {
               case Some(p: Properties) =>
                 _cache(suffix) = (p, f.lastModified)
