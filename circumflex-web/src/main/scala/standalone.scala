@@ -9,7 +9,7 @@ import org.apache.commons.io.FilenameUtils._
 /*!# Standalone Server
 
 Circumflex Web Framework ships `StandaloneServer` which uses Jetty to
-start accepting request without even the need to us deployment descriptor
+start accepting requests without even the need to use deployment descriptor
 (which is otherwise required by Servlet Specification).
 
 Following configuration parameters are required to get standalone server
