@@ -27,6 +27,8 @@ class Field[T, R <: Record[_, R]](name: String, record: R , sqlType: String)
   def REFERENCES[P <: Record[T, P]](relation: Relation[T, P]): Association[T, R, P] =
     new Association(this, relation)
 
+  def placeholder = dialect.placeholder
+
   def toSql: String = dialect.columnDefinition(this)
 }
 
@@ -113,9 +115,11 @@ class TimeField[R <: Record[_, R]](name: String, record: R)
     value.map(v => new java.sql.Time(v.getTime).toString).getOrElse("")
 }
 
-class XmlField[R <: Record[_, R]](name: String, record: R)
+class XmlField[R <: Record[_, R]](name: String, record: R, val root: String)
     extends XmlSerializable[Elem, R](name, record, dialect.xmlType) {
-  def from(str: String): Option[Elem] = Some(XML.loadString(str))
+  def from(str: String): Option[Elem] = Some(XML.loadString(
+    "<" + root + ">" + str + "</" + root +">"))
   override def read(rs: ResultSet, alias: String) =
-    any2option(rs.getString(alias)).flatMap(x => from(x))
+    any2option(rs.getString(alias)).map(x => XML.loadString(x))
+  override def placeholder = dialect.xmlPlaceholder
 }

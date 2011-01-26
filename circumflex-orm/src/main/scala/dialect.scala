@@ -30,7 +30,7 @@ class Dialect {
   def dateType = "DATE"
   def timeType = "TIME"
   def timestampType = "TIMESTAMP"
-  def xmlType = "TEXT"
+  def xmlType = "XML"
 
   /*!## Actions for Foreign Keys */
 
@@ -100,6 +100,11 @@ class Dialect {
 
   def asc = "ASC"
   def desc = "DESC"
+
+  /*!## Param placeholders */
+
+  def placeholder = "?"
+  def xmlPlaceholder = "XMLPARSE(DOCUMENT ?)"
 
   /*!## Features Compliance */
 
@@ -401,7 +406,7 @@ class Dialect {
   def insert[PK, R <: Record[PK, R]](dml: Insert[PK, R]): String =
     "INSERT INTO " + dml.relation.qualifiedName +
         " (" + dml.fields.map(f => quoteIdentifier(f.name)).mkString(", ") +
-        ") VALUES (" + dml.fields.map(f => "?").mkString(", ") + ")"
+        ") VALUES (" + dml.fields.map(_.placeholder).mkString(", ") + ")"
 
   /**
    * Produces an `INSERT .. SELECT` statement.
@@ -415,7 +420,7 @@ class Dialect {
    */
   def update[PK, R <: Record[PK, R]](dml: Update[PK, R]): String = {
     var result = "UPDATE " + dml.node.toSql + " SET " +
-        dml.setClause.map(f => quoteIdentifier(f._1.name) + " = ?").mkString(", ")
+        dml.setClause.map(f => quoteIdentifier(f._1.name) + " = " + f._1.placeholder).mkString(", ")
     if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
     return result
   }
