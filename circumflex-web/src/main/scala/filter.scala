@@ -120,6 +120,7 @@ class CircumflexFilter extends Filter {
         ctx("cx.request") = new HttpRequest(req)
         ctx("cx.response") = new HttpResponse(res)
         ctx("cx.filterChain") = chain
+        ctx("cx.locale") = req.getLocale
         prepareContext(ctx)
         try {
           WEB_LOG.trace(req)
