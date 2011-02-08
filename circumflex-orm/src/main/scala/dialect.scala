@@ -256,6 +256,11 @@ class Dialect {
   }
 
   /**
+   * Produces a name from multiple fields (generally by delimiting them with comma).
+   */
+  def compositeFieldName(names: String*): String = names.mkString(", ")
+
+  /**
    * Performs dialect-specific relation initialization.
    */
   def initializeRelation[R <: Record[_, R]](relation: Relation[_, R]): Unit = {}
