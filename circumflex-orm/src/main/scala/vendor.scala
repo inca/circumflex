@@ -42,7 +42,7 @@ class H2Dialect extends Dialect {
   override def createIndex(idx: Index): String = {
     var result = "CREATE "
     if (idx.unique_?) result += "UNIQUE "
-    result += "INDEX " + quoteIdentifier(idx.name) + " ON " + idx.relation.qualifiedName +
+    result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
         " (" + idx.expression + ")"
     if (idx.where != EmptyPredicate)
       result += " WHERE " + idx.where.toInlineSql

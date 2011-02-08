@@ -12,7 +12,7 @@ The `Field` class holds atomic values of records. It wraps actual value
 and provides methods for constructing column definitions for enclosing
 tables. It also contains the `REFERENCES` method which is used to create
 associations.
- */
+*/
 class Field[T, R <: Record[_, R]](val name: String,
                                   val record: R,
                                   val sqlType: String)

@@ -39,16 +39,16 @@ abstract class Constraint(val constraintName: String,
 
 class UniqueKey(name: String,
                 relation: Relation[_, _],
-                val fields: Seq[Field[_, _]])
+                val columns: Seq[ValueHolder[_, _]])
     extends Constraint(name, relation) {
   def sqlDefinition = dialect.uniqueKeyDefinition(this)
 }
 
 class ForeignKey(name: String,
                  childRelation: Relation[_, _],
-                 val childFields: Seq[Field[_, _]],
+                 val childColumns: Seq[ValueHolder[_, _]],
                  val parentRelation: Relation[_, _],
-                 val parentFields: Seq[Field[_, _]])
+                 val parentColumns: Seq[ValueHolder[_, _]])
     extends Constraint(name, childRelation) {
 
   protected var _onDelete: ForeignKeyAction = NO_ACTION
@@ -107,32 +107,32 @@ class Index(val name: String,
 }
 
 class ConstraintHelper(name: String, relation: Relation[_, _]) {
-  def UNIQUE(fields: Field[_, _]*): UniqueKey =
-    new UniqueKey(name, relation, fields.toList)
+  def UNIQUE(columns: ValueHolder[_, _]*): UniqueKey =
+    new UniqueKey(name, relation, columns.toList)
 
   def CHECK(expression: String): CheckConstraint =
     new CheckConstraint(name, relation, expression)
 
   def FOREIGN_KEY(parentRelation: Relation[_, _],
-                  childFields: Seq[Field[_, _]],
-                  parentFields: Seq[Field[_, _]]): ForeignKey =
-    new ForeignKey(name, relation, childFields, parentRelation, parentFields)
+                  childColumns: Seq[ValueHolder[_, _]],
+                  parentColumns: Seq[ValueHolder[_, _]]): ForeignKey =
+    new ForeignKey(name, relation, childColumns, parentRelation, parentColumns)
 
   def FOREIGN_KEY(parentRelation: Relation[_, _],
-                  fields: (Field[_, _], Field[_, _])*): ForeignKey = {
-    val childFields = fields.map(_._1)
-    val parentFields = fields.map(_._2)
-    return FOREIGN_KEY(parentRelation, childFields, parentFields)
+                  columns: (ValueHolder[_, _], ValueHolder[_, _])*): ForeignKey = {
+    val childColumns = columns.map(_._1)
+    val parentColumns = columns.map(_._2)
+    return FOREIGN_KEY(parentRelation, childColumns, parentColumns)
   }
 
-  def FOREIGN_KEY(localFields: Field[_, _]*): ForeignKeyHelper =
-    new ForeignKeyHelper(name, relation, localFields)
+  def FOREIGN_KEY(localColumns: ValueHolder[_, _]*): ForeignKeyHelper =
+    new ForeignKeyHelper(name, relation, localColumns)
 }
 
-class ForeignKeyHelper(name: String, childRelation: Relation[_, _], childFields: Seq[Field[_, _]]) {
+class ForeignKeyHelper(name: String, childRelation: Relation[_, _], childColumns: Seq[ValueHolder[_, _]]) {
   def REFERENCES(parentRelation: Relation[_, _],
-                 parentFields: Field[_, _]*): ForeignKey =
-    new ForeignKey(name, childRelation, childFields, parentRelation, parentFields)
+                 parentColumns: ValueHolder[_, _]*): ForeignKey =
+    new ForeignKey(name, childRelation, childColumns, parentRelation, parentColumns)
 }
 
 class DefinitionHelper[R <: Record[_, R]](name: String, record: R) {

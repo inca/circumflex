@@ -4,7 +4,6 @@ import ru.circumflex.core._
 import orm._
 import java.util.regex.Pattern
 import net.sf.ehcache.CacheManager
-import java.sql.ResultSet
 
 /*!# The `orm` Package
 
@@ -58,27 +57,25 @@ package object orm {
 
   // for nodes, fields and records
 
-  implicit def association2field[K, C <: Record[_, C], P <: Record[K, P]](
-      association: Association[K, C, P]): Field[K, C] = association.field
   implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
     new RelationNode[PK, R](relation)
   implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): R = {
     ctx("orm.lastAlias") = node.alias
     node.relation.asInstanceOf[R]
   }
-  implicit def field2str(field: Field[_, _]): String = ctx.get("orm.lastAlias") match {
+  implicit def vh2str(vh: ValueHolder[_, _]): String = ctx.get("orm.lastAlias") match {
     case Some(alias: String) =>
       ctx.remove("orm.lastAlias")
-      alias + "." + field.name
-    case _ => field.name
+      alias + "." + vh.name
+    case _ => vh.name
   }
 
   // for predicates
 
   implicit def string2helper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
-  implicit def field2helper(field: Field[_, _]): SimpleExpressionHelper =
-    new SimpleExpressionHelper(field2str(field))
+  implicit def vh2helper(vh: ValueHolder[_, _]): SimpleExpressionHelper =
+    new SimpleExpressionHelper(vh2str(vh))
   implicit def string2predicate(expression: String): Predicate =
     new SimpleExpression(expression, Nil)
   implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
@@ -91,15 +88,15 @@ package object orm {
 
   implicit def string2order(expression: String): Order =
     new Order(expression, Nil)
-  implicit def field2order(field: Field[_, _]): Order =
-    new Order(field2str(field), Nil)
+  implicit def vh2order(vh: ValueHolder[_, _]): Order =
+    new Order(vh2str(vh), Nil)
 
   // for projections
 
   implicit def string2projection(expression: String): Projection[Any] =
     new ExpressionProjection[Any](expression)
-  implicit def field2projection[T](field: Field[T, _]): Projection[T] =
-    new ExpressionProjection[T](field2str(field))
+  implicit def vh2projection[T](vh: ValueHolder[T, _]): Projection[T] =
+    new ExpressionProjection[T](vh2str(vh))
 
   implicit def pair2proj[T1, T2](
       t: (Projection[T1], Projection[T2])) = new PairProjection(t._1, t._2)

@@ -231,9 +231,9 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   */
 
   protected def CONSTRAINT(name: String) = new ConstraintHelper(name, this)
-  protected def UNIQUE(fields: Field[_, R]*) =
-    CONSTRAINT(relationName + "_" + fields.map(_.name).mkString("_") + "_key")
-        .UNIQUE(fields: _*)
+  protected def UNIQUE(columns: ValueHolder[_, R]*) =
+    CONSTRAINT(relationName + "_" + columns.map(_.name).mkString("_") + "_key")
+        .UNIQUE(columns: _*)
 
   /*!## Auxiliary Objects
 
