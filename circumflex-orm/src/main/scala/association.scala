@@ -20,7 +20,10 @@ We use some terminology when speaking about associations:
 */
 class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C],
                                                            val parentRelation: Relation[K, P])
-    extends ValueHolder[P, C](field.name, field.record, field.sqlType) { assoc =>
+    extends ValueHolder[P, C] { assoc =>
+
+  def name = field.name
+  def record = field.record
 
   /*! Column definition methods delegate to underlying field. */
   override def notNull_?(): Boolean = field.notNull_?

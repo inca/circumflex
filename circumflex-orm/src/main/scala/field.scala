@@ -13,8 +13,10 @@ and provides methods for constructing column definitions for enclosing
 tables. It also contains the `REFERENCES` method which is used to create
 associations.
  */
-class Field[T, R <: Record[_, R]](name: String, record: R , sqlType: String)
-    extends ValueHolder[T, R](name, record, sqlType) with SQLable {
+class Field[T, R <: Record[_, R]](val name: String,
+                                  val record: R,
+                                  val sqlType: String)
+    extends ValueHolder[T, R] with SQLable {
 
   def uuid = record.getClass.getName + "." + name
 

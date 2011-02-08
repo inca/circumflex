@@ -92,10 +92,10 @@ trait SchemaObject {
 Value holder is an atomic data-carrier unit of a record. Two implementations
 of `ValueHolder` are known: `Field` and `Association`.
 */
-abstract class ValueHolder[T, R <: Record[_, R]](
-    val name: String, val record: R, val sqlType: String)
-    extends Equals with Wrapper[Option[T]] {
+trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
 
+  def name: String
+  def record: R
   def item = value
 
   /*!## Setters
