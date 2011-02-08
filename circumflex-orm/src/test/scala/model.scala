@@ -22,16 +22,15 @@ class Country extends Record[String, Country] {
 }
 
 object Country extends Country
-    with Table[String, Country]
-    with Cacheable[String, Country] {
+with Table[String, Country]
+with Cacheable[String, Country] {
   val codeKey = CONSTRAINT("code_key").UNIQUE(code)
   val nameIdx = "name_idx".INDEX("code")
 
   validation.notEmpty(_.code).pattern(_.code, "^[a-z]{2}$", "syntax")
 }
 
-class City extends Record[Long, City]
-    with IdentityGenerator[Long, City] {
+class City extends Record[Long, City] with IdentityGenerator[Long, City] {
   def this(name: String, country: Country) = {
     this()
     this.name := name
@@ -47,9 +46,7 @@ class City extends Record[Long, City]
   override def toString = name.getOrElse("<unknown>")
 }
 
-object City extends City
-    with Table[Long, City]
-    with Cacheable[Long, City] {
+object City extends City with Table[Long, City] with Cacheable[Long, City] {
   val cityKey = UNIQUE(name, country)
   def byName(name: String) = (City AS "ci").map(ci =>
     ci.criteria.add(ci.name LIKE name).addOrder(ci.name ASC))
@@ -69,8 +66,20 @@ class Capital extends Record[String, Capital] {
   override def toString = city().name.getOrElse("<unknown>")
 }
 
-object Capital extends Capital
-    with Table[String, Capital]
-    with Cacheable[String, Capital] {
+object Capital extends Capital with Table[String, Capital] with Cacheable[String, Capital] {
   val cityKey = UNIQUE(city)
+}
+
+class User extends Record[Long, User] with IdentityGenerator[Long, User] {
+  def relation = User
+  def PRIMARY_KEY = id
+
+  val id = "id".BIGINT.NOT_NULL.AUTO_INCREMENT
+  val name = "name".TEXT.NOT_NULL
+  val createdAt = "created_at".TIMESTAMP.NOT_NULL.DEFAULT("current_timestamp")
+}
+
+object User extends User with Table[Long, User] {
+  override def autorefresh_?() = true
+  override def qualifiedName = "users"
 }
