@@ -1,7 +1,5 @@
 package ru.circumflex.orm
 
-import ru.circumflex.core._
-
 class Country extends Record[String, Country] {
   def this(code: String, name: String) = {
     this()
@@ -70,16 +68,26 @@ object Capital extends Capital with Table[String, Capital] with Cacheable[String
   val cityKey = UNIQUE(city)
 }
 
-class User extends Record[Long, User] with IdentityGenerator[Long, User] {
-  def relation = User
-  def PRIMARY_KEY = id
+// Pair field
 
-  val id = "id".BIGINT.NOT_NULL.AUTO_INCREMENT
-  val name = "name".TEXT.NOT_NULL
-  val createdAt = "created_at".TIMESTAMP.NOT_NULL.DEFAULT("current_timestamp")
+class Person extends Record[(String, String), Person] {
+  def relation = Person
+  def PRIMARY_KEY = passport
+
+  val passportSerial = "passport_serial".TEXT.NOT_NULL
+  val passportNumber = "passport_number".TEXT.NOT_NULL
+  val passport = (passportSerial -> passportNumber).REFERENCES(Passport).ON_DELETE(CASCADE)
 }
 
-object User extends User with Table[Long, User] {
-  override def autorefresh_?() = true
-  override def qualifiedName = "users"
+object Person extends Person with Table[(String, String), Person]
+
+
+class Passport extends Record[(String, String), Passport] {
+  def relation = Passport
+  def PRIMARY_KEY = (serial -> number)
+
+  val serial = "serial".TEXT.NOT_NULL
+  val number = "number".TEXT.NOT_NULL
 }
+
+object Passport extends Passport with Table[(String, String), Passport]
