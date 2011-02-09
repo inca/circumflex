@@ -327,7 +327,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   protected def merge(inverse: InverseAssociation[_, R, _, _], operator: String): Criteria[PK, R] = {
     val criteria = new Criteria[PK, R](rootNode)
     ctx("orm.lastAlias") = rootNode.alias
-    criteria.add(inverse.association.field EQ inverse.record.asInstanceOf[R].PRIMARY_KEY())
+    criteria.add(inverse.association.asInstanceOf[Association[_, _, R]] IS inverse.record.asInstanceOf[R])
     return merge(criteria, operator)
   }
   def AND(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.and)

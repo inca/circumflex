@@ -112,10 +112,18 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
 
   def subProjections = _fieldProjections
 
-  def read(rs: ResultSet): Option[R] = _fieldProjections
-      .find(_.field == node.relation.PRIMARY_KEY)
-      .flatMap(_.read(rs))
-      .flatMap(id => contextCache.cacheRecord(id.asInstanceOf[PK], node.relation, Some(readRecord(rs))))
+  protected def _readCell[T](rs: ResultSet, vh: ValueHolder[T, R]): Option[T] = vh match {
+    case f: Field[T, R] => _fieldProjections.find(_.field == f)
+        .flatMap(_.asInstanceOf[Projection[T]].read(rs))
+    case a: Association[T, R, _] => _readCell(rs, a.field)
+    case p: FieldPair[Any, Any, R] => (_readCell(rs, p._1), _readCell(rs, p._2)) match {
+      case (Some(v1), Some(v2)) => Some((v1, v2).asInstanceOf[T])
+      case _ => None
+    }
+  }
+
+  def read(rs: ResultSet): Option[R] = _readCell(rs, node.relation.PRIMARY_KEY).flatMap(id =>
+    contextCache.cacheRecord(id, node.relation, Some(readRecord(rs))))
 
   protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance

@@ -24,8 +24,8 @@ of fictional record `Country`:
 */
 abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
-  implicit def pair2field[T1, T2](pair: (Field[T1, R], Field[T2, R])): PairField[T1, T2, R] =
-    new PairField(pair._1, pair._2, this)
+  implicit def pair2field[T1, T2](pair: (Field[T1, R], Field[T2, R])): FieldPair[T1, T2, R] =
+    new FieldPair(pair._1, pair._2, this)
 
   implicit def str2ddlHelper(str: String): DefinitionHelper[R] =
     new DefinitionHelper(str, this)

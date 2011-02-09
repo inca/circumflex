@@ -25,23 +25,6 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
   def name = field.name
   def record = field.record
 
-  /*! Column definition methods delegate to underlying field. */
-  override def notNull_?(): Boolean = field.notNull_?
-  override def NOT_NULL(): this.type = {
-    field.NOT_NULL
-    return this
-  }
-  override def unique_?(): Boolean = field.unique_?
-  override def UNIQUE(): this.type = {
-    field.UNIQUE
-    return this
-  }
-  override def defaultExpression: Option[String] = field.defaultExpression
-  override def DEFAULT(expr: String): this.type = {
-    field.DEFAULT(expr)
-    return this
-  }
-
   // Cascading actions
 
   protected var _onDelete: ForeignKeyAction = NO_ACTION
@@ -68,11 +51,18 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
     return this
   }
 
+  // Simple expressions
+
+  def IS(record: P) = new SimpleExpression(aliasedName + " " + dialect.EQ, List(record.PRIMARY_KEY.get))
+  def IS_NOT(record: P) = new SimpleExpression(aliasedName + " " + dialect.NE, List(record.PRIMARY_KEY.get))
+  def IN(params: Iterable[P]) = new SimpleExpression(
+    aliasedName + " " + dialect.parameterizedIn(params), params.map(_.PRIMARY_KEY.get).toList)
+
 }
 
 /*!# Inverse Associations
 
-Inverse assocations provide a way to access child records from parent relation.
+Inverse assocations provide a way to access c hild records from parent relation.
 This type of relationship is often referred to as _one-to-one_ or _one-to-many_
 (the former one is implemented by applying a `UNIQUE` constraint).
 They are essentially useful in a combination with `Criteria` for fetching

@@ -70,24 +70,13 @@ object Capital extends Capital with Table[String, Capital] with Cacheable[String
 
 // Pair field
 
-class Person extends Record[(String, String), Person] {
-  def relation = Person
-  def PRIMARY_KEY = passport
-
-  val passportSerial = "passport_serial".TEXT.NOT_NULL
-  val passportNumber = "passport_number".TEXT.NOT_NULL
-  val passport = (passportSerial -> passportNumber).REFERENCES(Passport).ON_DELETE(CASCADE)
-}
-
-object Person extends Person with Table[(String, String), Person]
-
-
 class Passport extends Record[(String, String), Passport] {
   def relation = Passport
-  def PRIMARY_KEY = (serial -> number)
+  def PRIMARY_KEY = pk
 
   val serial = "serial".TEXT.NOT_NULL
   val number = "number".TEXT.NOT_NULL
+  val pk = (serial -> number)
 }
 
 object Passport extends Passport with Table[(String, String), Passport]

@@ -62,7 +62,7 @@ class Dialect {
   def between = "BETWEEN ? AND ?"
   def in = "IN"
   def notIn = "NOT IN"
-  def parameterizedIn(params: Seq[_]) =
+  def parameterizedIn(params: Iterable[_]) =
     "IN (" + params.map(p => "?").mkString(", ") + ")"
 
   def and = "AND"

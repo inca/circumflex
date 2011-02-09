@@ -53,7 +53,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
     else None
   }
 
-  def unique(f: R => Field[_, R], key: String = "unique"): this.type = addForTransient { r =>
+  def unique[T](f: R => Field[T, R], key: String = "unique"): this.type = addForTransient { r =>
     val field = f(r)
     r.relation.criteria.add(field EQ field()).unique.map { a =>
       new Msg(field.uuid + "." + key, "record" -> r, "field" -> field)
@@ -63,7 +63,10 @@ class RecordValidator[PK, R <: Record[PK, R]] {
   def uniqueAll(f: R => Seq[Field[_, R]], key: String = "unique"): this.type = addForTransient { r =>
     val fields = f(r)
     val crit = r.relation.criteria
-    fields.foreach(f => crit.add(f EQ f()))
+    fields.foreach {
+      case f: Field[Any, R] => crit.add(f EQ f())
+      case _ =>
+    }
     crit.unique.map(a => new Msg(r.uuid + "." + key, "record" -> r))
   }
 

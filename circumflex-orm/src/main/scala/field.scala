@@ -11,7 +11,7 @@ import scala.math.BigDecimal._
 The `Field` class holds atomic values of records. It wraps actual value
 and provides methods for constructing column definitions for enclosing
 tables. It also contains the `REFERENCES` method which is used to create
-associations.
+associations and various methods for composing simple predicates.
 */
 class Field[T, R <: Record[_, R]](val name: String,
                                   val record: R,
@@ -20,18 +20,106 @@ class Field[T, R <: Record[_, R]](val name: String,
 
   def uuid = record.getClass.getName + "." + name
 
+  def placeholder = dialect.placeholder
+
+  def toSql: String = dialect.columnDefinition(this)
+
   def read(rs: ResultSet, alias: String): Option[T] = {
     val o = rs.getObject(alias)
     if (rs.wasNull) None
     else Some(o.asInstanceOf[T])
   }
 
+  /*!## Column Definition Methods
+
+  Following methods help you construct a definition of the column where
+  the field will be persisted:
+
+    * `NOT_NULL` will render `NOT NULL` constraint in column's definition;
+    note that starting from 2.0, by default the `NOT NULL` constraint is
+    omitted and `NULLABLE` construct is no longer supported; this method
+    can also be used as a shortcut for specifying the `NOT NULL` constraint
+    and assigning default field value:
+
+        // following declarations are identical
+        val createdAt = "created_at".TIMESTAMP.NOT_NULL.set(new Date())
+        val createdAt = "created_at".TIMESTAMP.NOT_NULL(new Date())
+
+
+    * `DEFAULT` will render the `DEFAULT` expression in column's definition
+    (if not overriden by dialect);
+    * `UNIQUE` will create a `UNIQUE` constraint for enclosing table on
+    the field.
+  */
+  protected var _notNull: Boolean = false
+  def notNull_?(): Boolean = _notNull
+  def NOT_NULL(): this.type = {
+    _notNull = true
+    return this
+  }
+  def NOT_NULL(initialValue: T): this.type = NOT_NULL().set(initialValue)
+
+  protected var _unique: Boolean = false
+  def unique_?(): Boolean = _unique
+  def UNIQUE(): this.type = {
+    _unique = true
+    return this
+  }
+
+  protected var _defaultExpression: Option[String] = None
+  def defaultExpression: Option[String] = _defaultExpression
+  def DEFAULT(expr: String): this.type = {
+    _defaultExpression = Some(expr)
+    return this
+  }
+
   def REFERENCES[P <: Record[T, P]](relation: Relation[T, P]): Association[T, R, P] =
     new Association(this, relation)
 
-  def placeholder = dialect.placeholder
+  /*!## Simple expressions
 
-  def toSql: String = dialect.columnDefinition(this)
+  Simple expressions are used to compose predicates in a DSL-style.
+  */
+  def GT(value: T) = new SimpleExpression(aliasedName + " " + dialect.GT, List(value))
+  def GE(value: T) = new SimpleExpression(aliasedName + " " + dialect.GE, List(value))
+  def LT(value: T) = new SimpleExpression(aliasedName + " " + dialect.LT, List(value))
+  def LE(value: T) = new SimpleExpression(aliasedName + " " + dialect.LE, List(value))
+
+  def IN(params: Seq[T]) =
+    new SimpleExpression(aliasedName + " " + dialect.parameterizedIn(params), params.toList)
+  def BETWEEN(lowerValue: T, upperValue: T) =
+    new SimpleExpression(aliasedName + " " + dialect.between, List(lowerValue, upperValue))
+
+  def IN(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.in, query)
+  def NOT_IN(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.notIn, query)
+
+  def EQ_ALL(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.EQ + " " + dialect.all, query)
+  def NE_ALL(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.NE + " " + dialect.all, query)
+  def GT_ALL(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.GT + " " + dialect.all, query)
+  def GE_ALL(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.GE + " " + dialect.all, query)
+  def LT_ALL(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.LT + " " + dialect.all, query)
+  def LE_ALL(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.LE + " " + dialect.all, query)
+
+  def EQ_SOME(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.EQ + " " + dialect.some, query)
+  def NE_SOME(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.NE + " " + dialect.some, query)
+  def GT_SOME(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.GT + " " + dialect.some, query)
+  def GE_SOME(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.GE + " " + dialect.some, query)
+  def LT_SOME(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.LT + " " + dialect.some, query)
+  def LE_SOME(query: SQLQuery[_]) =
+    new SubqueryExpression(aliasedName + " " + dialect.LE + " " + dialect.some, query)
 }
 
 trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
@@ -45,14 +133,14 @@ trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
 
 class IntField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Int, R](name, record, dialect.integerType)
-        with AutoIncrementable[Int, R] {
+    with AutoIncrementable[Int, R] {
   def from(str: String): Option[Int] =
     try Some(str.toInt) catch { case _ => None }
 }
 
 class LongField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Long, R](name, record, dialect.longType)
-        with AutoIncrementable[Long, R]{
+    with AutoIncrementable[Long, R]{
   def from(str: String): Option[Long] =
     try Some(str.toLong) catch { case _ => None }
 }
@@ -85,6 +173,9 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
     this(name, record, dialect.varcharType(length))
   def from(str: String): Option[String] =
     if (str == "") None else Some(str)
+
+  def LIKE(value: String) = new SimpleExpression(aliasedName + " " + dialect.like, List(value))
+  def ILIKE(value: String) = new SimpleExpression(aliasedName + " " + dialect.ilike, List(value))
 }
 
 class BooleanField[R <: Record[_, R]](name: String, record: R)
@@ -126,9 +217,53 @@ class XmlField[R <: Record[_, R]](name: String, record: R, val root: String)
   override def placeholder = dialect.xmlPlaceholder
 }
 
-class PairField[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
+class FieldPair[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
                                            val _2: Field[T2, R],
                                            val record: R)
     extends ValueHolder[(T1, T2), R] {
+
   def name = dialect.compositeFieldName(_1.name, _2.name)
+
+  override def value: Option[(T1, T2)] = (_1.get, _2.get) match {
+    case (Some(v1), Some(v2)) => Some(v1 -> v2)
+    case _ => None
+  }
+
+  override def set(v: Option[(T1, T2)]): this.type = {
+    v match {
+      case Some(Pair(v1, v2)) =>
+        _1.set(v1)
+        _2.set(v2)
+      case _ =>
+        _1.setNull
+        _2.setNull
+    }
+    return this
+  }
+
+  override protected[orm] def aliasedName: String = {
+    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    return dialect.compositeFieldName(prefix + _1.name, prefix + _2.name)
+  }
+
+  override def EQ(value: (T1, T2)) = {
+    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    AND(new SimpleExpression(prefix + _1.name + " " + dialect.EQ, List(value._1)),
+      new SimpleExpression(prefix + _2.name + " " + dialect.EQ, List(value._2)))
+  }
+  override def NE(value: (T1, T2)) = {
+    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    AND(new SimpleExpression(prefix + _1.name + " " + dialect.NE, List(value._1)),
+      new SimpleExpression(prefix + _2.name + " " + dialect.NE, List(value._2)))
+  }
+  override def IS_NULL = {
+    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    AND(new SimpleExpression(prefix + _1.name + " " + dialect.isNull, Nil),
+      new SimpleExpression(prefix + _2.name + " " + dialect.isNull, Nil))
+  }
+  override def IS_NOT_NULL = {
+    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    AND(new SimpleExpression(prefix + _1.name + " " + dialect.isNotNull, Nil),
+      new SimpleExpression(prefix + _2.name + " " + dialect.isNotNull, Nil))
+  }
 }

@@ -144,18 +144,9 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
 
   private def processMember(m: Method): Unit = {
     val cl = m.getReturnType
-    if (classOf[Field[_, R]].isAssignableFrom(cl)) {
-      val f = m.invoke(this).asInstanceOf[Field[_, R]]
-      this._fields ++= List(f)
-      if (f.unique_?) this.UNIQUE(f)
-      this._methodsMap += (f -> m)
-    } else if (classOf[Association[_, R, _]].isAssignableFrom(cl)) {
-      val a = m.invoke(this).asInstanceOf[Association[_, R, _]]
-      this._associations ++= List[Association[_, R, _]](a)
-      this._fields ++= List(a.field)
-      this._methodsMap += (a.field -> m)
-      this._constraints ++= List(associationFK(a))
-      if (a.unique_?) this.UNIQUE(a.field)
+    if (classOf[ValueHolder[_, R]].isAssignableFrom(cl)) {
+      val vh = m.invoke(this).asInstanceOf[ValueHolder[_, R]]
+      processHolder(vh, m)
     } else if (classOf[Constraint].isAssignableFrom(cl)) {
       val c = m.invoke(this).asInstanceOf[Constraint]
       this._constraints ++= List(c)
@@ -163,6 +154,17 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
       val i = m.invoke(this).asInstanceOf[Index]
       this._indexes ++= List(i)
     }
+  }
+
+  private def processHolder(vh: ValueHolder[_, R], m: Method): Unit = vh match {
+    case f: Field[_, R] =>
+      this._fields ++= List(f)
+      if (f.unique_?) this.UNIQUE(f)
+      this._methodsMap += (f -> m)
+    case a: Association[_, R, _] =>
+      this._associations ++= List[Association[_, R, _]](a)
+      this._constraints ++= List(associationFK(a))
+      processHolder(a.field, m)
   }
 
   private def associationFK(a: Association[_, R, _]) =

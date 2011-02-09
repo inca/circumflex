@@ -55,7 +55,7 @@ package object orm {
 
   // Implicits
 
-  // for nodes, fields and records
+  // for nodes
 
   implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
     new RelationNode[PK, R](relation)
@@ -63,19 +63,12 @@ package object orm {
     ctx("orm.lastAlias") = node.alias
     node.relation.asInstanceOf[R]
   }
-  implicit def vh2str(vh: ValueHolder[_, _]): String = ctx.get("orm.lastAlias") match {
-    case Some(alias: String) =>
-      ctx.remove("orm.lastAlias")
-      alias + "." + vh.name
-    case _ => vh.name
-  }
+  implicit def vh2str(vh: ValueHolder[_, _]): String = vh.aliasedName
 
   // for predicates
 
   implicit def string2helper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
-  implicit def vh2helper(vh: ValueHolder[_, _]): SimpleExpressionHelper =
-    new SimpleExpressionHelper(vh2str(vh))
   implicit def string2predicate(expression: String): Predicate =
     new SimpleExpression(expression, Nil)
   implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =

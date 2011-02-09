@@ -1,7 +1,6 @@
 package ru.circumflex.orm
 
 import ru.circumflex.core._
-import java.util.regex.Matcher
 
 /*!# SQLable
 
@@ -89,8 +88,8 @@ trait SchemaObject {
 
 /*!# Value holders
 
-Value holder is an atomic data-carrier unit of a record. Two implementations
-of `ValueHolder` are known: `Field` and `Association`.
+Value holder is an atomic data-carrier unit of a record. It carries methods for
+identifying and manipulating data fields inside persistent records.
 */
 trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
 
@@ -165,49 +164,6 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
   def setNull: this.type = set(None)
   def :=(v: T): Unit = set(v)
 
-  /*!## Column Definition Methods
-
-  Following methods help you construct a definition of the column where
-  the field will be persisted:
-
-    * `NOT_NULL` will render `NOT NULL` constraint in column's definition;
-    note that starting from 2.0, by default the `NOT NULL` constraint is
-    omitted and `NULLABLE` construct is no longer supported; this method
-    can also be used as a shortcut for specifying the `NOT NULL` constraint
-    and assigning default field value:
-
-        // following declarations are identical
-        val createdAt = "created_at".TIMESTAMP.NOT_NULL.set(new Date())
-        val createdAt = "created_at".TIMESTAMP.NOT_NULL(new Date())
-        
-
-    * `DEFAULT` will render the `DEFAULT` expression in column's definition
-    (if not overriden by dialect);
-    * `UNIQUE` will create a `UNIQUE` constraint for enclosing table on
-    the field.
-  */
-  protected var _notNull: Boolean = false
-  def notNull_?(): Boolean = _notNull
-  def NOT_NULL(): this.type = {
-    _notNull = true
-    return this
-  }
-  def NOT_NULL(initialValue: T): this.type = NOT_NULL().set(initialValue)
-
-  protected var _unique: Boolean = false
-  def unique_?(): Boolean = _unique
-  def UNIQUE(): this.type = {
-    _unique = true
-    return this
-  }
-
-  protected var _defaultExpression: Option[String] = None
-  def defaultExpression: Option[String] = _defaultExpression
-  def DEFAULT(expr: String): this.type = {
-    _defaultExpression = Some(expr)
-    return this
-  }
-
   /*!## Methods from `Option`
 
   Since `ValueHolder` is just a wrapper around `Option`, we provide
@@ -236,7 +192,7 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
   */
   override def equals(that: Any): Boolean = that match {
     case that: ValueHolder[_, _] => this.canEqual(that) &&
-      this.name == that.name
+        this.name == that.name
     case _ => false
   }
   override lazy val hashCode: Int =  record.relation.qualifiedName.hashCode * 31 +
@@ -246,4 +202,29 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
     case _ => false
   }
   override def toString: String = record.relation.qualifiedName + "." + name
+
+  /*! ## Composing predicates
+
+  `ValueHolder` provides very basic functionality for predicates composition:
+
+  * `aliasedName` returns the name of this holder qualified with node alias (in appropriate context);
+  * `EQ` creates an equality predicate (i.e. `column = value`);
+  * `NE` creates an inequality predicate (i.e. `column <> value`).
+  * `IS_NULL` and `IS_NOT_NULL` creates (not-)nullability predicates
+    (i.e. `column IS NULL` or `column IS NOT NULL`).
+
+  More specific predicates can be acquired from subclasses.
+  */
+  protected[orm] def aliasedName = ctx.get("orm.lastAlias") match {
+    case Some(alias: String) =>
+      ctx.remove("orm.lastAlias")
+      alias + "." + name
+    case _ => name
+  }
+
+  def EQ(value: T): Predicate = new SimpleExpression(aliasedName + " " + dialect.EQ, List(value))
+  def NE(value: T): Predicate = new SimpleExpression(aliasedName + " " + dialect.NE, List(value))
+  def IS_NULL: Predicate = new SimpleExpression(aliasedName + " " + dialect.isNull, Nil)
+  def IS_NOT_NULL: Predicate = new SimpleExpression(aliasedName + " " + dialect.isNotNull, Nil)
+
 }

@@ -1,8 +1,8 @@
 package ru.circumflex.orm
 
-import ru.circumflex.core._
 import xml._
 import java.io.File
+import ru.circumflex.core._
 
 /*!# XML (de)serialization
 
