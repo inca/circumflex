@@ -54,4 +54,17 @@
       </country>
     </Capital>
   </deployment>
+
+  <deployment id="test4"
+              prefix="ru.circumflex.orm">
+    <Developer login="joe"/>
+    <Developer login="bob"/>
+    <Developer login="greg"/>
+    <Project name="nuke'em"/>
+    <Project name="heal'em"/>
+    <Membership name="nuke'em" login="joe"/>
+    <Membership name="nuke'em" login="bob"/>
+    <Membership name="heal'em" login="bob"/>
+    <Membership name="heal'em" login="greg"/>
+  </deployment>
 </deployments>

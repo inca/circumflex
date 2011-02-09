@@ -217,9 +217,9 @@ class XmlField[R <: Record[_, R]](name: String, record: R, val root: String)
   override def placeholder = dialect.xmlPlaceholder
 }
 
-class FieldPair[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
-                                           val _2: Field[T2, R],
-                                           val record: R)
+class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
+                                                   val _2: Field[T2, R],
+                                                   val record: R)
     extends ValueHolder[(T1, T2), R] {
 
   def name = dialect.compositeFieldName(_1.name, _2.name)

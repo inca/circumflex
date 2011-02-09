@@ -116,7 +116,7 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     case f: Field[T, R] => _fieldProjections.find(_.field == f)
         .flatMap(_.asInstanceOf[Projection[T]].read(rs))
     case a: Association[T, R, _] => _readCell(rs, a.field)
-    case p: FieldPair[Any, Any, R] => (_readCell(rs, p._1), _readCell(rs, p._2)) match {
+    case p: FieldComposition2[Any, Any, R] => (_readCell(rs, p._1), _readCell(rs, p._2)) match {
       case (Some(v1), Some(v2)) => Some((v1, v2).asInstanceOf[T])
       case _ => None
     }

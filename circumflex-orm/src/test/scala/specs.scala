@@ -5,10 +5,10 @@ import org.specs.Specification
 import xml._
 
 object Sample {
-  def createSchema = new DDLUnit(Country, City, Capital).CREATE
+  def createSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).CREATE
   def loadData = Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
         .foreach(_.process)
-  def dropSchema = new DDLUnit(Country, City, Capital).DROP
+  def dropSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).DROP
 }
 
 class SpecsTest extends JUnit4(CircumflexORMSpec)
@@ -115,6 +115,18 @@ object CircumflexORMSpec extends Specification {
       val ci = City AS "ci"
       val ci1 = City AS "ci1"
       (co JOIN ci JOIN ci1).toString must_== ((co JOIN ci) JOIN ci1).toString
+    }
+  }
+
+  "Composite key records" should {
+    "handle simple querying and equality" in {
+      Membership.get("nuke'em" -> "joe") must_== Some(new Membership("nuke'em", "joe"))
+    }
+    "handle associations" in {
+      // inverse
+      Developer.get("bob").get.projects.get.size must_== 2
+      // straight
+      Membership.get("heal'em" -> "greg").get.developer().login() must_== "greg"
     }
   }
 

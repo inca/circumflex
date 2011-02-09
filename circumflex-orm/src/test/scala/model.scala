@@ -68,15 +68,44 @@ object Capital extends Capital with Table[String, Capital] with Cacheable[String
   val cityKey = UNIQUE(city)
 }
 
-// Pair field
+// Many to many via with composite key
 
-class Passport extends Record[(String, String), Passport] {
-  def relation = Passport
-  def PRIMARY_KEY = pk
+class Developer extends Record[String, Developer] {
+  def relation = Developer
+  def PRIMARY_KEY = login
 
-  val serial = "serial".TEXT.NOT_NULL
-  val number = "number".TEXT.NOT_NULL
-  val pk = (serial -> number)
+  val login = "login".TEXT.NOT_NULL
+  def projects = inverseMany(Membership.developer)
 }
 
-object Passport extends Passport with Table[(String, String), Passport]
+object Developer extends Developer with Table[String, Developer]
+
+class Project extends Record[String, Project] {
+  def relation = Project
+  def PRIMARY_KEY = name
+
+  val name = "name".TEXT.NOT_NULL
+  def members = inverseMany(Membership.project)
+}
+
+object Project extends Project with Table[String, Project]
+
+class Membership extends Record[(String, String), Membership] {
+
+  def this(project: String, developer: String) = {
+    this()
+    this.name := project
+    this.login := developer
+  }
+
+  def relation = Membership
+  def PRIMARY_KEY = pk
+
+  val project = "project".TEXT.NOT_NULL.REFERENCES(Project).ON_DELETE(CASCADE)
+  def name = project.field
+  val developer = "developer".TEXT.NOT_NULL.REFERENCES(Developer).ON_DELETE(CASCADE)
+  def login = developer.field
+  val pk = (project -> developer)
+}
+
+object Membership extends Membership with Table[(String, String), Membership]
