@@ -105,7 +105,8 @@ class Membership extends Record[(String, String), Membership] {
   def name = project.field
   val developer = "developer".TEXT.NOT_NULL.REFERENCES(Developer).ON_DELETE(CASCADE)
   def login = developer.field
-  val pk = (project -> developer)
+  val pk = composition(name, login)
+
 }
 
 object Membership extends Membership with Table[(String, String), Membership]

@@ -165,6 +165,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
       this._associations ++= List[Association[_, R, _]](a)
       this._constraints ++= List(associationFK(a))
       processHolder(a.field, m)
+    case _ =>
   }
 
   private def associationFK(a: Association[_, R, _]) =

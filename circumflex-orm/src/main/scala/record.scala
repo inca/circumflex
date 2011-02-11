@@ -25,9 +25,7 @@ of fictional record `Country`:
 abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   implicit def fieldPair2cmp[T1, T2](pair: (Field[T1, R], Field[T2, R])): FieldComposition2[T1, T2, R] =
-    new FieldComposition2(pair._1, pair._2, this)
-  implicit def assocPair2cmp[T1, T2](pair: (Association[T1, R, _], Association[T2, R, _])): FieldComposition2[T1, T2, R] =
-    fieldPair2cmp(pair._1.field, pair._2.field)
+    composition(pair._1, pair._2)
 
   implicit def str2ddlHelper(str: String): DefinitionHelper[R] =
     new DefinitionHelper(str, this)
@@ -184,6 +182,16 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   protected def evalFields(fields: Seq[Field[_, R]]): Seq[Field[_, R]] =
     (if (fields.size == 0) relation.fields else fields)
         .map(f => relation.getField(this, f))
+
+  /*!## Field Compositions
+  
+  Fields can be grouped into field compositions using the `composition` method.
+  Compositions can be used as primary keys and participate in simple queries.
+  Circumflex ORM currently supports only composition with arity of 2. A pair
+  of fields is implicitly converted into `FieldComposition2` when necessary.
+  */
+  def composition[T1, T2](f1: Field[T1, R], f2: Field[T2, R]) =
+    new FieldComposition2[T1, T2, R](f1, f2, this)
 
   /*!## Inverse Associations
 
