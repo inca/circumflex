@@ -15,6 +15,9 @@ After that, set the `orm.dialect` configuration parameter accordingly.
 */
 class Dialect {
 
+  def driverClass: String =
+    throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
+
   /*!## SQL types */
 
   def longType = "BIGINT"

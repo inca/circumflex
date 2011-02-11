@@ -15,6 +15,8 @@ class PostgreSQLDialect extends Dialect {
 }
 
 class MySQLDialect extends Dialect {
+  override def driverClass = "com.mysql.jdbc.Driver"
+
   override def initializeField[R <: Record[_, R]](field: Field[_, R]): Unit = {
     // do nothing -- for MySQL you don't need to create manually a sequence for auto-incrementable fields
   }
@@ -35,9 +37,12 @@ class MySQLDialect extends Dialect {
     throw new UnsupportedOperationException("This operation is unsupported in the MySQL dialect.")
 }
 
-class OracleDialect extends Dialect
+class OracleDialect extends Dialect {
+  override def driverClass = "oracle.jdbc.driver.OracleDriver"
+}
 
 class H2Dialect extends Dialect {
+  override def driverClass = "org.h2.Driver"
   override def textType = "VARCHAR"
   override def createIndex(idx: Index): String = {
     var result = "CREATE "

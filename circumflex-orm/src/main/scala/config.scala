@@ -100,15 +100,14 @@ class DefaultConnectionProvider extends ConnectionProvider {
     }
     case _ => {
       ORM_LOG.info("Using c3p0 connection pool.")
-      val driver = cx.get("orm.connection.driver") match {
-        case Some(s: String) => s
-        case _ =>
-          throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
-      }
       val url = cx.get("orm.connection.url") match {
         case Some(s: String) => s
         case _ =>
           throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
+      }
+      val driver = cx.get("orm.connection.driver") match {
+        case Some(s: String) => s
+        case _ => dialect.driverClass
       }
       val username = cx.get("orm.connection.username") match {
         case Some(s: String) => s
