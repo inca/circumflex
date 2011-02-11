@@ -11,6 +11,7 @@ Following vendors are currently supported by Circumflex ORM:
 */
 
 class PostgreSQLDialect extends Dialect {
+  override def driverClass = "org.postgresql.Driver"
   override def timestampType = "TIMESTAMPTZ"
 }
 
