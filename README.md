@@ -32,3 +32,9 @@ An application skeleton for SBT has been kindly provided by
 [andreyshikov](http://github.com/andreyshikov), it shows how to configure
 simple Circumflex application to build with SBT. You can clone it from
 <http://github.com/andreyshikov/circumflex-sbt-quickstart>.
+
+Another useful project skeleton can be found at <https://github.com/freewind/scalaqa-sbt>,
+it shows Circumflex Web Framework coupled with Circumflex ORM in a simple project.
+We owe many thanks to [FreeWind](https://github.com/freewind) for adapting it to SBT.
+
+
