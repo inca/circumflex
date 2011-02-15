@@ -20,8 +20,6 @@ class Field[T, R <: Record[_, R]](val name: String,
 
   def uuid = record.getClass.getName + "." + name
 
-  def placeholder = dialect.placeholder
-
   def toSql: String = dialect.columnDefinition(this)
 
   def read(rs: ResultSet, alias: String): Option[T] = {
@@ -80,46 +78,59 @@ class Field[T, R <: Record[_, R]](val name: String,
 
   Simple expressions are used to compose predicates in a DSL-style.
   */
-  def GT(value: T) = new SimpleExpression(aliasedName + " " + dialect.GT, List(value))
-  def GE(value: T) = new SimpleExpression(aliasedName + " " + dialect.GE, List(value))
-  def LT(value: T) = new SimpleExpression(aliasedName + " " + dialect.LT, List(value))
-  def LE(value: T) = new SimpleExpression(aliasedName + " " + dialect.LE, List(value))
+  def GT(value: T): Predicate =
+    new SimpleExpression(dialect.GT(aliasedName, placeholder), List(value))
+  def GT(col: ColumnExpression[_, _]): Predicate =
+    new SimpleExpression(dialect.GT(aliasedName, col.toSql), Nil)
+  def GE(value: T): Predicate =
+    new SimpleExpression(dialect.GE(aliasedName, placeholder), List(value))
+  def GE(col: ColumnExpression[_, _]): Predicate =
+    new SimpleExpression(dialect.GE(aliasedName, col.toSql), Nil)
+  def LT(value: T): Predicate =
+    new SimpleExpression(dialect.LT(aliasedName, placeholder), List(value))
+  def LT(col: ColumnExpression[_, _]): Predicate =
+    new SimpleExpression(dialect.LT(aliasedName, col.toSql), Nil)
+  def LE(value: T): Predicate =
+    new SimpleExpression(dialect.LE(aliasedName, placeholder), List(value))
+  def LE(col: ColumnExpression[_, _]): Predicate =
+    new SimpleExpression(dialect.LE(aliasedName, col.toSql), Nil)
 
-  def IN(params: Seq[T]) =
-    new SimpleExpression(aliasedName + " " + dialect.parameterizedIn(params), params.toList)
+  def IN(params: Seq[T]): Predicate =
+    new SimpleExpression(dialect.parameterizedIn(aliasedName, params.map(p => placeholder)), params.toList)
   def BETWEEN(lowerValue: T, upperValue: T) =
-    new SimpleExpression(aliasedName + " " + dialect.between, List(lowerValue, upperValue))
+    new SimpleExpression(dialect.BETWEEN(aliasedName, placeholder, placeholder), List(lowerValue, upperValue))
 
-  def IN(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.in, query)
-  def NOT_IN(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.notIn, query)
+  def IN(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.IN(aliasedName), query)
+  def NOT_IN(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.NOT_IN(aliasedName), query)
 
-  def EQ_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.EQ + " " + dialect.all, query)
-  def NE_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.NE + " " + dialect.all, query)
-  def GT_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.GT + " " + dialect.all, query)
-  def GE_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.GE + " " + dialect.all, query)
-  def LT_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.LT + " " + dialect.all, query)
-  def LE_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.LE + " " + dialect.all, query)
+  def EQ_ALL(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.EQ(aliasedName, dialect.ALL), query)
+  def NE_ALL(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.NE(aliasedName, dialect.ALL), query)
+  def GT_ALL(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.GT(aliasedName, dialect.ALL), query)
+  def GE_ALL(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.GE(aliasedName, dialect.ALL), query)
+  def LT_ALL(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.LT(aliasedName, dialect.ALL), query)
+  def LE_ALL(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.LE(aliasedName, dialect.ALL), query)
 
-  def EQ_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.EQ + " " + dialect.some, query)
-  def NE_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.NE + " " + dialect.some, query)
-  def GT_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.GT + " " + dialect.some, query)
-  def GE_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.GE + " " + dialect.some, query)
-  def LT_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.LT + " " + dialect.some, query)
-  def LE_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(aliasedName + " " + dialect.LE + " " + dialect.some, query)
+  def EQ_SOME(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.EQ(aliasedName, dialect.SOME), query)
+  def NE_SOME(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.NE(aliasedName, dialect.SOME), query)
+  def GT_SOME(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.GT(aliasedName, dialect.SOME), query)
+  def GE_SOME(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.GE(aliasedName, dialect.SOME), query)
+  def LT_SOME(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.LT(aliasedName, dialect.SOME), query)
+  def LE_SOME(query: SQLQuery[_]): Predicate =
+    new SubqueryExpression(dialect.LE(aliasedName, dialect.SOME), query)
+
 }
 
 trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
@@ -174,8 +185,8 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
   def from(str: String): Option[String] =
     if (str == "") None else Some(str)
 
-  def LIKE(value: String) = new SimpleExpression(aliasedName + " " + dialect.like, List(value))
-  def ILIKE(value: String) = new SimpleExpression(aliasedName + " " + dialect.ilike, List(value))
+  def LIKE(value: String) = new SimpleExpression(dialect.LIKE(aliasedName, placeholder), List(value))
+  def ILIKE(value: String) = new SimpleExpression(dialect.ILIKE(aliasedName, placeholder), List(value))
 }
 
 class BooleanField[R <: Record[_, R]](name: String, record: R)
@@ -248,22 +259,22 @@ class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
 
   override def EQ(value: (T1, T2)) = {
     val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
-    AND(new SimpleExpression(prefix + _1.name + " " + dialect.EQ, List(value._1)),
-      new SimpleExpression(prefix + _2.name + " " + dialect.EQ, List(value._2)))
+    AND(new SimpleExpression(dialect.EQ(prefix + _1.name, placeholder), List(value._1)),
+      new SimpleExpression(dialect.EQ(prefix + _2.name, placeholder), List(value._2)))
   }
   override def NE(value: (T1, T2)) = {
     val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
-    AND(new SimpleExpression(prefix + _1.name + " " + dialect.NE, List(value._1)),
-      new SimpleExpression(prefix + _2.name + " " + dialect.NE, List(value._2)))
+    AND(new SimpleExpression(dialect.NE(prefix + _1.name, placeholder), List(value._1)),
+      new SimpleExpression(dialect.NE(prefix + _2.name, placeholder), List(value._2)))
   }
   override def IS_NULL = {
     val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
-    AND(new SimpleExpression(prefix + _1.name + " " + dialect.isNull, Nil),
-      new SimpleExpression(prefix + _2.name + " " + dialect.isNull, Nil))
+    AND(new SimpleExpression(dialect.IS_NULL(prefix + _1.name), Nil),
+      new SimpleExpression(dialect.IS_NULL(prefix + _2.name), Nil))
   }
   override def IS_NOT_NULL = {
     val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
-    AND(new SimpleExpression(prefix + _1.name + " " + dialect.isNotNull, Nil),
-      new SimpleExpression(prefix + _2.name + " " + dialect.isNotNull, Nil))
+    AND(new SimpleExpression(dialect.IS_NOT_NULL(prefix + _1.name), Nil),
+      new SimpleExpression(dialect.IS_NOT_NULL(prefix + _2.name), Nil))
   }
 }

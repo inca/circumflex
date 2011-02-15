@@ -203,13 +203,19 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
   }
   override def toString: String = record.relation.qualifiedName + "." + name
 
+  /*! The `placeholder` method returns an expression which is used to mark a parameter
+  inside JDBC `PreparedStatement` (usually `?` works, but custom data-type may require
+  some special treatment).
+   */
+  def placeholder = dialect.placeholder
+
   /*! ## Composing predicates
 
   `ValueHolder` provides very basic functionality for predicates composition:
 
   * `aliasedName` returns the name of this holder qualified with node alias (in appropriate context);
-  * `EQ` creates an equality predicate (i.e. `column = value`);
-  * `NE` creates an inequality predicate (i.e. `column <> value`).
+  * `EQ` creates an equality predicate (i.e. `column = value` or `column = column`);
+  * `NE` creates an inequality predicate (i.e. `column <> value` or `column <> column`).
   * `IS_NULL` and `IS_NOT_NULL` creates (not-)nullability predicates
     (i.e. `column IS NULL` or `column IS NOT NULL`).
 
@@ -222,9 +228,21 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
     case _ => name
   }
 
-  def EQ(value: T): Predicate = new SimpleExpression(aliasedName + " " + dialect.EQ, List(value))
-  def NE(value: T): Predicate = new SimpleExpression(aliasedName + " " + dialect.NE, List(value))
-  def IS_NULL: Predicate = new SimpleExpression(aliasedName + " " + dialect.isNull, Nil)
-  def IS_NOT_NULL: Predicate = new SimpleExpression(aliasedName + " " + dialect.isNotNull, Nil)
+  def EQ(value: T): Predicate =
+    new SimpleExpression(dialect.EQ(aliasedName, placeholder), List(value))
+  def EQ(col: ColumnExpression[_, _]): Predicate =
+    new SimpleExpression(dialect.EQ(aliasedName, col.toSql), Nil)
+  def NE(value: T): Predicate =
+    new SimpleExpression(dialect.NE(aliasedName, placeholder), List(value))
+  def NE(col: ColumnExpression[_, _]): Predicate =
+    new SimpleExpression(dialect.NE(aliasedName, col.toSql), Nil)
+  def IS_NULL: Predicate =
+    new SimpleExpression(dialect.IS_NULL(aliasedName), Nil)
+  def IS_NOT_NULL: Predicate =
+    new SimpleExpression(dialect.IS_NOT_NULL(aliasedName), Nil)
 
+}
+
+class ColumnExpression[T, R <: Record[_, R]](column: ValueHolder[T, R]) extends SQLable {
+  val toSql = column.aliasedName
 }

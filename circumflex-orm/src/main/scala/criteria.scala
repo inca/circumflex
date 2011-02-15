@@ -317,8 +317,8 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     return result
   }
 
-  def AND(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.and)
-  def OR(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.or)
+  def AND(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.AND)
+  def OR(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.OR)
 
   /*! Criteria can be merged with inverse associations to create logical scopes. Same
   rules are applied as with criteria merging, except that a criteria object with
@@ -330,7 +330,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     criteria.add(inverse.association.asInstanceOf[Association[_, _, R]] IS inverse.record.asInstanceOf[R])
     return merge(criteria, operator)
   }
-  def AND(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.and)
-  def OR(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.or)
+  def AND(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.AND)
+  def OR(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.OR)
 
 }

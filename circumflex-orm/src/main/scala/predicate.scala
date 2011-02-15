@@ -69,59 +69,59 @@ class SimpleExpressionHelper(val expr: String) {
 
   // Simple expressions
 
-  def EQ(value: Any) = new SimpleExpression(expr + " " + dialect.EQ, List(value))
-  def NE(value: Any) = new SimpleExpression(expr + " " + dialect.NE, List(value))
-  def GT(value: Any) = new SimpleExpression(expr + " " + dialect.GT, List(value))
-  def GE(value: Any) = new SimpleExpression(expr + " " + dialect.GE, List(value))
-  def LT(value: Any) = new SimpleExpression(expr + " " + dialect.LT, List(value))
-  def LE(value: Any) = new SimpleExpression(expr + " " + dialect.LE, List(value))
-  def IS_NULL = new SimpleExpression(expr + " " + dialect.isNull, Nil)
-  def IS_NOT_NULL = new SimpleExpression(expr + " " + dialect.isNotNull, Nil)
-  def LIKE(value: Any) = new SimpleExpression(expr + " " + dialect.like, List(value))
-  def ILIKE(value: Any) = new SimpleExpression(expr + " " + dialect.ilike, List(value))
-  def IN(params: Any*) =
-    new SimpleExpression(expr + " " + dialect.parameterizedIn(params), params.toList)
-  def BETWEEN(lowerValue: Any, upperValue: Any) =
-    new SimpleExpression(expr + " " + dialect.between, List(lowerValue, upperValue))
+  def EQ(value: Any) = new SimpleExpression(dialect.EQ(expr), List(value))
+  def NE(value: Any) = new SimpleExpression(dialect.NE(expr), List(value))
+  def GT(value: Any) = new SimpleExpression(dialect.GT(expr), List(value))
+  def GE(value: Any) = new SimpleExpression(dialect.GE(expr), List(value))
+  def LT(value: Any) = new SimpleExpression(dialect.LT(expr), List(value))
+  def LE(value: Any) = new SimpleExpression(dialect.LE(expr), List(value))
+  def IS_NULL = new SimpleExpression(dialect.IS_NULL(expr), Nil)
+  def IS_NOT_NULL = new SimpleExpression(dialect.IS_NOT_NULL(expr), Nil)
+  def LIKE(value: Any) = new SimpleExpression(dialect.LIKE(expr), List(value))
+  def ILIKE(value: Any) = new SimpleExpression(dialect.ILIKE(expr), List(value))
+  def IN(params: Any*) = new SimpleExpression(
+    dialect.parameterizedIn(expr, params.map(p => "?")), params.toList)
+  def BETWEEN(lowerValue: Any, upperValue: Any) = new SimpleExpression(
+    dialect.BETWEEN(expr), List(lowerValue, upperValue))
 
   // Simple subqueries
 
   def IN(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.in, query)
+    new SubqueryExpression(dialect.IN(expr), query)
   def NOT_IN(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.notIn, query)
+    new SubqueryExpression(dialect.NOT_IN(expr), query)
 
   def EQ_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.EQ + " " + dialect.all, query)
+    new SubqueryExpression(dialect.EQ(expr, dialect.ALL), query)
   def NE_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.NE + " " + dialect.all, query)
+    new SubqueryExpression(dialect.NE(expr, dialect.ALL), query)
   def GT_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.GT + " " + dialect.all, query)
+    new SubqueryExpression(dialect.GT(expr, dialect.ALL), query)
   def GE_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.GE + " " + dialect.all, query)
+    new SubqueryExpression(dialect.GE(expr, dialect.ALL), query)
   def LT_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.LT + " " + dialect.all, query)
+    new SubqueryExpression(dialect.LT(expr, dialect.ALL), query)
   def LE_ALL(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.LE + " " + dialect.all, query)
+    new SubqueryExpression(dialect.LE(expr, dialect.ALL), query)
 
   def EQ_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.EQ + " " + dialect.some, query)
+    new SubqueryExpression(dialect.EQ(expr, dialect.SOME), query)
   def NE_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.NE + " " + dialect.some, query)
+    new SubqueryExpression(dialect.NE(expr, dialect.SOME), query)
   def GT_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.GT + " " + dialect.some, query)
+    new SubqueryExpression(dialect.GT(expr, dialect.SOME), query)
   def GE_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.GE + " " + dialect.some, query)
+    new SubqueryExpression(dialect.GE(expr, dialect.SOME), query)
   def LT_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.LT + " " + dialect.some, query)
+    new SubqueryExpression(dialect.LT(expr, dialect.SOME), query)
   def LE_SOME(query: SQLQuery[_]) =
-    new SubqueryExpression(expr + " " + dialect.LE + " " + dialect.some, query)
+    new SubqueryExpression(dialect.LE(expr, dialect.SOME), query)
 }
 
 /*! `AggregatePredicateHelper` is used to compose predicates using infix notation. */
 class AggregatePredicateHelper(predicate: Predicate) {
   def AND(predicates: Predicate*) =
-    new AggregatePredicate(dialect.and, predicate::predicates.toList)
+    new AggregatePredicate(dialect.AND, predicate::predicates.toList)
   def OR(predicates: Predicate*) =
-    new AggregatePredicate(dialect.or, predicate::predicates.toList)
+    new AggregatePredicate(dialect.OR, predicate::predicates.toList)
 }

@@ -181,7 +181,7 @@ trait SearchQuery extends Query {
     where match {
       case EmptyPredicate =>
         this._where = AND(predicates: _*)
-      case p: AggregatePredicate if (p.operator == dialect.and) =>
+      case p: AggregatePredicate if (p.operator == dialect.AND) =>
         p.add(predicates: _*)
       case p =>
         this._where = _where.AND(predicates: _*)

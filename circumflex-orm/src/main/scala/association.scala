@@ -53,10 +53,13 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
 
   // Simple expressions
 
-  def IS(record: P) = new SimpleExpression(aliasedName + " " + dialect.EQ, List(record.PRIMARY_KEY.get))
-  def IS_NOT(record: P) = new SimpleExpression(aliasedName + " " + dialect.NE, List(record.PRIMARY_KEY.get))
-  def IN(params: Iterable[P]) = new SimpleExpression(
-    aliasedName + " " + dialect.parameterizedIn(params), params.map(_.PRIMARY_KEY.get).toList)
+  def IS(record: P): Predicate =
+    new SimpleExpression(dialect.EQ(aliasedName, placeholder), List(record.PRIMARY_KEY.get))
+  def IS_NOT(record: P): Predicate =
+    new SimpleExpression(dialect.NE(aliasedName, placeholder), List(record.PRIMARY_KEY.get))
+  def IN(params: Iterable[P]): Predicate = new SimpleExpression(
+    dialect.parameterizedIn(aliasedName, params.map(p => placeholder)),
+    params.map(_.PRIMARY_KEY.get).toList)
 
 }
 
@@ -91,13 +94,13 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
 }
 
 class InverseMany[K, C <: Record[_, C], P <: Record[K, P]](
-    val record: P, val association: Association[K, C, P])
+                                                              val record: P, val association: Association[K, C, P])
     extends InverseAssociation[K, C, P, Seq[C]] {
   def get(): Seq[C] = fetch()
 }
 
 class InverseOne[K, C <: Record[_, C], P <: Record[K, P]](
-    val record: P, val association: Association[K, C, P])
+                                                             val record: P, val association: Association[K, C, P])
     extends InverseAssociation[K, C, P, Option[C]] {
   def get(): Option[C] = {
     val children = fetch()

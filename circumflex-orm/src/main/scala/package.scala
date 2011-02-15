@@ -64,6 +64,8 @@ package object orm {
     node.relation.asInstanceOf[R]
   }
   implicit def vh2str(vh: ValueHolder[_, _]): String = vh.aliasedName
+  implicit def vh2colExpr[T, R <: Record[_, R]](vh: ValueHolder[T, R]): ColumnExpression[T, R] =
+    new ColumnExpression(vh)
 
   // for predicates
 
@@ -107,12 +109,12 @@ package object orm {
   val RIGHT = JoinType(dialect.rightJoin)
   val FULL = JoinType(dialect.fullJoin)
 
-  val OP_UNION = SetOperation(dialect.union)
-  val OP_UNION_ALL = SetOperation(dialect.unionAll)
-  val OP_EXCEPT = SetOperation(dialect.except)
-  val OP_EXCEPT_ALL = SetOperation(dialect.exceptAll)
-  val OP_INTERSECT = SetOperation(dialect.intersect)
-  val OP_INTERSECT_ALL = SetOperation(dialect.intersectAll)
+  val OP_UNION = SetOperation(dialect.UNION)
+  val OP_UNION_ALL = SetOperation(dialect.UNION_ALL)
+  val OP_EXCEPT = SetOperation(dialect.EXCEPT)
+  val OP_EXCEPT_ALL = SetOperation(dialect.EXCEPT_ALL)
+  val OP_INTERSECT = SetOperation(dialect.INTERSECT)
+  val OP_INTERSECT_ALL = SetOperation(dialect.INTERSECT_ALL)
 
   // Predicates DSL
 
@@ -141,26 +143,26 @@ package object orm {
   // Simple subqueries DSL
 
   def EXISTS(subquery: SQLQuery[_]) =
-    new SubqueryExpression(dialect.exists, subquery)
+    new SubqueryExpression(dialect.EXISTS, subquery)
 
   def NOT_EXISTS(subquery: SQLQuery[_]) =
-    new SubqueryExpression(dialect.notExists, subquery)
+    new SubqueryExpression(dialect.NOT_EXISTS, subquery)
 
   // Simple projections
 
   def COUNT(expr: String) =
-    new ExpressionProjection[Long](dialect.count + "(" + expr + ")")
+    new ExpressionProjection[Long](dialect.COUNT + "(" + expr + ")")
   def COUNT_DISTINCT(expr: String) =
     new ExpressionProjection[Long](
-      dialect.count + "(" + dialect.distinct + " " + expr + ")")
+      dialect.COUNT + "(" + dialect.DISTINCT + " " + expr + ")")
   def MAX(expr: String) =
-    new ExpressionProjection[Any](dialect.max + "(" + expr + ")")
+    new ExpressionProjection[Any](dialect.MAX + "(" + expr + ")")
   def MIN(expr: String) =
-    new ExpressionProjection[Any](dialect.min + "(" + expr + ")")
+    new ExpressionProjection[Any](dialect.MIN + "(" + expr + ")")
   def SUM(expr: String) =
-    new ExpressionProjection[Any](dialect.sum + "(" + expr + ")")
+    new ExpressionProjection[Any](dialect.SUM + "(" + expr + ")")
   def AVG(expr: String) =
-    new ExpressionProjection[Any](dialect.avg + "(" + expr + ")")
+    new ExpressionProjection[Any](dialect.AVG + "(" + expr + ")")
 
   // Queries DSL
 

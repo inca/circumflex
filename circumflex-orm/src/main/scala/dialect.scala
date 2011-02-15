@@ -50,52 +50,53 @@ class Dialect {
 
   /*!## Predicates */
 
-  def EQ = "= ?"
-  def NE = "<> ?"
-  def GT = "> ?"
-  def GE = ">= ?"
-  def LT = "< ?"
-  def LE = "<= ?"
+  def EQ(ex1: String, ex2: String = "?") = ex1 + " = " + ex2
+  def NE(ex1: String, ex2: String = "?") = ex1 + " <> " + ex2
+  def GT(ex1: String, ex2: String = "?") = ex1 + " > " + ex2
+  def GE(ex1: String, ex2: String = "?") = ex1 + " >= " + ex2
+  def LT(ex1: String, ex2: String = "?") = ex1 + " < " + ex2
+  def LE(ex1: String, ex2: String = "?") = ex1 + " <= " + ex2
 
   def emptyPredicate = "1 = 1"
-  def isNull = "IS NULL"
-  def isNotNull = "IS NOT NULL"
-  def like = "LIKE ?"
-  def ilike = "ILIKE ?"
-  def between = "BETWEEN ? AND ?"
-  def in = "IN"
-  def notIn = "NOT IN"
-  def parameterizedIn(params: Iterable[_]) =
-    "IN (" + params.map(p => "?").mkString(", ") + ")"
+  def IS_NULL(ex: String) = ex + " IS NULL"
+  def IS_NOT_NULL(ex: String) = ex + " IS NOT NULL"
+  def LIKE(ex1: String, ex2: String = "?") = ex1 + " LIKE " + ex2
+  def ILIKE(ex1: String, ex2: String = "?") = ex1 + " ILIKE " + ex2
+  def BETWEEN(ex: String, v1: String = "?", v2: String= "?") =
+    ex + " BETWEEN " + v1 + " AND " + v2
+  def IN(ex: String) = ex + " IN"
+  def NOT_IN(ex: String) = ex + " NOT IN"
+  def parameterizedIn(ex: String, params: Iterable[String]) =
+    ex + " IN (" + params.mkString(", ") + ")"
 
-  def and = "AND"
-  def or = "OR"
-  def not = "NOT"
+  def AND = "AND"
+  def OR = "OR"
+  def NOT = "NOT"
 
-  def all = "ALL"
-  def some = "SOME"
+  def ALL = "ALL"
+  def SOME = "SOME"
 
-  def exists = "EXISTS"
-  def notExists = "NOT EXISTS"
+  def EXISTS = "EXISTS"
+  def NOT_EXISTS = "NOT EXISTS"
 
   /*!## Functions and others */
 
   def NULL = "NULL"
-  def distinct = "DISTINCT"
-  def count = "COUNT"
-  def max = "MAX"
-  def min = "MIN"
-  def sum = "SUM"
-  def avg = "AVG"
+  def DISTINCT = "DISTINCT"
+  def COUNT = "COUNT"
+  def MAX = "MAX"
+  def MIN = "MIN"
+  def SUM = "SUM"
+  def AVG = "AVG"
 
   /*!## Set operations */
 
-  def union = "UNION"
-  def unionAll = "UNION ALL"
-  def except = "EXCEPT"
-  def exceptAll = "EXCEPT ALL"
-  def intersect = "INTERSECT"
-  def intersectAll = "INTERSECT ALL"
+  def UNION = "UNION"
+  def UNION_ALL = "UNION ALL"
+  def EXCEPT = "EXCEPT"
+  def EXCEPT_ALL = "EXCEPT ALL"
+  def INTERSECT = "INTERSECT"
+  def INTERSECT_ALL = "INTERSECT ALL"
 
   /*!## Order specificators */
 
