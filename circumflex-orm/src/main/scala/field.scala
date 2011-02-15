@@ -258,7 +258,7 @@ class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
 
   protected def _getPrefix = aliasStack.pop.map(_ + ".").getOrElse("")
 
-  override protected[orm] def aliasedName: String = {
+  override def aliasedName: String = {
     val prefix = _getPrefix
     return dialect.compositeFieldName(prefix + _1.name, prefix + _2.name)
   }

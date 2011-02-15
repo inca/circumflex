@@ -220,7 +220,7 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
 
   More specific predicates can be acquired from subclasses.
   */
-  protected[orm] def aliasedName = aliasStack.pop match {
+  def aliasedName = aliasStack.pop match {
     case Some(alias: String) => alias + "." + name
     case _ => name
   }
