@@ -19,7 +19,7 @@ The `DMLQuery` trait represents data-manipulation queries which usually
 employ the `executeUpdate` method of JDBC `PreparedStatement` and return
 the number of affected rows.
 */
-trait Query extends SQLable with ParameterizedExpression with Cloneable {
+trait Query extends SQLable with Expression with Cloneable {
 
   // Keep track of last execution time
   protected var _executionTime = 0l
@@ -156,7 +156,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 }
 
 class NativeSQLQuery[T](projection: Projection[T],
-                        expression: ParameterizedExpression)
+                        expression: Expression)
     extends SQLQuery[T](projection) {
   def parameters = expression.parameters
   def toSql = expression.toSql.replaceAll("\\{\\*\\}", projection.toSql)
@@ -351,7 +351,7 @@ trait DMLQuery extends Query {
   }
 }
 
-class NativeDMLQuery(expression: ParameterizedExpression) extends DMLQuery {
+class NativeDMLQuery(expression: Expression) extends DMLQuery {
   def parameters = expression.parameters
   def toSql = expression.toSql
 }

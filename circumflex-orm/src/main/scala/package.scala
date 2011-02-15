@@ -98,7 +98,7 @@ package object orm {
     new SimpleExpressionHelper(expression)
   implicit def string2predicate(expression: String): Predicate =
     new SimpleExpression(expression, Nil)
-  implicit def paramExpr2predicate(expression: ParameterizedExpression): Predicate =
+  implicit def expr2predicate(expression: Expression): Predicate =
     new SimpleExpression(expression.toSql, expression.parameters)
   implicit def predicate2aggregateHelper(predicate: Predicate) =
     new AggregatePredicateHelper(predicate)

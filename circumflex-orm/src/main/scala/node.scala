@@ -50,7 +50,7 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
     this.relation.findAssociation(node.relation)
 
   def JOIN[T, J <: Record[T, J]](node: RelationNode[T, J],
-                                 on: String,
+                                 on: Expression,
                                  joinType: JoinType): JoinNode[PK, R, T, J] =
     new JoinNode(this, node, joinType).ON(on)
   def JOIN[T, J <: Record[T, J]](node: RelationNode[T, J],
@@ -62,7 +62,7 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
         case Some(a: Association[PK, J, R]) =>  // one-to-many join
           new OneToManyJoin[PK, R, T, J](this, node, a, joinType)
         case _ =>
-          new JoinNode(this, node, joinType).ON(dialect.emptyPredicate)
+          new JoinNode(this, node, joinType).ON(EmptyPredicate)
       }
     }
   def INNER_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
@@ -169,14 +169,14 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
   def right = _right
   def joinType = _joinType
 
-  protected var _on: String = ""
+  protected var _on: Expression = EmptyPredicate
   def on = _on
-  def ON(condition: String): this.type = {
-    _on = condition
+  def ON(expr: Expression): this.type = {
+    _on = expr
     return this
   }
 
-  def sqlOn = dialect.on(this.on)
+  def sqlOn = dialect.ON(this.on)
 
   override def projections = left.projections ++ right.projections
 
@@ -209,10 +209,9 @@ class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     parentNode: RelationNode[PKR, R],
     val association: Association[PKR, L, R],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](childNode, parentNode, joinType) {
-  override def on: String =
-    if (_on == "")
-      dialect.qualifyColumn(association.field, childNode.alias) + " = " +
-          dialect.qualifyColumn(association.parentRelation.PRIMARY_KEY, parentNode.alias)
+  override def on =
+    if (_on == EmptyPredicate)
+      association.joinPredicate(childNode.alias, parentNode.alias)
     else _on
 }
 
@@ -221,9 +220,8 @@ class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     childNode: RelationNode[PKR, R],
     val association: Association[PKL, R, L],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](parentNode, childNode, joinType) {
-  override def on: String =
-    if (_on == "")
-      dialect.qualifyColumn(association.field, childNode.alias) + " = " +
-          dialect.qualifyColumn(association.parentRelation.PRIMARY_KEY, parentNode.alias)
+  override def on =
+    if (_on == EmptyPredicate)
+      association.joinPredicate(childNode.alias, parentNode.alias)
     else _on
 }

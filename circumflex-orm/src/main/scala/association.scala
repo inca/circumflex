@@ -61,6 +61,12 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
     dialect.parameterizedIn(aliasedName, params.map(p => placeholder)),
     params.map(_.PRIMARY_KEY.get).toList)
 
+  def joinPredicate(childAlias: String, parentAlias: String): Predicate = {
+    val lh = dialect.qualifyColumn(field, childAlias)
+    val rh = dialect.qualifyColumn(parentRelation.PRIMARY_KEY, parentAlias)
+    return new SimpleExpression(dialect.EQ(lh, rh), Nil)
+  }
+
 }
 
 /*!# Inverse Associations

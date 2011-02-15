@@ -10,14 +10,12 @@ trait SQLable {
   def toSql: String
 }
 
-trait Expression extends SQLable
-
 /*!# Parameterized expressions
 
-The `ParameterizedExpression` trait provides basic functionality for dealing
+The `Expression` trait provides basic functionality for dealing
 with SQL expressions with JDBC-style parameters.
 */
-trait ParameterizedExpression extends Expression {
+trait Expression extends SQLable {
 
   /**
    * The parameters associated with this expression. The order is important.
@@ -33,7 +31,7 @@ trait ParameterizedExpression extends Expression {
         .replaceAll("\\$", "\\\\\\$")))
 
   override def equals(that: Any) = that match {
-    case e: ParameterizedExpression =>
+    case e: Expression =>
       e.toSql == this.toSql && e.parameters.toList == this.parameters.toList
     case _ => false
   }
@@ -242,6 +240,8 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
 
 }
 
-class ColumnExpression[T, R <: Record[_, R]](column: ValueHolder[T, R]) extends Expression {
+class ColumnExpression[T, R <: Record[_, R]](column: ValueHolder[T, R])
+    extends Expression {
+  def parameters = Nil
   val toSql = column.aliasedName
 }

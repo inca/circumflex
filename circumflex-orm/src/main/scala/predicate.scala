@@ -8,7 +8,7 @@ value when executed by database.
 Predicates are designed to participate in `WHERE` clauses of SQL queries.
 */
 
-trait Predicate extends ParameterizedExpression
+trait Predicate extends Expression
 
 /**
  * Always yields `true` when executed by database, used to designate an empty

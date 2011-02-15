@@ -155,20 +155,20 @@ class DefinitionHelper[R <: Record[_, R]](name: String, record: R) {
   def INDEX(expression: String) = new Index(name, record.relation, expression)
 }
 
-case class ForeignKeyAction(val toSql: String) extends SQLable {
+case class ForeignKeyAction(toSql: String) extends SQLable {
   override def toString = toSql
 }
 
-case class JoinType(val toSql: String) extends SQLable {
+case class JoinType(toSql: String) extends SQLable {
   override def toString = toSql
 }
 
-case class SetOperation(val toSql: String) extends SQLable {
+case class SetOperation(toSql: String) extends SQLable {
   override def toString = toSql
 }
 
 class Order(val expression: String, val parameters: Seq[Any])
-    extends ParameterizedExpression {
+    extends Expression {
   protected[orm] var _specificator = dialect.asc
   def ASC: this.type = {
     this._specificator = dialect.asc

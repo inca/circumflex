@@ -151,7 +151,7 @@ class Dialect {
   /**
    * Takes specified `expression` into parentheses and prepend `ON`.
    */
-  def on(expression: String) = "ON (" + expression + ")"
+  def ON(expression: Expression) = "ON (" + expression.toInlineSql + ")"
 
   /**
    * Takes specified `expression` in parentheses and prepend `NOT`.
