@@ -2,21 +2,22 @@ package ru.circumflex.orm
 
 import ru.circumflex.core._
 
-/*!# SQLable
+/*!# SQLable & Expression
 
 Every object capable of rendering itself into an SQL statement
-should extend the `SQLable` trait.
-*/
+should extend the `SQLable` trait.*/
 trait SQLable {
   def toSql: String
 }
+
+trait Expression extends SQLable
 
 /*!# Parameterized expressions
 
 The `ParameterizedExpression` trait provides basic functionality for dealing
 with SQL expressions with JDBC-style parameters.
 */
-trait ParameterizedExpression extends SQLable {
+trait ParameterizedExpression extends Expression {
 
   /**
    * The parameters associated with this expression. The order is important.
@@ -221,10 +222,8 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
 
   More specific predicates can be acquired from subclasses.
   */
-  protected[orm] def aliasedName = ctx.get("orm.lastAlias") match {
-    case Some(alias: String) =>
-      ctx.remove("orm.lastAlias")
-      alias + "." + name
+  protected[orm] def aliasedName = aliasStack.pop match {
+    case Some(alias: String) => alias + "." + name
     case _ => name
   }
 
@@ -243,6 +242,6 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
 
 }
 
-class ColumnExpression[T, R <: Record[_, R]](column: ValueHolder[T, R]) extends SQLable {
+class ColumnExpression[T, R <: Record[_, R]](column: ValueHolder[T, R]) extends Expression {
   val toSql = column.aliasedName
 }

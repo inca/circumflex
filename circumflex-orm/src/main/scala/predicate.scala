@@ -22,8 +22,7 @@ object EmptyPredicate extends Predicate {
 /**
  * A predicate consisting of specified `expression` and specified `parameters`.
  */
-class SimpleExpression(val expression: String,
-                       val parameters: Seq[Any])
+class SimpleExpression(val expression: String, val parameters: Seq[Any])
     extends Predicate {
   def toSql = expression
 }

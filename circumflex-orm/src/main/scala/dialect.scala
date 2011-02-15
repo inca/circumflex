@@ -83,11 +83,12 @@ class Dialect {
 
   def NULL = "NULL"
   def DISTINCT = "DISTINCT"
-  def COUNT = "COUNT"
-  def MAX = "MAX"
-  def MIN = "MIN"
-  def SUM = "SUM"
-  def AVG = "AVG"
+  def COUNT(ex: String) = "COUNT(" + ex + ")"
+  def COUNT_DISTINCT(ex: String) = "COUNT(DISTINCT " + ex + ")"
+  def MAX(ex: String) = "MAX(" + ex + ")"
+  def MIN(ex: String) = "MIN(" + ex + ")"
+  def SUM(ex: String) = "SUM(" + ex + ")"
+  def AVG(ex: String) = "AVG(" + ex + ")"
 
   /*!## Set operations */
 

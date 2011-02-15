@@ -186,7 +186,11 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
     if (str == "") None else Some(str)
 
   def LIKE(value: String) = new SimpleExpression(dialect.LIKE(aliasedName, placeholder), List(value))
+  def LIKE(col: ColumnExpression[String, _]) =
+    new SimpleExpression(dialect.LIKE(aliasedName, col.toSql), Nil)
   def ILIKE(value: String) = new SimpleExpression(dialect.ILIKE(aliasedName, placeholder), List(value))
+  def ILIKE(col: ColumnExpression[String, _]) =
+    new SimpleExpression(dialect.ILIKE(aliasedName, col.toSql), Nil)
 }
 
 class BooleanField[R <: Record[_, R]](name: String, record: R)
@@ -252,28 +256,30 @@ class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
     return this
   }
 
+  protected def _getPrefix = aliasStack.pop.map(_ + ".").getOrElse("")
+
   override protected[orm] def aliasedName: String = {
-    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    val prefix = _getPrefix
     return dialect.compositeFieldName(prefix + _1.name, prefix + _2.name)
   }
 
   override def EQ(value: (T1, T2)) = {
-    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    val prefix = _getPrefix
     AND(new SimpleExpression(dialect.EQ(prefix + _1.name, placeholder), List(value._1)),
       new SimpleExpression(dialect.EQ(prefix + _2.name, placeholder), List(value._2)))
   }
   override def NE(value: (T1, T2)) = {
-    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    val prefix = _getPrefix
     AND(new SimpleExpression(dialect.NE(prefix + _1.name, placeholder), List(value._1)),
       new SimpleExpression(dialect.NE(prefix + _2.name, placeholder), List(value._2)))
   }
   override def IS_NULL = {
-    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    val prefix = _getPrefix
     AND(new SimpleExpression(dialect.IS_NULL(prefix + _1.name), Nil),
       new SimpleExpression(dialect.IS_NULL(prefix + _2.name), Nil))
   }
   override def IS_NOT_NULL = {
-    val prefix = ctx.get("orm.lastAlias").map(_ + ".").getOrElse("")
+    val prefix = _getPrefix
     AND(new SimpleExpression(dialect.IS_NOT_NULL(prefix + _1.name), Nil),
       new SimpleExpression(dialect.IS_NOT_NULL(prefix + _2.name), Nil))
   }

@@ -4,6 +4,7 @@ import ru.circumflex.core._
 import orm._
 import java.util.regex.Pattern
 import net.sf.ehcache.CacheManager
+import collection.mutable.Stack
 
 /*!# The `orm` Package
 
@@ -53,6 +54,31 @@ package object orm {
   def COMMIT() = tx.commit()
   def ROLLBACK() = tx.rollback()
 
+  /*! ## Alias Stack
+
+  Circumflex ORM offers nice DSL to reference fields of aliased tables:
+
+      val co = Country AS "co"
+      val predicate = co.name EQ "Switzerland"
+
+  In this example `RelationNode[Country]` with alias `"co"` is implicitly converted
+  into `Country`, its underlying `Relation`, because only that relation owns field
+  `name`. However, the information about the alias is lost during this conversion.
+  We use `aliasStack` to remember it during conversion so it can be accessed later.
+  */
+
+  object aliasStack {
+    protected def _stack: Stack[String] = ctx.get("orm.aliasStack") match {
+      case Some(s: Stack[String]) => s
+      case _ =>
+        val s = Stack[String]()
+        ctx += "orm.aliasStack" -> s
+        s
+    }
+    def pop: Option[String] = if (_stack.size == 0) None else Some(_stack.pop)
+    def push(alias: String): Unit = _stack.push(alias)
+  }
+
   // Implicits
 
   // for nodes
@@ -60,10 +86,9 @@ package object orm {
   implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
     new RelationNode[PK, R](relation)
   implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): R = {
-    ctx("orm.lastAlias") = node.alias
+    aliasStack.push(node.alias)
     node.relation.asInstanceOf[R]
   }
-  implicit def vh2str(vh: ValueHolder[_, _]): String = vh.aliasedName
   implicit def vh2colExpr[T, R <: Record[_, R]](vh: ValueHolder[T, R]): ColumnExpression[T, R] =
     new ColumnExpression(vh)
 
@@ -84,17 +109,17 @@ package object orm {
   implicit def string2order(expression: String): Order =
     new Order(expression, Nil)
   implicit def vh2order(vh: ValueHolder[_, _]): Order =
-    new Order(vh2str(vh), Nil)
+    new Order(vh.aliasedName, Nil)
 
   // for projections
 
   implicit def string2projection(expression: String): Projection[Any] =
     new ExpressionProjection[Any](expression)
   implicit def vh2projection[T](vh: ValueHolder[T, _]): Projection[T] =
-    new ExpressionProjection[T](vh2str(vh))
+    new ExpressionProjection[T](vh.aliasedName)
 
-  implicit def pair2proj[T1, T2](
-      t: (Projection[T1], Projection[T2])) = new PairProjection(t._1, t._2)
+  implicit def pair2proj[T1, T2](t: (Projection[T1], Projection[T2])) =
+    new PairProjection(t._1, t._2)
 
   // Constants
 
@@ -150,19 +175,18 @@ package object orm {
 
   // Simple projections
 
-  def COUNT(expr: String) =
-    new ExpressionProjection[Long](dialect.COUNT + "(" + expr + ")")
-  def COUNT_DISTINCT(expr: String) =
-    new ExpressionProjection[Long](
-      dialect.COUNT + "(" + dialect.DISTINCT + " " + expr + ")")
-  def MAX(expr: String) =
-    new ExpressionProjection[Any](dialect.MAX + "(" + expr + ")")
-  def MIN(expr: String) =
-    new ExpressionProjection[Any](dialect.MIN + "(" + expr + ")")
-  def SUM(expr: String) =
-    new ExpressionProjection[Any](dialect.SUM + "(" + expr + ")")
-  def AVG(expr: String) =
-    new ExpressionProjection[Any](dialect.AVG + "(" + expr + ")")
+  def COUNT(expr: Expression): Projection[Long] =
+    new ExpressionProjection[Long](dialect.COUNT(expr.toSql))
+  def COUNT_DISTINCT(expr: Expression): Projection[Long] =
+    new ExpressionProjection[Long](dialect.COUNT_DISTINCT(expr.toSql))
+  def MAX(expr: Expression): Projection[Any] =
+    new ExpressionProjection[Any](dialect.MAX(expr.toSql))
+  def MIN(expr: Expression) =
+    new ExpressionProjection[Any](dialect.MIN(expr.toSql))
+  def SUM(expr: Expression) =
+    new ExpressionProjection[Any](dialect.SUM(expr.toSql))
+  def AVG(expr: Expression) =
+    new ExpressionProjection[Any](dialect.AVG(expr.toSql))
 
   // Queries DSL
 

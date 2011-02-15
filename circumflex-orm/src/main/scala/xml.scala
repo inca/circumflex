@@ -128,7 +128,7 @@ class Deployment(val id: String,
       val k = a.key
       val field = r.relation.getClass.getMethod(k).invoke(r).asInstanceOf[Field[Any, R]]
       val v = convertValue(field, a.value.toString)
-      ctx("orm.lastAlias") = "root"
+      aliasStack.push("root")
       crit.add(field EQ v)
     })
     return crit
