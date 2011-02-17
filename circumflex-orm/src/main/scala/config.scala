@@ -8,6 +8,7 @@ import java.sql.{Timestamp, Connection, PreparedStatement, ResultSet}
 import com.mchange.v2.c3p0.{DataSources, ComboPooledDataSource}
 import collection.mutable.HashMap
 import xml._
+import util.control.ControlThrowable
 
 /*!# ORM Configuration Objects
 
@@ -255,6 +256,8 @@ class Transaction {
     try {
       block
     } catch {
+      case e: ControlThrowable =>
+        ORM_LOG.trace("Escaped nested transaction via ControlThrowable, ROLLBACK is suppressed.")
       case e =>
         getConnection.rollback(sp)
         throw e
