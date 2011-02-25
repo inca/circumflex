@@ -29,13 +29,10 @@ trait MockServer extends StandaloneServer {
 
   def initTester() = {
     _tester = new ServletTester()
-    _tester.setContextPath("/")
-    _tester.setResourceBase(Circumflex.get("cx.root") match {
-      case Some(s: String) => s
-      case _ => "src/main/webapp"
-    })
+    _tester.setContextPath(contextPath)
+    _tester.setResourceBase(webappRoot)
     _tester.addServlet(classOf[DefaultServlet], "/*")
-    filters.foreach(f => _tester.addFilter(f, "/*", Handler.ALL))
+    _tester.addFilter(classOf[CircumflexFilter], "/*", Handler.ALL)
   }
 
   override def start = {
