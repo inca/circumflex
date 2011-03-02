@@ -33,6 +33,8 @@ package object orm {
       else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
       else if (url.startsWith("jdbc:oracle:")) new OracleDialect
       else if (url.startsWith("jdbc:h2:")) new H2Dialect
+      else if (url.startsWith("jdbc:sqlserver:")) new MSSQLDialect
+      else if (url.startsWith("jdbc:db2:")) new DB2Dialect
       else new Dialect
     case _ => new Dialect
   })

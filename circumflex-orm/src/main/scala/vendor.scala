@@ -10,6 +10,21 @@ Following vendors are currently supported by Circumflex ORM:
   * Oracle.
 */
 
+class H2Dialect extends Dialect {
+  override def driverClass = "org.h2.Driver"
+  override def textType = "VARCHAR"
+  override def createIndex(idx: Index): String = {
+    var result = "CREATE "
+    if (idx.unique_?) result += "UNIQUE "
+    result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
+        " (" + idx.expression + ")"
+    if (idx.where != EmptyPredicate)
+      result += " WHERE " + idx.where.toInlineSql
+    return result
+  }
+  override def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name
+}
+
 class PostgreSQLDialect extends Dialect {
   override def driverClass = "org.postgresql.Driver"
   override def timestampType = "TIMESTAMPTZ"
@@ -59,26 +74,45 @@ class MySQLDialect extends Dialect {
     if (idx.unique_?) result += "UNIQUE "
     result += "INDEX " + idx.name + " USING " + idx.using +
         " ON " + idx.relation.qualifiedName + " (" + idx.expression + ")"
-    // index predicates are not supported
+    if (idx.where != EmptyPredicate)
+      ORM_LOG.warn("Ignoring WHERE clause of INDEX " + idx.name +
+          ": predicates are not supported.")
     return result
   }
 }
 
 class OracleDialect extends Dialect {
   override def driverClass = "oracle.jdbc.driver.OracleDriver"
-}
 
-class H2Dialect extends Dialect {
-  override def driverClass = "org.h2.Driver"
-  override def textType = "VARCHAR"
+  override def numericType(precision: Int, scale: Int): String =
+    "NUMBER" + (if (precision == -1) "" else "(" + precision + "," + scale + ")")
+  override def textType = "VARCHAR2(4000)"
+  override def varcharType(length: Int): String =
+    "VARCHAR2" + (if (length == -1) "" else "(" + length + ")")
+  override def booleanType = "NUMBER(1)"
+  override def timestampType = "TIMESTAMP"
+
+  override def supportsSchema_? = false
+
   override def createIndex(idx: Index): String = {
     var result = "CREATE "
     if (idx.unique_?) result += "UNIQUE "
-    result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
-        " (" + idx.expression + ")"
+    result += "INDEX " + idx.name +
+        " ON " + idx.relation.qualifiedName + " (" + idx.expression + ")"
     if (idx.where != EmptyPredicate)
-      result += " WHERE " + idx.where.toInlineSql
+      ORM_LOG.warn("Ignoring WHERE clause of INDEX " + idx.name +
+          ": predicates are not supported.")
     return result
   }
-  override def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name
+
+
+}
+
+class DB2Dialect extends Dialect {
+  override def driverClass = "com.ibm.db2.jcc.DB2Driver"
+}
+
+class MSSQLDialect extends Dialect {
+  override def driverClass = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+  override def booleanType = "BIT"
 }
