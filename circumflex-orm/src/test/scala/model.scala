@@ -24,8 +24,7 @@ class Country extends Record[String, Country] {
 object Country extends Country
 with Table[String, Country]
 with Cacheable[String, Country] {
-  val codeKey = CONSTRAINT("code_key").UNIQUE(code)
-  val nameIdx = "name_idx".INDEX("code")
+  val nameIdx = "name_idx".INDEX("name")
 
   validation.notEmpty(_.code).pattern(_.code, "^[a-z]{2}$", "syntax")
 }
