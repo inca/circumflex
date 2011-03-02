@@ -161,6 +161,11 @@ class DoubleField[R <: Record[_, R]](name: String,
                                      val precision: Int = -1,
                                      val scale: Int = 0)
     extends XmlSerializable[Double, R](name, record, dialect.numericType(precision, scale)) {
+  override def read(rs: ResultSet, alias: String): Option[Double] = {
+    val d = rs.getDouble(alias)
+    if (rs.wasNull) None
+    else Some(d)
+  }
   def from(str: String): Option[Double] =
     try Some(str.toDouble) catch { case _ => None }
 }
@@ -173,8 +178,11 @@ class NumericField[R <: Record[_, R]](name: String,
     extends XmlSerializable[BigDecimal, R](name, record, dialect.numericType(precision, scale)) {
   def from(str: String): Option[BigDecimal] =
     try Some(BigDecimal(str)) catch { case _ => None }
-  override def read(rs: ResultSet, alias: String): Option[BigDecimal] =
-    any2option(rs.getString(alias)).flatMap(x => from(x))
+  override def read(rs: ResultSet, alias: String): Option[BigDecimal] = {
+    val bd = rs.getBigDecimal(alias)
+    if (rs.wasNull) None
+    else Some(new BigDecimal(bd))
+  }
   addSetter(v => v.setScale(scale, roundingMode))
 }
 
