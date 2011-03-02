@@ -4,7 +4,7 @@ package ru.circumflex.orm
 
 Following vendors are currently supported by Circumflex ORM:
 
-  * PostgreSQL;
+  * PostgreSQL 8.3+;
   * MySQL;
   * H2 database;
   * Oracle.
@@ -13,9 +13,26 @@ Following vendors are currently supported by Circumflex ORM:
 class PostgreSQLDialect extends Dialect {
   override def driverClass = "org.postgresql.Driver"
   override def timestampType = "TIMESTAMPTZ"
+
+  /*!
+  PostgreSQL does not allow this syntax for inserting a row containing only default values:
+
+      INSERT INTO my.table () VALUES ();
+
+  We should write `INSERT INTO my.table DEFAULT VALUES` instead.
+  */
+  override def insert[PK, R <: Record[PK, R]](dml: Insert[PK, R]): String = {
+    var result = "INSERT INTO " + dml.relation.qualifiedName
+    if (dml.fields.size > 0)
+      result += " (" + dml.fields.map(_.name).mkString(", ") +
+        ") VALUES (" + dml.fields.map(_.placeholder).mkString(", ") + ")"
+    else result += " DEFAULT VALUES"
+    return result
+  }
 }
 
 class MySQLDialect extends Dialect {
+  override def supportsSchema_? = false
   override def driverClass = "com.mysql.jdbc.Driver"
 
   override def initializeField[R <: Record[_, R]](field: Field[_, R]): Unit = {
@@ -36,6 +53,15 @@ class MySQLDialect extends Dialect {
 
   override def sequenceNextValQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
     throw new UnsupportedOperationException("This operation is unsupported in the MySQL dialect.")
+
+  override def createIndex(idx: Index): String = {
+    var result = "CREATE "
+    if (idx.unique_?) result += "UNIQUE "
+    result += "INDEX " + idx.name + " USING " + idx.using +
+        " ON " + idx.relation.qualifiedName + " (" + idx.expression + ")"
+    // index predicates are not supported
+    return result
+  }
 }
 
 class OracleDialect extends Dialect {

@@ -7,7 +7,7 @@ import xml._
 object Sample {
   def createSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).CREATE
   def loadData = Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
-        .foreach(_.process)
+      .foreach(_.process)
   def dropSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).DROP
 }
 
@@ -62,11 +62,16 @@ object CircumflexORMSpec extends Specification {
     }
     "handle different identifier generation strategies" in {
       List(IdentNoAuto, IdentAuto, SeqNoAuto, SeqAuto).foreach { r =>
-        new DDLUnit(r).CREATE
-        val record = r.recordClass.newInstance
-        record.INSERT_!()
-        record.transient_? must beFalse
-        new DDLUnit(r).DROP
+        try {
+          new DDLUnit(r).CREATE
+          val record = r.recordClass.newInstance
+          record.INSERT_!()
+          record.transient_? must beFalse
+          new DDLUnit(r).DROP
+        } catch {
+          case e: UnsupportedOperationException =>
+            ORM_LOG.warn("Database does not support one of identity generation strategies.")
+        }
       }
     }
     "handle validation" in {
@@ -189,64 +194,4 @@ object CircumflexORMSpec extends Specification {
     }
   }
 
-}
-
-
-// Classes for testing Identifier Generation Strategies
-
-object IdGen extends Schema("idgen")
-
-class IdentNoAuto extends Record[Long, IdentNoAuto] with IdentityGenerator[Long, IdentNoAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT
-  def relation = IdentNoAuto
-  def PRIMARY_KEY = id
-}
-
-object IdentNoAuto extends IdentNoAuto with Table[Long, IdentNoAuto] {
-  override def schema: Schema = IdGen
-}
-
-class IdentAuto extends Record[Long, IdentAuto] with IdentityGenerator[Long, IdentAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT
-  def relation = IdentAuto
-  def PRIMARY_KEY = id
-}
-
-object IdentAuto extends IdentAuto with Table[Long, IdentAuto] {
-  override def schema: Schema = IdGen
-  override def autorefresh_?(): Boolean = true
-}
-
-class SeqNoAuto extends Record[Long, SeqNoAuto] with SequenceGenerator[Long, SeqNoAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT
-  def relation = SeqNoAuto
-  def PRIMARY_KEY = id
-}
-
-object SeqNoAuto extends SeqNoAuto with Table[Long, SeqNoAuto] {
-  override def schema: Schema = IdGen
-}
-
-class SeqAuto extends Record[Long, SeqAuto] with SequenceGenerator[Long, SeqAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT
-  def relation = SeqAuto
-  def PRIMARY_KEY = id
-}
-
-object SeqAuto extends SeqAuto with Table[Long, SeqAuto] {
-  override def schema: Schema = IdGen
-  override def autorefresh_?(): Boolean = true
-}
-
-object DecimalSchema extends Schema("decimal")
-
-class DecimalRecord extends Record[BigDecimal, DecimalRecord] {
-  val value = "value".NUMERIC(12,4).NOT_NULL
-  def PRIMARY_KEY = value
-  def relation = DecimalRecord
-}
-
-object DecimalRecord extends DecimalRecord with Table[BigDecimal, DecimalRecord] {
-  override def schema: Schema = DecimalSchema
-  override def autorefresh_?(): Boolean = true
 }

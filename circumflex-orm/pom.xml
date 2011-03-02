@@ -17,11 +17,9 @@
   </parent>
 
   <properties>
-    <orm.connection.driver>org.h2.Driver</orm.connection.driver>
     <orm.connection.url>jdbc:h2:mem:test</orm.connection.url>
     <orm.connection.username>test</orm.connection.username>
     <orm.connection.password>test</orm.connection.password>
-    <orm.dialect>ru.circumflex.orm.H2Dialect</orm.dialect>
     <orm.defaultSchema>orm</orm.defaultSchema>
   </properties>
 
@@ -48,48 +46,19 @@
       <version>1.2.142</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>9.0-801.jdbc4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.15</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
-
-  <profiles>
-    <profile>
-      <id>postgresql</id>
-      <properties>
-        <orm.connection.driver>org.postgresql.Driver</orm.connection.driver>
-        <orm.connection.url>jdbc:postgresql://localhost:5432/inca</orm.connection.url>
-        <orm.connection.username>inca</orm.connection.username>
-        <orm.connection.password>incainca</orm.connection.password>
-        <orm.dialect>ru.circumflex.orm.PostgreSQLDialect</orm.dialect>
-        <orm.defaultSchema>orm</orm.defaultSchema>
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>postgresql</groupId>
-          <artifactId>postgresql</artifactId>
-          <version>8.3-603.jdbc4</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>mysql</id>
-      <properties>
-        <orm.connection.driver>com.mysql.jdbc.Driver</orm.connection.driver>
-        <orm.connection.url>jdbc:mysql://localhost:3306/inca</orm.connection.url>
-        <orm.connection.username>inca</orm.connection.username>
-        <orm.connection.password>incainca</orm.connection.password>
-        <orm.dialect>ru.circumflex.orm.MySQLDialect</orm.dialect>
-        <orm.defaultSchema>orm</orm.defaultSchema>
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>mysql</groupId>
-          <artifactId>mysql-connector-java</artifactId>
-          <version>5.1.9</version>
-          <scope>test</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
 
   <build>
     <testResources>

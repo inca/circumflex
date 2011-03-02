@@ -134,7 +134,9 @@ class Dialect {
    * Qualifies relation name with it's schema.
    */
   def relationQualifiedName(relation: Relation[_, _]) =
-    relation.schema.name + "." + relation.relationName
+    if (supportsSchema_?) relation.schema.name + "." + relation.relationName
+    else relation.relationName
+
 
   /**
    * Just appends `AS` and specified `alias` to specified `expression`.
