@@ -84,6 +84,10 @@ class MySQLDialect extends Dialect {
 class OracleDialect extends Dialect {
   override def driverClass = "oracle.jdbc.driver.OracleDriver"
 
+  override def fkNoAction = "SET_NULL"
+  override def fkRestrict = "SET NULL"
+  override def fkSetDefault = "SET NULL"
+
   override def numericType(precision: Int, scale: Int): String =
     "NUMBER" + (if (precision == -1) "" else "(" + precision + "," + scale + ")")
   override def textType = "VARCHAR2(4000)"
@@ -104,6 +108,15 @@ class OracleDialect extends Dialect {
     return result
   }
 
+  override def defaultExpression[R <: Record[_, R]](field: Field[_, R]): String =
+    field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
+
+  override def sequenceNextValQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+    new Select(expr[PK](sequenceName(node.relation.PRIMARY_KEY) + ".nextval FROM dual"))
+  override def identityLastIdPredicate[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Predicate =
+    throw new UnsupportedOperationException("This operation is unsupported in Oracle dialect.")
+  override def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+    throw new UnsupportedOperationException("This operation is unsupported in Oracle dialect.")
 
 }
 
@@ -120,7 +133,8 @@ class DB2Dialect extends Dialect {
     }
 
   override def sequenceNextValQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
-    new Select(expr[PK]("VALUES NEXTVAL FOR " + sequenceName(node.relation.PRIMARY_KEY)))
+    new NativeSQLQuery[PK](expr[PK]("NEXTVAL FOR " + sequenceName(node.relation.PRIMARY_KEY) + " AS this"),
+      prepareExpr("VALUES {*}"))
   override def identityLastIdPredicate[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Predicate =
     new SimpleExpression(node.alias + "." + node.relation.PRIMARY_KEY.name + " = IDENTITY_VAL_LOCAL()", Nil)
   override def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =

@@ -29,14 +29,14 @@ with Cacheable[String, Country] {
   validation.notEmpty(_.code).pattern(_.code, "^[a-z]{2}$", "syntax")
 }
 
-class City extends Record[Long, City] with IdentityGenerator[Long, City] {
+class City extends Record[String, City] {
   def this(name: String, country: Country) = {
     this()
     this.name := name
     this.country := country
   }
 
-  val id = "id".BIGINT.NOT_NULL.AUTO_INCREMENT
+  val id = "id".TEXT.NOT_NULL(java.util.UUID.randomUUID.toString)
   val name = "name".TEXT.NOT_NULL
   val country = "country_code".VARCHAR(2).NOT_NULL.REFERENCES(Country).ON_DELETE(CASCADE)
 
@@ -45,7 +45,7 @@ class City extends Record[Long, City] with IdentityGenerator[Long, City] {
   override def toString = name.getOrElse("<unknown>")
 }
 
-object City extends City with Table[Long, City] with Cacheable[Long, City] {
+object City extends City with Table[String, City] with Cacheable[String, City] {
   val cityKey = UNIQUE(name, country)
   def byName(name: String) = (City AS "ci").map(ci =>
     ci.criteria.add(ci.name LIKE name).addOrder(ci.name ASC))
@@ -58,7 +58,7 @@ class Capital extends Record[String, Capital] {
     this.city := city
   }
   val country = "country_id".VARCHAR(2).NOT_NULL.REFERENCES(Country).ON_DELETE(CASCADE)
-  val city = "city_id".BIGINT.NOT_NULL.REFERENCES(City).ON_DELETE(CASCADE)
+  val city = "city_id".TEXT.NOT_NULL.REFERENCES(City).ON_DELETE(CASCADE)
 
   def relation = Capital
   def PRIMARY_KEY = country.field

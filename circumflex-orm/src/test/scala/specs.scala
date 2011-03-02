@@ -37,7 +37,7 @@ object CircumflexORMSpec extends Specification {
     "initialize metadata" in {
       Country.fields.size must_== 2
       Country.associations.size must_== 0
-      Country.constraints.size must_== 1
+      Country.constraints.size must_== 0
       Country.indexes.size must_== 1
       City.fields.size must_== 3
       City.associations.size must_== 1
@@ -48,17 +48,17 @@ object CircumflexORMSpec extends Specification {
 
   "Records" should {
     "handle equality" in {
-      val c1 = new City
-      val c2 = new City
+      val c1 = new Country
+      val c2 = new Country
       c1 must_!= c2
-      c1.id := 1l
+      c1.code := "ch"
       c1 must_!= c2
-      c2.id := 1l
+      c2.code := "ch"
       c1 must_== c2
-      c2.id := 2l
+      c2.code := "fr"
       c1 must_!= c2
       c1.canEqual(c2) must beTrue
-      c1.canEqual(new Country) must beFalse
+      c1.canEqual(new City) must beFalse
     }
     "handle different identifier generation strategies" in {
       List(IdentNoAuto, IdentAuto, SeqNoAuto, SeqAuto).foreach { r =>
