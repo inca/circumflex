@@ -46,44 +46,6 @@
       <version>1.2.142</version>
       <scope>test</scope>
     </dependency>
-    <!-- TODO remove'em-->
-    <dependency>
-      <groupId>postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>9.0-801.jdbc4</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>5.1.15</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.microsoft.sqlserver</groupId>
-      <artifactId>sqlserver-jdbc4</artifactId>
-      <version>2008-R2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.ibm.db2</groupId>
-      <artifactId>db2jcc</artifactId>
-      <version>9.7.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.ibm.db2</groupId>
-      <artifactId>db2jcc_license_cu</artifactId>
-      <version>9.7.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.oracle</groupId>
-      <artifactId>ojdbc14</artifactId>
-      <version>10g</version>
-      <scope>test</scope>
-    </dependency>
-    <!-- // -->
   </dependencies>
 
   <build>
