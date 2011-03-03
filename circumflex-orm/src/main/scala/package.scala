@@ -21,12 +21,6 @@ package object orm {
 
   // Commons
 
-  val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
-    "orm.connectionProvider", new DefaultConnectionProvider)
-
-  val typeConverter: TypeConverter = cx.instantiate[TypeConverter](
-    "orm.typeConverter", new TypeConverter)
-
   val dialect: Dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
     case Some(url: String) =>
       if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
@@ -38,6 +32,12 @@ package object orm {
       else new Dialect
     case _ => new Dialect
   })
+
+  val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
+    "orm.connectionProvider", new DefaultConnectionProvider)
+
+  val typeConverter: TypeConverter = cx.instantiate[TypeConverter](
+    "orm.typeConverter", new TypeConverter)
 
   val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
     "orm.transactionManager", new DefaultTransactionManager)

@@ -1,5 +1,7 @@
 package ru.circumflex.orm
 
+import java.sql._
+
 /*!# Dialect
 
 This little thingy does all dirty SQL rendering.
@@ -17,6 +19,11 @@ class Dialect {
 
   def driverClass: String =
     throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
+
+  /*!## JDBC methods */
+
+  def prepareStatement(conn: Connection, sql: String): PreparedStatement =
+    conn.prepareStatement(sql)
 
   /*!## SQL types */
 
@@ -408,10 +415,14 @@ class Dialect {
   /**
    * Produces an `INSERT INTO .. VALUES` statement for specified `record` and specified `fields`.
    */
-  def insert[PK, R <: Record[PK, R]](dml: Insert[PK, R]): String =
-    "INSERT INTO " + dml.relation.qualifiedName +
-        " (" + dml.fields.map(_.name).mkString(", ") +
-        ") VALUES (" + dml.fields.map(_.placeholder).mkString(", ") + ")"
+  def insert[PK, R <: Record[PK, R]](dml: Insert[PK, R]): String = {
+    var result = "INSERT INTO " + dml.relation.qualifiedName
+    if (dml.fields.size > 0)
+      result += " (" + dml.fields.map(_.name).mkString(", ") +
+          ") VALUES (" + dml.fields.map(_.placeholder).mkString(", ") + ")"
+    else result += " DEFAULT VALUES"
+    return result
+  }
 
   /**
    * Produces an `INSERT .. SELECT` statement.

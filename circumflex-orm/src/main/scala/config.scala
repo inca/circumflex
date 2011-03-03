@@ -244,7 +244,7 @@ class Transaction {
                 (errActions: Throwable => A): A = execute { conn =>
     ORM_LOG.debug(sql)
     val st =_statementsCache.get(sql).getOrElse {
-      val statement = conn.prepareStatement(sql)
+      val statement = dialect.prepareStatement(conn, sql)
       _statementsCache.update(sql, statement)
       statement
     }
