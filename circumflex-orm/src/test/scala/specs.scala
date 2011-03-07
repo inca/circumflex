@@ -5,7 +5,7 @@ import org.specs.Specification
 import xml._
 
 object Sample {
-  def createSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).CREATE
+  def createSchema = new DDLUnit(User, Country, City, Capital, Developer, Project, Membership).CREATE
   def loadData = Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
         .foreach(_.process)
   def dropSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).DROP
@@ -69,6 +69,21 @@ object CircumflexORMSpec extends Specification {
         new DDLUnit(r).DROP
       }
     }
+   "handle user supplied ids" in {
+      val user = new User("2131", "Peter kovac")
+      user.save_!
+      val u = User AS "u"
+      val saved: Seq[User] = (User AS "u").map(u => SELECT (u.*) FROM (u) list)
+      saved(0).ssn() must_== "2131"
+      saved(0).name() must_== "Peter kovac"
+      user.name := "override"
+      user.save_!
+      val updatedUser: Seq[User] = (User AS "u").map(u => SELECT (u.*) FROM (u) list)
+      updatedUser(0).name() must_== "override"
+      updatedUser.size must_== 1
+    }
+
+
     "handle validation" in {
       val c = new Country
       c.code := ""

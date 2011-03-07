@@ -252,6 +252,7 @@ traits. Following identity generators are supported out-of-box:
   for exposing last generated identifier;
   * `SequenceGenerator` assumes that database supports sequences: the database is polled for
   next sequence value which is then used as an identifier for persisting.
+  * `UserSuppliedIdentity` assumes that identity management is happening at the client side - useful in situations where the primary key is a natural key
 */
 trait Generator[PK, R <: Record[PK, R]] extends Record[PK, R] { this: R =>
   override protected def _persist(fields: scala.Seq[Field[_, R]]): Int = persist(fields)
@@ -304,3 +305,28 @@ trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     }
   }
 }
+
+trait UserSuppliedIdentity[PK, R <: Record[PK, R]] extends Generator[PK, R] {
+  this: R =>
+  def persist(fields: scala.Seq[Field[_, R]]): Int = {
+    if (this.PRIMARY_KEY.null_?)
+      throw new ORMException("User supplied Identity trait requires a primary key set by the user")
+    else
+      new Insert(relation, fields.filter(!_.null_?)).execute()
+  }
+
+  override def save_!(): Int = {
+    if (this.PRIMARY_KEY.null_?)
+      throw new ORMException("User supplied Identity trait requires a primary key set by the user")
+    else {
+      val root = relation.AS("root").map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).list
+      if (root.size == 0)
+        INSERT_!()
+      else
+        UPDATE_!()
+    }
+  }
+}
+
+
+

@@ -110,3 +110,20 @@ class Membership extends Record[(String, String), Membership] {
 }
 
 object Membership extends Membership with Table[(String, String), Membership]
+
+class User extends Record[String, User] with UserSuppliedIdentity[String, User] {
+  def this(ssn: String, name: String) = {
+    this()
+    this.name := name
+    this.ssn := ssn
+  }
+
+  val name = "name".TEXT.NOT_NULL
+  val ssn = "ssn".VARCHAR(9).NOT_NULL
+
+  def PRIMARY_KEY = ssn
+  def relation = User
+  override def toString = name.getOrElse("<User unknown>")
+}
+object User extends User with Table[String, User]
+
