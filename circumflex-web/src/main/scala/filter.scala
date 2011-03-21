@@ -81,7 +81,9 @@ class CircumflexFilter extends Filter {
       }
       val relativeUri = req.getRequestURI.substring(contextPath.length)
       val uri = URLDecoder.decode(publicUri + relativeUri, "UTF-8")
-      val resource = new File(filterConfig.getServletContext.getRealPath(uri))
+      val path = filterConfig.getServletContext.getRealPath(uri)
+      if (path == null) return false
+      val resource = new File(path)
       if (resource.isFile) {
         req.getRequestDispatcher(uri).forward(req, res)
         return true

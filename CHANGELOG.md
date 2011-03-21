@@ -14,3 +14,5 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 
   See [package.scala](http://circumflex.ru/api/2.0.1/circumflex-ftl/package.scala).
 
+* Fixed [issue 68](https://github.com/inca/circumflex/issues#issue/68).
+
