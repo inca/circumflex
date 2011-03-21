@@ -17,7 +17,7 @@ throughout your application using case class `HttpCookie`. It is mutable and dea
  * Provides convenient mutable wrapper to work with HTTP cookies.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-web/cookie.scala">cookie.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.1/circumflex-web/cookie.scala">cookie.scala</a>.
  */
 case class HttpCookie(var name: String,
                       var value: String,
@@ -49,7 +49,7 @@ supplying `javax.servlet.Cookie` as an argument to `apply` method of `HttpCookie
  * Converts the `javax.serlvet.Cookie` into `HttpCookie`.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-web/cookie.scala">cookie.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.1/circumflex-web/cookie.scala">cookie.scala</a>.
  */
 object HttpCookie {
   def apply(cookie: Cookie): HttpCookie =

@@ -30,7 +30,7 @@ in action.
  * Performs request routing for an application.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-web/router.scala">router.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.1/circumflex-web/router.scala">router.scala</a>.
  */
 class RequestRouter(val prefix: String = "") {
 

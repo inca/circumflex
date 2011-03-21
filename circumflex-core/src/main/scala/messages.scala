@@ -75,7 +75,7 @@ If you need to search messages in different sources, you can use
  * Provides an interface for resolving messages.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
+ * <a href="http://circumflex.ru/api/2.0.1/circumflex-core/messages.scala">messages.scala</a>
  */
 trait MessageResolver extends Map[String, String] {
   protected var _lastModified = new Date()
@@ -114,7 +114,7 @@ trait MessageResolver extends Map[String, String] {
  * Resolves messages from `ResourceBundle` with specified `bundleName`.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
+ * <a href="http://circumflex.ru/api/2.0.1/circumflex-core/messages.scala">messages.scala</a>
  */
 class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
   protected def bundle = ResourceBundle.getBundle(
@@ -129,7 +129,7 @@ class ResourceBundleMessageResolver(val bundleName: String) extends MessageResol
  * Resolves messages by delegating calls to specified `initialResolvers`.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0/circumflex-core/messages.scala">messages.scala</a>
+ * <a href="http://circumflex.ru/api/2.0.1/circumflex-core/messages.scala">messages.scala</a>
  */
 class DelegatingMessageResolver(initialResolvers: MessageResolver*) extends MessageResolver {
   protected var _resolvers: Seq[MessageResolver] = initialResolvers
