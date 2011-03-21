@@ -4,7 +4,7 @@ import freemarker.template._
 import java.util.Date
 import org.apache.commons.beanutils.MethodUtils
 import java.lang.String
-import ru.circumflex.core.Wrapper
+import ru.circumflex.core._
 import scala.collection.Map
 import scala.xml._
 import java.lang.reflect.{Modifier, Field, Method}
@@ -78,7 +78,7 @@ class ScalaMethodWrapper(val target: Any,
 }
 
 class ScalaXmlWrapper(val node: NodeSeq, val wrapper: ObjectWrapper) extends TemplateNodeModel
-    with TemplateHashModel with TemplateSequenceModel with TemplateScalarModel {
+with TemplateHashModel with TemplateSequenceModel with TemplateScalarModel {
   // as node
   def children: Seq[Node] = node match {
     case node: Elem => node.child.flatMap {
@@ -144,20 +144,23 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper)
 
   def get(key: String): TemplateModel = {
     val o = obj.asInstanceOf[Object]
-    // try field
-    findField(objectClass, key) match {
-      case Some(field) => return wrapper.wrap(field.get(o))
-      case _ =>
-    }
-    // try method
-    findMethod(objectClass, key) match {
-      case Some(method) if (method.getParameterTypes.length == 0) =>
-        return wrapper.wrap(method.invoke(obj))
-      case Some(method) =>
-        return new ScalaMethodWrapper(obj, method.getName, wrapper)
-      case _ =>
-    }
-    return wrapper.wrap(null)
+    if (resolveFields)
+      findField(objectClass, key) match {
+        case Some(field) => return wrapper.wrap(field.get(o))
+        case _ =>
+      }
+    if (resolveMethods)
+      findMethod(objectClass, key) match {
+        case Some(method) if (method.getParameterTypes.length == 0) =>
+          return wrapper.wrap(method.invoke(obj))
+        case Some(method) =>
+          return new ScalaMethodWrapper(obj, method.getName, wrapper)
+        case _ =>
+      }
+    // nothing found
+    if (delegateToDefault)
+      ObjectWrapper.DEFAULT_WRAPPER.wrap(obj)
+    else wrapper.wrap(null)
   }
 
   def isEmpty = false

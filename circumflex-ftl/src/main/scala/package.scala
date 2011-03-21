@@ -36,4 +36,38 @@ package object freemarker {
     return result.toString
   }
 
+  /*!# Configuring Object Wrapper
+
+  Circumflex FreeMarker Helper provides facilities to make Scala objects available inside
+  FreeMarker templates. These facilities are implemented inside `ScalaObjectWrapper`.
+
+  There are couple of things which can be configured:
+
+  * by default, all public fields can be resolved on any object (e.g. `${myObj.myField}`);
+    to disable this, set `ftl.wrapper.resolveFields` configuration parameter to `false`;
+  * by default, all public methods can be resolved on any object (e.g. `${myObj.myMethod("Hello")}`);
+    to disable this, set `ftl.wrapper.resolveMethods` configuration parameter to `false`;
+  * you can set `ftl.wrapper.delegateToDefault` configuration parameter to `true` in order to
+    delegate resolving to FreeMarker's default object wrapper (`ObjectWrapper.DEFAULT_WRAPPER`);
+    this can be useful if you work with Java types in your Scala applications (e.g. Java lists or
+    maps); by default the delegation does not occur (`null` is returned if resolving fails).
+
+  */
+
+  val resolveFields = cx.get("ftl.wrapper.resolveFields") match {
+    case Some(b: Boolean) => b
+    case Some(s: String) => s.toBoolean
+    case _ => true
+  }
+  val resolveMethods = cx.get("ftl.wrapper.resolveMethods") match {
+    case Some(b: Boolean) => b
+    case Some(s: String) => s.toBoolean
+    case _ => true
+  }
+  val delegateToDefault = cx.get("ftl.wrapper.delegateToDefault") match {
+    case Some(b: Boolean) => b
+    case Some(s: String) => s.toBoolean
+    case _ => false
+  }
+
 }
