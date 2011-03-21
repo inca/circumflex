@@ -1,98 +1,16 @@
 # Circumflex Change Log
 
-## Version 1.2
+Version 2.0 was a great reorganization, so it is now a baseline for change log.
 
-### Circumflex Web Framework
+## 2.0.1
 
-* Added helpers for HTTP cookies.
-* Changed `apply` and `get` methods in `HashModel` to follow Scala convention
-  for data structures.
-* Refactored matchers, `&` method is used to make up composite matchers.
-* Removed prefix matching for subrouters.
-* The following methods:
+* Jetty dependencies are now marked as `optional` in Circumflex Web Framework.
+  If you intend to use our `MockServer`, make sure to include necessary Jetty
+  artifacts (`jetty`, `jetty-servlet-tester`). Consult with `pom.xml` of
+  `circumflex-web` module for details.
 
-  * `error`
-  * `redirect`
-  * `rewrite`
-  * `done`
-  * `sendFile`
-  * `xSendFile`
+* Some configuration options are now available for `ScalaObjectWrapper` of
+  Circumflex FreeMarker Helper.
 
-  now throw `RouteMatchedException` immediately.
-* Added `xhr_?` method.
-* Fixed bugs in `Messages`, added some tests.
-* Added support for HTTP `PATCH` method.
+  See [package.scala](http://circumflex.ru/api/2.0.1/circumflex-ftl/package.scala).
 
-### Circumflex ORM
-
-* Added methods for simplified queries (`get(id: Long)`, `all(limit: Int, offset: Int)`).
-* Changed `apply` and `get` methods in `ValueHolder` to follow Scala convention
-  for data structures.
-* Added infix-style `AND` and `OR` composite predicates.
-* Removed `Subselect` class, all subqueries-related stuff now accept `SQLQuery`.
-* Improved contextual transaction demarcation pattern by implementing proper transaction
-dispatching within `TransactionManager.executeInContext` method.
-* Added convenient method shortcuts for joins. `JoinType` predefines are renamed.
-* Added named parameters feature to `Query` to allow reusing same queries.
-* Added setters to `ValueHolder`.
-* Validators are now resolved more loyally.
-* Whole validation routine moved to relation level.
-
-### Circumflex Markdown
-
-* Added some SmartyPants extensions.
-* Added id attribute support for headers.
-* Span elements are now processed inside headers.
-* Defined a syntax to process markdown inside inline HTML.
-* Added macro support.
-
-### Circumflex Freemarker
-
-* Hashes are now wrapped with `TemplateHashModelEx` which provides useful built-ins.
-* `ftl` now throws `RouteMatchedException`.
-* `ScalaBaseWrapper` now implements `TemplateScalarModel` to eliminate explicit `toString` calls.
-
-### Circumflex Docco
-
-* Scaladocs are now left in code sections.
-
-## Version 1.0
-
-### Circumflex Web Framework
-
-* Introduced Sinatra-like named parameters and greatly simplified matching.
-
-### Circumflex Freemarker Views
-
-* Changed default resolution priority for templating model (now webapp first, classpath second)
-
-### Circumflex ORM
-
-* Revisited the concepts and ideology and rewritten 95% of code.
-
-## Version 0.3
-
-* Added Circumflex Docco module.
-* Added Circumflex Markdown module.
-
-### Circumflex Web Framework
-
-* Added sendFile with Content-Disposition: attachment.
-* Added redirect with optional flashes.
-* Added xSendFile feature.
-
-### Circumflex Freemarker Views
-
-* Not depending on circumflex-orm.
-* DefaultConfiguration now can be used outside webapps.
-* Removed textilej support to make the library more lightweight.
-
-## Version 0.2.1
-
-### Circmflex ORM
-
-* Added helpers for simple expressions and named parameters.
-
-### Circumflex Freemarker Views
-
-* Added FTL singleton.
