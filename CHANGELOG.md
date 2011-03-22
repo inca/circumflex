@@ -16,3 +16,6 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 
 * Fixed [issue 68](https://github.com/inca/circumflex/issues#issue/68).
 
+* `unique` and `uniqueAll` validators now work with persisted records too
+  (by performing simple comparison with their persisted counterparts).
+
