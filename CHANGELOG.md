@@ -14,3 +14,6 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 * `unique` and `uniqueAll` validators now work with persisted records too
   (by performing simple comparison with their persisted counterparts).
 
+* Added new implicit for converting strings into parameterless instances of
+  `SimpleExpression`.
+

@@ -93,6 +93,7 @@ package object orm {
   }
   implicit def vh2colExpr[T, R <: Record[_, R]](vh: ValueHolder[T, R]): ColumnExpression[T, R] =
     new ColumnExpression(vh)
+  implicit def str2expr(str: String): SimpleExpression = prepareExpr(str)
 
   // for predicates
 
