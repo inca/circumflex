@@ -105,7 +105,8 @@ package object orm {
     new SimpleExpression(expression.toSql, expression.parameters)
   implicit def predicate2aggregateHelper(predicate: Predicate) =
     new AggregatePredicateHelper(predicate)
-  implicit def predicate2string(predicate: Predicate): String = predicate.toInlineSql
+  implicit def boolean2predicate(f: BooleanField[_]): Predicate =
+    string2predicate(f.aliasedName)
 
   // for orders
 
