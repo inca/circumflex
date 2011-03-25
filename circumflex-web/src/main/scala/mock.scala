@@ -19,7 +19,7 @@ Refer to our test sources at [`circumflex-web/src/test/scala`][tests] to see it 
  * Provides functionality to test your web application.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.1/circumflex-web/mock.scala">mock.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/mock.scala">mock.scala</a>.
  */
 trait MockServer extends StandaloneServer {
 

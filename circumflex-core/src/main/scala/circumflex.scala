@@ -30,7 +30,7 @@ manual filtering sources and resources.
  * Provides access to Circumflex configuration parameters.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.1/circumflex-core/circumflex.scala">circumflex.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.2/circumflex-core/circumflex.scala">circumflex.scala</a>.
  */
 object Circumflex extends HashMap[String, Any] with UntypedContainer {
 
@@ -102,7 +102,7 @@ make sure that the supplied class has one.
  * Provides convenient methods for retrieving data from untyped containers.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.1/circumflex-core/circumflex.scala">circumflex.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.2/circumflex-core/circumflex.scala">circumflex.scala</a>.
  */
 trait UntypedContainer extends Map[String, Any] {
 

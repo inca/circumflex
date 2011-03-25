@@ -36,7 +36,7 @@ to `UTF-8`. Feel free to change it if your application requires so.
  * Provides a wrapper around `HttpServletRequest`, which is still available as `raw` field.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.1/circumflex-web/request.scala">request.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/request.scala">request.scala</a>.
  */
 class HttpRequest(val raw: HttpServletRequest) {
 

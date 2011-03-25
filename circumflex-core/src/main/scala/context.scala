@@ -42,7 +42,7 @@ configuration parameter.
  * destroy current context.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.1/circumflex-core/context.scala">context.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.2/circumflex-core/context.scala">context.scala</a>.
  */
 class Context extends HashMap[String, Any] with UntypedContainer {
   override def stringPrefix = "ctx"
@@ -57,7 +57,7 @@ class Context extends HashMap[String, Any] with UntypedContainer {
  * application.
  *
  *  For more information refer to
- * <a href="http://circumflex.ru/api/2.0.1/circumflex-core/context.scala">context.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.2/circumflex-core/context.scala">context.scala</a>.
  */
 object Context {
 
@@ -156,7 +156,7 @@ The implicit conversions from `Symbol` into `ContextVarHelper` are available in 
  * A helper which enables DSL-like syntax for context.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.1/circumflex-core/context.scala">context.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.2/circumflex-core/context.scala">context.scala</a>.
  */
 class ContextVarHelper(val key: Symbol) {
   def apply[T](): T = ctx.as[T](key)

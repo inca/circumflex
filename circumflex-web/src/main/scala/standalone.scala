@@ -46,7 +46,7 @@ Refer to Jetty documentation for more information.
  * Provides standalone server based on Jetty.
  *
  * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.1/circumflex-web/standalone.scala">standalone.scala</a>.
+ * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/standalone.scala">standalone.scala</a>.
  */
 class StandaloneServer {
 
