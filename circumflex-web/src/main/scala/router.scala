@@ -32,7 +32,7 @@ in action.
  * For more information refer to
  * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/router.scala">router.scala</a>.
  */
-class RequestRouter(val prefix: String = "") {
+class RequestRouter(var prefix: String = "") {
 
   implicit def string2response(str: String): RouteResponse =
     new RouteResponse(str)
@@ -73,6 +73,32 @@ class RequestRouter(val prefix: String = "") {
   def uri: MatchResult = ctx.get("uri") match {
     case Some(m: MatchResult) => m
     case None => new MatchResult("uri", "splat" -> request.uri)
+  }
+
+  /*!## Subroutes
+
+  Subroutes represent an easy and powerful concept which allows nesting
+  routes inside each other without creating additional routers.
+
+  Consider the following example:
+
+      class UsersRouter extends RequestRouter("/users") {
+        get("/") = "list all users"
+        any("/:userId/+") = User.get(param("userId")) match {
+          case Some(u: User) => subroute("/" + u.id()) {
+            // continue matching with prefix "/users/:userId"
+            get("/profile") = "Profile of user #" + u.id()
+            get("/accounts") = "Accounts of user #" + u.id()
+            // ...
+          }
+          case _ => sendError(404)
+        }
+      }
+
+  */
+  def subroute(newPrefix: String)(block: => RouteResponse): RouteResponse = {
+    prefix += newPrefix
+    block
   }
 
 }
