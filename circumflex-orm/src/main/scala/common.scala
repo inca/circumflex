@@ -90,11 +90,9 @@ trait SchemaObject {
 Value holder is an atomic data-carrier unit of a record. It carries methods for
 identifying and manipulating data fields inside persistent records.
 */
-trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
-
+trait ValueHolder[T, R <: Record[_, R]] extends Container[T] {
   def name: String
   def record: R
-  def item = value
 
   /*!## Setters
 
@@ -110,15 +108,7 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
 
       pkg := "  ru/circumflex/ORM  "  // "ru.circumflex.orm" will be assigned
 
-  */
-  protected var _setters: Seq[T => T] = Nil
-  def setters: Seq[T => T] = _setters
-  def addSetter(f: T => T): this.type = {
-    _setters ++= List(f)
-    return this
-  }
-
-  /*!## Accessing & Setting Values
+  ## Accessing & Setting Values
 
   Values are stored internally as `Option[T]`. `None` stands both for
   uninitialized and `null` values. Following examples show how field values
@@ -138,45 +128,14 @@ trait ValueHolder[T, R <: Record[_, R]] extends Equals with Wrapper[Option[T]] {
       id := 1l
 
   The `null_?` method indicates whether the underlying value is `null` or not.
-  */
-  protected var _value: Option[T] = None
 
-  // Accessing
-
-  def value: Option[T] = _value
-  def get: Option[T] = value
-  def apply(): T = value.get
-  def getOrElse(default: T): T = value.getOrElse(default)
-
-  def null_?(): Boolean = value == None
-
-  // Setting
-
-  def set(v: Option[T]): this.type = {
-    // process value with setters
-    _value = v.map { v =>
-      setters.foldLeft(v) { (v, f) => f(v) }
-    }
-    return this
-  }
-  def set(v: T): this.type = set(any2option(v))
-  def setNull: this.type = set(None)
-  def :=(v: T): Unit = set(v)
-
-  /*!## Methods from `Option`
+  ## Methods from `Option`
 
   Since `ValueHolder` is just a wrapper around `Option`, we provide
   some methods to work with your values in functional style
   (they delegate to their equivalents in `Option`).
-  */
-  def map[B](f: T => B): Option[B] =
-    value.map(f)
-  def flatMap[B](f: T => Option[B]): Option[B] =
-    value.flatMap(f)
-  def orElse[B >: T](alternative: => Option[B]): Option[B] =
-    value.orElse(alternative)
 
-  /*!## Equality & Others
+  ## Equality & Others
 
   Two fields are considered equal if they belong to the same type of records
   and share the same name.
