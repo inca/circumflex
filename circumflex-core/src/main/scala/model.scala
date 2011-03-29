@@ -23,7 +23,7 @@ attributes (like name, identifier, etc.), **but not their internal value**.
 Implementations should provide sensible `canEqual`, `equal` and `hashCode`
 methods, but internal value should not be taken into consideration.
 */
-trait Container[T] extends Wrapper[Option[T]] with Equals {
+trait Container[T] extends Equals {
   protected var _value: Option[T] = None
 
   /*!## Setters
@@ -45,7 +45,6 @@ trait Container[T] extends Wrapper[Option[T]] with Equals {
   uninitialized and `null` values.
   */
   def value: Option[T] = _value
-  def item = value
   def get = value
   def apply(): T = value.get
   def getOrElse(default: T): T = value.getOrElse(default)

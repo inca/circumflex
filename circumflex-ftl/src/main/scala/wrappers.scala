@@ -77,8 +77,11 @@ class ScalaMethodWrapper(val target: Any,
     wrapper.wrap(MethodUtils.invokeMethod(target, methodName, arguments.toArray))
 }
 
-class ScalaXmlWrapper(val node: NodeSeq, val wrapper: ObjectWrapper) extends TemplateNodeModel
-with TemplateHashModel with TemplateSequenceModel with TemplateScalarModel {
+class ScalaXmlWrapper(val node: NodeSeq, val wrapper: ObjectWrapper)
+    extends TemplateNodeModel
+    with TemplateHashModel
+    with TemplateSequenceModel
+    with TemplateScalarModel {
   // as node
   def children: Seq[Node] = node match {
     case node: Elem => node.child.flatMap {
