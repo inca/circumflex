@@ -95,10 +95,15 @@ class RequestRouter(var prefix: String = "") {
         }
       }
 
+  When entering `subroute`, specified `newPrefix` is appended to current prefix
+  and specified `block` gets executed. All routes inside this block will be matched
+  with respect to this new prefix. If no routes match inside specified `block`,
+  `404 NOT FOUND` is sent.
   */
-  def subroute(newPrefix: String)(block: => RouteResponse): RouteResponse = {
+  def subroute(newPrefix: String)(block: => Unit): Nothing = {
     prefix += newPrefix
     block
+    sendError(404)
   }
 
 }

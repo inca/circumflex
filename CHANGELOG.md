@@ -7,6 +7,8 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 * Extracted common container functionality from `ValueHolder` into `circumflex-core`
   module.
 
+* More strict rules in `subroute`: 404 is sent if no nested routes match.
+
 ## 2.0.1
 
 * Some configuration options are now available for `ScalaObjectWrapper` of
