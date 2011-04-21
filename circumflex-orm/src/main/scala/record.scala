@@ -128,6 +128,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     if (relation.autorefresh_?) refresh()
     // Invalidate caches
     contextCache.evictInverse[PK, R](this)
+    contextCache.evictRecord(PRIMARY_KEY(), relation)
+    contextCache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     return result
