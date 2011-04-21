@@ -674,11 +674,8 @@ class MarkevenProcessor() {
     r
   }
 
-  def doMacros(s: StringEx): StringEx = s.replaceAll(regexes.macro, m =>
-    protector.addToken(processSingleMacro(m)))
-
-  def doMacrosPlain(s: StringEx): StringEx = s.replaceAll(regexes.macro, m =>
-    processSingleMacro(m))
+  def doMacros(s: StringEx): StringEx =
+    s.replaceAll(regexes.macro, m => protector.addToken(processSingleMacro(m)))
 
   def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m => {
     val s = new StringEx(m.group(2)).trim
@@ -706,7 +703,7 @@ class MarkevenProcessor() {
     val result = links.get(id)
         .map(ld => ld.toLink(linkContent))
         .getOrElse(new StringEx(m.group(0)))
-    doMacrosPlain(result)
+    doMacros(result)
     protector.addToken(result)
   })
 
@@ -718,7 +715,7 @@ class MarkevenProcessor() {
     val result = links.get(id)
         .map(ld => ld.toImageLink(altText))
         .getOrElse(new StringEx(m.group(0)))
-    doMacrosPlain(result)
+    doMacros(result)
     protector.addToken(result)
   })
 
@@ -732,7 +729,7 @@ class MarkevenProcessor() {
     unprotect(linkContent)
     doSpanEnhancements(linkContent)
     val result = new LinkDefinition(url, new StringEx(title)).toLink(linkContent)
-    doMacrosPlain(result)
+    doMacros(result)
     protector.addToken(result)
   })
 
@@ -742,7 +739,7 @@ class MarkevenProcessor() {
     var title = m.group(4)
     if (title == null) title = ""
     val result = new LinkDefinition(url, new StringEx(title)).toImageLink(altText)
-    doMacrosPlain(result)
+    doMacros(result)
     protector.addToken(result)
   })
 
@@ -781,10 +778,14 @@ class MarkevenProcessor() {
     s
   }
 
-  def unprotect(s: StringEx): StringEx = s.replaceAll(regexes.protectKey, m => {
-    val key = m.group(0)
-    protector.decode(key).getOrElse(key)
-  })
+  def unprotect(s: StringEx): StringEx = {
+    val found = s.replaceIfFound(regexes.protectKey, m => {
+      val key = m.group(0)
+      protector.decode(key).getOrElse(key)
+    })
+    if (found) unprotect(s)
+    return s
+  }
 
   def writeHtml(blocks: Seq[Block], out: Writer): Unit =
     blocks.foreach(b => if (b != EmptyBlock) {

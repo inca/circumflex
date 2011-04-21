@@ -80,17 +80,24 @@ class StringEx(var buffer: StringBuilder) extends CharSequence {
   }
 
   def replaceAll(pattern: Pattern, replacement: Matcher => CharSequence): this.type = {
+    replaceIfFound(pattern, replacement)
+    return this
+  }
+
+  def replaceIfFound(pattern: Pattern, replacement: Matcher => CharSequence): Boolean = {
     var lastIndex = 0;
     val m = pattern.matcher(buffer)
     val sb = new StringBuilder(buffer.length)
+    var result = false
     while (m.find()) {
       sb.append(buffer.subSequence(lastIndex, m.start))
       sb.append(replacement(m))
       lastIndex = m.end
+      result = true;
     }
     sb.append(buffer.subSequence(lastIndex, buffer.length))
     this.buffer = sb
-    return this
+    return result
   }
 
   def replaceFirst(pattern: Pattern, replacement: Matcher => CharSequence): Int = {
