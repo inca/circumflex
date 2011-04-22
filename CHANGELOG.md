@@ -9,6 +9,8 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 
 * More strict rules in `subroute`: 404 is sent if no nested routes match.
 
+* Records are evicted from `contextCache` on updates (credits to Scott Maher).
+
 ## 2.0.1
 
 * Some configuration options are now available for `ScalaObjectWrapper` of
