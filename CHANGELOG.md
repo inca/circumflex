@@ -11,6 +11,9 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 
 * Records are evicted from `contextCache` on updates (credits to Scott Maher).
 
+* Removed redundant `MsgGroup` class (changes affected `ValidationException` and
+  the code which depended on them).
+
 ## 2.0.1
 
 * Some configuration options are now available for `ScalaObjectWrapper` of

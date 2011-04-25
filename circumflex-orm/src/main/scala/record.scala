@@ -158,10 +158,10 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     return result
   }
 
-  def validate(): Option[MsgGroup] = {
+  def validate(): Option[Seq[Msg]] = {
     val errors = relation.validation.validate(this)
     if (errors.size <= 0) None
-    else Some(new MsgGroup(errors: _*))
+    else Some(List(errors: _*))
   }
 
   def validate_!(): Unit = validate.map(errors => throw new ValidationException(errors))

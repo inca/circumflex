@@ -232,20 +232,8 @@ class PropertyFileResolver extends MessageResolver {
 
 }
 
-/*!## Messages Grouping
-
-Application-generated messages can be grouped using the `Msg` and `MsgGroup` classes.
-*/
 case class Msg(key: String, params: (String, Any)*) {
   def param(key: String): Option[Any] = params.find(_._1 == key).map(_._2)
   def hasParam(key: String): Boolean = !params.find(_._1 == key).isEmpty
   override def toString: String = msg.fmt(key, params: _*)
-}
-
-class MsgGroup extends ArrayBuffer[Msg] {
-  def this(msgs: Msg*) = {
-    this()
-    this.addAll(msgs)
-  }
-  def by[K](f: Msg => K) = groupBy(f)
 }
