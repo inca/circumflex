@@ -60,7 +60,7 @@ class RequestRouter(var prefix: String = "") {
   val patch = new Route("patch")
   val delete = new Route("delete")
   val options = new Route("options")
-  val any = new Route("get", "post", "put", "patch" , "delete", "head", "options")
+  val any = new Route("*")
 
   // Filter
   val filter = new FilterRoute
@@ -127,7 +127,7 @@ trait RoutingContext[-T] {
 }
 
 class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
-  val matches = matchingMethods.contains(request.method)
+  val matches = matchingMethods.contains("*") || matchingMethods.contains(request.method)
   protected def dispatch(block: => RouteResponse): Unit = {
     val response = block.body
     send(response)

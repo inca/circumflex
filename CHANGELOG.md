@@ -14,6 +14,9 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 * Removed redundant `MsgGroup` class (changes affected `ValidationException` and
   the code which depended on them).
 
+* The `any` route now does not perform method matching at all instead of just accepting
+  standard HTTP methods.
+
 ## 2.0.1
 
 * Some configuration options are now available for `ScalaObjectWrapper` of
