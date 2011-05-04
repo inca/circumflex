@@ -49,7 +49,7 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
   public void execute() throws MojoExecutionException {
     ClassLoader oldCld = Thread.currentThread().getContextClassLoader();
     try {
-      URLClassLoader cld = prepareClassLoader();
+      ClassLoader cld = prepareClassLoader();
       Thread.currentThread().setContextClassLoader(cld);
       processSchema();
       processDeployments();

@@ -1,15 +1,26 @@
 package ru.circumflex.maven;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.filter.AndArtifactFilter;
+import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
+import org.apache.maven.artifact.resolver.filter.ScopeArtifactFilter;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.classworlds.ClassRealm;
+import org.codehaus.classworlds.ClassWorld;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -25,17 +36,41 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
   protected MavenProject project;
 
   /**
+   * @parameter expression="${localRepository}"
+   * @readonly
+   */
+  protected ArtifactRepository localRepository;
+
+  /**
+   * @component
+   */
+  protected ArtifactResolver artifactResolver;
+
+  /**
+   * @component
+   */
+  protected ArtifactMetadataSource artifactMetaDataSource;
+
+  /**
    * @parameter default-value="true"
    */
   protected boolean skipUnresolved;
 
-  protected URLClassLoader prepareClassLoader() throws MojoExecutionException {
+  protected ClassLoader prepareClassLoader() throws MojoExecutionException {
     try {
       List<URL> urls = new ArrayList<URL>();
       for (Object o : project.getRuntimeClasspathElements())
         urls.add(new File(o.toString()).toURI().toURL());
       for (Object o : project.getTestClasspathElements())
         urls.add(new File(o.toString()).toURI().toURL());
+      ArtifactResolutionResult deps = artifactResolver.resolveTransitively(project.getDependencyArtifacts(),
+          project.getArtifact(),
+          localRepository,
+          Collections.EMPTY_LIST,
+          artifactMetaDataSource,
+          new ScopeArtifactFilter(Artifact.SCOPE_COMPILE));
+      for (Object o : deps.getArtifacts())
+        urls.add(((Artifact)o).getFile().toURI().toURL());
       return URLClassLoader.newInstance(urls.toArray(new URL[urls.size()]),
           Thread.currentThread().getContextClassLoader());
     } catch (Exception e) {
