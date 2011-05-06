@@ -18,7 +18,7 @@ Note, however, that `Circumflex` singleton is not thread-safe, so it is a best
 practice to only set configuration parameters inside some initialization block
 which will be executed only once by only one thread.
 
-[Circumflex Maven Plugin](http://circumflex.ru/plugin.html)
+[Circumflex Maven Plugin](http://circumflex.ru/projects/maven-plugin/index.html)
 enables you to configure your application at build time using Maven properties
 (specified either in application's `pom.xml` or in `settings.xml`) and system
 properties (specified in command line). This is very robust production scenario,
@@ -61,8 +61,8 @@ with different type than you expect.
 
 Circumflex configuration (and every untyped container) also offers you a convenient
 way to configure different implementations of components and services, such as configuring
-dialects or connection providers for [Circumflex ORM](http://circumflex.ru/orm.html)
-or request routers for [Circumflex Web Framework](http://circumflex.ru/web.html).
+dialects or connection providers for [Circumflex ORM](http://circumflex.ru/projects/orm/index.html)
+or request routers for [Circumflex Web Framework](http://circumflex.ru/projects/web/index.html).
 We call this mechanism an _instantiation facility_.
 
 The logic is pretty simple. Let's say an application or library expects you

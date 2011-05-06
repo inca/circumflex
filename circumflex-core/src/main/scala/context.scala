@@ -14,7 +14,7 @@ calling `Context.get` method (or using `ctx` method of package `ru.circumflex.co
 
 Most Circumflex components depend on context and, therefore, can only be run
 inside context-aware code. Application is responsible for maintaining context
-lifecycle. For example, [Circumflex Web Framework](http://circumflex.ru/web.html)
+lifecycle. For example, [Circumflex Web Framework](http://circumflex.ru/projects/web/index.html)
 takes care of context initialization and finalization inside `CircumflexFilter`.
 See [Context Lifecycle](#lifecycle) for more information.
 
