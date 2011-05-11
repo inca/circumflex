@@ -68,6 +68,12 @@ class MySQLDialect extends Dialect {
           ": predicates are not supported.")
     return result
   }
+
+  override def delete[PK, R <: Record[PK, R]](dml: Delete[PK, R]): String = {
+    var result = "DELETE " + dml.node.alias + " FROM " + dml.node.toSql
+    if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
+    return result
+  }
 }
 
 class OracleDialect extends Dialect {
