@@ -84,7 +84,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     associations.find(_.parentRelation == relation)
         .asInstanceOf[Option[Association[T, R, F]]]
 
-  protected val validation = new RecordValidator[PK, R]()
+  val validation = new RecordValidator[PK, R]()
 
   /*!## Simple queries
 
