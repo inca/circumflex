@@ -7,30 +7,18 @@ value when executed by database.
 
 Predicates are designed to participate in `WHERE` clauses of SQL queries.
 */
-
 trait Predicate extends Expression
 
-/**
- * Always yields `true` when executed by database, used to designate an empty
- * `WHERE` clause.
- */
 object EmptyPredicate extends Predicate {
   def parameters: scala.Seq[Any] = Nil
   def toSql: String = dialect.emptyPredicate
 }
 
-/**
- * A predicate consisting of specified `expression` and specified `parameters`.
- */
 class SimpleExpression(val expression: String, val parameters: Seq[Any])
     extends Predicate {
   def toSql = expression
 }
 
-/**
- * Aggregates specified `predicates` with specified `operator` (for example, `OR`).
- * `EmptyPredicate` are not included into expressions.
- */
 class AggregatePredicate(val operator: String,
                          protected var _predicates: Seq[Predicate])
     extends Predicate {
@@ -53,9 +41,6 @@ class AggregatePredicate(val operator: String,
   }
 }
 
-/**
- * A predicate which consists of specified `expression` and specified `subquery`.
- */
 class SubqueryExpression[T](expression: String,
                             val subquery: SQLQuery[T])
     extends SimpleExpression(

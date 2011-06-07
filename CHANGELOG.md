@@ -2,6 +2,14 @@
 
 Version 2.0 was a great reorganization, so it is now a baseline for change log.
 
+## 2.0.3
+
+* Moved to Jetty 7.2.4 to allow Web Sockets support.
+
+* Switched to Apache Http Client for testing (instead of Jetty's Servlet Tester).
+
+* All ScalaDocs are stripped.
+
 ## 2.0.2
 
 * Extracted common container functionality from `ValueHolder` into `circumflex-core`

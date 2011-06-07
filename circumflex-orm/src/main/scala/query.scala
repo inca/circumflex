@@ -27,19 +27,13 @@ trait Query extends SQLable with Expression with Cloneable {
 
   protected var _aliasCounter = 0;
 
-  /**
-   * Generates an alias to eliminate duplicates within query.
-   */
+
   protected def nextAlias: String = {
     _aliasCounter += 1
     return "this_" + _aliasCounter
   }
 
-  /**
-   * Sets the parameters of specified `PreparedStatement` of this query starting
-   * from specified `index`. Because `Query` objects can be nested, this method returns
-   * the new starting index of prepared statement parameter.
-   */
+
   def setParams(st: PreparedStatement, index: Int): Int = {
     var paramsCounter = index;
     parameters.foreach(p => {
@@ -81,17 +75,10 @@ determined by specified `projections`).
 */
 abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
-  /**
-   * Forms the `SELECT` clause of query. In normal circumstances this list
-   * should only consist of single `projection` element; but if `GROUP_BY`
-   * clause specifies projections that are not yet a part of the `SELECT`
-   * clause, then they are added here implicitly but are not processed.
-   */
+
   def projections: Seq[Projection[_]] = List(projection)
 
-  /**
-   * Makes sure that `projections` with alias `this` are assigned query-unique alias.
-   */
+
   protected def ensureProjectionAlias[T](projection: Projection[T]): Unit =
     projection match {
       case p: AtomicProjection[_] if (p.alias == "this") => p.AS(nextAlias)
@@ -102,9 +89,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   ensureProjectionAlias(projection)
 
-  /**
-   * Executes a query, opens a JDBC `ResultSet` and executes specified `actions`.
-   */
+
   def resultSet[A](actions: ResultSet => A): A = {
     val result = time {
       tx.execute(toSql) { st =>
@@ -122,14 +107,10 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
     return result._2
   }
 
-  /**
-   * Uses the query projection to read specified `ResultSet`.
-   */
+
   def read(rs: ResultSet): Option[T] = projection.read(rs)
 
-  /**
-   * Executes a query and returns `Seq[T]`, where `T` is designated by query `projection`.
-   */
+
   def list(): Seq[T] = resultSet { rs =>
     var result = List[T]()
     while (rs.next) read(rs) match {
@@ -140,11 +121,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
     result
   }
 
-  /**
-   * Executes a query and returns a unique result.
-   *
-   * An exception is thrown if `ResultSet` yields more than one row.
-   */
+
   def unique(): Option[T] = resultSet(rs => {
     if (!rs.next)
       None
@@ -174,9 +151,7 @@ trait SearchQuery extends Query {
   def WHERE(expression: String, params: Pair[String,Any]*): this.type =
     WHERE(prepareExpr(expression, params: _*))
 
-  /**
-   * Adds specified `predicates` to restrictions list.
-   */
+
   def add(predicates: Predicate*): this.type = {
     where match {
       case EmptyPredicate =>
@@ -271,9 +246,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
       case Some(p) => this._groupBy ++= List(p)
     }
 
-  /**
-   * Searches deeply for a `projection` that matches specified `predicate` function.
-   */
+
   protected def findProjection(projection: Projection[_],
                                predicate: Projection[_] => Boolean): Option[Projection[_]] =
     if (predicate(projection)) return Some(projection)
@@ -335,9 +308,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
 /*! The `DMLQuery` trait defines a contract for data-manipulation queries. */
 trait DMLQuery extends Query {
 
-  /**
-   * Executes a query and returns the number of affected rows.
-   */
+
   def execute(): Int = {
     val result = time {
       tx.execute(toSql){ st =>
@@ -363,12 +334,6 @@ class Insert[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
   def toSql: String = dialect.insert(this)
 }
 
-/**
- * Provides functionality for `INSERT ... SELECT` queries. Data is extracted using
- * specified `query` and is inserted into specified `relation`.
- *
- * The projections of `query` should match the columns of target `relation`.
- */
 class InsertSelect[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
                                            val query: SQLQuery[_])
     extends DMLQuery {
@@ -382,9 +347,6 @@ class InsertSelectHelper[PK, R <: Record[PK, R]](val relation: Relation[PK, R]) 
   def SELECT[T](projection: Projection[T]) = new InsertSelect(relation, new Select(projection))
 }
 
-/**
- * Provides functionality for `DELETE` queries.
- */
 class Delete[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     extends DMLQuery with SearchQuery {
   val relation = node.relation
@@ -395,9 +357,6 @@ class Delete[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   def toSql: String = dialect.delete(this)
 }
 
-/**
- * Provides functionality for `UPDATE` queries.
- */
 class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     extends DMLQuery with SearchQuery {
   val relation = node.relation

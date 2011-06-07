@@ -12,15 +12,11 @@ class Protector {
   protected var protectHash: Map[String, CharSequence] = Map()
   protected var unprotectHash: Map[CharSequence, String] = Map()
 
-  /**
-   * Generates a random hash key.
-   */
+
   def randomKey = "!}" + (0 until keySize).foldLeft("")((s, i) =>
     s + chars.charAt(rnd.nextInt(chars.length)))
 
-  /**
-   * Adds the specified token to hash and returns the protection key.
-   */
+
   def addToken(t: CharSequence): String = unprotectHash.get(t) match {
     case Some(key) => key
     case _ =>
@@ -30,19 +26,13 @@ class Protector {
       key
   }
 
-  /**
-   * Attempts to retrieve an encoded sequence by specified `key`.
-   */
+
   def decode(key: String): Option[CharSequence] = protectHash.get(key)
 
-  /**
-   * Returns hash keys that are currently in use.
-   */
+
   def keys = protectHash.keys
 
-  /**
-   * Clears both hashes.
-   */
+
   def clear: Unit = {
     protectHash = Map()
     unprotectHash = Map()

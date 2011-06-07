@@ -45,7 +45,6 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
   def criteria = new Criteria[PK, R](this)
 
   /*! Relation nodes can be joined to allow restrictions of associated relations. */
-
   def findAssociation[T, F <: Record[T, F]](node: RelationNode[T, F]): Option[Association[T, R, F]] =
     this.relation.findAssociation(node.relation)
 
@@ -89,7 +88,6 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
   Finally, both `toSql` and `toString` return dialect specific SQL expression
   which appends an alias to relation's qualified name.
   */
-
   override def equals(that: Any): Boolean = that match {
     case that: RelationNode[_, _] =>
       this.canEqual(that) && this.alias == that.alias
@@ -133,10 +131,7 @@ class ProxyNode[PK, R <: Record[PK, R]](protected[orm] var node: RelationNode[PK
 
   override def toSql = node.toSql
 
-  /**
-   * Unlike `clone` in `RelationNode` this creates a deep copy (clones underlying
-   * `node`, but `relation` remains unchanged).
-   */
+
   override def clone(): this.type = {
     val newNode = super.clone().asInstanceOf[this.type]
     val n = node.clone().asInstanceOf[RelationNode[PK, R]]
@@ -192,10 +187,7 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
 
   override def toSql = dialect.join(this)
 
-  /**
-   * Creates a deep copy of this node, cloning left and right nodes.
-   * The underlying relations of nodes remain unchanged.
-   */
+
   override def clone(): this.type = super.clone()
       .replaceLeft(this.left.clone)
       .replaceRight(this.right.clone)

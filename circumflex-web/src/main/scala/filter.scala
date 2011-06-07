@@ -35,29 +35,15 @@ The filter configuration is saved into the `cx.filterConfig` configuration param
 is available throughout your configuration via the `filterConfig` method of the
 `ru.circumflex.web` package.
 */
-
-/**
- * Serves as an entry point of Circumflex Web Application.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/filter.scala">filter.scala</a>.
- */
 class CircumflexFilter extends Filter {
 
-  /**
-   * Place your application initialization code here.
-   * By default it saves filter configuration into the `cx.filterConfig` configuration
-   * parameter so that it could be accessed later.
-   */
+
   def init(filterConfig: FilterConfig) = {
-    WEB_LOG.info("Circumflex 2.0.2")
+    WEB_LOG.info("Circumflex 2.0.3")
     cx("cx.filterConfig") = filterConfig
   }
 
-  /**
-   * Place your application shutdown code here.
-   * Does nothing by default.
-   */
+
   def destroy = {}
 
   /*!## Serving static  {#static}
@@ -179,7 +165,6 @@ class CircumflexFilter extends Filter {
   * `onRouterError` is executed if a general exception is thrown from a router;
 
   */
-
   def onNoMatch(): Unit = {
     WEB_LOG.debug("No routes matched: " + request)
     sendError(404)

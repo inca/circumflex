@@ -3,6 +3,7 @@ package ru.circumflex.scalate
 import ru.circumflex._, core._, web._
 import org.specs.runner.JUnit4
 import org.specs.Specification
+import java.io.File
 
 class SpecsTest extends JUnit4(CircumflexScalateSpec)
 
@@ -29,14 +30,18 @@ object CircumflexScalateSpec extends Specification {
 
   doBeforeSpec {
     cx("cx.router") = classOf[MockRouter]
-    cx("cx.root") = "src/test/resources"
+    var rootPath = System.getProperty("user.dir")
+    if (!rootPath.endsWith("circumflex-scalate")) {
+      rootPath += (File.separator + "circumflex-scalate")
+    }
+    cx("cx.webappRoot") = (rootPath + File.separatorChar + "src/test/webapp")
     MockApp.start
   }
 
   "Circumflex Scalate Views" should {
     for(kind <- List("ssp", "scaml", "jade")) {
       "render simple "+kind+" templates" in {
-        MockApp.get("/hello."+kind+"/Hiram").execute().getContent.trim must_== "<p>Hello, Hiram!</p>"
+        MockApp.get("/hello."+kind+"/Hiram").execute().content.trim must_== "<p>Hello, Hiram!</p>"
       }
     }
   }

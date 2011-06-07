@@ -31,13 +31,6 @@ information refer to Java Servlet API.
 Since Circumflex is UTF-friendly it will implicitly set character encoding of request body
 to `UTF-8`. Feel free to change it if your application requires so.
 */
-
-/**
- * Provides a wrapper around `HttpServletRequest`, which is still available as `raw` field.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/request.scala">request.scala</a>.
- */
 class HttpRequest(val raw: HttpServletRequest) {
 
   /*!## Request Basics
@@ -307,36 +300,21 @@ class HttpRequest(val raw: HttpServletRequest) {
     visit [Commons FileUpload Project Page](http://commons.apache.org/fileupload).
     */
 
-    /**
-     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
-     * using specified `factory`. Returns `Nil` if request does not have multipart content.
-     */
     def parseFileItems(factory: FileItemFactory): Seq[FileItem] =
       if (multipart_?) {
         val uploader = new ServletFileUpload(factory)
         return asScalaBuffer(uploader.parseRequest(raw).asInstanceOf[java.util.List[FileItem]])
       } else Nil
 
-    /**
-     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
-     * using `DiskFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
-     * `Nil` if request does not have multipart content.
-     */
+
     def parseFileItems(sizeThreshold: Int, tempStorage: File): Seq[FileItem] =
       parseFileItems(new DiskFileItemFactory(sizeThreshold, tempStorage))
 
-    /**
-     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
-     * using `DiskFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
-     * `Nil` if request does not have multipart content.
-     */
+
     def parseFileItems(sizeThreshold: Int, tempStorage: String): Seq[FileItem] =
       parseFileItems(sizeThreshold, new File(tempStorage))
 
-    /**
-     * Parses multipart request into an iterator of `FileItemStream` (Apache Commons FileUpload).
-     * Returns an empty iterator if request does not have multipart content.
-     */
+
     def parseFileStreams(): Iterator[FileItemStream] = if (multipart_?) {
       val it = new ServletFileUpload().getItemIterator(raw)
       return new Iterator[FileItemStream]() {

@@ -16,7 +16,6 @@ Following classes represent various database schema objects:
 
 Circumflex ORM also uses some helpers to make DSL-style data definition.
 */
-
 class Schema(val name: String) extends SchemaObject {
   def objectName = "SCHEMA " + name
   def sqlCreate = dialect.createSchema(this)

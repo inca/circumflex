@@ -93,7 +93,6 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     * `get` retrieves a record either from cache or from database by specified `id`;
     * `all` retrieves all records.
    */
-
   def get(id: PK): Option[R] =
     contextCache.cacheRecord(id, this,
       (this.AS("root")).map(r => r.criteria.add(r.PRIMARY_KEY EQ id).unique))
@@ -193,19 +192,14 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
       }
     }
 
-  /**
-   * Copies all field values from specified `src` record to specified `dst` record.
-   */
+
   protected[orm] def copyFields(src: R, dst: R): Unit = fields.foreach { f =>
     val m = methodsMap(f)
     val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
     getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
   }
 
-  /**
-   * Retrieves actual field of specified `record` which corresponds to specified
-   * `field` via reflection.
-   */
+
   protected[orm] def getField[T](record: R, field: Field[T, R]): Field[T, R] =
     methodsMap(field).invoke(record) match {
       case a: Association[T, R, _] => a.field
@@ -232,7 +226,6 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   Circumflex ORM allows you to define constraints and indexes inside the
   relation body using DSL style.
   */
-
   protected def CONSTRAINT(name: String) = new ConstraintHelper(name, this)
   protected def UNIQUE(columns: ValueHolder[_, R]*) =
     CONSTRAINT(relationName + "_" + columns.map(_.name).mkString("_") + "_key")
@@ -335,7 +328,6 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
       this.recordClass == that.getClass
     case _ => false
   }
-
 
   override def refresh(): Nothing =
     throw new ORMException("This method cannot be invoked on relation instance.")

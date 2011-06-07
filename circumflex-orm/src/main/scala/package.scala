@@ -68,7 +68,6 @@ package object orm {
   `name`. However, the information about the alias is lost during this conversion.
   We use `aliasStack` to remember it during conversion so it can be accessed later.
   */
-
   object aliasStack {
     protected def _stack: Stack[String] = ctx.get("orm.aliasStack") match {
       case Some(s: Stack[String]) => s

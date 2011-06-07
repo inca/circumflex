@@ -43,7 +43,6 @@ class Field[T, R <: Record[_, R]](val name: String,
         val createdAt = "created_at".TIMESTAMP.NOT_NULL.set(new Date())
         val createdAt = "created_at".TIMESTAMP.NOT_NULL(new Date())
 
-
     * `DEFAULT` will render the `DEFAULT` expression in column's definition
     (if not overriden by dialect);
     * `UNIQUE` will create a `UNIQUE` constraint for enclosing table on

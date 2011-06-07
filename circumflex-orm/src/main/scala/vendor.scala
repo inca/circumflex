@@ -13,7 +13,6 @@ Following vendors are currently supported by Circumflex ORM:
 We also provide limited support for `Oracle`, `MS SQL Server` and `DB2`.
 We would appreciate any commits for better vendors support.
 */
-
 class H2Dialect extends Dialect {
   override def driverClass = "org.h2.Driver"
   override def textType = "VARCHAR"

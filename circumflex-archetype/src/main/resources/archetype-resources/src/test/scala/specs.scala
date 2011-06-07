@@ -23,7 +23,7 @@ object MySpec extends Specification {
 
   "My application" should {
     "test itself" in {
-      MockApp.get("/test").execute().getContent must_== "I'm fine, thanks!"
+      MockApp.get("/test").execute().content must_== "I'm fine, thanks!"
     }
   }
 }

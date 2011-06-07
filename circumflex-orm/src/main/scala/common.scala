@@ -17,14 +17,10 @@ with SQL expressions with JDBC-style parameters.
 */
 trait Expression extends SQLable {
 
-  /**
-   * The parameters associated with this expression. The order is important.
-   */
+
   def parameters: Seq[Any]
 
-  /**
-   * Renders this query by replacing parameter placeholders with actual values.
-   */
+
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
     sql.replaceFirst("\\?", dialect.escapeParameter(p)
         .replaceAll("\\\\", "\\\\\\\\")
@@ -47,32 +43,13 @@ Every database object which could be created or dropped should
 implement the `SchemaObject` trait.
 */
 trait SchemaObject {
-  /**
-   * SQL statement to create this database object.
-   */
+
   def sqlCreate: String
 
-  /**
-   * SQL statement to drop this database object.
-   */
+
   def sqlDrop: String
 
-  /**
-   * SQL object name. It is used to uniquely identify this object
-   * during schema creation by `DDL` to avoid duplicates and to print
-   * nice messages on schema generation.
-   *
-   * We follow default convention to name objects:
-   *
-   *     <TYPE OF OBJECT> <qualified_name>
-   *
-   * where `TYPE OF OBJECT` is `TABLE`, `VIEW`, `SEQUENCE`, `TRIGGER`,
-   * `FUNCTION`, `PROCEDURE`, `INDEX`, etc. (note the upper case), and
-   * `qualified_name` is object's unique identifier.
-   *
-   * For equality testing, object names are taken in case-insensitive manner
-   * (e.g. `MY_TABLE` and `my_table` are considered equal).
-   */
+
   def objectName: String
 
   override def hashCode = objectName.toLowerCase.hashCode

@@ -609,9 +609,7 @@ class MarkevenProcessor() {
     return (c == '*' && i.hasNext && i.peek == ' ')
   }
 
-  /**
-   * Strips a selector from first line of block. Returns read selector.
-   */
+
   def stripSelector(s: StringEx): Selector = {
     var id = ""
     var classes = new ListBuffer[String]()

@@ -161,7 +161,6 @@ package object web {
   `CircumflexFilter` to indicate that the response have been processed
   successfully.
   */
-
   def send(text: String = "", statusCode: Int = -1): Nothing = {
     if (statusCode != -1)
       response.statusCode(statusCode)

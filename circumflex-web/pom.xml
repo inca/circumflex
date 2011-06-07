@@ -6,7 +6,7 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-web</artifactId>
   <packaging>jar</packaging>
-  <version>2.0.2</version>
+  <version>2.0.3</version>
   <name>Circumflex Web Framework</name>
   <description>Circumflex Web Framework is a lightweight framework
   for quick and robust application development using Scala
@@ -15,7 +15,7 @@
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>2.0.2</version>
+    <version>2.0.3</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -23,7 +23,7 @@
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-core</artifactId>
-      <version>2.0.2</version>
+      <version>2.0.3</version>
     </dependency>
     <!-- Servlet API 2.5 -->
     <dependency>
@@ -39,14 +39,15 @@
     </dependency>
     <!-- Jetty for standalones and tests -->
     <dependency>
-      <groupId>org.mortbay.jetty</groupId>
-      <artifactId>jetty</artifactId>
-      <version>6.1.25</version>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-webapp</artifactId>
+      <version>7.4.2.v20110526</version>
     </dependency>
+    <!-- Http Client -->
     <dependency>
-      <groupId>org.mortbay.jetty</groupId>
-      <artifactId>jetty-servlet-tester</artifactId>
-      <version>6.1.25</version>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.1.1</version>
     </dependency>
   </dependencies>
 

@@ -111,9 +111,7 @@ class DDLUnit {
         "error" -> e.getMessage))
     }
 
-  /**
-   * Executes a DROP script for added objects.
-   */
+
   def DROP(): this.type = {
     resetMsgs()
     _drop()
@@ -137,9 +135,7 @@ class DDLUnit {
     conn.setAutoCommit(autoCommit)
   } { throw _ }
 
-  /**
-   * Executes a CREATE script for added objects.
-   */
+
   def CREATE(): this.type = {
     resetMsgs()
     _create()
@@ -162,9 +158,7 @@ class DDLUnit {
     conn.setAutoCommit(autoCommit)
   } { throw _ }
 
-  /**
-   * Executes a DROP script and then a CREATE script.
-   */
+
   def DROP_CREATE(): this.type = {
     resetMsgs()
     _drop()
