@@ -131,6 +131,7 @@ class HeadingBlock(text: StringEx, selector: Selector, val level: Int)
 
 class CodeBlock(text: StringEx, selector: Selector)
     extends Block(text, selector) {
+  var indented = true
   def element = "code"
   override def toHtml(mp: MarkevenProcessor): StringEx = new StringEx(mp.currentIndent)
       .append("<pre")
@@ -138,9 +139,12 @@ class CodeBlock(text: StringEx, selector: Selector)
       .append("><code>")
       .append(processContent(mp).buffer)
       .append("</code></pre>")
-  override def processContent(mp: MarkevenProcessor): StringEx =
-    mp.encodeChars(text.replaceAll(regexes.outdent(4), ""))
-
+  override def processContent(mp: MarkevenProcessor): StringEx = {
+    var result = text
+    if (indented)
+      result = result.replaceAll(regexes.outdent(4), "")
+    return mp.encodeChars(result)
+  }
 }
 
 class UnorderedListBlock(text: StringEx, selector: Selector, baseline: Int)
