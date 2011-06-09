@@ -10,6 +10,9 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 
 * All ScalaDocs are stripped.
 
+* Public directories are not delegated to underlying default servlets which
+  tend to allow directory listings (security-related issue).
+
 ## 2.0.2
 
 * Extracted common container functionality from `ValueHolder` into `circumflex-core`

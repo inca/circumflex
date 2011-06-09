@@ -59,19 +59,20 @@ class CircumflexFilter extends Filter {
                   res: HttpServletResponse,
                   chain: FilterChain): Boolean = {
     if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
+      val uri = req.getRequestURI
       val publicUri = cx.getOrElse("cx.public", "/public").toString
       val contextPath = servletContext.getContextPath
-      if (req.getRequestURI.startsWith(contextPath + publicUri)) {
+      if (uri.startsWith(contextPath + publicUri) && !uri.endsWith("/")) {
         chain.doFilter(req, res)
         return true
       }
-      val relativeUri = req.getRequestURI.substring(contextPath.length)
-      val uri = URLDecoder.decode(publicUri + relativeUri, "UTF-8")
-      val path = filterConfig.getServletContext.getRealPath(uri)
+      val relativeUri = uri.substring(contextPath.length)
+      val decodedUri = URLDecoder.decode(publicUri + relativeUri, "UTF-8")
+      val path = filterConfig.getServletContext.getRealPath(decodedUri)
       if (path == null) return false
       val resource = new File(path)
       if (resource.isFile) {
-        req.getRequestDispatcher(uri).forward(req, res)
+        req.getRequestDispatcher(decodedUri).forward(req, res)
         return true
       }
     }
