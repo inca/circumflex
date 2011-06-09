@@ -530,6 +530,25 @@ class MarkevenProcessor() {
     val indent = s.trimLeft
     // do not include empty freaks
     if (s.length == 0) return EmptyBlock
+    // assume fenced code block
+    if (s.startsWith("```")) {
+      val c = s.clone.substring(3)
+      if (c.startsWith("\n"))
+        c.substring(1)
+      // self-contained block?
+      if (fence_end_?(c))
+        return new CodeBlock(c, selector).fenced()
+      var inside = true
+      return processComplexChunk(chunks, new CodeBlock(c, selector).fenced(), { c =>
+        val chunk = unprotect(c)
+        if (!inside) false
+        else {
+          if (fence_end_?(chunk))
+            inside = false
+          true
+        }
+      })
+    }
     // assume unordered list and ordered list
     if (s.startsWith("* "))
       return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent),
@@ -578,6 +597,17 @@ class MarkevenProcessor() {
       } else eob = true
     }
     return block
+  }
+
+  def fence_end_?(s: StringEx): Boolean = {
+    s.trimRight
+    if (s.endsWith("```")) {
+      s.substring(0, s.length - 3)
+      if (s.endsWith("\n"))
+        s.substring(0, s.length - 1)
+      return true
+    }
+    return false
   }
 
   def ol_?(s: StringEx, indent: Int): Boolean = {

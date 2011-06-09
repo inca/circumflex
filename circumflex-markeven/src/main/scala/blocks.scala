@@ -131,7 +131,15 @@ class HeadingBlock(text: StringEx, selector: Selector, val level: Int)
 
 class CodeBlock(text: StringEx, selector: Selector)
     extends Block(text, selector) {
-  var indented = true
+  protected var _fenced = false
+  def indented(): this.type = {
+    _fenced = false
+    return this
+  }
+  def fenced(): this.type = {
+    _fenced = true
+    return this
+  }
   def element = "code"
   override def toHtml(mp: MarkevenProcessor): StringEx = new StringEx(mp.currentIndent)
       .append("<pre")
@@ -141,7 +149,7 @@ class CodeBlock(text: StringEx, selector: Selector)
       .append("</code></pre>")
   override def processContent(mp: MarkevenProcessor): StringEx = {
     var result = text
-    if (indented)
+    if (!_fenced)
       result = result.replaceAll(regexes.outdent(4), "")
     return mp.encodeChars(result)
   }
