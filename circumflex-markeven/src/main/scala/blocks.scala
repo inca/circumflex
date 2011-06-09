@@ -151,7 +151,7 @@ class CodeBlock(text: StringEx, selector: Selector)
     var result = text
     if (!_fenced)
       result = result.replaceAll(regexes.outdent(4), "")
-    return mp.encodeChars(result)
+    return encodeChars(result)
   }
 }
 

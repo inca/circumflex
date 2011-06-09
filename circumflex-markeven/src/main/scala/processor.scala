@@ -469,8 +469,8 @@ class MarkevenProcessor() {
     ""
   })
 
-  def hashInlineHtml(s: StringEx, pattern: Pattern, out: String => String): StringEx =
-    s.replaceIndexed(pattern, m => {
+  def hashHtmlBlocks(s: StringEx): StringEx =
+    s.replaceIndexed(regexes.inlineHtmlBlockStart, m => {
       val startIdx = m.start
       var endIdx = 0
       if (m.group(2) != null) {
@@ -493,11 +493,12 @@ class MarkevenProcessor() {
       }
       // add to protector and replace
       val key = protector.addToken(s.buffer.subSequence(startIdx, endIdx))
-      (out(key), endIdx)
+      ("\n\n" + key + "\n\n", endIdx)
     })
 
-  def hashHtmlBlocks(s: StringEx): StringEx =
-    hashInlineHtml(s, regexes.inlineHtmlBlockStart, key => "\n\n" + key + "\n\n")
+  def hashInlineHtml(s: StringEx): StringEx = s.replaceAll(regexes.htmlTag, { m =>
+    protector.addToken(m.group(0))
+  })
 
   def hashHtmlComments(s: StringEx): StringEx = s.replaceAll(regexes.htmlComment, m =>
     "\n\n" + protector.addToken(m.group(0)) + "\n\n")
@@ -671,7 +672,7 @@ class MarkevenProcessor() {
   def transform(s: StringEx): StringEx = {
     protector.clear
     normalizeSpan(s)
-    hashInlineHtml(s, regexes.inlineHtmlSpanStart, key => key)
+    hashInlineHtml(s)
     doMacros(s)
     encodeChars(s)
     doCodeSpans(s)
@@ -686,11 +687,6 @@ class MarkevenProcessor() {
 
   def normalizeSpan(s: StringEx): StringEx =
     s.trim.replaceAll("  \n", "<br/>\n").replaceAll("\n", " ")
-
-  def encodeChars(s: StringEx): StringEx =
-    s.replaceAll(regexes.e_amp, "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
 
   protected def processSingleMacro(m: Matcher): CharSequence = {
     var name = m.group(1)
@@ -749,7 +745,7 @@ class MarkevenProcessor() {
 
   def doInlineLinks(s: StringEx): StringEx = s.replaceAll(regexes.inlineLinks, m => {
     val linkText = m.group(1)
-    val url = processUrl(m.group(2))
+    val url = encodeChars(unprotect(processUrl(m.group(2))))
     var title = m.group(4)
     if (title == null) title = ""
     val linkContent = new StringEx(linkText)

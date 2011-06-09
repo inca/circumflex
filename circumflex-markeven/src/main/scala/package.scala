@@ -68,6 +68,11 @@ package object markeven {
     "\\." -> "&#46;",
     "\\!" -> "&#33;")
 
+  def encodeChars(s: StringEx): StringEx =
+    s.replaceAll(regexes.e_amp, "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+
   object regexes {
     val lineEnds = Pattern.compile("\\r\\n|\\r")
     val blankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
@@ -76,7 +81,7 @@ package object markeven {
     val htmlNameExpr = "(?>[a-z][a-z0-9\\-_:.]*+\\b)"
     val inlineHtmlBlockStart = Pattern.compile("^ {0,3}<(" + htmlNameExpr + ")[\\S\\s]*?(/)?>",
       Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
-    val inlineHtmlSpanStart = Pattern.compile("<(" + htmlNameExpr + ")[\\S\\s]*?(/)?>",
+    val htmlTag = Pattern.compile("</?" + htmlNameExpr + "[\\S\\s]*?/?>",
       Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
     val linkDefinition = Pattern.compile("^ {0,3}\\[(.+?)\\]: *(\\S.*?)" +
         "(\\n? *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
