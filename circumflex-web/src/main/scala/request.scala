@@ -49,6 +49,9 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   The result of `uri`, `url` and `queryString` is decoded into UTF-8 string using `URLDecoder`.
 
+  Note that JSESSIONID encoded into URI is not reported via method `uri` (thus, it does not
+  participate in matching).
+
   Also note that if the method is overriden by the `_method` parameter, the original method is
   saved in context under the `cx.originalMethod` key.
   */
@@ -62,7 +65,14 @@ class HttpRequest(val raw: HttpServletRequest) {
       m.trim.toLowerCase
     case _ => raw.getMethod.toLowerCase
   }
-  lazy val uri = URLDecoder.decode(raw.getRequestURI, "UTF-8")
+  lazy val uri = {
+    var u = URLDecoder.decode(raw.getRequestURI, "UTF-8")
+    val sid = ";jsessionid=" + sessionId
+    val i = u.indexOf(sid)
+    if (i != -1 && i == u.length - sid.length)    // endsWith
+      u = u.substring(0, i)
+    u
+  }
   lazy val queryString = if (raw.getQueryString == null) "" else
     URLDecoder.decode(raw.getQueryString, "UTF-8")
   lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")

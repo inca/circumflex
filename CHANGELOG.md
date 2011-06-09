@@ -13,6 +13,9 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 * Public directories are not delegated to underlying default servlets which
   tend to allow directory listings (security-related issue).
 
+* URL-encoded JSESSIONID is not reported by `request.uri` anymore, thus it does not
+  participate in regular matching.
+
 ## 2.0.2
 
 * Extracted common container functionality from `ValueHolder` into `circumflex-core`
