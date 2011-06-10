@@ -19,6 +19,8 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
 * Added fenced code blocks like on GitHub (due to Markeven's nature, empty lines are
   condensed anyway).
 
+* Added block postprocessors to Markeven.
+
 ## 2.0.2
 
 * Extracted common container functionality from `ValueHolder` into `circumflex-core`

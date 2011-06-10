@@ -36,7 +36,14 @@ class Selector(val id: String = "", val classes: Seq[String] = Nil) {
 abstract class Block(val text: StringEx, val selector: Selector) {
   def element: String
   def toHtml(mp: MarkevenProcessor): StringEx = {
+    // run implementation-specific processing
     val content = processContent(mp)
+    // apply postprocessors
+    mp.postProcessors.foreach { p =>
+      if (p._1 == element)
+        p._2(this)
+    }
+    // form HTML
     val result = new StringEx(mp.currentIndent)
         .append("<")
         .append(element)
