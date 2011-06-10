@@ -438,7 +438,7 @@ class MarkevenProcessor() {
   val links = new HashMap[String, LinkDefinition]()
   var level = 0
   val macros = new HashMap[String, StringEx => CharSequence]()
-  val postProcessors = new ListBuffer[(String, Block => Unit)]()
+  val postProcessors = new ListBuffer[(String, StringEx => StringEx)]()
 
   def increaseIndent: Unit = level += 1
   def decreaseIndent: Unit = if (level > 0) level -= 1
@@ -448,7 +448,7 @@ class MarkevenProcessor() {
     return this
   }
 
-  def postProcess(element: String)(handler: Block => Unit): Unit = {
+  def postProcess(element: String)(handler: StringEx => StringEx): Unit = {
     this.postProcessors ++= List(element -> handler)
   }
 

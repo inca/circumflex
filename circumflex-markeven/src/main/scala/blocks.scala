@@ -36,14 +36,7 @@ class Selector(val id: String = "", val classes: Seq[String] = Nil) {
 abstract class Block(val text: StringEx, val selector: Selector) {
   def element: String
   def toHtml(mp: MarkevenProcessor): StringEx = {
-    // run implementation-specific processing
-    val content = processContent(mp)
-    // apply postprocessors
-    mp.postProcessors.foreach { p =>
-      if (p._1 == element)
-        p._2(this)
-    }
-    // form HTML
+    val content = postProcess(mp, processContent(mp))
     val result = new StringEx(mp.currentIndent)
         .append("<")
         .append(element)
@@ -61,6 +54,12 @@ abstract class Block(val text: StringEx, val selector: Selector) {
     out.write(toHtml(mp).toString)
   def processContent(mp: MarkevenProcessor): StringEx = text
   def attributes = ""
+  def postProcess(mp: MarkevenProcessor, content: StringEx): StringEx =
+    mp.postProcessors.foldLeft(content) { (c, p) =>
+      if (p._1 == element)
+        p._2(c)
+      else c
+    }
 }
 
 abstract class NestedMarkupBlock(text: StringEx, selector: Selector)
@@ -148,12 +147,15 @@ class CodeBlock(text: StringEx, selector: Selector)
     return this
   }
   def element = "code"
-  override def toHtml(mp: MarkevenProcessor): StringEx = new StringEx(mp.currentIndent)
-      .append("<pre")
-      .append(selector.toString)
-      .append("><code>")
-      .append(processContent(mp).buffer)
-      .append("</code></pre>")
+  override def toHtml(mp: MarkevenProcessor): StringEx = {
+    val content = postProcess(mp, processContent(mp))
+    new StringEx(mp.currentIndent)
+        .append("<pre")
+        .append(selector.toString)
+        .append("><code>")
+        .append(content)
+        .append("</code></pre>")
+  }
   override def processContent(mp: MarkevenProcessor): StringEx = {
     var result = text
     if (!_fenced)
