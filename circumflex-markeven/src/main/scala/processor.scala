@@ -807,14 +807,14 @@ class MarkevenProcessor() {
     s
   }
 
-  def unprotect(s: StringEx): StringEx = {
-    val found = s.replaceIfFound(regexes.protectKey, m => {
+  def unprotect(s: StringEx): StringEx =
+    s.replaceAll(regexes.protectKey, m => {
       val key = m.group(0)
-      protector.decode(key).getOrElse(key)
+      protector.decode(key) match {
+        case Some(cs) => unprotect(new StringEx(cs))
+        case _ => key
+      }
     })
-    if (found) unprotect(s)
-    return s
-  }
 
   def writeHtml(blocks: Seq[Block], out: Writer): Unit =
     blocks.foreach(b => if (b != EmptyBlock) {
