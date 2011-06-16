@@ -1,7 +1,5 @@
 # Circumflex Change Log
 
-Version 2.0 was a great reorganization, so it is now a baseline for change log.
-
 ## 2.0.3
 
 * Moved to Jetty 7.2.4 to allow Web Sockets support.
@@ -20,6 +18,8 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
   condensed anyway).
 
 * Added block postprocessors to Markeven.
+
+* `ValidationException` moved to `circumflex-core`.
 
 ## 2.0.2
 
@@ -52,4 +52,6 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
   `SimpleExpression`.
 
 * Added new implicit convertion from boolean fields to predicates.
+
+## Older changes
 

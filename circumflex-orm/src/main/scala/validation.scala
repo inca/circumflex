@@ -2,12 +2,6 @@ package ru.circumflex.orm
 
 import ru.circumflex.core._
 
-class ValidationException(val errors: Seq[Msg])
-    extends ORMException("Record validation failed.") {
-  def this(msg: Msg) = this(List(msg))
-  def this(msg: Msg, msgs: Msg*) = this(List(msg) ++ msgs.toSeq)
-}
-
 class RecordValidator[PK, R <: Record[PK, R]] {
 
   protected var _validators: Seq[R => Option[Msg]] = Nil
