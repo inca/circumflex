@@ -457,6 +457,8 @@ class MarkevenProcessor() {
   def increaseIndent: Unit = level += 1
   def decreaseIndent: Unit = if (level > 0) level -= 1
 
+  def resolveLink(id: String): Option[LinkDefinition] = links.get(id)
+
   def addMacro(name: String, function: StringEx => CharSequence): this.type = {
     macros += (name -> function)
     return this
@@ -738,7 +740,7 @@ class MarkevenProcessor() {
     id = id.trim.toLowerCase
     val linkContent = new StringEx(linkText)
     doSpanEnhancements(linkContent)
-    val result = links.get(id)
+    val result = resolveLink(id)
         .map(ld => ld.toLink(linkContent))
         .getOrElse(new StringEx(m.group(0)))
     doMacros(result)
@@ -750,7 +752,7 @@ class MarkevenProcessor() {
     var id = m.group(2)
     if (id == "") id = altText
     id = id.trim.toLowerCase
-    val result = links.get(id)
+    val result = resolveLink(id)
         .map(ld => ld.toImageLink(altText))
         .getOrElse(new StringEx(m.group(0)))
     doMacros(result)
