@@ -4,6 +4,10 @@ import java.io._
 import java.util.regex._
 
 class LinkDefinition(val url: StringEx, val title: StringEx) {
+
+  def this(url: CharSequence, title: CharSequence) =
+    this(new StringEx(url), new StringEx(title))
+
   url.replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
   title.replaceAll("*", "&#42;").replaceAll("_", "&#95;").replaceAll("\"", "&quot;").trim
 
