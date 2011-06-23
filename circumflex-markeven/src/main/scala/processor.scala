@@ -7,8 +7,11 @@ import collection.mutable.{HashMap, ListBuffer}
 
 /*!# The Markeven Processor
 
-`Markeven` transforms text files into HTML using a set of simple rules.
-It takes most ideas from [Markdown][], but has more strict rules, which lead to better
+`MarkevenProcessor` transforms text files into HTML using a set of simple rules.
+`MarkevenProcessor` should be instantiated for every task and should not be shared
+between threads or tasks to avoid orphaned data.
+
+Markeven takes most ideas from [Markdown][], but has more strict rules, which lead to better
 source structure and enhanced performance.
 
   [Markdown]: http://daringfireball.net/projects/markdown/syntax
@@ -34,12 +37,6 @@ Block elements are always delimited by two or more line ends (`\n\n`):
     This is a paragraph                                       {.no-highlight}
 
         this is a code block
-
-        But this is still
-    a paragraph.
-
-This behavior is different from [Markdown][], which interprets last block as two blocks: paragraph
-and code block.
 
 ### Paragraphs                         {#p}
 
@@ -128,6 +125,23 @@ Markeven will produce:
     <p>Here's some code:</p>                                            {.html}
     <pre><code>println("Hello world!")
     </code></pre>
+
+You can indent only the first line of the code block. Note, however, that Markeven will trim at most
+4 spaces in the beginning of each line.
+
+You can also use GitHub like syntax to create fenced code blocks in case you find indenting each code line
+cumbersome:
+
+``` {.awesome-code}
+def toHtml(str: String) = markeven.toHtml(str)
+```
+
+This will produce following markup:
+
+```
+<pre class="awesome-code"><code>def toHtml(str: String) =
+    markeven.toHtml(str)</code></pre>
+```
 
 ### Ordered and unordered lists                 {#ol-ul}
 
@@ -456,8 +470,7 @@ class MarkevenProcessor() {
     if (level <= 0) return ""
     else "  " * level
 
-  def normalize(s: StringEx): StringEx = s.replaceAll("\t","    ")
-      .replaceAll(regexes.lineEnds, "\n")
+  def normalize(s: StringEx): StringEx = s.replaceAll("\t","    ").replaceAll(regexes.lineEnds, "\n")
 
   def cleanEmptyLines(s: StringEx): StringEx = s.replaceAll(regexes.blankLines, "")
 
@@ -529,9 +542,9 @@ class MarkevenProcessor() {
         case _ => return new ParagraphBlock(s, selector)
       }
     // assume code block
-    if (s.matches(regexes.d_code))
+    if (s.startsWith("    "))
       return processComplexChunk(chunks, new CodeBlock(s, selector),
-        c => c.matches(regexes.d_code))
+        c => c.startsWith("    "))
     // trim any leading whitespace
     val indent = s.trimLeft
     // do not include empty freaks
@@ -675,7 +688,6 @@ class MarkevenProcessor() {
   }
 
   def transform(s: StringEx): StringEx = {
-    protector.clear
     normalizeSpan(s)
     hashInlineHtml(s)
     doMacros(s)
@@ -709,7 +721,6 @@ class MarkevenProcessor() {
   def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m => {
     val s = new StringEx(m.group(2)).trim
     // there can be protected content inside codespans, so decode them first
-    unprotect(s)
     encodeChars(s)
     protector.addToken(s.append("</code>").prepend("<code>"))
   })
@@ -726,8 +737,6 @@ class MarkevenProcessor() {
     if (id == "") id = linkText
     id = id.trim.toLowerCase
     val linkContent = new StringEx(linkText)
-    // there can be protected content inside linktexts, so decode them first
-    unprotect(linkContent)
     doSpanEnhancements(linkContent)
     val result = links.get(id)
         .map(ld => ld.toLink(linkContent))
@@ -754,8 +763,6 @@ class MarkevenProcessor() {
     var title = m.group(4)
     if (title == null) title = ""
     val linkContent = new StringEx(linkText)
-    // there can be protected content inside linktexts, so decode them first
-    unprotect(linkContent)
     doSpanEnhancements(linkContent)
     val result = new LinkDefinition(url, new StringEx(title)).toLink(linkContent)
     doMacros(result)

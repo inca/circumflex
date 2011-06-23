@@ -36,7 +36,7 @@ class Selector(val id: String = "", val classes: Seq[String] = Nil) {
 abstract class Block(val text: StringEx, val selector: Selector) {
   def element: String
   def toHtml(mp: MarkevenProcessor): StringEx = {
-    val content = postProcess(mp, processContent(mp))
+    val content = mp.unprotect(postProcess(mp, processContent(mp)))
     val result = new StringEx(mp.currentIndent)
         .append("<")
         .append(element)
