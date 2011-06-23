@@ -73,13 +73,19 @@ package object markeven {
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
 
+  def encodeBackslashEscapes(s: StringEx): StringEx =
+    s.replaceAll(regexes.backslashChar, m => {
+      val c = m.group(0)
+      escapeMap.getOrElse(c, c)
+    })
+
   object regexes {
     val lineEnds = Pattern.compile("\\r\\n|\\r")
-    val blankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
+    val blankLines = Pattern.compile(" +$", Pattern.MULTILINE)
     val blocks = Pattern.compile("\\n{2,}")
     val lines = Pattern.compile("\\n")
     val htmlNameExpr = "(?>[a-z][a-z0-9\\-_:.]*+\\b)"
-    val inlineHtmlBlockStart = Pattern.compile("^ {0,3}<(" + htmlNameExpr + ")[\\S\\s]*?(/)?>",
+    val inlineHtmlBlockStart = Pattern.compile("^ {0,3}<(" + htmlNameExpr + ").*?(/)?>",
       Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
     val htmlTag = Pattern.compile("</?" + htmlNameExpr + "[\\S\\s]*?/?>",
       Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
@@ -111,7 +117,7 @@ package object markeven {
     val d_div = Pattern.compile("(?: {0,3}\\|.*\\n?)+")
     val d_blockquote = Pattern.compile("(?: {0,3}>.*\\n?)+")
     val d_hr = Pattern.compile("^-{3,} *\\n?$")
-    val d_table = Pattern.compile("^-{3,}>?\\n.+\\n *-{3,}\\s*\\n?$", Pattern.DOTALL)
+    val d_table = Pattern.compile("^-{3,}>?\\n.+\\n *-{3,}\\n?$", Pattern.DOTALL)
     val d_heading = Pattern.compile("^(\\#{1,6}) (.*) *\\#*$", Pattern.DOTALL)
     val d_h1 = Pattern.compile("^(.+)\\n=+\\n?$", Pattern.DOTALL)
     val d_h2 = Pattern.compile("^(.+)\\n-+\\n?$", Pattern.DOTALL)

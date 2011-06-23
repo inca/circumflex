@@ -8,6 +8,7 @@ import collection.mutable.HashMap
 
   * macro processors;
   * link resolvers;
+  * custom URL processors;
   * pre- and post- processors.
 */
 
@@ -29,4 +30,6 @@ trait MarkevenConfiguration {
 
   /*! Default indentation for complex blocks is two spaces. You can override this here. */
   def indent: String = "  "
+
+
 }

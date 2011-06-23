@@ -22,6 +22,7 @@ abstract class Block(val text: StringEx, val selector: Selector) {
   }
   def writeHtml(mp: MarkevenProcessor, out: Writer): Unit =
     out.write(toHtml(mp).toString)
+  def writeHtml(w: MarkevenWorker, out: Writer): Unit = {} // TODO visit me
   def processContent(mp: MarkevenProcessor): StringEx = text
   def attributes = ""
   def postProcess(mp: MarkevenProcessor, content: StringEx): StringEx =
