@@ -246,3 +246,37 @@ class CharIterator(val chunk: StringEx) {
   def stepBack: Unit = if (_index > -1) _index -= 1
   def size = chunk.length
 }
+
+class LinkDefinition(val url: StringEx, val title: StringEx) {
+
+  def this(url: String, title: String = "") =
+    this(new StringEx(url), new StringEx(title))
+
+  url.replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
+  title.replaceAll("*", "&#42;").replaceAll("_", "&#95;").replaceAll("\"", "&quot;").trim
+
+  def toLink(linkText: CharSequence): StringEx = {
+    val result = new StringEx("<a href=\"").append(url).append("\"")
+    if (title.length > 0) result.append(" title=\"").append(title).append("\"")
+    result.append(">").append(linkText).append("</a>")
+    return result
+  }
+
+  def toImageLink(alt: CharSequence): StringEx = {
+    val result = new StringEx("<img src=\"").append(url).append("\"")
+    if (title.length > 0) result.append(" title=\"").append(title).append("\"")
+    if (alt.length > 0) result.append(" alt=\"").append(alt).append("\"")
+    result.append("/>")
+    return result
+  }
+}
+
+class Selector(val id: String = "", val classes: Seq[String] = Nil) {
+  override val toString = {
+    var result = ""
+    if (id != "") result += " id=\"" + id + "\""
+    if (classes.size > 0)
+      result += " class=\"" + classes.mkString(" ") + "\""
+    result
+  }
+}
