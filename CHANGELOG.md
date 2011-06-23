@@ -21,6 +21,8 @@
 
 * `ValidationException` moved to `circumflex-core`.
 
+* Changed `orm.ehcacheManager` configuration.
+
 ## 2.0.2
 
 * Extracted common container functionality from `ValueHolder` into `circumflex-core`

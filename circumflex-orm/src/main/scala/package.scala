@@ -45,10 +45,8 @@ package object orm {
   val defaultSchema: Schema = new Schema(
     cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
 
-  val ehcacheManager: CacheManager = cx.get("orm.ehcache.config") match {
-    case Some(f: String) => new CacheManager(f)
-    case _ => new CacheManager()
-  }
+  val ehcacheManager: CacheManager = cx.instantiate[CacheManager](
+    "orm.ehcache.manager", new CacheManager())
 
   def contextCache = CacheService.get
 

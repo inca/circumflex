@@ -239,7 +239,7 @@ class HttpRequest(val raw: HttpServletRequest) {
       if (s != null) any2option(s.getAttribute(key))
       else None
     }
-    def invalidate: this.type = {
+    def invalidate(): this.type = {
       val s = raw.getSession(false)
       if (s != null) s.invalidate
       return this
