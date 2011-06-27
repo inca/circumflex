@@ -23,6 +23,25 @@ Match results are stored in `Context`, you can look them up by name.
 Take a look at our test sources at [`circumflex-web/src/test/scala`][tests] to see routers
 in action.
 
+## A bit on trailing slashes
+
+If you write lots of RESTful code, you probably come across following routing paradigm:
+
+    any("/items/:itemId/&#42;") = Items.get(param("itemId")) map { i =>
+      subroute("/items/" + i.id) {
+        get("/?") = { ... }
+      }
+    }
+
+With code like this you would expect `/items/6` to hit the inner route,
+but it does not satisfy the outer route. In earlier versions you would have
+to forward the route `/items/:itemId` to enforce trailing slash inside subroutes.
+Since Circumflex 2.0.3 we made this a bit easier to you:
+we simply do not take trailing slash into consideration when matching against the
+pattern ending with `/&#42;` (a slash and an asterisk). Note that this only
+affects string patterns, regex-patterns are processed normally. This also does not
+affect patterns ending with `/+`: in this case trailing slash is required.
+
    [tests]: http://github.com/inca/circumflex/tree/master/circumflex-web/src/test/scala/
 */
 class RequestRouter(var prefix: String = "") {
@@ -37,8 +56,15 @@ class RequestRouter(var prefix: String = "") {
   implicit def router2response(router: RequestRouter): RouteResponse =
     sendError(404)
 
-  implicit def string2uriMatcher(str: String): RegexMatcher =
-    new RegexMatcher("uri", request.uri, servletContext.getContextPath + prefix + str)
+  implicit def string2uriMatcher(str: String): RegexMatcher = {
+    var uri = request.uri
+    var pattern = str
+    if (pattern.endsWith("/*")) {
+      uri += "/"
+      pattern += "/?"
+    }
+    new RegexMatcher("uri", uri, servletContext.getContextPath + prefix + pattern)
+  }
   implicit def regex2uriMatcher(regex: Regex): RegexMatcher =
     new RegexMatcher("uri", request.uri,
       new Regex(servletContext.getContextPath + prefix + regex.toString))

@@ -23,6 +23,8 @@
 
 * Changed `orm.ehcacheManager` configuration.
 
+* Trailing slashes are ignored when matching against routes ending with `/*`.
+
 ## 2.0.2
 
 * Extracted common container functionality from `ValueHolder` into `circumflex-core`
