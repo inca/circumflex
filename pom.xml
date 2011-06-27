@@ -27,7 +27,7 @@
   </modules>
 
   <properties>
-    <scala.version>2.9.0</scala.version>
+    <scala.version>2.9.0-1</scala.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -78,6 +78,12 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
       <version>0.9.26</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>jline</artifactId>
+      <version>2.9.0-1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -307,6 +313,5 @@
       <url>http://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
   </distributionManagement>
-
 
 </project>

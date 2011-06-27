@@ -61,7 +61,7 @@ class MockRequest(val conv: MockConversation, val req: m.HttpRequestBase) {
     req match {
       case req: m.HttpEntityEnclosingRequestBase =>
         val pairs = params.map(p => new BasicNameValuePair(p._1, p._2)).toList
-        val e = new UrlEncodedFormEntity(asJavaList(pairs))
+        val e = new UrlEncodedFormEntity(seqAsJavaList(pairs))
         req.setEntity(e)
       case _ =>
     }
