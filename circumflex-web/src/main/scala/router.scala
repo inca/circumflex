@@ -58,12 +58,12 @@ class RequestRouter(var prefix: String = "") {
 
   implicit def string2uriMatcher(str: String): RegexMatcher = {
     var uri = request.uri
-    var pattern = str
-    if (pattern.endsWith("/*")) {
+    var pattern = servletContext.getContextPath + prefix + str
+    if (str.endsWith("/*")) {
       uri += "/"
       pattern += "/?"
     }
-    new RegexMatcher("uri", uri, servletContext.getContextPath + prefix + pattern)
+    new RegexMatcher("uri", uri, pattern)
   }
   implicit def regex2uriMatcher(regex: Regex): RegexMatcher =
     new RegexMatcher("uri", request.uri,
