@@ -45,10 +45,8 @@ package object orm {
   val defaultSchema: Schema = new Schema(
     cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
 
-  val ehcacheManager: CacheManager = cx.get("orm.ehcache.config") match {
-    case Some(f: String) => new CacheManager(f)
-    case _ => new CacheManager()
-  }
+  val ehcacheManager: CacheManager = cx.instantiate[CacheManager](
+    "orm.ehcache.manager", new CacheManager())
 
   def contextCache = CacheService.get
 
@@ -68,7 +66,6 @@ package object orm {
   `name`. However, the information about the alias is lost during this conversion.
   We use `aliasStack` to remember it during conversion so it can be accessed later.
   */
-
   object aliasStack {
     protected def _stack: Stack[String] = ctx.get("orm.aliasStack") match {
       case Some(s: Stack[String]) => s

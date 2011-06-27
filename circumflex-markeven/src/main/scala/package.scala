@@ -68,15 +68,20 @@ package object markeven {
     "\\." -> "&#46;",
     "\\!" -> "&#33;")
 
+  def encodeChars(s: StringEx): StringEx =
+    s.replaceAll(regexes.e_amp, "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+
   object regexes {
     val lineEnds = Pattern.compile("\\r\\n|\\r")
-    val blankLines = Pattern.compile("^ +$", Pattern.MULTILINE)
+    val blankLines = Pattern.compile(" +$", Pattern.MULTILINE)
     val blocks = Pattern.compile("\\n{2,}")
     val lines = Pattern.compile("\\n")
     val htmlNameExpr = "(?>[a-z][a-z0-9\\-_:.]*+\\b)"
     val inlineHtmlBlockStart = Pattern.compile("^ {0,3}<(" + htmlNameExpr + ")[\\S\\s]*?(/)?>",
       Pattern.CASE_INSENSITIVE | Pattern.MULTILINE)
-    val inlineHtmlSpanStart = Pattern.compile("<(" + htmlNameExpr + ")[\\S\\s]*?(/)?>",
+    val htmlTag = Pattern.compile("</?" + htmlNameExpr + "[\\S\\s]*?/?>",
       Pattern.MULTILINE | Pattern.CASE_INSENSITIVE)
     val linkDefinition = Pattern.compile("^ {0,3}\\[(.+?)\\]: *(\\S.*?)" +
         "(\\n? *\"(.+?)\")?(?=\\n+|\\Z)", Pattern.MULTILINE)
@@ -102,7 +107,6 @@ package object markeven {
 
     // deterministic patterns
 
-    val d_code = Pattern.compile("(?: {4,}.*\\n?)+")
     val d_div = Pattern.compile("(?: {0,3}\\|.*\\n?)+")
     val d_blockquote = Pattern.compile("(?: {0,3}>.*\\n?)+")
     val d_hr = Pattern.compile("^-{3,} *\\n?$")

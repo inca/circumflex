@@ -4,6 +4,10 @@ import java.io._
 import java.util.regex._
 
 class LinkDefinition(val url: StringEx, val title: StringEx) {
+
+  def this(url: CharSequence, title: CharSequence) =
+    this(new StringEx(url), new StringEx(title))
+
   url.replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
   title.replaceAll("*", "&#42;").replaceAll("_", "&#95;").replaceAll("\"", "&quot;").trim
 
@@ -36,7 +40,7 @@ class Selector(val id: String = "", val classes: Seq[String] = Nil) {
 abstract class Block(val text: StringEx, val selector: Selector) {
   def element: String
   def toHtml(mp: MarkevenProcessor): StringEx = {
-    val content = processContent(mp)
+    val content = mp.unprotect(postProcess(mp, processContent(mp)))
     val result = new StringEx(mp.currentIndent)
         .append("<")
         .append(element)
@@ -54,6 +58,12 @@ abstract class Block(val text: StringEx, val selector: Selector) {
     out.write(toHtml(mp).toString)
   def processContent(mp: MarkevenProcessor): StringEx = text
   def attributes = ""
+  def postProcess(mp: MarkevenProcessor, content: StringEx): StringEx =
+    mp.postProcessors.foldLeft(content) { (c, p) =>
+      if (p._1 == element)
+        p._2(c)
+      else c
+    }
 }
 
 abstract class NestedMarkupBlock(text: StringEx, selector: Selector)
@@ -131,16 +141,31 @@ class HeadingBlock(text: StringEx, selector: Selector, val level: Int)
 
 class CodeBlock(text: StringEx, selector: Selector)
     extends Block(text, selector) {
+  protected var _fenced = false
+  def indented(): this.type = {
+    _fenced = false
+    return this
+  }
+  def fenced(): this.type = {
+    _fenced = true
+    return this
+  }
   def element = "code"
-  override def toHtml(mp: MarkevenProcessor): StringEx = new StringEx(mp.currentIndent)
-      .append("<pre")
-      .append(selector.toString)
-      .append("><code>")
-      .append(processContent(mp).buffer)
-      .append("</code></pre>")
-  override def processContent(mp: MarkevenProcessor): StringEx =
-    mp.encodeChars(text.replaceAll(regexes.outdent(4), ""))
-
+  override def toHtml(mp: MarkevenProcessor): StringEx = {
+    val content = postProcess(mp, processContent(mp))
+    new StringEx(mp.currentIndent)
+        .append("<pre")
+        .append(selector.toString)
+        .append("><code>")
+        .append(content)
+        .append("</code></pre>")
+  }
+  override def processContent(mp: MarkevenProcessor): StringEx = {
+    var result = text
+    if (!_fenced)
+      result = result.replaceAll(regexes.outdent(4), "")
+    return encodeChars(result)
+  }
 }
 
 class UnorderedListBlock(text: StringEx, selector: Selector, baseline: Int)

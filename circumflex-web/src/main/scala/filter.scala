@@ -35,29 +35,15 @@ The filter configuration is saved into the `cx.filterConfig` configuration param
 is available throughout your configuration via the `filterConfig` method of the
 `ru.circumflex.web` package.
 */
-
-/**
- * Serves as an entry point of Circumflex Web Application.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/filter.scala">filter.scala</a>.
- */
 class CircumflexFilter extends Filter {
 
-  /**
-   * Place your application initialization code here.
-   * By default it saves filter configuration into the `cx.filterConfig` configuration
-   * parameter so that it could be accessed later.
-   */
+
   def init(filterConfig: FilterConfig) = {
-    WEB_LOG.info("Circumflex 2.0.2")
+    WEB_LOG.info("Circumflex 2.0.3")
     cx("cx.filterConfig") = filterConfig
   }
 
-  /**
-   * Place your application shutdown code here.
-   * Does nothing by default.
-   */
+
   def destroy = {}
 
   /*!## Serving static  {#static}
@@ -73,19 +59,20 @@ class CircumflexFilter extends Filter {
                   res: HttpServletResponse,
                   chain: FilterChain): Boolean = {
     if (req.getMethod.equalsIgnoreCase("get") || req.getMethod.equalsIgnoreCase("head")) {
+      val uri = req.getRequestURI
       val publicUri = cx.getOrElse("cx.public", "/public").toString
       val contextPath = servletContext.getContextPath
-      if (req.getRequestURI.startsWith(contextPath + publicUri)) {
+      if (uri.startsWith(contextPath + publicUri) && !uri.endsWith("/")) {
         chain.doFilter(req, res)
         return true
       }
-      val relativeUri = req.getRequestURI.substring(contextPath.length)
-      val uri = URLDecoder.decode(publicUri + relativeUri, "UTF-8")
-      val path = filterConfig.getServletContext.getRealPath(uri)
+      val relativeUri = uri.substring(contextPath.length)
+      val decodedUri = URLDecoder.decode(publicUri + relativeUri, "UTF-8")
+      val path = filterConfig.getServletContext.getRealPath(decodedUri)
       if (path == null) return false
       val resource = new File(path)
       if (resource.isFile) {
-        req.getRequestDispatcher(uri).forward(req, res)
+        req.getRequestDispatcher(decodedUri).forward(req, res)
         return true
       }
     }
@@ -179,7 +166,6 @@ class CircumflexFilter extends Filter {
   * `onRouterError` is executed if a general exception is thrown from a router;
 
   */
-
   def onNoMatch(): Unit = {
     WEB_LOG.debug("No routes matched: " + request)
     sendError(404)

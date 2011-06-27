@@ -20,13 +20,6 @@ actual `HttpServletResponse` using the `flush` method.
 Since Circumflex is UTF-friendly it will implicitly set character encoding of
 response body to `UTF-8`. Feel free to change it if your application requires so.
 */
-
-/**
- * Provides functionality for sending HTTP responses.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/response.scala">response.scala</a>.
- */
 class HttpResponse(val raw: HttpServletResponse) {
 
   def flush_!(): Nothing = {
@@ -114,7 +107,7 @@ class HttpResponse(val raw: HttpServletResponse) {
   Circumflex Web Framework lets you access response headers via the `headers` object.
   */
   object headers extends HashMap[String, Any] {
-    update("X-Powered-By", "Circumflex 2.0.2")
+    update("X-Powered-By", "Circumflex 2.0.3")
   }
 
   /*!## Cookies

@@ -20,16 +20,11 @@ package object freemarker {
   val ftlConfig: Configuration = cx.instantiate[Configuration](
     "ftl.configuration", new DefaultConfiguration)
 
-  /**
-   * Renders specified `template` directly into current response;
-   * must be invoked inside a router definition.
-   */
+
   def ftl(template: String, data: Any = ctx): Nothing =
     response.body(r => ftlConfig.getTemplate(template).process(data, r.getWriter)).flush_!
 
-  /**
-   * Renders specified `template` and returns produced content.
-   */
+
   def ftl2string(template: String, root: Any = ctx): String = {
     val result = new StringWriter
     ftlConfig.getTemplate(template).process(root, result)
@@ -53,7 +48,6 @@ package object freemarker {
     maps); by default the delegation does not occur (`null` is returned if resolving fails).
 
   */
-
   val resolveFields = cx.get("ftl.wrapper.resolveFields") match {
     case Some(b: Boolean) => b
     case Some(s: String) => s.toBoolean

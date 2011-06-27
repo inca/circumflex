@@ -4,6 +4,7 @@ import ru.circumflex.core._
 import matchers._
 import org.specs.runner.JUnit4
 import org.specs.Specification
+import java.io.{File}
 
 class SpecsTest extends JUnit4(CircumflexWebSpec)
 
@@ -67,6 +68,11 @@ object CircumflexWebSpec extends Specification {
 
   doBeforeSpec{
     cx("cx.router") = classOf[MockRouter]
+    var rootPath = System.getProperty("user.dir")
+    if (!rootPath.endsWith("circumflex-web")) {
+      rootPath += (File.separator + "circumflex-web")
+    }
+    cx("cx.webappRoot") = (rootPath + File.separatorChar + "src/test/webapp")
     MockApp.start
   }
 
@@ -74,84 +80,84 @@ object CircumflexWebSpec extends Specification {
 
   "RequestRouter" should {
     "return 404 by default on non-matched requests" in {
-      MockApp.get("/this/does/not/match/any/routes").execute().getStatus must_== 404
+      MockApp.get("/this/does/not/match/any/routes").execute().statusCode must_== 404
     }
     "decode URIs before matching" in {
-      MockApp.get("/decode%20me").execute().getContent must_== "preved"
+      MockApp.get("/decode%20me").execute().content must_== "preved"
     }
     "match requests by simple URI" in {
-      MockApp.get("/").execute().getContent must_== "preved"
+      MockApp.get("/").execute().content must_== "preved"
     }
     "match requests by method" in {
-      MockApp.post("/").execute().getContent must_== "preved from POST"
+      MockApp.post("/").execute().content must_== "preved from POST"
     }
     "match requests by regex" in {
-      MockApp.get("/regex/piu").execute().getContent must_== "matched piu"
+      MockApp.get("/regex/piu").execute().content must_== "matched piu"
     }
     "interpret `_method` parameter as HTTP method" in {
-      MockApp.get("/?_method=PUT").execute().getContent must_== "this is a put route"
+      MockApp.get("/?_method=PUT").execute().content must_== "this is a put route"
       MockApp.post("/")
-          .setContent("_method=PUT")
+          .setParam("_method", "PUT")
           .execute()
-          .getContent must_== "this is a put route"
+          .content must_== "this is a put route"
     }
     "process subrouters" in {
-      MockApp.get("/sub/").execute().getContent must_== "preved"
+      MockApp.get("/sub/").execute().content must_== "preved"
     }
     "send errors" in {
-      MockApp.get("/error").execute().getStatus must_== 503
+      MockApp.get("/error").execute().statusCode must_== 503
     }
     "send redirects" in {
-      MockApp.get("/redirect").execute().getStatus must_== 302
+      MockApp.get("/redirect").execute().content must_== "preved"
     }
     "process filter directive" in {
-      MockApp.get("/filter").execute().getContent must_== "1"
+      MockApp.get("/filter").execute().content must_== "1"
     }
   }
 
   "Matching mechanism" should {
     "process named parameters from URI" in {
-      MockApp.get("/matching/uri/Jack").execute().getContent must_== "preved, Jack"
-      MockApp.get("/matching/uri/file.txt").execute().getContent must_== "file->txt"
-      MockApp.get("/matching/uri/I/one/Love/Circum.flex").execute().getContent must_== "ILoveCircumflex"
+      MockApp.get("/matching/uri/Jack").execute().content must_== "preved, Jack"
+      MockApp.get("/matching/uri/file.txt").execute().content must_== "file->txt"
+      MockApp.get("/matching/uri/I/one/Love/Circum.flex").execute().content must_== "ILoveCircumflex"
     }
     "process named parameters from current match results, delegating to request parameters on fail" in {
       MockApp.get("/matching/param")
           .setHeader("Host", "preved")
           .execute()
-          .getContent must_== "host is preved"
+          .content must_== "host is preved"
     }
     "match composite routes" in {
       MockApp.get("/matching/composite")
           .setHeader("Accept","text/html")
           .setHeader("Referer","localhost")
-          .execute().getContent must_== "3 conditions met (html)"
+          .execute().content must_== "3 conditions met (html)"
       MockApp.get("/matching/composite")
           .setHeader("Accept","text/plain")
-          .execute().getContent must_== "2 conditions met (plain)"
+          .execute().content must_== "2 conditions met (plain)"
       MockApp.get("/matching/composite")
           .setHeader("Accept","application/xml")
           .setHeader("Referer","localhost")
-          .execute().getContent must_== "1 condition met"
+          .execute().content must_== "1 condition met"
     }
     "deal with multiple parameter values" in {
       MockApp.get("/matching/multiparam?test=one&test=two&test=three")
           .execute()
-          .getContent must_== "one,two,three"
+          .content must_== "one,two,three"
       MockApp.get("/matching/multiparam/one/two?test=three&test=four&test=five")
           .execute()
-          .getContent must_== "one,two,three,four,five"
+          .content must_== "one,two,three,four,five"
     }
     "deal with complex route contexts" in {
       MockApp.get("/matching/complex/Chris")
           .execute()
-          .getContent must_== "You passed a complex route."
+          .content must_== "You passed a complex route."
       MockApp.get("/matching/complex/Chuck")
           .execute()
-          .getContent must_== "You passed a complex route."
+          .content must_== "You passed a complex route."
       MockApp.get("/matching/complex/Joe")
           .execute()
-          .getContent must_== "You failed to pass complex route using 'Joe'."
+          .content must_== "You failed to pass complex route using 'Joe'."
     }
   }
 

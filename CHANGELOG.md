@@ -1,6 +1,27 @@
 # Circumflex Change Log
 
-Version 2.0 was a great reorganization, so it is now a baseline for change log.
+## 2.0.3
+
+* Moved to Jetty 7.2.4 to allow Web Sockets support.
+
+* Switched to Apache Http Client for testing (instead of Jetty's Servlet Tester).
+
+* All ScalaDocs are stripped.
+
+* Public directories are not delegated to underlying default servlets which
+  tend to allow directory listings (security-related issue).
+
+* URL-encoded JSESSIONID is not reported by `request.uri` anymore, thus it does not
+  participate in regular matching.
+
+* Added fenced code blocks like on GitHub (due to Markeven's nature, empty lines are
+  condensed anyway).
+
+* Added block postprocessors to Markeven.
+
+* `ValidationException` moved to `circumflex-core`.
+
+* Changed `orm.ehcacheManager` configuration.
 
 ## 2.0.2
 
@@ -33,4 +54,6 @@ Version 2.0 was a great reorganization, so it is now a baseline for change log.
   `SimpleExpression`.
 
 * Added new implicit convertion from boolean fields to predicates.
+
+## Older changes
 

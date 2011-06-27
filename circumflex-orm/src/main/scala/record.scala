@@ -66,7 +66,6 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   to use different strategy mix in one of the `Generator` traits or simply override the `persist`
   method.
   */
-
   def refresh(): this.type = if (transient_?)
     throw new ORMException("Could not refresh transient record.")
   else {

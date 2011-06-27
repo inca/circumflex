@@ -25,13 +25,6 @@ in action.
 
    [tests]: http://github.com/inca/circumflex/tree/master/circumflex-web/src/test/scala/
 */
-
-/**
- * Performs request routing for an application.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/router.scala">router.scala</a>.
- */
 class RequestRouter(var prefix: String = "") {
 
   implicit def string2response(str: String): RouteResponse =
@@ -144,7 +137,4 @@ object NopRoute extends RoutingContext[Any] {
   def matches = false
 }
 
-/**
- * @see RequestRouter
- */
 case class RouteResponse(val body: String)

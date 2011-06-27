@@ -24,21 +24,16 @@ Following objects configure different aspects of Circumflex ORM:
   * _transaction manager_ is responsible for allocating current transactions
   for execution contexts.
 */
-
 /*!## Connection Provider
 
 The `ConnectionProvider` is a simple trait responsible for acquiring JDBC
 connections throughout the application.
 */
 trait ConnectionProvider {
-  /**
-   * Opens new JDBC connection.
-   */
+
   def openConnection(): Connection
 
-  /**
-   * Closes the provider (and underlying `DataSource` if applicable).
-   */
+
   def close(): Unit
 }
 
@@ -88,10 +83,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
     }
   }
 
-  /**
-   * Configure datasource instance. It is retrieved from JNDI if 'orm.connection.datasource'
-   * is specified or is constructed using c3p0 otherwise.
-   */
+
   protected def createDataSource: DataSource = cx.get("orm.connection.datasource") match {
     case Some(jndiName: String) => {
       val ctx = new InitialContext
@@ -156,9 +148,7 @@ If you intend to use custom types, provide your own implementation.
 */
 class TypeConverter {
 
-  /**
-   * Writes a value to specified `PreparedStatement` at specified `paramIndex`.
-   */
+
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit =
     parameter match {
       case None | null => st.setObject(paramIndex, null)
@@ -271,14 +261,10 @@ class Transaction {
 
 trait TransactionManager {
 
-  /**
-   * Indicates that current transaction is allocated.
-   */
+
   def hasLive_?(): Boolean
 
-  /**
-   * Returns current transaction or allocates a new one.
-   */
+
   def get: Transaction
 }
 

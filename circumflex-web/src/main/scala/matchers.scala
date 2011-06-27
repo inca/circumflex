@@ -13,7 +13,6 @@ match results on successful match and are used in routes definition.
 
 Match results are subsequently used inside matched route's block.
 */
-
 /*!## Match Results
 
 The results of matching contain information about successful match. The `name` reflects
@@ -21,13 +20,6 @@ the name of the `Matcher` which yielded this match result, and the `params` cont
 strings captured by `Matcher`. The special name `splat` is assigned to parameters with
 unknown name (`+`, `*` or any group, if you use regular expressions).
 */
-
-/**
- * Provides information about successful match.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/matchers.scala">matchers.scala</a>.
- */
 class MatchResult(val name: String,
                   val params: (String, String)*) extends Map[String, String] {
   def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
@@ -53,22 +45,12 @@ class MatchResult(val name: String,
 
 /*! Matchers can be composed together using the `&` method. The `CompositeMatcher` will
 only yield match results if all it's matchers succeed.*/
-
-/**
- * Provides matching mechanism to routes.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/matchers.scala">matchers.scala</a>.
- */
 trait Matcher {
   def apply(): Option[Seq[MatchResult]]
   def add(matcher: Matcher): CompositeMatcher
   def &(matcher: Matcher) = add(matcher)
 }
 
-/**
- * @see Matcher
- */
 trait AtomicMatcher extends Matcher {
   def name: String
   def add(matcher: Matcher) = new CompositeMatcher()
@@ -76,9 +58,6 @@ trait AtomicMatcher extends Matcher {
           .add(matcher)
 }
 
-/**
- * @see Matcher
- */
 class CompositeMatcher extends Matcher {
   private var _matchers: Seq[Matcher] = Nil
   def matchers = _matchers
@@ -97,7 +76,6 @@ class CompositeMatcher extends Matcher {
     case e: MatchError => None
   }
 }
-
 
 /*!## The `RegexMatcher`
 
@@ -129,10 +107,6 @@ the corresponding `MatchResult`. All other parameters are accessible via the `pa
 method (note that named parameters are groups too, so they appear inside `params`
 and have their index as well).
 */
-
-/**
- * @see Matcher
- */
 class RegexMatcher(val name: String,
                    val value: String,
                    protected var regex: Regex,
@@ -167,10 +141,6 @@ class RegexMatcher(val name: String,
 }
 
 /*! `HeaderMatcher` is used to match the requests by contents of their headers. */
-
-/**
- * @see Matcher
- */
 class HeaderMatcher(name: String,
                     regex: Regex,
                     groupNames: Seq[String] = Nil)
@@ -183,10 +153,6 @@ class HeaderMatcher(name: String,
 
 /*! `HeaderMatcherHelper` provides DSL for matching requests by headers. See `matchers` object
 in package `ru.circumflex.web` for more information. */
-
-/**
- * @see Matcher
- */
 class HeaderMatcherHelper(name: String) {
   def apply(regex: Regex, groupNames: Seq[String] = Nil) =
     new HeaderMatcher(name, regex, groupNames)

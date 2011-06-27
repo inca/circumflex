@@ -31,13 +31,6 @@ information refer to Java Servlet API.
 Since Circumflex is UTF-friendly it will implicitly set character encoding of request body
 to `UTF-8`. Feel free to change it if your application requires so.
 */
-
-/**
- * Provides a wrapper around `HttpServletRequest`, which is still available as `raw` field.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/request.scala">request.scala</a>.
- */
 class HttpRequest(val raw: HttpServletRequest) {
 
   /*!## Request Basics
@@ -56,6 +49,9 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   The result of `uri`, `url` and `queryString` is decoded into UTF-8 string using `URLDecoder`.
 
+  Note that JSESSIONID encoded into URI is not reported via method `uri` (thus, it does not
+  participate in matching).
+
   Also note that if the method is overriden by the `_method` parameter, the original method is
   saved in context under the `cx.originalMethod` key.
   */
@@ -69,7 +65,14 @@ class HttpRequest(val raw: HttpServletRequest) {
       m.trim.toLowerCase
     case _ => raw.getMethod.toLowerCase
   }
-  lazy val uri = URLDecoder.decode(raw.getRequestURI, "UTF-8")
+  lazy val uri = {
+    var u = URLDecoder.decode(raw.getRequestURI, "UTF-8")
+    val sid = ";jsessionid=" + sessionId
+    val i = u.indexOf(sid)
+    if (i != -1 && i == u.length - sid.length)    // endsWith
+      u = u.substring(0, i)
+    u
+  }
   lazy val queryString = if (raw.getQueryString == null) "" else
     URLDecoder.decode(raw.getQueryString, "UTF-8")
   lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")
@@ -236,7 +239,7 @@ class HttpRequest(val raw: HttpServletRequest) {
       if (s != null) any2option(s.getAttribute(key))
       else None
     }
-    def invalidate: this.type = {
+    def invalidate(): this.type = {
       val s = raw.getSession(false)
       if (s != null) s.invalidate
       return this
@@ -307,36 +310,21 @@ class HttpRequest(val raw: HttpServletRequest) {
     visit [Commons FileUpload Project Page](http://commons.apache.org/fileupload).
     */
 
-    /**
-     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
-     * using specified `factory`. Returns `Nil` if request does not have multipart content.
-     */
     def parseFileItems(factory: FileItemFactory): Seq[FileItem] =
       if (multipart_?) {
         val uploader = new ServletFileUpload(factory)
         return asScalaBuffer(uploader.parseRequest(raw).asInstanceOf[java.util.List[FileItem]])
       } else Nil
 
-    /**
-     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
-     * using `DiskFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
-     * `Nil` if request does not have multipart content.
-     */
+
     def parseFileItems(sizeThreshold: Int, tempStorage: File): Seq[FileItem] =
       parseFileItems(new DiskFileItemFactory(sizeThreshold, tempStorage))
 
-    /**
-     * Parses multipart request into a sequence of `FileItem` (Apache Commons FileUpload)
-     * using `DiskFileItemFactory` with specified `sizeThreshold` and `tempStorage`. Returns
-     * `Nil` if request does not have multipart content.
-     */
+
     def parseFileItems(sizeThreshold: Int, tempStorage: String): Seq[FileItem] =
       parseFileItems(sizeThreshold, new File(tempStorage))
 
-    /**
-     * Parses multipart request into an iterator of `FileItemStream` (Apache Commons FileUpload).
-     * Returns an empty iterator if request does not have multipart content.
-     */
+
     def parseFileStreams(): Iterator[FileItemStream] = if (multipart_?) {
       val it = new ServletFileUpload().getItemIterator(raw)
       return new Iterator[FileItemStream]() {

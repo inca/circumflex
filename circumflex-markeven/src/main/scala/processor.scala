@@ -7,8 +7,11 @@ import collection.mutable.{HashMap, ListBuffer}
 
 /*!# The Markeven Processor
 
-`Markeven` transforms text files into HTML using a set of simple rules.
-It takes most ideas from [Markdown][], but has more strict rules, which lead to better
+`MarkevenProcessor` transforms text files into HTML using a set of simple rules.
+`MarkevenProcessor` should be instantiated for every task and should not be shared
+between threads or tasks to avoid orphaned data.
+
+Markeven takes most ideas from [Markdown][], but has more strict rules, which lead to better
 source structure and enhanced performance.
 
   [Markdown]: http://daringfireball.net/projects/markdown/syntax
@@ -34,12 +37,6 @@ Block elements are always delimited by two or more line ends (`\n\n`):
     This is a paragraph                                       {.no-highlight}
 
         this is a code block
-
-        But this is still
-    a paragraph.
-
-This behavior is different from [Markdown][], which interprets last block as two blocks: paragraph
-and code block.
 
 ### Paragraphs                         {#p}
 
@@ -128,6 +125,23 @@ Markeven will produce:
     <p>Here's some code:</p>                                            {.html}
     <pre><code>println("Hello world!")
     </code></pre>
+
+You can indent only the first line of the code block. Note, however, that Markeven will trim at most
+4 spaces in the beginning of each line.
+
+You can also use GitHub like syntax to create fenced code blocks in case you find indenting each code line
+cumbersome:
+
+``` {.awesome-code}
+def toHtml(str: String) = markeven.toHtml(str)
+```
+
+This will produce following markup:
+
+```
+<pre class="awesome-code"><code>def toHtml(str: String) =
+    markeven.toHtml(str)</code></pre>
+```
 
 ### Ordered and unordered lists                 {#ol-ul}
 
@@ -438,21 +452,27 @@ class MarkevenProcessor() {
   val links = new HashMap[String, LinkDefinition]()
   var level = 0
   val macros = new HashMap[String, StringEx => CharSequence]()
+  val postProcessors = new ListBuffer[(String, StringEx => StringEx)]()
 
   def increaseIndent: Unit = level += 1
   def decreaseIndent: Unit = if (level > 0) level -= 1
+
+  def resolveLink(id: String): Option[LinkDefinition] = links.get(id)
 
   def addMacro(name: String, function: StringEx => CharSequence): this.type = {
     macros += (name -> function)
     return this
   }
 
+  def postProcess(element: String)(handler: StringEx => StringEx): Unit = {
+    this.postProcessors ++= List(element -> handler)
+  }
+
   def currentIndent: String =
     if (level <= 0) return ""
     else "  " * level
 
-  def normalize(s: StringEx): StringEx = s.replaceAll("\t","    ")
-      .replaceAll(regexes.lineEnds, "\n")
+  def normalize(s: StringEx): StringEx = s.replaceAll("\t","    ").replaceAll(regexes.lineEnds, "\n")
 
   def cleanEmptyLines(s: StringEx): StringEx = s.replaceAll(regexes.blankLines, "")
 
@@ -469,8 +489,8 @@ class MarkevenProcessor() {
     ""
   })
 
-  def hashInlineHtml(s: StringEx, pattern: Pattern, out: String => String): StringEx =
-    s.replaceIndexed(pattern, m => {
+  def hashHtmlBlocks(s: StringEx): StringEx =
+    s.replaceIndexed(regexes.inlineHtmlBlockStart, m => {
       val startIdx = m.start
       var endIdx = 0
       if (m.group(2) != null) {
@@ -493,11 +513,12 @@ class MarkevenProcessor() {
       }
       // add to protector and replace
       val key = protector.addToken(s.buffer.subSequence(startIdx, endIdx))
-      (out(key), endIdx)
+      ("\n\n" + key + "\n\n", endIdx)
     })
 
-  def hashHtmlBlocks(s: StringEx): StringEx =
-    hashInlineHtml(s, regexes.inlineHtmlBlockStart, key => "\n\n" + key + "\n\n")
+  def hashInlineHtml(s: StringEx): StringEx = s.replaceAll(regexes.htmlTag, { m =>
+    protector.addToken(m.group(0))
+  })
 
   def hashHtmlComments(s: StringEx): StringEx = s.replaceAll(regexes.htmlComment, m =>
     "\n\n" + protector.addToken(m.group(0)) + "\n\n")
@@ -523,13 +544,32 @@ class MarkevenProcessor() {
         case _ => return new ParagraphBlock(s, selector)
       }
     // assume code block
-    if (s.matches(regexes.d_code))
+    if (s.startsWith("    "))
       return processComplexChunk(chunks, new CodeBlock(s, selector),
-        c => c.matches(regexes.d_code))
+        c => c.startsWith("    "))
     // trim any leading whitespace
     val indent = s.trimLeft
     // do not include empty freaks
     if (s.length == 0) return EmptyBlock
+    // assume fenced code block
+    if (s.startsWith("```")) {
+      val c = s.clone.substring(3)
+      if (c.startsWith("\n"))
+        c.substring(1)
+      // self-contained block?
+      if (fence_end_?(c))
+        return new CodeBlock(c, selector).fenced()
+      var inside = true
+      return processComplexChunk(chunks, new CodeBlock(c, selector).fenced(), { c =>
+        val chunk = unprotect(c)
+        if (!inside) false
+        else {
+          if (fence_end_?(chunk))
+            inside = false
+          true
+        }
+      })
+    }
     // assume unordered list and ordered list
     if (s.startsWith("* "))
       return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent),
@@ -580,6 +620,17 @@ class MarkevenProcessor() {
     return block
   }
 
+  def fence_end_?(s: StringEx): Boolean = {
+    s.trimRight
+    if (s.endsWith("```")) {
+      s.substring(0, s.length - 3)
+      if (s.endsWith("\n"))
+        s.substring(0, s.length - 1)
+      return true
+    }
+    return false
+  }
+
   def ol_?(s: StringEx, indent: Int): Boolean = {
     val i = new CharIterator(s)
     while (i.hasNext && i.index < indent - 1)
@@ -609,9 +660,7 @@ class MarkevenProcessor() {
     return (c == '*' && i.hasNext && i.peek == ' ')
   }
 
-  /**
-   * Strips a selector from first line of block. Returns read selector.
-   */
+
   def stripSelector(s: StringEx): Selector = {
     var id = ""
     var classes = new ListBuffer[String]()
@@ -641,9 +690,8 @@ class MarkevenProcessor() {
   }
 
   def transform(s: StringEx): StringEx = {
-    protector.clear
     normalizeSpan(s)
-    hashInlineHtml(s, regexes.inlineHtmlSpanStart, key => key)
+    hashInlineHtml(s)
     doMacros(s)
     encodeChars(s)
     doCodeSpans(s)
@@ -658,11 +706,6 @@ class MarkevenProcessor() {
 
   def normalizeSpan(s: StringEx): StringEx =
     s.trim.replaceAll("  \n", "<br/>\n").replaceAll("\n", " ")
-
-  def encodeChars(s: StringEx): StringEx =
-    s.replaceAll(regexes.e_amp, "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
 
   protected def processSingleMacro(m: Matcher): CharSequence = {
     var name = m.group(1)
@@ -680,7 +723,6 @@ class MarkevenProcessor() {
   def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m => {
     val s = new StringEx(m.group(2)).trim
     // there can be protected content inside codespans, so decode them first
-    unprotect(s)
     encodeChars(s)
     protector.addToken(s.append("</code>").prepend("<code>"))
   })
@@ -697,10 +739,8 @@ class MarkevenProcessor() {
     if (id == "") id = linkText
     id = id.trim.toLowerCase
     val linkContent = new StringEx(linkText)
-    // there can be protected content inside linktexts, so decode them first
-    unprotect(linkContent)
     doSpanEnhancements(linkContent)
-    val result = links.get(id)
+    val result = resolveLink(id)
         .map(ld => ld.toLink(linkContent))
         .getOrElse(new StringEx(m.group(0)))
     doMacros(result)
@@ -712,7 +752,7 @@ class MarkevenProcessor() {
     var id = m.group(2)
     if (id == "") id = altText
     id = id.trim.toLowerCase
-    val result = links.get(id)
+    val result = resolveLink(id)
         .map(ld => ld.toImageLink(altText))
         .getOrElse(new StringEx(m.group(0)))
     doMacros(result)
@@ -721,12 +761,10 @@ class MarkevenProcessor() {
 
   def doInlineLinks(s: StringEx): StringEx = s.replaceAll(regexes.inlineLinks, m => {
     val linkText = m.group(1)
-    val url = processUrl(m.group(2))
+    val url = encodeChars(unprotect(processUrl(m.group(2))))
     var title = m.group(4)
     if (title == null) title = ""
     val linkContent = new StringEx(linkText)
-    // there can be protected content inside linktexts, so decode them first
-    unprotect(linkContent)
     doSpanEnhancements(linkContent)
     val result = new LinkDefinition(url, new StringEx(title)).toLink(linkContent)
     doMacros(result)
@@ -778,14 +816,14 @@ class MarkevenProcessor() {
     s
   }
 
-  def unprotect(s: StringEx): StringEx = {
-    val found = s.replaceIfFound(regexes.protectKey, m => {
+  def unprotect(s: StringEx): StringEx =
+    s.replaceAll(regexes.protectKey, m => {
       val key = m.group(0)
-      protector.decode(key).getOrElse(key)
+      protector.decode(key) match {
+        case Some(cs) => unprotect(new StringEx(cs))
+        case _ => key
+      }
     })
-    if (found) unprotect(s)
-    return s
-  }
 
   def writeHtml(blocks: Seq[Block], out: Writer): Unit =
     blocks.foreach(b => if (b != EmptyBlock) {

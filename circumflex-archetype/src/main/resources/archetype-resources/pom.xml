@@ -12,7 +12,7 @@
 
   <properties>
     <port>8180</port>
-    <cx.version>2.0.2</cx.version>
+    <cx.version>2.0.3</cx.version>
     <cx.router>${package}.Main</cx.router>
   </properties>
 

@@ -9,9 +9,6 @@ import java.util.{Collection => JCollection}
 import collection.mutable.ListBuffer
 import org.apache.commons.io.{FilenameUtils, IOUtils, FileUtils}
 
-/**
- * A simple wrapper over a Documentation -> Code Block tuple.
- */
 case class Section(private var _doc: String = "", private var _code: String = "") {
 
   private var _committed = false
@@ -61,7 +58,6 @@ FreeMarker `Configuration` and templates.
 
  [1]: http://freemarker.org "FreeMarker Templating Engine"
 */
-
 object Docco {
   def apply(sourceFile: String, stripScaladoc: Boolean = true): Docco =
     new Docco(new File(sourceFile), stripScaladoc)
@@ -132,7 +128,6 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
   }
 
   /* Export to HTML */
-
   def toHtml(writer: Writer): Unit = ftlConfig.getTemplate(pageTemplate)
       .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
 
@@ -188,7 +183,7 @@ class DoccoBatch {
   // Title for index
   val title: String = cx.get("docco.title").map(_.toString)
       .getOrElse(basePath.getCanonicalFile.getName + " index")
-  // Should we strip Scaladoc ( /** ... */ ) or not?
+  // Should we strip Scaladoc ( `/** .. */` ) or not?
   val stripScaladoc: Boolean = cx.get("docco.stripScaladoc")
       .map(_.toString.toBoolean).getOrElse(true)
   // Should we ignore files with no docco?
@@ -223,9 +218,7 @@ class DoccoBatch {
       }
     }
 
-  /**
-   * Builds the documentation suite.
-   */
+
   def generate(): Unit = {
     prepareCustomResources
     // crawl basePath for the sources

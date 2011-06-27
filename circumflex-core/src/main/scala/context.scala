@@ -34,31 +34,10 @@ Context is initialized when it is first accessed via `Context.get` method.
 You can override default context implementation by setting `cx.context`
 configuration parameter.
 */
-
-/**
- * Provides simple thread-local storage for organizing an execution context of
- * an application. The companion object, `Context`, is used to retrieve a context
- * bound to current thread (a.k.a. current context) as well as to initialize and
- * destroy current context.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-core/context.scala">context.scala</a>.
- */
 class Context extends HashMap[String, Any] with UntypedContainer {
   override def stringPrefix = "ctx"
 }
 
-/**
- * Singleton which is used to initialize, retrieve and destroy current contexts.
- *
- * Circumflex Context API also provides mechanisms to subscribe to context
- * initialization and finalization events. Note that these methods are not thread-safe,
- * so you can only add subscriptions inside some initialization block of your
- * application.
- *
- *  For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-core/context.scala">context.scala</a>.
- */
 object Context {
 
   // We use thread-local storage so that each thread can get it's own instance of context.
@@ -68,57 +47,36 @@ object Context {
   protected var initListeners: Seq[Context => Unit] = Nil
   protected var destroyListeners: Seq[Context => Unit] = Nil
 
-  /**
-   * Subscribes specified `listener` to context initialization event.
-   */
+
   def addInitListener(listener: Context => Unit): Unit =
     initListeners ++= List(listener)
-  /**
-   * Subscribes specified `listener` to context finalization event.
-   */
+
   def addDestroyListener(listener: Context => Unit): Unit =
     destroyListeners ++= List(listener)
 
-  /**
-   * Returns an instance of the `Context` class bound to current thread (a.k.a. current context).
-   * Performs context initialization if it hasn't been initialized before.
-   */
+
   def get(): Context = {
     if (!live_?) init()
     return threadLocal.get
   }
 
-  /**
-   * Indicates if the current context has been initialized.
-   */
+
   def live_?(): Boolean = threadLocal.get != null
 
-  /**
-   * Performs current context initialization. New instance of `Context` is created
-   * using either the class provided by `cx.context` configuration parameter or
-   * the default implementation, the `Context` class. After initialization each
-   * listener subscribed to context initialization event is executed.
-   */
+
   def init(): Unit = {
     threadLocal.set(cx.instantiate[Context]("cx.context", new Context))
     initListeners.foreach(l => l.apply(get()))
   }
 
-  /**
-   * Destroys current context.
-   * After that each listener subscribed to context finalization event is executed.
-   */
+
   def destroy(): Unit = {
     if (!live_?) return
     destroyListeners.foreach(l => l.apply(get()))
     threadLocal.set(null)
   }
 
-  /**
-   * Executes specified `block` within new context (by initializing a new one,
-   * passing it to the block and then destroying it). If previous context exists,
-   * it's content becomes unavailable within block, but is restored afterwards.
-   */
+
   def executeInNew[A](block: Context => A): A = {
     val previousCtx: Option[Context] = if (live_?) Some(get) else None
     try {
@@ -151,13 +109,6 @@ Following syntaxes are available for setting context variables:
 The implicit conversions from `Symbol` into `ContextVarHelper` are available in the
 `ru.circumflex.core` package.
 */
-
-/**
- * A helper which enables DSL-like syntax for context.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-core/context.scala">context.scala</a>.
- */
 class ContextVarHelper(val key: Symbol) {
   def apply[T](): T = ctx.as[T](key)
   def get[T](): Option[T] = ctx.getAs[T](key)

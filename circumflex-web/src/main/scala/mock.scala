@@ -1,10 +1,14 @@
 package ru.circumflex.web
 
-import ru.circumflex.core._
-import javax.servlet.http.Cookie
-import org.mortbay.jetty.Handler
-import org.mortbay.jetty.servlet.{DefaultServlet}
-import org.mortbay.jetty.testing.{HttpTester, ServletTester}
+import org.apache._
+import http.client.entity.UrlEncodedFormEntity
+import http.Header
+import http.impl.client.DefaultHttpClient
+import http.message.BasicNameValuePair
+import http.util.EntityUtils
+import http.client.{methods => m}
+import collection.JavaConversions._
+import collection.mutable.ListBuffer
 
 /*!# Testing your application
 
@@ -14,107 +18,66 @@ Refer to our test sources at [`circumflex-web/src/test/scala`][tests] to see it 
 
    [tests]: http://github.com/inca/circumflex/tree/master/circumflex-web/src/test/scala/
 */
-
-/**
- * Provides functionality to test your web application.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/mock.scala">mock.scala</a>.
- */
 trait MockServer extends StandaloneServer {
-
-  protected var _tester: ServletTester = null
-
-  def tester = _tester
-
-  def initTester() = {
-    _tester = new ServletTester()
-    _tester.setContextPath(contextPath)
-    _tester.setResourceBase(webappRoot)
-    _tester.addServlet(classOf[DefaultServlet], "/*")
-    _tester.addFilter(classOf[CircumflexFilter], "/*", Handler.ALL)
+  def baseUrl = "http://localhost:" + port
+  def conversate[A](c: MockConversation => A): A = {
+    val conv = new MockConversation(this)
+    c(conv)
   }
-
-  override def start = {
-    initTester()
-    _tester.start
-  }
-
-  override def stop = if (_tester != null) _tester.stop
-
-  // ## HTTP Methods
-
-  def get(uri: String) = new MockRequest(this, "GET", uri)
-  def head(uri: String) = new MockRequest(this, "HEAD", uri)
-  def post(uri: String) = new MockRequest(this, "POST", uri)
-          .setHeader("Content-Type", "application/x-www-form-urlencoded")
-  def put(uri: String) = new MockRequest(this, "PUT", uri)
-          .setHeader("Content-Type", "application/x-www-form-urlencoded")
-  def delete(uri: String) = new MockRequest(this, "DELETE", uri)
-          .setHeader("Content-Type", "application/x-www-form-urlencoded")
-  def options(uri: String) = new MockRequest(this, "OPTIONS", uri)
-          .setHeader("Content-Type", "application/x-www-form-urlencoded")
-  def patch(uri: String) = new MockRequest(this, "PATCH", uri)
-          .setHeader("Content-Type", "application/x-www-form-urlencoded")
-
+  def get(uri: String) = conversate(_.get(uri))
+  def post(uri: String) = conversate(_.post(uri))
+  def put(uri: String) = conversate(_.put(uri))
+  def delete(uri: String) = conversate(_.delete(uri))
+  def head(uri: String) = conversate(_.head(uri))
+  def options(uri: String) = conversate(_.options(uri))
 }
 
-/**
- * @see MockServer
- */
-class MockRequest(val mockServer: MockServer, val method: String, val uri: String) {
+object MockApp extends MockServer
 
-  private val req = new HttpTester
+class MockConversation(val server: MockServer) {
+  val baseUrl = server.baseUrl
+  val client = new DefaultHttpClient()
+  def get(uri: String) = new MockRequest(this, new m.HttpGet(baseUrl + uri))
+  def post(uri: String) = new MockRequest(this, new m.HttpPost(baseUrl + uri))
+  def put(uri: String) = new MockRequest(this, new m.HttpPut(baseUrl + uri))
+  def delete(uri: String) = new MockRequest(this, new m.HttpDelete(baseUrl + uri))
+  def head(uri: String) = new MockRequest(this, new m.HttpHead(baseUrl + uri))
+  def options(uri: String) = new MockRequest(this, new m.HttpOptions(baseUrl + uri))
+  // patch is still not supported by apache httpclient =(
+}
 
-  req.setMethod(method)
-  req.setURI(uri)
-  req.setVersion("HTTP/1.1")
-  req.setHeader("Host", "localhost")
-
+class MockRequest(val conv: MockConversation, val req: m.HttpRequestBase) {
+  val params = new ListBuffer[(String, String)]
   def setHeader(name: String, value: String): this.type = {
     req.setHeader(name, value)
     return this
   }
-
-  def setDateHeader(name: String, value: Long): this.type = {
-    req.setDateHeader(name, value)
+  def setParam(name: String, value: String): this.type = {
+    params += name -> value
     return this
   }
-
-  def setLongHeader(name: String, value: Long): this.type = {
-    req.setLongHeader(name, value)
-    return this
+  def execute() = {
+    // apply params if applicable
+    req match {
+      case req: m.HttpEntityEnclosingRequestBase =>
+        val pairs = params.map(p => new BasicNameValuePair(p._1, p._2)).toList
+        val e = new UrlEncodedFormEntity(asJavaList(pairs))
+        req.setEntity(e)
+      case _ =>
+    }
+    new MockResponse(conv, conv.client.execute(req))
   }
-
-  def setContent(content: String): this.type = {
-    req.setContent(content)
-    return this
-  }
-
-  def setCookie(cookie: Cookie): this.type = {
-    req.addSetCookie(cookie)
-    return this
-  }
-
-  def get_? = req.getMethod.equalsIgnoreCase("GET")
-  def post_? = req.getMethod.equalsIgnoreCase("POST")
-  def put_? = req.getMethod.equalsIgnoreCase("PUT")
-  def delete_? = req.getMethod.equalsIgnoreCase("DELETE")
-  def head_? = req.getMethod.equalsIgnoreCase("HEAD")
-  def options_? = req.getMethod.equalsIgnoreCase("OPTIONS")
-  def patch_? = req.getMethod.equalsIgnoreCase("PATCH")
-
-  override def toString = req.generate
-
-  def execute(): HttpTester = {
-    val result = new HttpTester
-    result.parse(mockServer.tester.getResponses(req.generate))
-    return result
-  }
-
+  override def toString = req.getRequestLine.toString
 }
 
-/**
- * @see MockServer
- */
-object MockApp extends MockServer
+class MockResponse(val conv: MockConversation, val res: http.HttpResponse) {
+  def statusCode = {
+    println(res.getStatusLine.getStatusCode)
+    println(res.getStatusLine)
+    println(res)
+    res.getStatusLine.getStatusCode
+  }
+  def content = EntityUtils.toString(res.getEntity)
+  def headers(name: String): Seq[Header] = res.getHeaders(name).toSeq
+  override def toString = res.getStatusLine.toString
+}

@@ -1,9 +1,9 @@
 package ru.circumflex.web
 
 import ru.circumflex.core._
-import org.mortbay.jetty.servlet.{Context => JettyContext}
-import org.mortbay.jetty.webapp.WebAppContext
-import org.mortbay.jetty.{Server}
+import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.server.Server
+import java.net.{InetAddress, InetSocketAddress}
 
 /*!# Standalone Server
 
@@ -27,74 +27,48 @@ up and running:
 
 Jetty's `WebAppContext` is used as default requests handler: it provides sensible defaults
 for almost every web application startup (it reads configuration from `web.xml` and all other
-Jetty-specific descriptors). You can override default handler:
-
-    object MyServer extends StandaloneServer {
-      context(new JettyContext(...))
-    }
-
-You can also supply your own implementation of Jetty's `Server`:
-
-    object MyServer extends StandaloneServer {
-       server(new JettyServer(...))
-    }
+Jetty-specific descriptors). You can override the server with your own implementation using
+the `cx.jetty.server` configuration property (the normal instantiation facility is employed
+in this case):
 
 Refer to Jetty documentation for more information.
 */
-
-/**
- * Provides standalone server based on Jetty.
- *
- * For more information refer to
- * <a href="http://circumflex.ru/api/2.0.2/circumflex-web/standalone.scala">standalone.scala</a>.
- */
 class StandaloneServer {
-
-  protected var _jetty: Server = null
-  protected var _context: JettyContext = null
-
+  val listenAddress: InetAddress = cx.get("cx.listenAddress") match {
+    case Some(a: InetAddress) => a
+    case Some(s: String) => InetAddress.getByName(s)
+    case _ => InetAddress.getByName("0.0.0.0")
+  }
   val port: Int = cx.get("cx.port") match {
     case Some(p: Int) => p
     case Some(s: String) => try { s.toInt } catch { case _ => 8180 }
     case _ => 8180
   }
-
   val webappRoot: String = cx.get("cx.webappRoot") match {
     case Some(s: String) => s
     case _ => "src/main/webapp"
   }
-
   val contextPath: String = cx.get("cx.contextPath") match {
     case Some(s: String) => s
     case _ => "/"
   }
 
-  def context(jettyContext: JettyContext): this.type = {
-    _context = jettyContext
-    return this
-  }
-
-  def context: JettyContext = {
-    if (_context == null) {
-      _context = new WebAppContext(webappRoot, contextPath)
-    }
-    return _context
-  }
-
-  def server(jettyServer: Server): this.type = {
-    _jetty = jettyServer
-    return this
-  }
+  protected var _server: Server = _
 
   def server: Server = {
-    if (_jetty == null) {
-      _jetty = new Server(port)
-      _jetty.setHandler(context)
+    if (_server == null) {
+      _server = cx.instantiate[Server]("cx.jetty.server", prepareDefaultServer)
     }
-    return _jetty
+    return _server
+  }
+
+  def prepareDefaultServer(): Server = {
+    val handler = new WebAppContext(webappRoot, contextPath)
+    val srv = new Server(new InetSocketAddress(listenAddress, port))
+    srv.setHandler(handler)
+    return srv
   }
 
   def start = server.start
-  def stop = if (_jetty != null) _jetty.stop
-
+  def stop = server.stop
 }
