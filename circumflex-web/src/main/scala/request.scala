@@ -65,7 +65,7 @@ class HttpRequest(val raw: HttpServletRequest) {
       m.trim.toLowerCase
     case _ => raw.getMethod.toLowerCase
   }
-  lazy val uri = {
+  lazy val originalUri = {
     var u = URLDecoder.decode(raw.getRequestURI, "UTF-8")
     val sid = ";jsessionid=" + sessionId
     val i = u.indexOf(sid)
@@ -73,6 +73,7 @@ class HttpRequest(val raw: HttpServletRequest) {
       u = u.substring(0, i)
     u
   }
+  def uri = ctx.getAs[String]("cx.web.uri").getOrElse(originalUri)
   lazy val queryString = if (raw.getQueryString == null) "" else
     URLDecoder.decode(raw.getQueryString, "UTF-8")
   lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")
