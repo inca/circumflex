@@ -154,9 +154,6 @@ package object web {
     if you want to forward the request to another Circumflex route, you must make
     sure that `CircumflexFilter` is mapped with `<dispatcher>FORWARD</dispatcher>`
     in `web.xml`;
-    * `rewrite` changes URI for this request; this affects the `request.uri`
-    method which is used in standard routes; use `request.originalUri` to access
-    original URI after it has been rewritten;
     * `pass_!` sends request and response down the filter chain and then immediately
     flushes response.
 
@@ -205,9 +202,6 @@ package object web {
   def forward(url: String): Nothing = {
     request.forward(url)
     response.flush_!
-  }
-  def rewrite(newUri: String): Unit = {
-    ctx.update("cx.web.uri", newUri)
   }
   def pass_!(): Nothing = {
     filterChain.doFilter(request.raw, response.raw)

@@ -94,6 +94,25 @@ class RequestRouter(var prefix: String = "") {
     case None => new MatchResult("uri", "splat" -> request.uri)
   }
 
+  /*!## URI rewriting
+
+  Special `rewrite` route allows you to change URI for currently processed request.
+  If route has matched successfully, the URI will be set to the value returned by
+  the attached block. After that the matching will be continued.
+
+  This affects `request.uri` method which is used in standard routes.
+  Use `request.originalUri` to access original URI after it has been rewritten.
+
+  Here's the example of using URI rewriting:
+
+      rewrite("/a") = "/a/info"
+
+      get("/a") = { ... }   // will never match
+      get("/a/info") = { ... }  // will match for both `/a` and `/a/info` requests
+  */
+
+  val rewrite = new RewriteRoute
+
   /*!## Subroutes
 
   Subroutes represent an easy and powerful concept which allows nesting
@@ -156,6 +175,14 @@ class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
 class FilterRoute extends RoutingContext[Unit] {
   def matches = true
   protected def dispatch(block: => Unit) = block
+}
+
+class RewriteRoute extends RoutingContext[String] {
+  def matches = true
+  protected def dispatch(block: => String): Unit = {
+    val newUri = block
+    ctx.update("cx.web.uri", newUri)
+  }
 }
 
 object NopRoute extends RoutingContext[Any] {

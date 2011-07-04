@@ -40,7 +40,7 @@
 * The `any` route now does not perform method matching at all instead of just accepting
   standard HTTP methods.
 
-* Added `rewrite` method as a quick replacement for heavy `forward`.
+* Added `rewrite` route as a quick replacement for heavy `forward`.
 
 ## 2.0.1
 
