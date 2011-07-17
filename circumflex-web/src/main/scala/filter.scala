@@ -39,7 +39,7 @@ class CircumflexFilter extends Filter {
 
 
   def init(filterConfig: FilterConfig) = {
-    WEB_LOG.info("Circumflex 2.0.3")
+    WEB_LOG.info("Circumflex 2.1")
     cx("cx.filterConfig") = filterConfig
   }
 

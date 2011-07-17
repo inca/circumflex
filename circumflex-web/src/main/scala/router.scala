@@ -36,7 +36,7 @@ If you write lots of RESTful code, you probably come across following routing pa
 With code like this you would expect `/items/6` to hit the inner route,
 but it does not satisfy the outer route. In earlier versions you would have
 to forward the route `/items/:itemId` to enforce trailing slash inside subroutes.
-Since Circumflex 2.0.3 we made this a bit easier to you:
+Since Circumflex 2.1 we made this a bit easier to you:
 we simply do not take trailing slash into consideration when matching against the
 pattern ending with `/&#42;` (a slash and an asterisk). Note that this only
 affects string patterns, regex-patterns are processed normally. This also does not
