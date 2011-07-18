@@ -154,7 +154,7 @@ trait ValueHolder[T, R <: Record[_, R]] extends Container[T] with Wrapper[Option
 
   More specific predicates can be acquired from subclasses.
   */
-  def aliasedName = aliasStack.pop match {
+  def aliasedName = aliasStack.pop() match {
     case Some(alias: String) => alias + "." + name
     case _ => name
   }

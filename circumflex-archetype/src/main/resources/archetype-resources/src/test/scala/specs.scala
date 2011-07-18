@@ -14,11 +14,11 @@ object MySpec extends Specification {
 
   doBeforeSpec {
     cx("cx.router") = classOf[Main]
-    MockApp.start
+    MockApp.start()
   }
 
   doAfterSpec {
-    MockApp.stop
+    MockApp.stop()
   }
 
   "My application" should {

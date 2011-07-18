@@ -63,14 +63,16 @@ object Context {
 
   def isLive: Boolean = threadLocal.get != null
 
-  def init() = {
+  def init() {
     threadLocal.set(cx.instantiate[Context]("cx.context", new Context))
     initListeners.foreach(l => l.apply(get()))
   }
 
-  def destroy() = if (isLive) {
-    destroyListeners.foreach(_.apply(get()))
-    threadLocal.set(null)
+  def destroy() {
+    if (isLive) {
+      destroyListeners.foreach(_.apply(get()))
+      threadLocal.set(null)
+    }
   }
 
   def executeInNew[A](block: Context => A): A = {

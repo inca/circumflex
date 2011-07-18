@@ -2,11 +2,11 @@
 
 Simple selfclosing:
 
-<div id="preved"/>
+<div id="hi"/>
 
 Multiline selfclosing:
 
-<div id="preved"
+<div id="hello"
      class="world"/>
 
 Multiline:

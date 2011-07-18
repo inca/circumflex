@@ -269,7 +269,7 @@ class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
     this
   }
 
-  protected def _getPrefix = aliasStack.pop.map(_ + ".").getOrElse("")
+  protected def _getPrefix = aliasStack.pop().map(_ + ".").getOrElse("")
 
   override def aliasedName: String = {
     val prefix = _getPrefix
