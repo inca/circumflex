@@ -1,7 +1,7 @@
 package ru.circumflex
 package web
 
-import ru.circumflex.core._
+import core._
 import util.control.ControlThrowable
 
 /*!# Exceptions

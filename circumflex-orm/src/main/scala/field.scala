@@ -1,6 +1,7 @@
-package ru.circumflex.orm
+package ru.circumflex
+package orm
 
-import ru.circumflex.core._
+import core._
 import java.util.Date
 import xml._
 import java.sql.ResultSet

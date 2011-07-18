@@ -6,7 +6,7 @@ import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import java.io._
 import java.net.URLDecoder
-import ru.circumflex.core._
+import core._
 
 /*!# Circumflex Filter
 

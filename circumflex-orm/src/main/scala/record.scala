@@ -1,6 +1,7 @@
-package ru.circumflex.orm
+package ru.circumflex
+package orm
 
-import ru.circumflex.core._
+import core._
 
 /*!# Record
 

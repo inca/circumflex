@@ -1,5 +1,5 @@
-package ru.circumflex.web
-
+package ru.circumflex
+package web
 import javax.servlet.http.HttpServletResponse
 import collection.mutable.{ListBuffer, HashMap}
 import java.lang.String

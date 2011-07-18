@@ -1,9 +1,9 @@
-package ru.circumflex.docco
-
-import ru.circumflex.core._
-import ru.circumflex.freemarker._
+package ru.circumflex
+package docco
+import core._
+import freemarker._
 import java.io._
-import ru.circumflex.markeven
+import markeven
 import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}
 import java.util.{Collection => JCollection}
 import collection.mutable.ListBuffer

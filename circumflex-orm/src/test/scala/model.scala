@@ -1,4 +1,5 @@
-package ru.circumflex.orm
+package ru.circumflex
+package orm
 
 // Generic test model
 

@@ -1,5 +1,5 @@
-package ru.circumflex.maven;
-
+package ru.circumflex
+package maven;
 import org.apache.maven.plugin.MojoExecutionException;
 import java.io.File;
 import java.io.FileOutputStream;

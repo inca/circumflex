@@ -1,5 +1,5 @@
-package ru.circumflex.maven;
-
+package ru.circumflex
+package maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;

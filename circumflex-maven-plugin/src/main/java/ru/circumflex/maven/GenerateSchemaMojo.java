@@ -1,5 +1,5 @@
-package ru.circumflex.maven;
-
+package ru.circumflex
+package maven;
 import org.apache.commons.io.FilenameUtils;
 import ru.circumflex.core.Msg;
 import ru.circumflex.orm.DDLUnit;

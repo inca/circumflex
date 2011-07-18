@@ -1,9 +1,10 @@
-package ru.circumflex.orm
+package ru.circumflex
+package orm
 
 import org.specs.runner.JUnit4
 import org.specs.Specification
 import xml._
-import ru.circumflex.core._
+import core._
 
 object Sample {
   def createSchema() = new DDLUnit(Country, City, Capital, Developer, Project, Membership).CREATE()

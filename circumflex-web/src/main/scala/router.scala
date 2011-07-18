@@ -1,6 +1,6 @@
-package ru.circumflex.web
-
-import ru.circumflex.core._
+package ru.circumflex
+package web
+import core._
 import util.matching.Regex
 import xml.Node
 

@@ -1,10 +1,10 @@
-package ru.circumflex.markeven
-
+package ru.circumflex
+package markeven
 import javax.swing._
 import java.awt._
 import javax.swing.event._
 import java.awt.event._
-import ru.circumflex._, core._
+import _, core._
 
 object GUITesterMain extends Application {
   new GUITester().setVisible(true)

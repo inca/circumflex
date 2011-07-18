@@ -1,6 +1,6 @@
-package ru.circumflex.freemarker
-
-import ru.circumflex.core._
+package ru.circumflex
+package freemarker
+import core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
 import org.apache.commons.io.FileUtils

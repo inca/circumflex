@@ -1,6 +1,6 @@
 package ru.circumflex
 
-import ru.circumflex.core._
+import core._
 import java.util.regex.Pattern
 import net.sf.ehcache.CacheManager
 import collection.mutable.Stack

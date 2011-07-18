@@ -1,5 +1,5 @@
-package ru.circumflex.web
-
+package ru.circumflex
+package web
 import org.apache._
 import http.client.entity.UrlEncodedFormEntity
 import http.Header

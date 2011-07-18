@@ -1,10 +1,10 @@
 
-package ru.circumflex.web
-
+package ru.circumflex
+package web
 import scala.collection.Iterator
 import scala.collection.JavaConversions._
 import scala.xml._
-import ru.circumflex.core._
+import core._
 import javax.servlet.http.{HttpServletRequest}
 import java.security.Principal
 import java.util.{Locale, Date}

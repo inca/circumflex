@@ -1,8 +1,8 @@
-package ru.circumflex.freemarker
-
-import ru.circumflex.markeven
-import ru.circumflex.core._
-import ru.circumflex.web._
+package ru.circumflex
+package freemarker
+import markeven
+import core._
+import web._
 import freemarker.template._
 import freemarker.core.Environment
 import freemarker.cache._

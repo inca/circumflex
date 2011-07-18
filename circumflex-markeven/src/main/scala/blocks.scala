@@ -1,5 +1,5 @@
-package ru.circumflex.markeven
-
+package ru.circumflex
+package markeven
 import java.io._
 import java.util.regex._
 
@@ -8,14 +8,14 @@ class LinkDefinition(val url: StringEx, val title: StringEx) {
   def this(url: CharSequence, title: CharSequence) =
     this(new StringEx(url), new StringEx(title))
 
-  url.replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim
-  title.replaceAll("*", "&#42;").replaceAll("_", "&#95;").replaceAll("\"", "&quot;").trim
+  url.replaceAll("*", "&#42;").replaceAll("_", "&#95;").trim()
+  title.replaceAll("*", "&#42;").replaceAll("_", "&#95;").replaceAll("\"", "&quot;").trim()
 
   def toLink(linkText: CharSequence): StringEx = {
     val result = new StringEx("<a href=\"").append(url).append("\"")
     if (title.length > 0) result.append(" title=\"").append(title).append("\"")
     result.append(">").append(linkText).append("</a>")
-    return result
+    result
   }
 
   def toImageLink(alt: CharSequence): StringEx = {
@@ -23,7 +23,7 @@ class LinkDefinition(val url: StringEx, val title: StringEx) {
     if (title.length > 0) result.append(" title=\"").append(title).append("\"")
     if (alt.length > 0) result.append(" alt=\"").append(alt).append("\"")
     result.append("/>")
-    return result
+    result
   }
 }
 
@@ -52,10 +52,11 @@ abstract class Block(val text: StringEx, val selector: Selector) {
         .append("</")
         .append(element)
         .append(">")
-    return result
+    result
   }
-  def writeHtml(mp: MarkevenProcessor, out: Writer): Unit =
+  def writeHtml(mp: MarkevenProcessor, out: Writer) {
     out.write(toHtml(mp).toString)
+  }
   def processContent(mp: MarkevenProcessor): StringEx = text
   def attributes = ""
   def postProcess(mp: MarkevenProcessor, content: StringEx): StringEx =
@@ -79,8 +80,8 @@ abstract class NestedMarkupBlock(text: StringEx, selector: Selector)
     val blocks = mp.readBlocks(text)
     // do not wrap single paragraph
     if (blocks.size == 1 && isUnwrapBlock(blocks(0)))
-      return blocks(0).processContent(mp)
-    else return new StringEx(mp.newLine).append(mp.formHtml(blocks, true)).append(mp.currentIndent)
+      blocks(0).processContent(mp)
+    else new StringEx(mp.newLine).append(mp.formHtml(blocks, true)).append(mp.currentIndent)
   }
 
   def isUnwrapBlock(block: Block): Boolean = block.isInstanceOf[ParagraphBlock]
@@ -104,7 +105,7 @@ abstract class ListBlock(text: StringEx, selector: Selector, val baseline: Int)
       if (indent > 0) s.replaceAll(regexes.outdent(indent), "")
       new ListItemBlock(s, selector)
     }
-    return new StringEx(mp.newLine).append(mp.formHtml(blocks, true)).append(mp.currentIndent)
+    new StringEx(mp.newLine).append(mp.formHtml(blocks, true)).append(mp.currentIndent)
   }
 
 }
@@ -113,7 +114,7 @@ object EmptyBlock extends Block(new StringEx(""), new Selector()) {
   def element = ""
   override def processContent(mp: MarkevenProcessor) = text
   override def toHtml(mp: MarkevenProcessor) = text
-  override def writeHtml(mp: MarkevenProcessor, out: Writer): Unit = {}
+  override def writeHtml(mp: MarkevenProcessor, out: Writer) {}
 }
 
 class InlineHtmlBlock(text: StringEx)
@@ -144,11 +145,11 @@ class CodeBlock(text: StringEx, selector: Selector)
   protected var _fenced = false
   def indented(): this.type = {
     _fenced = false
-    return this
+    this
   }
   def fenced(): this.type = {
     _fenced = true
-    return this
+    this
   }
   def element = "code"
   override def toHtml(mp: MarkevenProcessor): StringEx = {
@@ -164,7 +165,7 @@ class CodeBlock(text: StringEx, selector: Selector)
     var result = text
     if (!_fenced)
       result = result.replaceAll(regexes.outdent(4), "")
-    return encodeChars(result)
+    encodeChars(result)
   }
 }
 
@@ -223,7 +224,7 @@ class TableBlock(text: StringEx, selector: Selector)
     if (l.matches(regexes.tableSeparatorLine) && chunks.hasNext) {
       // we have a heading; but let's parse separator first
       align = l.split(regexes.tableCellSplit).map { a =>
-        val v = a.trim
+        val v = a.trim()
         if (v.startsWith(":") && v.endsWith(":")) " align=\"center\""
         else if (v.startsWith(":")) " align=\"left\""
         else if (v.endsWith(":")) " align=\"right\""
@@ -272,7 +273,7 @@ class TableBlock(text: StringEx, selector: Selector)
     result.append(mp.newLine).append(mp.currentIndent).append("</tbody>")
     mp.decreaseIndent
     result.append(mp.newLine).append(mp.currentIndent)
-    return result
+    result
   }
 
   def parseCells(mp: MarkevenProcessor, s: StringEx): Seq[StringEx] =

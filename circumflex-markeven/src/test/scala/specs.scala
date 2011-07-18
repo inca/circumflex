@@ -1,5 +1,5 @@
-package ru.circumflex.markeven
-
+package ru.circumflex
+package markeven
 import org.specs.runner.JUnit4
 import org.specs.Specification
 import java.io.File

@@ -1,10 +1,10 @@
-package ru.circumflex.freemarker
-
+package ru.circumflex
+package freemarker
 import freemarker.template._
 import java.util.Date
 import org.apache.commons.beanutils.MethodUtils
 import java.lang.String
-import ru.circumflex.core._
+import core._
 import scala.collection.Map
 import scala.xml._
 import java.lang.reflect.{Modifier, Field, Method}

@@ -1,5 +1,5 @@
-package ru.circumflex.maven;
-
+package ru.circumflex
+package maven;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import ru.circumflex.docco.DoccoBatch;

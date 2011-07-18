@@ -1,5 +1,5 @@
-package ru.circumflex.scalate
-
+package ru.circumflex
+package scalate
 import ru.circumflex._, core._, web._
 import org.specs.runner.JUnit4
 import org.specs.Specification

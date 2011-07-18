@@ -4,7 +4,6 @@ import java.util.Random
 import java.util.regex.Pattern
 import collection.mutable.HashMap
 import core._
-import markeven._
 
 /*!# The `markeven` Package
 

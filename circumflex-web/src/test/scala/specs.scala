@@ -1,6 +1,7 @@
-package ru.circumflex.web
+package ru.circumflex
+package web
 
-import ru.circumflex.core._
+import core._
 import matchers._
 import org.specs.runner.JUnit4
 import org.specs.Specification

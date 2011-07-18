@@ -1,5 +1,5 @@
-package ru.circumflex.web
-
+package ru.circumflex
+package web
 import util.matching.Regex
 import scala.collection.immutable.Map
 import collection.Iterator

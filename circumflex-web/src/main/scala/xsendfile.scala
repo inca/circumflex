@@ -1,5 +1,5 @@
-package ru.circumflex.web
-
+package ru.circumflex
+package web
 import java.io.File
 
 /*!# X-SendFile feature

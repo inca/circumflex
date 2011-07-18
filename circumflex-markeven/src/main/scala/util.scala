@@ -1,5 +1,5 @@
-package ru.circumflex.markeven
-
+package ru.circumflex
+package markeven
 import java.lang.StringBuilder
 import java.util.regex._
 

@@ -1,7 +1,8 @@
-package ru.circumflex.orm
+package ru.circumflex
+package orm
 
 import java.sql.{ResultSet, PreparedStatement}
-import ru.circumflex.core._
+import core._
 
 /*!# Querying
 

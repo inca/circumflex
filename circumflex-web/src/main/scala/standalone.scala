@@ -1,6 +1,6 @@
-package ru.circumflex.web
-
-import ru.circumflex.core._
+package ru.circumflex
+package web
+import core._
 import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.server.Server
 import java.net.{InetAddress, InetSocketAddress}
