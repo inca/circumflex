@@ -13,7 +13,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
 
   def add(validator: R => Option[Msg]): this.type = {
     _validators ++= List(validator)
-    return this
+    this
   }
 
   def addForTransient(validator: R => Option[Msg]): this.type =
@@ -52,7 +52,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
 
   def unique[T](f: R => Field[T, R], key: String = "unique"): this.type = add { r =>
     val field = f(r)
-    r.relation.criteria.add(field EQ field()).unique match {
+    r.relation.criteria.add(field EQ field()).unique() match {
       case Some(a) if (r.isTransient || a != r) =>
         Some(new Msg(field.uuid + "." + key, "record" -> r, "field" -> field))
       case _ => None
@@ -66,7 +66,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
       case f: Field[Any, R] => crit.add(f EQ f())
       case _ =>
     }
-    crit.unique match {
+    crit.unique() match {
       case Some(a: R) if (r.isTransient || a != r) =>
          Some(new Msg(r.uuid + "." + key, "record" -> r))
       case _ => None

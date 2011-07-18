@@ -35,7 +35,7 @@ class DDLUnit {
 
   def resetMsgs(): this.type = {
     _msgs = Nil
-    return this
+    this
   }
 
   def clear() = {
@@ -50,11 +50,11 @@ class DDLUnit {
 
   def add(objects: SchemaObject*): this.type = {
     objects.foreach(addObject(_))
-    return this
+    this
   }
 
   def addObject(obj: SchemaObject): this.type = {
-    def processRelation(r: Relation[_, _]) = {
+    def processRelation(r: Relation[_, _]) {
       addObject(r.schema)
       r.preAux.foreach(o =>
         if (!_preAux.contains(o)) _preAux ++= List(o))
@@ -78,92 +78,102 @@ class DDLUnit {
       case o => if (!_postAux.contains(o))
         _postAux ++= List(o)
     }
-    return this
+    this
   }
 
-  protected def dropObjects(objects: Seq[SchemaObject]): Unit =
-    for (o <- objects.reverse) tx.execute (o.sqlDrop) { st =>
-      st.executeUpdate
-      _msgs ++= List(new Msg(
-        "orm.ddl.info",
-        "status" -> ("DROP "  + o.objectName + ": OK"),
-        "sql" -> o.sqlDrop))
-    } { e =>
-      _msgs ++= List(new Msg(
-        "orm.ddl.info",
-        "status" -> ("DROP "  + o.objectName + ": " + e.getMessage),
-        "sql" -> o.sqlDrop,
-        "error" -> e.getMessage))
+  protected def dropObjects(objects: Seq[SchemaObject]) {
+    objects.reverse.foreach { o =>
+      tx.execute(o.sqlDrop, { st =>
+        st.executeUpdate()
+        _msgs ++= List(new Msg(
+          "orm.ddl.info",
+          "status" -> ("DROP " + o.objectName + ": OK"),
+          "sql" -> o.sqlDrop))
+      }, { e =>
+        _msgs ++= List(new Msg(
+          "orm.ddl.info",
+          "status" -> ("DROP " + o.objectName + ": " + e.getMessage),
+          "sql" -> o.sqlDrop,
+          "error" -> e.getMessage))
+      })
     }
+  }
 
-  protected def createObjects(objects: Seq[SchemaObject]): Unit =
-    for (o <- objects) tx.execute(o.sqlCreate) { st =>
-      st.executeUpdate
-      _msgs ++= List(new Msg(
-        "orm.ddl.info",
-        "status" -> ("CREATE "  + o.objectName + ": OK"),
-        "sql" -> o.sqlCreate))
-    } { e =>
-      _msgs ++= List(new Msg(
-        "orm.ddl.error",
-        "status" -> ("CREATE "  + o.objectName + ": " + e.getMessage),
-        "sql" -> o.sqlCreate,
-        "error" -> e.getMessage))
+  protected def createObjects(objects: Seq[SchemaObject]) {
+    objects.foreach { o =>
+      tx.execute(o.sqlCreate, { st =>
+        st.executeUpdate()
+        _msgs ++= List(new Msg(
+          "orm.ddl.info",
+          "status" -> ("CREATE " + o.objectName + ": OK"),
+          "sql" -> o.sqlCreate))
+      }, { e =>
+        _msgs ++= List(new Msg(
+          "orm.ddl.error",
+          "status" -> ("CREATE " + o.objectName + ": " + e.getMessage),
+          "sql" -> o.sqlCreate,
+          "error" -> e.getMessage))
+      })
     }
+  }
 
   def DROP(): this.type = {
     resetMsgs()
     _drop()
-    return this
+    this
   }
 
-  def _drop(): Unit = tx.execute { conn =>
-  // We will commit every successfull statement.
-    val autoCommit = conn.getAutoCommit
-    conn.setAutoCommit(true)
-    // Execute a script.
-    dropObjects(postAux)
-    dropObjects(views)
-    if (dialect.supportsDropConstraints)
-      dropObjects(constraints)
-    dropObjects(tables)
-    dropObjects(preAux)
-    if (dialect.supportsSchema)
-      dropObjects(schemata)
-    // Restore auto-commit.
-    conn.setAutoCommit(autoCommit)
-  } { throw _ }
+  def _drop() {
+    tx.execute({ conn =>
+    // We will commit every successfull statement.
+      val autoCommit = conn.getAutoCommit
+      conn.setAutoCommit(true)
+      // Execute a script.
+      dropObjects(postAux)
+      dropObjects(views)
+      if (dialect.supportsDropConstraints)
+        dropObjects(constraints)
+      dropObjects(tables)
+      dropObjects(preAux)
+      if (dialect.supportsSchema)
+        dropObjects(schemata)
+      // Restore auto-commit.
+      conn.setAutoCommit(autoCommit)
+    }, { throw _ })
+  }
 
   def CREATE(): this.type = {
     resetMsgs()
     _create()
-    return this
+    this
   }
 
-  def _create(): Unit = tx.execute { conn =>
-  // We will commit every successfull statement.
-    val autoCommit = conn.getAutoCommit
-    conn.setAutoCommit(true)
-    // Execute a script.
-    if (dialect.supportsSchema)
-      createObjects(schemata)
-    createObjects(preAux)
-    createObjects(tables)
-    createObjects(constraints)
-    createObjects(views)
-    createObjects(postAux)
-    // Restore auto-commit.
-    conn.setAutoCommit(autoCommit)
-  } { throw _ }
+  def _create() {
+    tx.execute({ conn =>
+    // We will commit every successfull statement.
+      val autoCommit = conn.getAutoCommit
+      conn.setAutoCommit(true)
+      // Execute a script.
+      if (dialect.supportsSchema)
+        createObjects(schemata)
+      createObjects(preAux)
+      createObjects(tables)
+      createObjects(constraints)
+      createObjects(views)
+      createObjects(postAux)
+      // Restore auto-commit.
+      conn.setAutoCommit(autoCommit)
+    }, { throw _ })
+  }
 
   def DROP_CREATE(): this.type = {
     resetMsgs()
     _drop()
     _create()
-    return this
+    this
   }
 
-  def close(): Unit = {
+  def close() {
     tx.close()
     connectionProvider.close()
   }
@@ -183,6 +193,6 @@ class DDLUnit {
       val errorsCount = messages.filter(_.key == "orm.ddl.error").size
       result += infoCount + " successful statements, " + errorsCount + " errors."
     }
-    return result
+    result
   }
 }

@@ -25,7 +25,7 @@ class AggregatePredicate(val operator: String,
   def parameters = predicates.flatMap(_.parameters)
   def add(predicate: Predicate*): this.type = {
     _predicates ++= predicate.toList
-    return this
+    this
   }
   def predicates: Seq[Predicate] = _predicates.flatMap {
     case EmptyPredicate => None

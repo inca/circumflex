@@ -34,7 +34,8 @@ records:
 The relation should also inherit the structure of corresponding record so that
 it could be used to compose predicates and other expressions in a DSL-style.
 */
-trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject { this: R =>
+trait Relation[PK, R <: Record[PK, R]]
+    extends Record[PK, R] with SchemaObject { this: R =>
 
   protected var _initialized = false
 
@@ -48,7 +49,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     this.getClass.getName.replaceAll("\\$(?=\\Z)", ""),
     true,
     Thread.currentThread.getContextClassLoader
-    ).asInstanceOf[Class[R]]
+  ).asInstanceOf[Class[R]]
   def recordClass: Class[R] = _recordClass
 
   /*! By default the relation name is inferred from `recordClass` by replacing
@@ -95,9 +96,9 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
    */
   def get(id: PK): Option[R] =
     contextCache.cacheRecord(id, this,
-      (this.AS("root")).map(r => r.criteria.add(r.PRIMARY_KEY EQ id).unique))
+      (this.AS("root")).map(r => r.criteria.add(r.PRIMARY_KEY EQ id).unique()))
 
-  def all: Seq[R] = this.AS("root").criteria.list
+  def all: Seq[R] = this.AS("root").criteria.list()
 
   /*!## Metadata
 
@@ -134,14 +135,14 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     _indexes
   }
 
-  private def findMembers(cl: Class[_]): Unit = {
+  private def findMembers(cl: Class[_]) {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
     cl.getDeclaredFields
         .flatMap(f => try Some(cl.getMethod(f.getName)) catch { case _ => None })
         .foreach(processMember(_))
   }
 
-  private def processMember(m: Method): Unit = {
+  private def processMember(m: Method) {
     val cl = m.getReturnType
     if (classOf[ValueHolder[_, R]].isAssignableFrom(cl)) {
       val vh = m.invoke(this).asInstanceOf[ValueHolder[_, R]]
@@ -155,27 +156,29 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
     }
   }
 
-  private def processHolder(vh: ValueHolder[_, R], m: Method): Unit = vh match {
-    case f: Field[_, R] =>
-      this._fields ++= List(f)
-      if (f.isUnique) this.UNIQUE(f)
-      this._methodsMap += (f -> m)
-    case a: Association[_, R, _] =>
-      this._associations ++= List[Association[_, R, _]](a)
-      this._constraints ++= List(associationFK(a))
-      processHolder(a.field, m)
-    case _ =>
+  private def processHolder(vh: ValueHolder[_, R], m: Method) {
+    vh match {
+      case f: Field[_, R] =>
+        this._fields ++= List(f)
+        if (f.isUnique) this.UNIQUE(f)
+        this._methodsMap += (f -> m)
+      case a: Association[_, R, _] =>
+        this._associations ++= List[Association[_, R, _]](a)
+        this._constraints ++= List(associationFK(a))
+        processHolder(a.field, m)
+      case _ =>
+    }
   }
 
   private def associationFK(a: Association[_, R, _]) =
     CONSTRAINT(relationName + "_" + a.name + "_fkey")
         .FOREIGN_KEY(a.field)
         .REFERENCES(a.parentRelation, a.parentRelation.PRIMARY_KEY)
-        .ON_DELETE(a.onDelete)
-        .ON_UPDATE(a.onUpdate)
+        .ON_DELETE(a.onDeleteClause)
+        .ON_UPDATE(a.onUpdateClause)
 
-  protected[orm] def init(): Unit =
-    if (!_initialized) this.synchronized {
+  protected[orm] def init() {
+    if (!_initialized) synchronized {
       if (!_initialized) try {
         findMembers(this.getClass)
         dialect.initializeRelation(this)
@@ -191,11 +194,13 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
           throw new ORMException("Failed to initialize " + relationName + ".", e)
       }
     }
+  }
 
-  protected[orm] def copyFields(src: R, dst: R): Unit = fields.foreach { f =>
-    val m = methodsMap(f)
-    val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
-    getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
+  protected[orm] def copyFields(src: R, dst: R) {
+    fields.foreach { f =>
+        val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
+        getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
+    }
   }
 
   protected[orm] def getField[T](record: R, field: Field[T, R]): Field[T, R] =
@@ -214,9 +219,9 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   protected var _prefetchSeq: Seq[Association[_, _, _]] = Nil
   def prefetchSeq = _prefetchSeq
   def prefetch[K, C <: Record[_, C], P <: Record[K, P]](
-      association: Association[K, C, P]): this.type = {
+        association: Association[K, C, P]): this.type = {
     this._prefetchSeq ++= List(association)
-    return this
+    this
   }
 
   /*!## Constraints & Indexes Definition
@@ -241,14 +246,14 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   def preAux: Seq[SchemaObject] = _preAux
   def addPreAux(objects: SchemaObject*): this.type = {
     objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
-    return this
+    this
   }
 
   protected[orm] var _postAux: List[SchemaObject] = Nil
   def postAux: Seq[SchemaObject] = _postAux
   def addPostAux(objects: SchemaObject*): this.type = {
     objects.foreach(o => if (!_postAux.contains(o)) _postAux ++= List(o))
-    return this
+    this
   }
 
   /*!## Events
@@ -267,37 +272,37 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   def beforeInsert = _beforeInsert
   def beforeInsert(callback: R => Unit): this.type = {
     this._beforeInsert ++= List(callback)
-    return this
+    this
   }
   protected var _afterInsert: Seq[R => Unit] = Nil
   def afterInsert = _afterInsert
   def afterInsert(callback: R => Unit): this.type = {
     this._afterInsert ++= List(callback)
-    return this
+    this
   }
   protected var _beforeUpdate: Seq[R => Unit] = Nil
   def beforeUpdate = _beforeUpdate
   def beforeUpdate(callback: R => Unit): this.type = {
     this._beforeUpdate ++= List(callback)
-    return this
+    this
   }
   protected var _afterUpdate: Seq[R => Unit] = Nil
   def afterUpdate = _afterUpdate
   def afterUpdate(callback: R => Unit): this.type = {
     this._afterUpdate ++= List(callback)
-    return this
+    this
   }
   protected var _beforeDelete: Seq[R => Unit] = Nil
   def beforeDelete = _beforeDelete
   def beforeDelete(callback: R => Unit): this.type = {
     this._beforeDelete ++= List(callback)
-    return this
+    this
   }
   protected var _afterDelete: Seq[R => Unit] = Nil
   def afterDelete = _afterDelete
   def afterDelete(callback: R => Unit): this.type = {
     this._afterDelete ++= List(callback)
-    return this
+    this
   }
 
   /*!## Equality & Others
@@ -345,7 +350,7 @@ The `Table` class represents plain-old database table which will be created to s
 records.
 */
 trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
-  def isReadOnly(): Boolean = false
+  def isReadOnly: Boolean = false
   def objectName: String = "TABLE " + qualifiedName
   def sqlCreate: String = {
     init()
@@ -366,7 +371,7 @@ views on backend somehow (with triggers in Oracle or rules in PostgreSQL),
 override the `isReadOnly` method accordingly.
 */
 trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
-  def isReadOnly(): Boolean = true
+  def isReadOnly: Boolean = true
   def objectName: String = "VIEW " + qualifiedName
   def sqlDrop: String = {
     init()

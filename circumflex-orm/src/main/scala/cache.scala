@@ -4,7 +4,6 @@ import ru.circumflex.core._
 import collection.mutable.HashMap
 import net.sf.ehcache._
 import java.util.concurrent.atomic._
-import java.io.Serializable
 
 /*!# Context-Level Cache
 
@@ -21,9 +20,9 @@ The cache consists of two logical parts:
 */
 trait CacheService {
 
-  def invalidate: Unit = {
-    invalidateRecords
-    invalidateInverse
+  def invalidate() {
+    invalidateRecords()
+    invalidateInverse()
   }
 
   /*!## Records Cache
@@ -36,13 +35,13 @@ trait CacheService {
   * `updateRecord` updates a cache with specified `record`;
   * `evictRecord` removes a record from cache by specified `relation` and `id`.
   */
-  def invalidateRecords: Unit
+  def invalidateRecords()
   def invalidateRecords[PK, R <: Record[PK, R]](
-      relation: Relation[PK, R]): Unit
+      relation: Relation[PK, R])
   def cacheRecord[PK, R <: Record[PK, R]](
       id: PK, relation: Relation[PK, R], record: => Option[R]): Option[R]
   def evictRecord[PK, R <: Record[PK, R]](
-      id: PK, relation: Relation[PK, R]): Unit
+      id: PK, relation: Relation[PK, R])
   def updateRecord[PK, R <: Record[PK, R]](
       id: PK, relation: Relation[PK, R], record: R): R = {
     evictRecord(id, relation)
@@ -61,20 +60,19 @@ trait CacheService {
   * `updateInverse` updates an inverse cache with specified `children`;
   * `evictInverse` removes children from inverse cache by specified `association` and `parentId`;
   */
-  def invalidateInverse: Unit
+  def invalidateInverse()
   def invalidateInverse[K, C <: Record[_, C], P <: Record[K, P]](
-      association: Association[K, C, P]): Unit
+      association: Association[K, C, P])
   def cacheInverse[K, C <: Record[_, C], P <: Record[K, P]](
       parentId: K, association: Association[K, C, P], children: => Seq[C]): Seq[C]
   def evictInverse[K, C <: Record[_, C], P <: Record[K, P]](
-      parentId: K, association: Association[K, C, P]): Unit
+      parentId: K, association: Association[K, C, P])
   def updateInverse[K, C <: Record[_, C], P <: Record[K, P]](
       parentId: K, association: Association[K, C, P], children: Seq[C]): Seq[C] = {
     evictInverse(parentId, association)
     cacheInverse(parentId, association, children)
   }
-  def evictInverse[K, P <: Record[K, P]](
-      parent: P): Unit
+  def evictInverse[K, P <: Record[K, P]](parent: P)
 
 }
 
@@ -92,20 +90,22 @@ class DefaultCacheService extends CacheService {
 
   // Records cache
 
-  def invalidateRecords: Unit = {
+  def invalidateRecords() {
     _recordsCache.clear()
-    Cacheable.relations.foreach(_.invalidateCache)
+    Cacheable.relations.foreach(_.invalidateCache())
   }
-  def invalidateRecords[PK, R <: Record[PK, R]](relation: Relation[PK, R]): Unit =
+  def invalidateRecords[PK, R <: Record[PK, R]](relation: Relation[PK, R]) {
     relation match {
-      case c: Cacheable[_, _] => c.invalidateCache
+      case c: Cacheable[_, _] => c.invalidateCache()
       case _ => _recordsCache.remove(relation)
     }
-  def evictRecord[PK, R <: Record[PK, R]](id: PK, relation: Relation[PK, R]): Unit =
+  }
+  def evictRecord[PK, R <: Record[PK, R]](id: PK, relation: Relation[PK, R]) {
     relation match {
       case c: Cacheable[_, _] => c.evict(id)
       case _ => _recordsCache(relation).remove(id)
     }
+  }
   def cacheRecord[PK, R <: Record[PK, R]](
       id: PK, relation: Relation[PK, R], record: => Option[R]): Option[R] =
     relation match {
@@ -113,10 +113,10 @@ class DefaultCacheService extends CacheService {
       case _ =>
         val c = _recordsCache(relation)
         c.get(id).map { r =>
-          Statistics.recordCacheHits.incrementAndGet
+          Statistics.recordCacheHits.incrementAndGet()
           r.asInstanceOf[R]
         } orElse {
-          Statistics.recordCacheMisses.incrementAndGet
+          Statistics.recordCacheMisses.incrementAndGet()
           val v = record
           v.map { r =>
             c.update(id, r)
@@ -127,29 +127,33 @@ class DefaultCacheService extends CacheService {
 
   // Inverse cache
 
-  def invalidateInverse: Unit =
+  def invalidateInverse() {
     _inverseCache.clear()
-  def invalidateInverse[K, C <: Record[_, C], P <: Record[K, P]](association: Association[K, C, P]): Unit =
+  }
+  def invalidateInverse[K, C <: Record[_, C], P <: Record[K, P]](
+      association: Association[K, C, P]) {
     _inverseCache(association).clear()
+  }
   def cacheInverse[K, C <: Record[_, C], P <: Record[K, P]](
       parentId: K, association: Association[K, C, P], children: => Seq[C]): Seq[C] = {
     val cache = _inverseCache(association)
     cache.get(parentId) match {
       case Some(children: Seq[C]) =>
-        Statistics.inverseCacheHits.incrementAndGet
+        Statistics.inverseCacheHits.incrementAndGet()
         children
       case _ =>
-        Statistics.inverseCacheMisses.incrementAndGet
+        Statistics.inverseCacheMisses.incrementAndGet()
         val c = children
         cache.update(parentId, c)
         c
     }
   }
   def evictInverse[K, C <: Record[_, C], P <: Record[K, P]](
-      parentId: K, association: Association[K, C, P]): Unit =
+      parentId: K, association: Association[K, C, P]) {
     _inverseCache(association).remove(parentId)
+  }
   def evictInverse[K, P <: Record[K, P]](
-      parent: P): Unit = {
+      parent: P) {
     _inverseCache.keys.foreach {
       case a: Association[K, _, P] =>
         if (a.parentRelation == parent.relation)
@@ -167,7 +171,7 @@ object CacheService {
     case _ =>
       val cs = cx.instantiate[CacheService]("orm.contextCache", new DefaultCacheService)
       ctx.update("orm.contextCache", cs)
-      return cs
+      cs
   }
 }
 
@@ -190,18 +194,20 @@ trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
     if (elem == null) {
       elem = new Element(id, record)
       _cache.put(elem)
-      cacheMisses.incrementAndGet
-      Statistics.recordCacheMisses.incrementAndGet
+      cacheMisses.incrementAndGet()
+      Statistics.recordCacheMisses.incrementAndGet()
     } else {
-      cacheHits.incrementAndGet
-      Statistics.recordCacheHits.incrementAndGet
+      cacheHits.incrementAndGet()
+      Statistics.recordCacheHits.incrementAndGet()
     }
-    return elem.getValue().asInstanceOf[Option[R]]
+    elem.getValue.asInstanceOf[Option[R]]
   }
-  def evict(id: PK): Unit =
+  def evict(id: PK) {
     _cache.remove(id)
-  def invalidateCache(): Unit =
+  }
+  def invalidateCache() {
     _cache.removeAll()
+  }
 
   afterInsert(r => cache(r.PRIMARY_KEY(), Some(r)))
   afterUpdate(r => cache(r.PRIMARY_KEY(), Some(r)))
@@ -215,6 +221,6 @@ object Cacheable {
   def relations = _relations
   def add[PK, R <: Record[PK, R]](relation: Cacheable[PK, R]): this.type = {
     _relations ++= List(relation)
-    return this
+    this
   }
 }

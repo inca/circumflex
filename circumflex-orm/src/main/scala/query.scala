@@ -79,13 +79,14 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   def projections: Seq[Projection[_]] = List(projection)
 
-  protected def ensureProjectionAlias[T](projection: Projection[T]): Unit =
+  protected def ensureProjectionAlias[T](projection: Projection[T]) {
     projection match {
       case p: AtomicProjection[_] if (p.alias == "this") => p.AS(nextAlias)
       case p: CompositeProjection[_] =>
         p.subProjections.foreach(ensureProjectionAlias(_))
       case _ =>
     }
+  }
 
   ensureProjectionAlias(projection)
 
@@ -93,19 +94,19 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   def resultSet[A](actions: ResultSet => A): A = {
     val result = time {
-      tx.execute(toSql) { st =>
+      tx.execute(toSql, { st =>
         setParams(st, 1)
-        val rs = st.executeQuery
+        val rs = st.executeQuery()
         try {
           actions(rs)
         } finally {
-          rs.close
+          rs.close()
         }
-      } { throw _ }
+      }, { throw _ })
     }
     _executionTime = result._1
     Statistics.executeSql(this)
-    return result._2
+    result._2
   }
 
   def read(rs: ResultSet): Option[T] = projection.read(rs)
@@ -152,7 +153,7 @@ trait SearchQuery extends Query {
     WHERE(prepareExpr(expression, params: _*))
 
   def add(predicates: Predicate*): this.type = {
-    where match {
+    whereClause match {
       case EmptyPredicate =>
         this._where = AND(predicates: _*)
       case p: AggregatePredicate if (p.operator == dialect.AND) =>
@@ -181,7 +182,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
   protected var _limit: Int = -1
   protected var _offset: Int = 0
 
-  def parameters: Seq[Any] = where.parameters ++
+  def parameters: Seq[Any] = _where.parameters ++
       _having.parameters ++
       _setOps.flatMap(p => p._2.parameters) ++
       _orders.flatMap(_.parameters)
@@ -201,7 +202,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
   def fromClause = _relations
   def FROM(nodes: RelationNode[_, _]*): Select[T] = {
     this._relations = nodes.toList
-    from.foreach(ensureNodeAlias(_))
+    fromClause.foreach(ensureNodeAlias(_))
     this
   }
 
@@ -217,24 +218,24 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
 
   // HAVING clause
 
-  def having: Predicate = this._having
+  def havingClause: Predicate = this._having
   def HAVING(predicate: Predicate): Select[T] = {
     this._having = predicate
-    return this
+    this
   }
   def HAVING(expression: String, params: Pair[String,Any]*): Select[T] =
     HAVING(prepareExpr(expression, params: _*))
 
   // GROUP BY clause
 
-  def groupBy: Seq[Projection[_]] = _groupBy
+  def groupByClause: Seq[Projection[_]] = _groupBy
 
   def GROUP_BY(proj: Projection[_]*): Select[T] = {
     proj.toList.foreach(p => addGroupByProjection(p))
-    return this
+    this
   }
 
-  protected def addGroupByProjection(proj: Projection[_]): Unit =
+  protected def addGroupByProjection(proj: Projection[_]) {
     findProjection(projection, p => p.equals(proj)) match {
       case None =>
         ensureProjectionAlias(proj)
@@ -242,20 +243,21 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
         this._groupBy ++= List(proj)
       case Some(p) => this._groupBy ++= List(p)
     }
+  }
 
   protected def findProjection(projection: Projection[_],
                                predicate: Projection[_] => Boolean): Option[Projection[_]] =
-    if (predicate(projection)) return Some(projection)
+    if (predicate(projection)) Some(projection)
     else projection match {
       case p: CompositeProjection[_] =>
-        return p.subProjections.find(predicate)
-      case _ => return None
+        p.subProjections.find(predicate)
+      case _ => None
     }
 
   // Set Operations
 
   protected var _setOps: Seq[Pair[SetOperation, SQLQuery[T]]] = Nil
-  def getSetOps = _setOps
+  def setOps = _setOps
 
   protected def addSetOp(op: SetOperation, sql: SQLQuery[T]): Select[T] = {
     val q = clone()
@@ -278,10 +280,10 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
 
   // ORDER BY clause
 
-  def orderBy = _orders
+  def orderByClause = _orders
   def ORDER_BY(order: Order*): Select[T] = {
     this._orders ++= order.toList
-    return this
+    this
   }
 
   // LIMIT and OFFSET clauses
@@ -289,13 +291,13 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
   def limit = this._limit
   def LIMIT(value: Int): Select[T] = {
     _limit = value
-    return this
+    this
   }
 
   def offset = this._offset
   def OFFSET(value: Int): Select[T] = {
     _offset = value
-    return this
+    this
   }
 
   // Miscellaneous
@@ -309,14 +311,14 @@ trait DMLQuery extends Query {
 
   def execute(): Int = {
     val result = time {
-      tx.execute(toSql){ st =>
+      tx.execute(toSql, { st =>
         setParams(st, 1)
-        st.executeUpdate
-      } { throw _ }
+        st.executeUpdate()
+      }, { throw _ })
     }
     _executionTime = result._1
     Statistics.executeDml(this)
-    return result._2
+    result._2
   }
 }
 
@@ -351,7 +353,7 @@ class Delete[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
-  def parameters = where.parameters
+  def parameters = _where.parameters
   def toSql: String = dialect.delete(this)
 }
 
@@ -365,18 +367,18 @@ class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   def setClause = _setClause
   def SET[T](field: Field[T, R], value: T): Update[PK, R] = {
     _setClause ++= List(field -> Some(value))
-    return this
+    this
   }
   def SET[K, P <: Record[K, P]](association: Association[K, R, P], value: P): Update[PK, R]=
     SET(association.field.asInstanceOf[Field[Any, R]], value.PRIMARY_KEY.value)
   def SET_NULL[T](field: Field[T, R]): Update[PK, R] = {
     _setClause ++= List(field -> None)
-    return this
+    this
   }
   def SET_NULL[K, P <: Record[K, P]](association: Association[K, R, P]): Update[PK, R] =
     SET_NULL(association.field)
 
-  def parameters = _setClause.map(_._2) ++ where.parameters
+  def parameters = _setClause.map(_._2) ++ _where.parameters
   def toSql: String = dialect.update(this)
 
 }

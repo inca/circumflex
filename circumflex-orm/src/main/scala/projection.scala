@@ -23,28 +23,21 @@ trait Projection[T] extends SQLable {
   def read(rs: ResultSet): Option[T]
 
   def sqlAliases: Seq[String]
-
   protected[orm] var alias: String = "this"
-
   def AS(alias: String): this.type = {
     this.alias = alias
-    return this
+    this
   }
 
   override def toString = toSql
-
 }
 
 trait AtomicProjection[T] extends Projection[T] {
-
   def sqlAliases = List(alias)
-
 }
 
 trait CompositeProjection[T] extends Projection[T] {
-
   def subProjections: Seq[Projection[_]]
-
   def sqlAliases = subProjections.flatMap(_.sqlAliases)
 
   override def equals(obj: Any) = obj match {
@@ -58,11 +51,10 @@ trait CompositeProjection[T] extends Projection[T] {
     if (_hash == 0)
       for (p <- subProjections)
         _hash = 31 * _hash + p.hashCode
-    return _hash
+    _hash
   }
 
   def toSql = subProjections.map(_.toSql).mkString(", ")
-
 }
 
 class ExpressionProjection[T](val expression: String)
@@ -85,8 +77,9 @@ class ExpressionProjection[T](val expression: String)
   override def hashCode = expression.hashCode
 }
 
-class FieldProjection[T, R <: Record[_, R]](val node: RelationNode[_, R],
-                                            val field: Field[T, R])
+class FieldProjection[T, R <: Record[_, R]](
+        val node: RelationNode[_, R],
+        val field: Field[T, R])
     extends AtomicProjection[T] {
 
   def expr = dialect.qualifyColumn(field, node.alias)
@@ -130,7 +123,7 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     _fieldProjections.foreach { p =>
       node.relation.getField(record, p.field.asInstanceOf[Field[Any, R]]).set(p.read(rs))
     }
-    return record
+    record
   }
 
   override def equals(obj: Any) = obj match {
@@ -139,7 +132,6 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   }
 
   override def hashCode = node.hashCode
-
 }
 
 class UntypedTupleProjection(val subProjections: Projection[_]*)

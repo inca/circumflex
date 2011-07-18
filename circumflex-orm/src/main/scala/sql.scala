@@ -54,14 +54,14 @@ class ForeignKey(name: String,
   def onDelete = _onDelete
   def ON_DELETE(action: ForeignKeyAction): this.type = {
     _onDelete = action
-    return this
+    this
   }
 
   protected var _onUpdate: ForeignKeyAction = NO_ACTION
   def onUpdate = _onUpdate
   def ON_UPDATE(action: ForeignKeyAction): this.type = {
     _onUpdate = action
-    return this
+    this
   }
 
   def sqlDefinition = dialect.foreignKeyDefinition(this)
@@ -171,11 +171,11 @@ class Order(val expression: String, val parameters: Seq[Any])
   protected[orm] var _specificator = dialect.asc
   def ASC: this.type = {
     this._specificator = dialect.asc
-    return this
+    this
   }
   def DESC: this.type = {
     this._specificator = dialect.desc
-    return this
+    this
   }
   def toSql = expression + " " + _specificator
 }

@@ -141,7 +141,7 @@ class Dialect {
   def qualifyColumn(vh: ValueHolder[_, _], tableAlias: String) =
     tableAlias + "." + vh.name
 
-  def ON(expression: Expression) = "ON (" + expression.toInlineSql + ")"
+  def on(expression: Expression) = "ON (" + expression.toInlineSql + ")"
 
   def not(expression: String) = "NOT (" + expression + ")"
 
@@ -186,9 +186,9 @@ class Dialect {
     var result = "CREATE "
     if (idx.isUnique) result += "UNIQUE "
     result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
-        " USING " + idx.using + " (" + idx.expression + ")"
-    if (idx.where != EmptyPredicate)
-      result += " WHERE " + idx.where.toInlineSql
+        " USING " + idx.usingClause + " (" + idx.expression + ")"
+    if (idx.whereClause != EmptyPredicate)
+      result += " WHERE " + idx.whereClause.toInlineSql
     result
   }
 
@@ -204,7 +204,7 @@ class Dialect {
 
   def compositeFieldName(names: String*): String = names.mkString(", ")
 
-  def initializeRelation[R <: Record[_, R]](relation: Relation[_, R]) = {}
+  def initializeRelation[R <: Record[_, R]](relation: Relation[_, R]) {}
 
   def initializeField[R <: Record[_, R]](field: Field[_, R]) = field match {
     case f: AutoIncrementable[_, _]
@@ -268,21 +268,21 @@ class Dialect {
     if (q.isDistinct)
       result += "DISTINCT "
     result += q.projections.map(_.toSql).mkString(", ")
-    if (q.from.size > 0)
-      result += " FROM " + q.from.map(_.toSql).mkString(", ")
-    if (q.where != EmptyPredicate)
-      result += " WHERE " + q.where.toSql
-    if (q.groupBy.size > 0)
-      result += " GROUP BY " + q.groupBy.flatMap(_.sqlAliases).mkString(", ")
-    if (q.having != EmptyPredicate)
-      result += " HAVING " + q.having.toSql
+    if (q.fromClause.size > 0)
+      result += " FROM " + q.fromClause.map(_.toSql).mkString(", ")
+    if (q.whereClause != EmptyPredicate)
+      result += " WHERE " + q.whereClause.toSql
+    if (q.groupByClause.size > 0)
+      result += " GROUP BY " + q.groupByClause.flatMap(_.sqlAliases).mkString(", ")
+    if (q.havingClause != EmptyPredicate)
+      result += " HAVING " + q.havingClause.toSql
     q.setOps.foreach {
       case (op: SetOperation, subq: SQLQuery[_]) =>
         result += " " + op.toSql + " ( " + subq.toSql + " )"
       case _ =>
     }
-    if (q.orderBy.size > 0)
-      result += " ORDER BY " + q.orderBy.map(_.toSql).mkString(", ")
+    if (q.orderByClause.size > 0)
+      result += " ORDER BY " + q.orderByClause.map(_.toSql).mkString(", ")
     if (q.limit > -1)
       result += " LIMIT " + q.limit
     if (q.offset > 0)
@@ -317,13 +317,13 @@ class Dialect {
   def update[PK, R <: Record[PK, R]](dml: Update[PK, R]): String = {
     var result = "UPDATE " + dml.node.toSql + " SET " +
         dml.setClause.map(f => f._1.name + " = " + f._1.placeholder).mkString(", ")
-    if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
+    if (dml.whereClause != EmptyPredicate) result += " WHERE " + dml.whereClause.toSql
     result
   }
 
   def delete[PK, R <: Record[PK, R]](dml: Delete[PK, R]): String = {
     var result = "DELETE FROM " + dml.node.toSql
-    if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
+    if (dml.whereClause != EmptyPredicate) result += " WHERE " + dml.whereClause.toSql
     result
   }
 

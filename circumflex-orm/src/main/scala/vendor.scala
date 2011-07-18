@@ -21,8 +21,8 @@ class H2Dialect extends Dialect {
     if (idx.isUnique) result += "UNIQUE "
     result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
         " (" + idx.expression + ")"
-    if (idx.where != EmptyPredicate)
-      result += " WHERE " + idx.where.toInlineSql
+    if (idx.whereClause != EmptyPredicate)
+      result += " WHERE " + idx.whereClause.toInlineSql
     result
   }
   override def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name
@@ -38,7 +38,7 @@ class MySQLDialect extends Dialect {
   override def supportsSchema = false
   override def driverClass = "com.mysql.jdbc.Driver"
 
-  override def initializeField[R <: Record[_, R]](field: Field[_, R]) = {
+  override def initializeField[R <: Record[_, R]](field: Field[_, R]) {
     // do nothing -- for MySQL you don't need to create manually a sequence for auto-incrementable fields
   }
 
@@ -60,9 +60,9 @@ class MySQLDialect extends Dialect {
   override def createIndex(idx: Index): String = {
     var result = "CREATE "
     if (idx.isUnique) result += "UNIQUE "
-    result += "INDEX " + idx.name + " USING " + idx.using +
+    result += "INDEX " + idx.name + " USING " + idx.usingClause +
         " ON " + idx.relation.qualifiedName + " (" + idx.expression + ")"
-    if (idx.where != EmptyPredicate)
+    if (idx.whereClause != EmptyPredicate)
       ORM_LOG.warn("Ignoring WHERE clause of INDEX " + idx.name +
           ": predicates are not supported.")
     result
@@ -70,7 +70,7 @@ class MySQLDialect extends Dialect {
 
   override def delete[PK, R <: Record[PK, R]](dml: Delete[PK, R]): String = {
     var result = "DELETE " + dml.node.alias + " FROM " + dml.node.toSql
-    if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
+    if (dml.whereClause != EmptyPredicate) result += " WHERE " + dml.whereClause.toSql
     result
   }
 }
@@ -96,7 +96,7 @@ class OracleDialect extends Dialect {
     if (idx.isUnique) result += "UNIQUE "
     result += "INDEX " + idx.name +
         " ON " + idx.relation.qualifiedName + " (" + idx.expression + ")"
-    if (idx.where != EmptyPredicate)
+    if (idx.whereClause != EmptyPredicate)
       ORM_LOG.warn("Ignoring WHERE clause of INDEX " + idx.name +
           ": predicates are not supported.")
     result
@@ -143,7 +143,7 @@ class DB2Dialect extends Dialect {
     if (idx.isUnique) result += "UNIQUE "
     result += "INDEX " + idx.name +
         " ON " + idx.relation.qualifiedName + " (" + idx.expression + ")"
-    if (idx.where != EmptyPredicate)
+    if (idx.whereClause != EmptyPredicate)
       ORM_LOG.warn("Ignoring WHERE clause of INDEX " + idx.name +
           ": predicates are not supported.")
     result
@@ -187,8 +187,8 @@ class MSSQLDialect extends Dialect {
     if (idx.isUnique) result += "UNIQUE "
     result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
         " (" + idx.expression + ")"
-    if (idx.where != EmptyPredicate)
-      result += " WHERE " + idx.where.toInlineSql
+    if (idx.whereClause != EmptyPredicate)
+      result += " WHERE " + idx.whereClause.toInlineSql
     result
   }
 

@@ -47,11 +47,13 @@ object Statistics {
   protected var _heaviestSql = ""
   def heaviestSql = _heaviestSql
 
-  def executeSql(q: SQLQuery[_]): Unit = synchronized {
-    val t = q.executionTime
-    if (t > _heaviestSqlTime) {
-      _heaviestSqlTime = t
-      _heaviestSql = q.toInlineSql
+  def executeSql(q: SQLQuery[_]) {
+    synchronized {
+      val t = q.executionTime
+      if (t > _heaviestSqlTime) {
+        _heaviestSqlTime = t
+        _heaviestSql = q.toInlineSql
+      }
     }
   }
 
@@ -61,28 +63,32 @@ object Statistics {
   protected var _heaviestDml = ""
   def heaviestDml = _heaviestDml
 
-  def executeDml(q: DMLQuery): Unit = synchronized {
-    val t = q.executionTime
-    if (t > _heaviestDmlTime) {
-      _heaviestDmlTime = t
-      _heaviestDml = q.toInlineSql
+  def executeDml(q: DMLQuery) {
+    synchronized {
+      val t = q.executionTime
+      if (t > _heaviestDmlTime) {
+        _heaviestDmlTime = t
+        _heaviestDml = q.toInlineSql
+      }
     }
   }
 
-  def clear(): Unit = synchronized {
-    connectionsOpened.set(0)
-    connectionsClosed.set(0)
-    executions.set(0)
-    executionsSucceeded.set(0)
-    executionsFailed.set(0)
-    recordCacheHits.set(0)
-    recordCacheMisses.set(0)
-    inverseCacheHits.set(0)
-    inverseCacheMisses.set(0)
-    _heaviestSql = ""
-    _heaviestSqlTime = 0l
-    _heaviestDml = ""
-    _heaviestDmlTime = 0l
+  def clear() {
+    synchronized {
+      connectionsOpened.set(0)
+      connectionsClosed.set(0)
+      executions.set(0)
+      executionsSucceeded.set(0)
+      executionsFailed.set(0)
+      recordCacheHits.set(0)
+      recordCacheMisses.set(0)
+      inverseCacheHits.set(0)
+      inverseCacheMisses.set(0)
+      _heaviestSql = ""
+      _heaviestSqlTime = 0l
+      _heaviestDml = ""
+      _heaviestDmlTime = 0l
+    }
   }
 
 }

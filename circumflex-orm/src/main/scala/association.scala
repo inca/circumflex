@@ -18,8 +18,8 @@ We use some terminology when speaking about associations:
   * the `K` type parameter is a type of this association field's value, it must
   match the type of parent relation's primary key.
 */
-class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C],
-                                                           val parentRelation: Relation[K, P])
+class Association[K, C <: Record[_, C], P <: Record[K, P]] (
+        val field: Field[K, C], val parentRelation: Relation[K, P])
     extends ValueHolder[P, C] { assoc =>
 
   def name = field.name
@@ -28,17 +28,17 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
   // Cascading actions
 
   protected var _onDelete: ForeignKeyAction = NO_ACTION
-  def onDelete = _onDelete
+  def onDeleteClause = _onDelete
   def ON_DELETE(action: ForeignKeyAction): this.type = {
     _onDelete = action
-    return this
+    this
   }
 
   protected var _onUpdate: ForeignKeyAction = NO_ACTION
-  def onUpdate = _onUpdate
+  def onUpdateClause = _onUpdate
   def ON_UPDATE(action: ForeignKeyAction): this.type = {
     _onUpdate = action
-    return this
+    this
   }
 
   // State maintenance
@@ -48,7 +48,7 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
 
   override def set(v: Option[P]): this.type = {
     field.set(v.flatMap(_.PRIMARY_KEY.value))
-    return this
+    this
   }
 
   // Simple expressions
@@ -64,7 +64,7 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]](val field: Field[K, C
   def joinPredicate(childAlias: String, parentAlias: String): Predicate = {
     val lh = dialect.qualifyColumn(field, childAlias)
     val rh = dialect.qualifyColumn(parentRelation.PRIMARY_KEY, parentAlias)
-    return new SimpleExpression(dialect.EQ(lh, rh), Nil)
+    new SimpleExpression(dialect.EQ(lh, rh), Nil)
   }
 
 }
@@ -79,7 +79,7 @@ whole hierarchy of associated records in a single SQL `SELECT`.
 */
 trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
     extends Wrapper[T] {
-  def item: T = get()
+  def item: T = get
   def association: Association[K, C, P]
   def record: P
   def fetch(): Seq[C] = if (record.isTransient) Nil
@@ -88,8 +88,8 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
     aliasStack.push(root.alias)
     SELECT(root.*).FROM(root).WHERE(association.field EQ record.PRIMARY_KEY()).list()
   })
-  def get(): T
-  def apply(): T = get()
+  def get: T
+  def apply: T = get
 
   override def equals(that: Any): Boolean = that match {
     case that: InverseAssociation[_, _, _, _] =>
@@ -100,20 +100,20 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
 }
 
 class InverseMany[K, C <: Record[_, C], P <: Record[K, P]](
-                                                              val record: P, val association: Association[K, C, P])
+        val record: P, val association: Association[K, C, P])
     extends InverseAssociation[K, C, P, Seq[C]] {
-  def get(): Seq[C] = fetch()
+  def get: Seq[C] = fetch()
 }
 
 class InverseOne[K, C <: Record[_, C], P <: Record[K, P]](
-                                                             val record: P, val association: Association[K, C, P])
+        val record: P, val association: Association[K, C, P])
     extends InverseAssociation[K, C, P, Option[C]] {
-  def get(): Option[C] = {
+  def get: Option[C] = {
     val children = fetch()
     if (children.size <= 0) return None
     if (children.size > 1)
-      throw new ORMException("One-to-one relationship expected, by multiple records found. " +
+      throw new ORMException("One-to-one relationship expected, but multiple records found. " +
           "Add a UNIQUE constraint or stick with InverseMany.")
-    return Some(children(0))
+    Some(children(0))
   }
 }

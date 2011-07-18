@@ -16,8 +16,8 @@ Every `Field` capable of (de)serializing itself (from)into XML should extend the
 abstract class XmlSerializable[T, R <: Record[_, R]](
     name: String, record: R, sqlType: String)
     extends Field[T, R](name, record, sqlType) {
-  def from(str: String): Option[T]
-  def to(value: Option[T]): String =
+  def fromString(str: String): Option[T]
+  def toString(value: Option[T]): String =
     value.map(_.toString).getOrElse("")
 }
 
@@ -32,13 +32,15 @@ class Deployment(val id: String,
                  val validate: Boolean = true,
                  val entries: Seq[Node]) {
 
-  def process() = try {
-    entries.foreach(e => processNode(e, Nil))
-    COMMIT()
-  } catch {
-    case e =>
-      ROLLBACK()
-      throw e
+  def process() {
+    try {
+      entries.foreach(e => processNode(e, Nil))
+      COMMIT()
+    } catch {
+      case e =>
+        ROLLBACK()
+        throw e
+    }
   }
 
   protected def processNode[R <: Record[Any, R]](
@@ -50,11 +52,11 @@ class Deployment(val id: String,
     // Decide, whether a record should be processed, and how exactly.
     if (node.attributes.next != null) {
       val crit = prepareCriteria(r, node)
-      crit.unique match {
+      crit.unique() match {
         case Some(rec: R) if (onExist == Deployment.Skip || node.child.size == 0) =>
           return rec
         case Some(rec: R) if (onExist == Deployment.Recreate) =>
-          crit.mkDelete.execute()
+          crit.mkDelete().execute()
         case Some(rec: R) if (onExist == Deployment.Update) =>
           r = rec
           update = true
@@ -134,7 +136,7 @@ class Deployment(val id: String,
   }
 
   protected def convertValue(field: Field[Any, _], v: String): Option[Any] = field match {
-    case field: XmlSerializable[Any, _] => field.from(v)
+    case field: XmlSerializable[Any, _] => field.fromString(v)
     case _ => Some(v)
   }
 
@@ -175,5 +177,7 @@ object Deployment {
 }
 
 class DeploymentHelper(f: File) {
-  def loadData() = Deployment.readAll(XML.loadFile(f)).foreach(_.process())
+  def loadData() {
+    Deployment.readAll(XML.loadFile(f)).foreach(_.process())
+  }
 }

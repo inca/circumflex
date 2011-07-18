@@ -1,7 +1,6 @@
 package ru.circumflex
 
 import ru.circumflex.core._
-import orm._
 import java.util.regex.Pattern
 import net.sf.ehcache.CacheManager
 import collection.mutable.Stack
@@ -51,8 +50,12 @@ package object orm {
   def contextCache = CacheService.get
 
   def tx: Transaction = transactionManager.get
-  def COMMIT() = tx.commit()
-  def ROLLBACK() = tx.rollback()
+  def COMMIT() {
+    tx.commit()
+  }
+  def ROLLBACK() {
+    tx.rollback()
+  }
 
   /*! ## Alias Stack
 
@@ -74,8 +77,10 @@ package object orm {
         ctx += "orm.aliasStack" -> s
         s
     }
-    def pop: Option[String] = if (_stack.size == 0) None else Some(_stack.pop)
-    def push(alias: String): Unit = _stack.push(alias)
+    def pop(): Option[String] = if (_stack.size == 0) None else Some(_stack.pop())
+    def push(alias: String) {
+      _stack.push(alias)
+    }
   }
 
   // Implicits
@@ -163,7 +168,7 @@ package object orm {
       case _ => parameters ++= List(null)
     }
     sqlText = matcher.replaceAll("?")
-    return new SimpleExpression(sqlText, parameters)
+    new SimpleExpression(sqlText, parameters)
   }
 
   // Simple subqueries DSL

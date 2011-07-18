@@ -4,7 +4,7 @@ import ru.circumflex.core._
 import javax.sql.DataSource
 import javax.naming.InitialContext
 import java.util.Date
-import java.sql.{Timestamp, Connection, PreparedStatement, ResultSet}
+import java.sql.{Timestamp, Connection, PreparedStatement}
 import com.mchange.v2.c3p0.{DataSources, ComboPooledDataSource}
 import collection.mutable.HashMap
 import xml._
@@ -30,10 +30,8 @@ The `ConnectionProvider` is a simple trait responsible for acquiring JDBC
 connections throughout the application.
 */
 trait ConnectionProvider {
-
   def openConnection(): Connection
-
-  def close(): Unit
+  def close()
 }
 
 /*! Circumflex ORM provides default `ConnectionProvider` implementation.
@@ -123,17 +121,17 @@ class DefaultConnectionProvider extends ConnectionProvider {
   def dataSource: DataSource = {
     if (_ds == null)
       _ds = createDataSource
-    return _ds
+    _ds
   }
 
   def openConnection(): Connection = {
     val conn = dataSource.getConnection
     conn.setAutoCommit(autocommit)
     conn.setTransactionIsolation(isolation)
-    return conn
+    conn
   }
 
-  def close(): Unit = {
+  def close() {
     DataSources.destroy(_ds)
     _ds = null
   }
@@ -146,15 +144,16 @@ If you intend to use custom types, provide your own implementation.
 */
 class TypeConverter {
 
-  def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit =
+  def write(st: PreparedStatement, parameter: Any, paramIndex: Int) {
     parameter match {
       case None | null => st.setObject(paramIndex, null)
       case Some(v) => write(st, v, paramIndex)
       case p: Date => st.setObject(paramIndex, new Timestamp(p.getTime))
-      case x: Elem => st.setString(paramIndex, x.toString)
+      case x: Elem => st.setString(paramIndex, x.toString())
       case bd: BigDecimal => st.setBigDecimal(paramIndex, bd.bigDecimal)
       case v => st.setObject(paramIndex, v)
     }
+  }
 }
 
 /*!# Transaction manager
@@ -184,51 +183,54 @@ class Transaction {
   def isLive: Boolean =
     _connection != null && !_connection.isClosed
 
-  def commit(): Unit =
-    if (isLive && !_connection.getAutoCommit) _connection.commit
-
-  def rollback(): Unit = {
-    if (isLive && !_connection.getAutoCommit) _connection.rollback
-    contextCache.invalidate
+  def commit() {
+    if (isLive && !_connection.getAutoCommit) _connection.commit()
   }
 
-  def close(): Unit = if (isLive) try {
-    // close all cached statements
-    _statementsCache.values.foreach(_.close)
-  } finally {
-    // clear statements cache
-    _statementsCache.clear
-    // close connection
-    _connection.close
-    Statistics.connectionsClosed.incrementAndGet
-    ORM_LOG.trace("Closed a JDBC connection.")
+  def rollback() {
+    if (isLive && !_connection.getAutoCommit) _connection.rollback()
+    contextCache.invalidate()
+  }
+
+  def close() {
+    if (isLive) try {
+      // close all cached statements
+      _statementsCache.values.foreach(_.close())
+    } finally {
+      // clear statements cache
+      _statementsCache.clear()
+      // close connection
+      _connection.close()
+      Statistics.connectionsClosed.incrementAndGet()
+      ORM_LOG.trace("Closed a JDBC connection.")
+    }
   }
 
   protected def getConnection: Connection = {
     if (_connection == null || _connection.isClosed) {
-      _connection = connectionProvider.openConnection
-      Statistics.connectionsOpened.incrementAndGet
+      _connection = connectionProvider.openConnection()
+      Statistics.connectionsOpened.incrementAndGet()
       ORM_LOG.trace("Opened a JDBC connection.")
     }
-    return _connection
+    _connection
   }
 
-  def execute[A](connActions: Connection => A)
-                (errActions: Throwable => A): A =
+  def execute[A](connActions: Connection => A,
+                 errActions: Throwable => A): A =
     try {
-      Statistics.executions.incrementAndGet
+      Statistics.executions.incrementAndGet()
       val result = connActions(getConnection)
-      Statistics.executionsSucceeded.incrementAndGet
+      Statistics.executionsSucceeded.incrementAndGet()
       result
     } catch {
       case e =>
-        Statistics.executionsFailed.incrementAndGet
+        Statistics.executionsFailed.incrementAndGet()
         errActions(e)
     }
 
-  def execute[A](sql: String)
-                (stActions: PreparedStatement => A)
-                (errActions: Throwable => A): A = execute { conn =>
+  def execute[A](sql: String,
+                 stActions: PreparedStatement => A,
+                 errActions: Throwable => A): A = execute({ conn =>
     ORM_LOG.debug(sql)
     val st =_statementsCache.get(sql).getOrElse {
       val statement = dialect.prepareStatement(conn, sql)
@@ -236,10 +238,10 @@ class Transaction {
       statement
     }
     stActions(st)
-  } (errActions)
+  }, errActions)
 
   def apply[A](block: => A): A = {
-    val sp = getConnection.setSavepoint
+    val sp = getConnection.setSavepoint()
     try {
       block
     } catch {
@@ -257,39 +259,34 @@ class Transaction {
 }
 
 trait TransactionManager {
-
-  def hasisLive(): Boolean
-
   def get: Transaction
 }
 
 class DefaultTransactionManager extends TransactionManager {
 
   Context.addDestroyListener(c => try {
-    get.commit
+    get.commit()
     ORM_LOG.trace("Committed current transaction.")
   } catch {
-    case e =>
-      ORM_LOG.error("Could not commit current transaction", e)
+    case e1: Exception =>
+      ORM_LOG.error("Could not commit current transaction", e1)
       try {
-        get.rollback
+        get.rollback()
         ORM_LOG.trace("Rolled back current transaction.")
       } catch {
-        case e =>
-          ORM_LOG.error("Could not roll back current transaction", e)
+        case e2: Exception =>
+          ORM_LOG.error("Could not roll back current transaction", e2)
       }
   } finally {
-    get.close
+    get.close()
   })
-
-  def hasisLive(): Boolean = ctx.contains("orm.transaction")
 
   def get: Transaction = ctx.get("orm.transaction") match {
     case Some(t: Transaction) => t
     case _ =>
       val t = cx.instantiate[Transaction]("orm.transaction", new Transaction)
       ctx.update("orm.transaction", t)
-      return t
+      t
   }
 
 }

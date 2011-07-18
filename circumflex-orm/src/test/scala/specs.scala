@@ -6,10 +6,12 @@ import xml._
 import ru.circumflex.core._
 
 object Sample {
-  def createSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).CREATE
-  def loadData = Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
-      .foreach(_.process)
-  def dropSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).DROP
+  def createSchema() = new DDLUnit(Country, City, Capital, Developer, Project, Membership).CREATE()
+  def loadData() {
+    Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
+        .foreach(_.process())
+  }
+  def dropSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).DROP()
 }
 
 class SpecsTest extends JUnit4(CircumflexORMSpec)
@@ -20,8 +22,8 @@ object CircumflexORMSpec extends Specification {
   val co = Country AS "co"
 
   doBeforeSpec {
-    Sample.createSchema
-    Sample.loadData
+    Sample.createSchema()
+    Sample.loadData()
   }
 
   doAfterSpec {
@@ -64,11 +66,11 @@ object CircumflexORMSpec extends Specification {
     "handle different identifier generation strategies" in {
       List(IdentNoAuto, IdentAuto, SeqNoAuto, SeqAuto).foreach { r =>
         try {
-          new DDLUnit(r).CREATE
+          new DDLUnit(r).CREATE()
           val record = r.recordClass.newInstance
           record.INSERT_!()
           record.isTransient must beFalse
-          new DDLUnit(r).DROP
+          new DDLUnit(r).DROP()
         } catch {
           case e: UnsupportedOperationException =>
             ORM_LOG.warn("Database does not support one of identity generation strategies.")
@@ -78,18 +80,18 @@ object CircumflexORMSpec extends Specification {
     "handle validation" in {
       val c = new Country
       c.code := ""
-      c.validate.get.size must_== 2
+      c.validate().get.size must_== 2
       c.code := "1"
-      c.validate.get.size must_== 1
+      c.validate().get.size must_== 1
       c.validate_! must throwA[ValidationException]
     }
     "handle decimal types" in {
-      new DDLUnit(DecimalRecord).CREATE
+      new DDLUnit(DecimalRecord).CREATE()
       val r = new DecimalRecord
       r.value := BigDecimal("13.653214")
       r.INSERT()
       r.value() must_== BigDecimal("13.6532")
-      new DDLUnit(DecimalRecord).DROP
+      new DDLUnit(DecimalRecord).DROP()
     }
   }
 
@@ -138,11 +140,11 @@ object CircumflexORMSpec extends Specification {
 
   "Querying API" should {
     "handle simple selects" in {
-      SELECT(co.*).FROM(co).list.size must_== 3
+      SELECT(co.*).FROM(co).list().size must_== 3
     }
     "handle distincts, joins and predicates" in {
       SELECT(co.*)
-          .DISTINCT
+          .DISTINCT()
           .FROM(co JOIN ci)
           .WHERE(ci.name LIKE "Lausanne")
           .unique.get.code() must_== "ch"
@@ -151,14 +153,14 @@ object CircumflexORMSpec extends Specification {
       SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ch").unique.get must_== 3l
     }
     "handle unions" in {
-      SELECT(ci.name).FROM(ci).UNION(SELECT(co.name).FROM(co)).list.size must_== 10
+      SELECT(ci.name).FROM(ci).UNION(SELECT(co.name).FROM(co)).list().size must_== 10
     }
     "handle subqueries" in {
       val q = SELECT(ci.country.field).FROM(ci).WHERE(ci.name LIKE "Lausanne")
       SELECT(co.*).FROM(co).WHERE(co.code IN q).unique.get.code() must_== "ch"
     }
     "handle limits, offsets and order-by's" in {
-      SELECT(co.*).FROM(co).LIMIT(1).OFFSET(1).ORDER_BY(co.name ASC).unique.get.code() must_== "ch"
+      SELECT(co.*).FROM(co).LIMIT(1).OFFSET(1).ORDER_BY(co.name ASC).unique().get.code() must_== "ch"
     }
     "handle criteria and inverse association merging" in {
       val ch = Country.get("ch").get
@@ -174,7 +176,7 @@ object CircumflexORMSpec extends Specification {
       val pt = new Country("pt", "Portugal")
       pt.INSERT()
       SELECT(co.*).FROM(co).WHERE(co.code LIKE "pt").unique must_== Some(pt)
-      ROLLBACK
+      ROLLBACK()
       SELECT(co.*).FROM(co).WHERE(co.code LIKE "pt").unique must_== None
     }
     "handle nested transactions" in {
@@ -190,7 +192,7 @@ object CircumflexORMSpec extends Specification {
         new Country(code, "Test").INSERT()
       } catch { case _ => }
       SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list.size must_== 3
-      ROLLBACK
+      ROLLBACK()
       SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list.size must_== 0
     }
   }

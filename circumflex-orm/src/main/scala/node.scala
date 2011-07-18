@@ -20,7 +20,7 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
   def alias = _alias
   def AS(alias: String): this.type = {
     this._alias = alias
-    return this
+    this
   }
 
   /*! Relation nodes allow Scala-like syntactic sugar by using the `map` method.
@@ -119,7 +119,7 @@ class ProxyNode[PK, R <: Record[PK, R]](protected[orm] var node: RelationNode[PK
   override def alias = node.alias
   override def AS(alias: String): this.type = {
     node.AS(alias)
-    return this
+    this
   }
 
   override def projections = node.projections
@@ -135,7 +135,7 @@ class ProxyNode[PK, R <: Record[PK, R]](protected[orm] var node: RelationNode[PK
     val newNode = super.clone().asInstanceOf[this.type]
     val n = node.clone().asInstanceOf[RelationNode[PK, R]]
     newNode.node = n
-    return newNode
+    newNode
   }
 
 }
@@ -164,31 +164,31 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
   def joinType = _joinType
 
   protected var _on: Expression = EmptyPredicate
-  def on = _on
+  def onClause = _on
   def ON(expr: Expression): this.type = {
     _on = expr
-    return this
+    this
   }
 
-  def sqlOn = dialect.ON(this.on)
+  def sqlOn = dialect.on(this.onClause)
 
   override def projections = left.projections ++ right.projections
 
   def replaceLeft(newLeft: RelationNode[PKL, L]): this.type = {
     this._left = newLeft
-    return this
+    this
   }
 
   def replaceRight(newRight: RelationNode[PKR, R]): this.type = {
     this._right = newRight
-    return this
+    this
   }
 
   override def toSql = dialect.join(this)
 
   override def clone(): this.type = super.clone()
-      .replaceLeft(this.left.clone)
-      .replaceRight(this.right.clone)
+      .replaceLeft(this.left.clone())
+      .replaceRight(this.right.clone())
 
   override def toString = "(" + left + " -> " + right + ")"
 
@@ -199,7 +199,7 @@ class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     parentNode: RelationNode[PKR, R],
     val association: Association[PKR, L, R],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](childNode, parentNode, joinType) {
-  override def on =
+  override def onClause =
     if (_on == EmptyPredicate)
       association.joinPredicate(childNode.alias, parentNode.alias)
     else _on
@@ -210,7 +210,7 @@ class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     childNode: RelationNode[PKR, R],
     val association: Association[PKL, R, L],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](parentNode, childNode, joinType) {
-  override def on =
+  override def onClause =
     if (_on == EmptyPredicate)
       association.joinPredicate(childNode.alias, parentNode.alias)
     else _on

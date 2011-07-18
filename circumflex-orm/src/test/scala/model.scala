@@ -9,10 +9,10 @@ class Country extends Record[String, Country] {
     this.name := name
   }
 
-  val code = "code".VARCHAR(2).NOT_NULL
+  val code = "code".VARCHAR(2).NOT_NULL()
       .addSetter(_.trim)
       .addSetter(_.toLowerCase)
-  val name = "name".TEXT.NOT_NULL
+  val name = "name".TEXT.NOT_NULL()
   def cities = inverseMany(City.country)
   def capital = inverseOne(Capital.country)
 
@@ -37,8 +37,8 @@ class City extends Record[String, City] {
   }
 
   val id = "id".TEXT.NOT_NULL(java.util.UUID.randomUUID.toString)
-  val name = "name".TEXT.NOT_NULL
-  val country = "country_code".VARCHAR(2).NOT_NULL.REFERENCES(Country).ON_DELETE(CASCADE)
+  val name = "name".TEXT.NOT_NULL()
+  val country = "country_code".VARCHAR(2).NOT_NULL().REFERENCES(Country).ON_DELETE(CASCADE)
 
   def PRIMARY_KEY = id
   def relation = City
@@ -57,8 +57,8 @@ class Capital extends Record[String, Capital] {
     this.country := country
     this.city := city
   }
-  val country = "country_id".VARCHAR(2).NOT_NULL.REFERENCES(Country).ON_DELETE(CASCADE)
-  val city = "city_id".TEXT.NOT_NULL.REFERENCES(City).ON_DELETE(CASCADE)
+  val country = "country_id".VARCHAR(2).NOT_NULL().REFERENCES(Country).ON_DELETE(CASCADE)
+  val city = "city_id".TEXT.NOT_NULL().REFERENCES(City).ON_DELETE(CASCADE)
 
   def relation = Capital
   def PRIMARY_KEY = country.field
@@ -75,7 +75,7 @@ class Developer extends Record[String, Developer] {
   def relation = Developer
   def PRIMARY_KEY = login
 
-  val login = "login".VARCHAR(255).NOT_NULL
+  val login = "login".VARCHAR(255).NOT_NULL()
   def projects = inverseMany(Membership.developer)
 }
 
@@ -85,7 +85,7 @@ class Project extends Record[String, Project] {
   def relation = Project
   def PRIMARY_KEY = name
 
-  val name = "name".VARCHAR(255).NOT_NULL
+  val name = "name".VARCHAR(255).NOT_NULL()
   def members = inverseMany(Membership.project)
 }
 
@@ -102,9 +102,9 @@ class Membership extends Record[(String, String), Membership] {
   def relation = Membership
   def PRIMARY_KEY = pk
 
-  val project = "project".VARCHAR(255).NOT_NULL.REFERENCES(Project).ON_DELETE(CASCADE)
+  val project = "project".VARCHAR(255).NOT_NULL().REFERENCES(Project).ON_DELETE(CASCADE)
   def name = project.field
-  val developer = "developer".VARCHAR(255).NOT_NULL.REFERENCES(Developer).ON_DELETE(CASCADE)
+  val developer = "developer".VARCHAR(255).NOT_NULL().REFERENCES(Developer).ON_DELETE(CASCADE)
   def login = developer.field
   val pk = composition(name, login)
 
@@ -117,7 +117,7 @@ object Membership extends Membership with Table[(String, String), Membership]
 object IdGen extends Schema("idgen")
 
 class IdentNoAuto extends Record[Long, IdentNoAuto] with IdentityGenerator[Long, IdentNoAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT
+  val id = "id".BIGINT.AUTO_INCREMENT()
   def relation = IdentNoAuto
   def PRIMARY_KEY = id
 }
@@ -127,18 +127,18 @@ object IdentNoAuto extends IdentNoAuto with Table[Long, IdentNoAuto] {
 }
 
 class IdentAuto extends Record[Long, IdentAuto] with IdentityGenerator[Long, IdentAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT
+  val id = "id".BIGINT.AUTO_INCREMENT()
   def relation = IdentAuto
   def PRIMARY_KEY = id
 }
 
 object IdentAuto extends IdentAuto with Table[Long, IdentAuto] {
   override def schema: Schema = IdGen
-  override def isAutoRefresh(): Boolean = true
+  override def isAutoRefresh: Boolean = true
 }
 
 class SeqNoAuto extends Record[Long, SeqNoAuto] with SequenceGenerator[Long, SeqNoAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT
+  val id = "id".BIGINT.AUTO_INCREMENT()
   def relation = SeqNoAuto
   def PRIMARY_KEY = id
 }
@@ -148,14 +148,14 @@ object SeqNoAuto extends SeqNoAuto with Table[Long, SeqNoAuto] {
 }
 
 class SeqAuto extends Record[Long, SeqAuto] with SequenceGenerator[Long, SeqAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT
+  val id = "id".BIGINT.AUTO_INCREMENT()
   def relation = SeqAuto
   def PRIMARY_KEY = id
 }
 
 object SeqAuto extends SeqAuto with Table[Long, SeqAuto] {
   override def schema: Schema = IdGen
-  override def isAutoRefresh(): Boolean = true
+  override def isAutoRefresh: Boolean = true
 }
 
 // SQL Types test model
@@ -163,12 +163,12 @@ object SeqAuto extends SeqAuto with Table[Long, SeqAuto] {
 object DecimalSchema extends Schema("decimal")
 
 class DecimalRecord extends Record[BigDecimal, DecimalRecord] {
-  val value = "value".NUMERIC(12,4).NOT_NULL
+  val value = "value".NUMERIC(12, 4).NOT_NULL()
   def PRIMARY_KEY = value
   def relation = DecimalRecord
 }
 
 object DecimalRecord extends DecimalRecord with Table[BigDecimal, DecimalRecord] {
   override def schema = DecimalSchema
-  override def isAutoRefresh(): Boolean = true
+  override def isAutoRefresh: Boolean = true
 }

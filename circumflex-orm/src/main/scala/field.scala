@@ -13,9 +13,10 @@ and provides methods for constructing column definitions for enclosing
 tables. It also contains the `REFERENCES` method which is used to create
 associations and various methods for composing simple predicates.
 */
-class Field[T, R <: Record[_, R]](val name: String,
-                                  val record: R,
-                                  val sqlType: String)
+class Field[T, R <: Record[_, R]](
+        val name: String,
+        val record: R,
+        val sqlType: String)
     extends ValueHolder[T, R] with SQLable {
 
   def uuid = record.getClass.getName + "." + name
@@ -144,38 +145,42 @@ trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
 class IntField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Int, R](name, record, dialect.integerType)
     with AutoIncrementable[Int, R] {
-  def from(str: String): Option[Int] =
+  def fromString(str: String): Option[Int] =
     try Some(str.toInt) catch { case _ => None }
 }
 
 class LongField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Long, R](name, record, dialect.longType)
     with AutoIncrementable[Long, R]{
-  def from(str: String): Option[Long] =
+  def fromString(str: String): Option[Long] =
     try Some(str.toLong) catch { case _ => None }
 }
 
-class DoubleField[R <: Record[_, R]](name: String,
-                                     record: R,
-                                     val precision: Int = -1,
-                                     val scale: Int = 0)
-    extends XmlSerializable[Double, R](name, record, dialect.numericType(precision, scale)) {
+class DoubleField[R <: Record[_, R]](
+      name: String,
+      record: R,
+      val precision: Int = -1,
+      val scale: Int = 0)
+    extends XmlSerializable[Double, R](
+      name, record, dialect.numericType(precision, scale)) {
   override def read(rs: ResultSet, alias: String): Option[Double] = {
     val d = rs.getDouble(alias)
     if (rs.wasNull) None
     else Some(d)
   }
-  def from(str: String): Option[Double] =
+  def fromString(str: String): Option[Double] =
     try Some(str.toDouble) catch { case _ => None }
 }
 
-class NumericField[R <: Record[_, R]](name: String,
-                                      record: R,
-                                      val precision: Int = -1,
-                                      val scale: Int = 0,
-                                      val roundingMode: RoundingMode.RoundingMode = RoundingMode.HALF_EVEN)
-    extends XmlSerializable[BigDecimal, R](name, record, dialect.numericType(precision, scale)) {
-  def from(str: String): Option[BigDecimal] =
+class NumericField[R <: Record[_, R]](
+      name: String,
+      record: R,
+      val precision: Int = -1,
+      val scale: Int = 0,
+      val roundingMode: RoundingMode.RoundingMode = RoundingMode.HALF_EVEN)
+    extends XmlSerializable[BigDecimal, R](
+      name, record, dialect.numericType(precision, scale)) {
+  def fromString(str: String): Option[BigDecimal] =
     try Some(BigDecimal(str)) catch { case _ => None }
   override def read(rs: ResultSet, alias: String): Option[BigDecimal] = {
     val bd = rs.getBigDecimal(alias)
@@ -189,7 +194,7 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
     extends XmlSerializable[String, R](name, record, sqlType) {
   def this(name: String, record: R, length: Int = -1) =
     this(name, record, dialect.varcharType(length))
-  def from(str: String): Option[String] =
+  def fromString(str: String): Option[String] =
     if (str == "") None else Some(str)
 
   def LIKE(value: String) = new SimpleExpression(dialect.LIKE(aliasedName, placeholder), List(value))
@@ -202,37 +207,37 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
 
 class BooleanField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Boolean, R](name, record, dialect.booleanType) {
-  def from(str: String): Option[Boolean] =
+  def fromString(str: String): Option[Boolean] =
     try Some(str.toBoolean) catch { case _ => None }
 }
 
 class TimestampField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, dialect.timestampType) {
-  def from(str: String): Option[Date] =
+  def fromString(str: String): Option[Date] =
     try Some(new Date(java.sql.Timestamp.valueOf(str).getTime)) catch { case _ => None }
-  override def to(value: Option[Date]): String =
+  override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Timestamp(v.getTime).toString).getOrElse("")
 }
 
 class DateField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, dialect.dateType) {
-  def from(str: String): Option[Date] =
+  def fromString(str: String): Option[Date] =
     try Some(new Date(java.sql.Date.valueOf(str).getTime)) catch { case _ => None }
-  override def to(value: Option[Date]): String =
+  override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Date(v.getTime).toString).getOrElse("")
 }
 
 class TimeField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, dialect.timeType) {
-  def from(str: String): Option[Date] =
+  def fromString(str: String): Option[Date] =
     try Some(new Date(java.sql.Time.valueOf(str).getTime)) catch { case _ => None }
-  override def to(value: Option[Date]): String =
+  override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Time(v.getTime).toString).getOrElse("")
 }
 
 class XmlField[R <: Record[_, R]](name: String, record: R, val root: String)
     extends XmlSerializable[Elem, R](name, record, dialect.xmlType) {
-  def from(str: String): Option[Elem] = Some(XML.loadString(
+  def fromString(str: String): Option[Elem] = Some(XML.loadString(
     "<" + root + ">" + str + "</" + root +">"))
   override def read(rs: ResultSet, alias: String) =
     any2option(rs.getString(alias)).map(x => XML.loadString(x))
@@ -257,8 +262,8 @@ class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
         _1.set(v1)
         _2.set(v2)
       case _ =>
-        _1.setNull
-        _2.setNull
+        _1.setNull()
+        _2.setNull()
     }
     this
   }
