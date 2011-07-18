@@ -1,6 +1,5 @@
 package ru.circumflex
 
-import core._
 import java.security.MessageDigest
 
 /*!# The `core` Package
@@ -43,9 +42,8 @@ package object core {
   def md5(text: String) = digest("md5", text)
   def sha256(text: String) = digest("sha-256", text)
 
-  /* Implicits */
+  // Pimping Symbols
 
-  @inline implicit def symbol2string(sym: Symbol): String = sym.name
   @inline implicit def symbol2contextVarHelper(sym: Symbol): ContextVarHelper =
     new ContextVarHelper(sym)
 

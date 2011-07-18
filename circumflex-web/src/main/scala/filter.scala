@@ -1,4 +1,5 @@
-package ru.circumflex.web
+package ru.circumflex
+package web
 
 import java.lang.reflect.InvocationTargetException
 import javax.servlet._
@@ -42,7 +43,7 @@ class CircumflexFilter extends Filter {
     cx("cx.filterConfig") = filterConfig
   }
 
-  def destroy = {}
+  def destroy() = {}
 
   /*!## Serving static  {#static}
 
@@ -67,14 +68,15 @@ class CircumflexFilter extends Filter {
       val relativeUri = uri.substring(contextPath.length)
       val decodedUri = URLDecoder.decode(publicUri + relativeUri, "UTF-8")
       val path = filterConfig.getServletContext.getRealPath(decodedUri)
-      if (path == null) return false
+      if (path == null)
+        return false
       val resource = new File(path)
       if (resource.isFile) {
         req.getRequestDispatcher(decodedUri).forward(req, res)
         return true
       }
     }
-    return false
+    false
   }
 
   /*!## Main Lifecycle {#lifecycle}
@@ -98,35 +100,39 @@ class CircumflexFilter extends Filter {
   */
   def doFilter(req: ServletRequest,
                res: ServletResponse,
-               chain: FilterChain): Unit = (req, res) match {
-    case (req: HttpServletRequest, res: HttpServletResponse) =>
-      // try to serve static first
-      if (serveStatic(req, res, chain)) return
-      // initialize context
-      Context.executeInNew { ctx =>
-        ctx("cx.request") = new HttpRequest(req)
-        ctx("cx.response") = new HttpResponse(res)
-        ctx("cx.filterChain") = chain
-        ctx("cx.locale") = req.getLocale
-        prepareContext(ctx)
-        try {
-          WEB_LOG.trace(req)
-          // execute main router
-          try {
-            cx.instantiate("cx.router") // ResponseSentException must be thrown
-            onNoMatch()
-          } catch {
-            case e: InvocationTargetException => e.getCause match {
-              case ex: ResponseSentException => throw ex
-              case ex: FileNotFoundException => onNotFound(ex)
-              case ex => onRouterError(ex)
+               chain: FilterChain) {
+    (req, res) match {
+      case (req: HttpServletRequest, res: HttpServletResponse) =>
+        // try to serve static first
+        if (serveStatic(req, res, chain))
+          return
+        // initialize context
+        Context.executeInNew {
+          ctx =>
+            ctx("cx.request") = new HttpRequest(req)
+            ctx("cx.response") = new HttpResponse(res)
+            ctx("cx.filterChain") = chain
+            ctx("cx.locale") = req.getLocale
+            prepareContext(ctx)
+            try {
+              WEB_LOG.trace(req)
+              // execute main router
+              try {
+                cx.instantiate("cx.router") // ResponseSentException must be thrown
+                onNoMatch()
+              } catch {
+                case e: InvocationTargetException => e.getCause match {
+                  case ex: ResponseSentException => throw ex
+                  case ex: FileNotFoundException => onNotFound(ex)
+                  case ex => onRouterError(ex)
+                }
+              }
+            } catch {
+              case e: ResponseSentException => WEB_LOG.trace(res)
             }
-          }
-        } catch {
-          case e: ResponseSentException => WEB_LOG.trace(res)
         }
-      }
-    case _ =>
+      case _ =>
+    }
   }
 
   /*! The `prepareContext` method populates current context with various useful
@@ -144,7 +150,7 @@ class CircumflexFilter extends Filter {
   If you use custom filter implementation, you are can override this method
   to populate current context with global variables of your application.
   */
-  def prepareContext(ctx: Context): Unit = {
+  def prepareContext(ctx: Context) {
     'param := param
     'request := request
     'session := session
@@ -164,17 +170,17 @@ class CircumflexFilter extends Filter {
   * `onRouterError` is executed if a general exception is thrown from a router;
 
   */
-  def onNoMatch(): Unit = {
+  def onNoMatch() {
     WEB_LOG.debug("No routes matched: " + request)
     sendError(404)
   }
 
-  def onRouterError(e: Throwable): Unit = {
+  def onRouterError(e: Throwable) {
     WEB_LOG.error("Router threw an exception, see stack trace for details.", e)
     sendError(500)
   }
 
-  def onNotFound(e: Throwable): Unit = {
+  def onNotFound(e: Throwable) {
     WEB_LOG.debug("Resource not found, see stack trace for details.", e)
     sendError(404)
   }

@@ -106,9 +106,10 @@ Following syntaxes are available for setting context variables:
 The implicit conversions from `Symbol` into `ContextVarHelper` are available in the
 `ru.circumflex.core` package.
 */
-class ContextVarHelper(val key: Symbol) {
-  def apply[T](): T = ctx.as[T](key)
-  def get[T](): Option[T] = ctx.getAs[T](key)
+class ContextVarHelper(val sym: Symbol) {
+  val key = sym.toString
+  def apply[T]: T = ctx.as[T](key)
+  def get[T]: Option[T] = ctx.getAs[T](key)
   def getOrElse[T >: Any](default: T): T = ctx.getOrElse[T](key, default)
   def getString(key: String): String = getOrElse(key, "").toString
   def getString: String = ctx.getString(key)

@@ -1,4 +1,5 @@
-package ru.circumflex.web
+package ru.circumflex
+package web
 
 import ru.circumflex.core._
 import util.control.ControlThrowable

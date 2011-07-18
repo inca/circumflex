@@ -11,7 +11,7 @@ import collection.mutable.Map
 
 /*!# The `web` Package
 
-Package `web` contains different shortcuts, utilities, helpers and implicits --
+Package `web` contains different shortcuts, utilities and helpers --
 the basis of routing DSL of Circumflex Web Framework.
 
 You should import this package to use Circumflex Web Framework in your application:
@@ -184,7 +184,7 @@ package object web {
       try {
         IOUtils.copy(is, r.getOutputStream)
       } finally {
-        is.close
+        is.close()
       }
     } flush()
   }

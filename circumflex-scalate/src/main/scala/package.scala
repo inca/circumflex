@@ -3,8 +3,6 @@ package ru.circumflex
 import core._, web._
 import org.fusesource.scalate._
 import org.fusesource.scalate.servlet._
-import java.util.Enumeration
-import javax.servlet.ServletContext
 
 /*!# The `scalate` package
 
@@ -58,7 +56,7 @@ package object scalate {
     val rctx = new ServletRenderContext(engine, response.raw.getWriter, request.raw, response.raw, servletContext)
     // add context parameters
     ctx.foreach(p => rctx.attributes(p._1) = p._2)
-    return rctx
+    rctx
   }
 
   def render(template: String,
@@ -66,12 +64,12 @@ package object scalate {
              layout: Boolean = true): Nothing = {
     response.statusCode(statusCode)
     acquireRenderContext.include(template, layout)
-    response.flush
+    response.flush()
   }
 
   def view(view: String, it: AnyRef): Nothing = {
     acquireRenderContext.view(it, view)
-    response.flush
+    response.flush()
   }
 
 }

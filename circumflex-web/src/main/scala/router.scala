@@ -148,25 +148,25 @@ class RequestRouter(var prefix: String = "") {
 
 trait RoutingContext[-T] {
   def matches: Boolean
-  protected def dispatch(block: => T): Unit
+  protected def dispatch(block: => T)
   def and: RoutingContext[T] = if (matches) this else NopRoute
   def apply(matcher: Matcher): RoutingContext[T] = matcher.apply() match {
     case Some(matchResults) if matches =>
       matchResults.foreach(m => ctx.update(m.name, m))
-      return this
-    case _ => return NopRoute
+      this
+    case _ => NopRoute
   }
   def apply(condition: => Boolean): RoutingContext[T] =
     if (matches && condition) this else NopRoute
-  def update(matcher: Matcher, block: => T): Unit =
+  def update(matcher: Matcher, block: => T) =
     apply(matcher).dispatch(block)
-  def update(condition: => Boolean, block: => T): Unit =
+  def update(condition: => Boolean, block: => T) =
     apply(condition).dispatch(block)
 }
 
 class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
   val matches = matchingMethods.contains("*") || matchingMethods.contains(request.method)
-  protected def dispatch(block: => RouteResponse): Unit = {
+  protected def dispatch(block: => RouteResponse) = {
     val response = block.body
     send(response)
   }
@@ -179,15 +179,15 @@ class FilterRoute extends RoutingContext[Unit] {
 
 class RewriteRoute extends RoutingContext[String] {
   def matches = true
-  protected def dispatch(block: => String): Unit = {
+  protected def dispatch(block: => String) = {
     val newUri = block
     ctx.update("cx.web.uri", newUri)
   }
 }
 
 object NopRoute extends RoutingContext[Any] {
-  protected def dispatch(block: => Any): Unit = {}
+  protected def dispatch(block: => Any) = {}
   def matches = false
 }
 
-case class RouteResponse(val body: String)
+case class RouteResponse(body: String)

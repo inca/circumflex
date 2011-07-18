@@ -1,4 +1,5 @@
-package ru.circumflex.web
+package ru.circumflex
+package web
 
 import javax.servlet.http.Cookie
 
@@ -20,14 +21,14 @@ case class HttpCookie(var name: String,
                       var secure: Boolean = false,
                       var maxAge: Int = -1) {
 /*! You can convert `HttpCookie` back to `javax.servlet.Cookie` using `convert` method. */
-  def convert: Cookie = {
+  def convert(): Cookie = {
     val c = new Cookie(name, value)
     if (domain != null) c.setDomain(domain)
     if (path != null) c.setPath(path)
     if (comment != null) c.setComment(comment)
     c.setSecure(secure)
     c.setMaxAge(maxAge)
-    return c
+    c
   }
   override def toString = name + " = " + value
 }

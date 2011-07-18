@@ -22,12 +22,7 @@ response body to `UTF-8`. Feel free to change it if your application requires so
 */
 class HttpResponse(val raw: HttpServletResponse) {
 
-  def flush(): Nothing = {
-    flush()
-    throw new ResponseSentException
-  }
-
-  def flush(): Unit = if (!raw.isCommitted) {
+  def flush(): Nothing = if (!raw.isCommitted) {
     if (statusCode != -1)
       raw.setStatus(statusCode)
     if (contentLength != -1)
@@ -43,7 +38,9 @@ class HttpResponse(val raw: HttpServletResponse) {
     // write response body
     body(raw)
     // flush
-    raw.flushBuffer
+    raw.flushBuffer()
+    // throw an exception to container
+    throw new ResponseSentException()
   }
 
   /*!## Response Basics
