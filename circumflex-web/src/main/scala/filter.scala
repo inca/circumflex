@@ -38,12 +38,12 @@ is available throughout your configuration via the `filterConfig` method of the
 */
 class CircumflexFilter extends Filter {
 
-  def init(filterConfig: FilterConfig) = {
+  def init(filterConfig: FilterConfig) {
     WEB_LOG.info("Circumflex 2.1")
     cx("cx.filterConfig") = filterConfig
   }
 
-  def destroy() = {}
+  def destroy() {}
 
   /*!## Serving static  {#static}
 
@@ -107,29 +107,28 @@ class CircumflexFilter extends Filter {
         if (serveStatic(req, res, chain))
           return
         // initialize context
-        Context.executeInNew {
-          ctx =>
-            ctx("cx.request") = new HttpRequest(req)
-            ctx("cx.response") = new HttpResponse(res)
-            ctx("cx.filterChain") = chain
-            ctx("cx.locale") = req.getLocale
-            prepareContext(ctx)
+        Context.executeInNew { ctx =>
+          ctx("cx.request") = new HttpRequest(req)
+          ctx("cx.response") = new HttpResponse(res)
+          ctx("cx.filterChain") = chain
+          ctx("cx.locale") = req.getLocale
+          prepareContext(ctx)
+          try {
+            WEB_LOG.trace(req)
+            // execute main router
             try {
-              WEB_LOG.trace(req)
-              // execute main router
-              try {
-                cx.instantiate("cx.router") // ResponseSentException must be thrown
-                onNoMatch()
-              } catch {
-                case e: InvocationTargetException => e.getCause match {
-                  case ex: ResponseSentException => throw ex
-                  case ex: FileNotFoundException => onNotFound(ex)
-                  case ex => onRouterError(ex)
-                }
-              }
+              cx.instantiate("cx.router") // ResponseSentException must be thrown
+              onNoMatch()
             } catch {
-              case e: ResponseSentException => WEB_LOG.trace(res)
+              case e: InvocationTargetException => e.getCause match {
+                case ex: ResponseSentException => throw ex
+                case ex: FileNotFoundException => onNotFound(ex)
+                case ex => onRouterError(ex)
+              }
             }
+          } catch {
+            case e: ResponseSentException => WEB_LOG.trace(res)
+          }
         }
       case _ =>
     }

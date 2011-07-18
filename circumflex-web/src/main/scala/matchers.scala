@@ -40,7 +40,7 @@ class MatchResult(val name: String,
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
 
   override def default(key: String): String = ""
-  override def toString = apply(0)
+  override def toString() = apply(0)
 }
 
 /*! Matchers can be composed together using the `&` method. The `CompositeMatcher` will
@@ -54,8 +54,8 @@ trait Matcher {
 trait AtomicMatcher extends Matcher {
   def name: String
   def add(matcher: Matcher) = new CompositeMatcher()
-          .add(this)
-          .add(matcher)
+      .add(this)
+      .add(matcher)
 }
 
 class CompositeMatcher extends Matcher {
@@ -63,10 +63,10 @@ class CompositeMatcher extends Matcher {
   def matchers = _matchers
   def add(matcher: Matcher): CompositeMatcher = {
     _matchers ++= List(matcher)
-    return this
+    this
   }
   def apply() = try {
-    val matches = _matchers.flatMap(m => m.apply match {
+    val matches = _matchers.flatMap(_.apply() match {
       case Some(matches: Seq[MatchResult]) => matches
       case _ => throw new MatchError
     })
@@ -115,7 +115,7 @@ class RegexMatcher(val name: String,
     this(name, value, null, Nil)
     processPattern(pattern)
   }
-  protected def processPattern(pattern: String): Unit = {
+  protected def processPattern(pattern: String) {
     this.groupNames = List("splat")    // for `group(0)`
     this.regex = (""":\w+|[\*+.()]""".r.replaceAllIn(pattern, m => m.group(0) match {
       case "*" | "+" =>
@@ -144,7 +144,7 @@ class RegexMatcher(val name: String,
 class HeaderMatcher(name: String,
                     regex: Regex,
                     groupNames: Seq[String] = Nil)
-        extends RegexMatcher(name, request.headers.getOrElse(name,""), regex, groupNames) {
+    extends RegexMatcher(name, request.headers.getOrElse(name,""), regex, groupNames) {
   def this(name: String, pattern: String) = {
     this(name, null, Nil)
     processPattern(pattern)

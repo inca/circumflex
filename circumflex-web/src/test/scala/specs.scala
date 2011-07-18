@@ -36,11 +36,12 @@ class SubMockRouter extends RequestRouter("/sub") {
 }
 
 class MatchingMockRouter extends RequestRouter("/matching") {
-  get("/uri/:name.:ext") = uri('name) + "->" + uri('ext)
-  get("/uri/:name") = "preved, " + uri('name)
-  get("/uri/*/one/:two/+.:three") = uri(1) + uri('two) + uri(3) + uri('three)
+  get("/uri/:name.:ext") = uri("name") + "->" + uri("ext")
+  get("/uri/:name") = "preved, " + uri("name")
+  get("/uri/*/one/:two/+.:three") = uri(1) + uri("two") + uri(3) + uri("three")
 
-  get("/param" & HOST(":host")) = "host is " + param("host")
+  get("/param" & HOST(":host")) = "" +
+      "host is " + param("host")
 
   get("/composite" & ACCEPT("text/:format") & REFERER("localhost")) =
       "3 conditions met (" + param("format") + ")"
@@ -73,10 +74,10 @@ object CircumflexWebSpec extends Specification {
       rootPath += (File.separator + "circumflex-web")
     }
     cx("cx.webappRoot") = (rootPath + File.separatorChar + "src/test/webapp")
-    MockApp.start
+    MockApp.start()
   }
 
-  doAfterSpec { MockApp.stop }
+  doAfterSpec { MockApp.stop() }
 
   "RequestRouter" should {
     "return 404 by default on non-matched requests" in {

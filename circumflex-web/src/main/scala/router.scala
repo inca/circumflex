@@ -158,15 +158,17 @@ trait RoutingContext[-T] {
   }
   def apply(condition: => Boolean): RoutingContext[T] =
     if (matches && condition) this else NopRoute
-  def update(matcher: Matcher, block: => T) =
+  def update(matcher: Matcher, block: => T) {
     apply(matcher).dispatch(block)
-  def update(condition: => Boolean, block: => T) =
+  }
+  def update(condition: => Boolean, block: => T) {
     apply(condition).dispatch(block)
+  }
 }
 
 class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
   val matches = matchingMethods.contains("*") || matchingMethods.contains(request.method)
-  protected def dispatch(block: => RouteResponse) = {
+  protected def dispatch(block: => RouteResponse) {
     val response = block.body
     send(response)
   }
@@ -174,19 +176,21 @@ class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
 
 class FilterRoute extends RoutingContext[Unit] {
   def matches = true
-  protected def dispatch(block: => Unit) = block
+  protected def dispatch(block: => Unit) {
+    block
+  }
 }
 
 class RewriteRoute extends RoutingContext[String] {
   def matches = true
-  protected def dispatch(block: => String) = {
+  protected def dispatch(block: => String) {
     val newUri = block
     ctx.update("cx.web.uri", newUri)
   }
 }
 
 object NopRoute extends RoutingContext[Any] {
-  protected def dispatch(block: => Any) = {}
+  protected def dispatch(block: => Any) {}
   def matches = false
 }
 

@@ -57,18 +57,22 @@ class StandaloneServer {
 
   def server: Server = {
     if (_server == null) {
-      _server = cx.instantiate[Server]("cx.jetty.server", prepareDefaultServer)
+      _server = cx.instantiate[Server]("cx.jetty.server", prepareDefaultServer())
     }
-    return _server
+    _server
   }
 
   def prepareDefaultServer(): Server = {
     val handler = new WebAppContext(webappRoot, contextPath)
     val srv = new Server(new InetSocketAddress(listenAddress, port))
     srv.setHandler(handler)
-    return srv
+    srv
   }
 
-  def start = server.start
-  def stop = server.stop
+  def start() {
+    server.start()
+  }
+  def stop() {
+    server.stop()
+  }
 }

@@ -1,7 +1,6 @@
 package ru.circumflex
 
-import ru.circumflex.core._
-import web._
+import core._
 import javax.servlet.{FilterChain, FilterConfig}
 import collection.Iterator
 import javax.activation.MimetypesFileTypeMap
@@ -50,11 +49,11 @@ package object web {
   object headers extends Map[String, String] {
     def +=(kv: (String, String)): this.type = {
       response.headers + kv
-      return this
+      this
     }
     def -=(key: String): this.type = {
       response.headers - key
-      return this
+      this
     }
     def iterator: Iterator[(String, String)] = request.headers.iterator
     def get(key: String): Option[String] = request.headers.get(key)
@@ -69,11 +68,11 @@ package object web {
   object cookies extends Map[String, HttpCookie] {
     def +=(kv: (String, HttpCookie)): this.type = {
       response.cookies += kv._2.asInstanceOf[HttpCookie]
-      return this
+      this
     }
     def -=(key: String): this.type = {
       response.cookies.find(_.name == key).map(c => response.cookies -= c)
-      return this
+      this
     }
     def iterator: Iterator[(String, HttpCookie)] =
       request.cookies.iterator.map(c => (c.name -> c))
@@ -93,11 +92,11 @@ package object web {
         .asInstanceOf[Map[String, Any]]
     def +=(kv: (String, Any)): this.type = {
       session(SESSION_KEY) = flashMap + (kv)
-      return this
+      this
     }
     def -=(key: String): this.type = {
       session(SESSION_KEY) = flashMap - key
-      return this
+      this
     }
     def iterator: Iterator[(String, Any)] = flashMap.iterator
     def get(key: String): Option[Any] = {

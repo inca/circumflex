@@ -107,7 +107,7 @@ The implicit conversions from `Symbol` into `ContextVarHelper` are available in 
 `ru.circumflex.core` package.
 */
 class ContextVarHelper(val sym: Symbol) {
-  val key = sym.toString()
+  val key = sym.name
   def apply[T]: T = ctx.as[T](key)
   def get[T]: Option[T] = ctx.getAs[T](key)
   def getOrElse[T >: Any](default: T): T = ctx.getOrElse[T](key, default)

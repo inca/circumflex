@@ -57,7 +57,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   */
   def protocol = raw.getProtocol
   def scheme = raw.getScheme
-  def isSecure() = raw.isSecure
+  def isSecure = raw.isSecure
   lazy val method = params.get("_method") match {
     case Some(m) =>
       // store original method in context
@@ -172,11 +172,11 @@ class HttpRequest(val raw: HttpServletRequest) {
   object attrs extends Map[String, Any] with UntypedContainer {
     def +=(kv: (String, Any)): this.type = {
       raw.setAttribute(kv._1, kv._2)
-      return this
+      this
     }
     def -=(key: String): this.type = {
       raw.removeAttribute(key)
-      return this
+      this
     }
     def iterator: Iterator[(String, Any)] = raw.getAttributeNames
             .asInstanceOf[JEnumeration[String]]
@@ -220,12 +220,12 @@ class HttpRequest(val raw: HttpServletRequest) {
   object session extends Map[String, Any] with UntypedContainer {
     def +=(kv: (String, Any)): this.type = {
       raw.getSession(true).setAttribute(kv._1, kv._2)
-      return this
+      this
     }
     def -=(key: String): this.type = {
       val s = raw.getSession(false)
       if (s != null) s.removeAttribute(key)
-      return this
+      this
     }
     def iterator: Iterator[(String, Any)] = {
       val s = raw.getSession(false)
@@ -242,8 +242,8 @@ class HttpRequest(val raw: HttpServletRequest) {
     }
     def invalidate(): this.type = {
       val s = raw.getSession(false)
-      if (s != null) s.invalidate
-      return this
+      if (s != null) s.invalidate()
+      this
     }
   }
 
@@ -274,7 +274,9 @@ class HttpRequest(val raw: HttpServletRequest) {
     def isXHR: Boolean = headers.getOrElse("X-Requested-With", "") == "XMLHttpRequest"
     def isMultipart: Boolean = ServletFileUpload.isMultipartContent(raw)
     def encoding: String = raw.getCharacterEncoding
-    def encoding_=(enc: String) = raw.setCharacterEncoding(enc)
+    def encoding_=(enc: String) {
+      raw.setCharacterEncoding(enc)
+    }
     def length: Int = raw.getContentLength
     def contentType: String = raw.getContentType
     def reader: BufferedReader = raw.getReader
@@ -339,8 +341,12 @@ class HttpRequest(val raw: HttpServletRequest) {
   to forward the request processing to or to include partial result from different web application
   object (such as servlet).
   */
-  def forward(uri: String) = raw.getRequestDispatcher(uri).forward(raw, response.raw)
-  def include(uri: String) = raw.getRequestDispatcher(uri).include(raw, response.raw)
+  def forward(uri: String) {
+    raw.getRequestDispatcher(uri).forward(raw, response.raw)
+  }
+  def include(uri: String) {
+    raw.getRequestDispatcher(uri).include(raw, response.raw)
+  }
 
   override def toString: String = method + " " + uri + " " + protocol
 

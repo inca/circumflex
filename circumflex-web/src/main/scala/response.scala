@@ -1,10 +1,6 @@
 package ru.circumflex.web
 
 import javax.servlet.http.HttpServletResponse
-import org.apache.commons.io.IOUtils
-import javax.activation.MimetypesFileTypeMap
-import java.io._
-import javax.servlet.ServletOutputStream
 import collection.mutable.{ListBuffer, HashMap}
 import java.lang.String
 import java.util.Date
@@ -22,24 +18,26 @@ response body to `UTF-8`. Feel free to change it if your application requires so
 */
 class HttpResponse(val raw: HttpServletResponse) {
 
-  def flush(): Nothing = if (!raw.isCommitted) {
-    if (statusCode != -1)
-      raw.setStatus(statusCode)
-    if (contentLength != -1)
-      raw.setContentLength(contentLength)
-    // apply headers
-    headers.foreach {
-      case (k: String, v: Date) => raw.setDateHeader(k, v.getTime)
-      case (k: String, v: Int) => raw.setIntHeader(k, v)
-      case (k: String, v) => raw.setHeader(k, v.toString)
+  def flush(): Nothing = {
+    if (!raw.isCommitted) {
+      if (statusCode != -1)
+        raw.setStatus(statusCode)
+      if (contentLength != -1)
+        raw.setContentLength(contentLength)
+      // apply headers
+      headers.foreach {
+        case (k: String, v: Date) => raw.setDateHeader(k, v.getTime)
+        case (k: String, v: Int) => raw.setIntHeader(k, v)
+        case (k: String, v) => raw.setHeader(k, v.toString)
+      }
+      // apply cookies
+      cookies.foreach(c => raw.addCookie(c.convert()))
+      // write response body
+      body(raw)
+      // flush
+      raw.flushBuffer()
     }
-    // apply cookies
-    cookies.foreach(c => raw.addCookie(c.convert))
-    // write response body
-    body(raw)
-    // flush
-    raw.flushBuffer()
-    // throw an exception to container
+    // throw an exception to the container
     throw new ResponseSentException()
   }
 
@@ -56,29 +54,29 @@ class HttpResponse(val raw: HttpServletResponse) {
   def bufferSize = raw.getBufferSize
   def bufferSize(bs: Int): this.type = {
     raw.setBufferSize(bs)
-    return this
+    this
   }
   def contentType = raw.getContentType
   def contentType(ct: String): this.type = {
     raw.setContentType(ct)
-    return this
+    this
   }
   def encoding = raw.getCharacterEncoding
   def encoding(e: String): this.type = {
     raw.setCharacterEncoding(e)
-    return this
+    this
   }
   protected var _statusCode: Int = -1
   def statusCode = _statusCode
   def statusCode(sc: Int): this.type = {
     _statusCode = sc
-    return this
+    this
   }
   protected var _contentLength: Int = -1   // -1 means that container's default will be used
   def contentLength = _contentLength
   def contentLength(cl: Int): this.type = {
     _contentLength = cl
-    return this
+    this
   }
 
   // set encoding implicitly
@@ -95,7 +93,7 @@ class HttpResponse(val raw: HttpServletResponse) {
   def body = _body
   def body(f: HttpServletResponse => Unit): this.type = {
     _body = f
-    return this
+    this
   }
 
   /*!## Headers
@@ -125,14 +123,14 @@ class HttpResponse(val raw: HttpServletResponse) {
   def attachment(filename: String): this.type = {
     headers("Content-Disposition") =
         "attachment; filename=\"" + new String(filename.getBytes("UTF-8"), "ISO-8859-1") + "\""
-    return this
+    this
   }
 
   def noCache(): this.type = {
     headers("Pragma") = "no-cache"
     headers("Cache-Control") = "no-store"
     headers("Expires") = 0l
-    return this
+    this
   }
 
 }

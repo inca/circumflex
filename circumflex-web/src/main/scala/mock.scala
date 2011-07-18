@@ -50,11 +50,11 @@ class MockRequest(val conv: MockConversation, val req: m.HttpRequestBase) {
   val params = new ListBuffer[(String, String)]
   def setHeader(name: String, value: String): this.type = {
     req.setHeader(name, value)
-    return this
+    this
   }
   def setParam(name: String, value: String): this.type = {
     params += name -> value
-    return this
+    this
   }
   def execute() = {
     // apply params if applicable
@@ -71,12 +71,7 @@ class MockRequest(val conv: MockConversation, val req: m.HttpRequestBase) {
 }
 
 class MockResponse(val conv: MockConversation, val res: http.HttpResponse) {
-  def statusCode = {
-    println(res.getStatusLine.getStatusCode)
-    println(res.getStatusLine)
-    println(res)
-    res.getStatusLine.getStatusCode
-  }
+  def statusCode = res.getStatusLine.getStatusCode
   def content = EntityUtils.toString(res.getEntity)
   def headers(name: String): Seq[Header] = res.getHeaders(name).toSeq
   override def toString = res.getStatusLine.toString
