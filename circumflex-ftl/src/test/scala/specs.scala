@@ -1,5 +1,6 @@
 package ru.circumflex
 package freemarker
+
 import core._
 import org.specs.runner.JUnit4
 import org.specs.Specification
@@ -8,7 +9,6 @@ import org.apache.commons.lang.StringUtils
 import org.specs.matcher.Matcher
 import java.io.File
 import collection.mutable.HashMap
-import xml._
 
 class SpecsTest extends JUnit4(CircumflexFtlSpec)
 

@@ -28,12 +28,12 @@ class Protector {
 
   def keys = protectHash.keys
 
-  def clear: Unit = {
+  def clear() {
     protectHash = Map()
     unprotectHash = Map()
   }
 
-  override def toString = protectHash.toString
+  override def toString = protectHash.toString()
 }
 
 /*!# Mutable Character Buffer
@@ -61,7 +61,7 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
       // evaluate new start index
       startIndex = m.start + text.length
     }
-    return this
+    this
   }
 
   def replaceAll(pattern: Pattern, replacement: Matcher => CharSequence): this.type = {
@@ -75,7 +75,7 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
     }
     sb.append(buffer.subSequence(lastIndex, buffer.length))
     this.buffer = sb
-    return this
+    this
   }
 
   def replaceFirst(pattern: Pattern, replacement: Matcher => CharSequence): Int = {
@@ -89,7 +89,7 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
       this.buffer = sb
       length = m.end - m.start
     }
-    return length
+    length
   }
 
   def replaceFirst(pattern: Pattern, replacement: CharSequence): Int =
@@ -105,7 +105,7 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
       buffer.replace(i, i + text.length, replacement.toString)
       i = buffer.indexOf(text, i + replacement.length)
     }
-    return this
+    this
   }
 
   def split(pattern: Pattern): Seq[StringEx] =
@@ -113,19 +113,19 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
 
   def append(cs: CharSequence): this.type = {
     buffer.append(cs)
-    return this
+    this
   }
 
   def prepend(cs: CharSequence): this.type = {
     buffer.replace(0, 0, cs.toString)
-    return this
+    this
   }
 
   def outdent(): this.type = replaceAll(regexes.outdent(4), "")
 
   def substring(start: Int, end: Int = length): this.type = {
     buffer = new StringBuilder(subSequence(start, end))
-    return this
+    this
   }
 
   def startsWith(cs: CharSequence): Boolean = {
@@ -137,7 +137,7 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
         return false
       i += 1
     }
-    return true
+    true
   }
 
   def endsWith(cs: CharSequence): Boolean = {
@@ -149,13 +149,13 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
         return false
       i += 1
     }
-    return true
+    true
   }
 
   def equals(cs: CharSequence): Boolean = {
     if (cs.length != buffer.length)
       return false
-    return startsWith(cs)
+    startsWith(cs)
   }
 
   def trimLeft(): Int = {
@@ -164,7 +164,7 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
       i += 1
     if (i > 0)
       buffer.delete(0, i)
-    return i
+    i
   }
   
   def trimRight(): Int = {
@@ -172,13 +172,13 @@ class StringEx(var buffer: StringBuilder) extends CharSequence with Cloneable {
     while ((i < buffer.length) && (buffer.charAt(buffer.length - i - 1) <= ' '))
       i += 1
     if (i > 0) buffer.delete(buffer.length - i, buffer.length)
-    return i
+    i
   }
 
   def trim(): this.type = {
-    trimLeft
-    trimRight
-    return this
+    trimLeft()
+    trimRight()
+    this
   }
 
   def matches(pattern: Pattern): Boolean =
@@ -210,14 +210,16 @@ class ChunkIterator(val chunks: Seq[StringEx]) {
   def hasNext: Boolean = (_index + 1) < chunks.length
   def next: StringEx = {
     _index += 1
-    return chunks(_index)
+    chunks(_index)
   }
   def peek: StringEx = chunks(_index + 1)
   def reset: this.type = {
     _index = -1
-    return this
+    this
   }
-  def stepBack: Unit = if (_index > -1) _index -= 1
+  def stepBack() {
+    if (_index > -1) _index -= 1
+  }
   def size = chunks.size
 }
 
@@ -227,17 +229,19 @@ class CharIterator(val chunk: StringEx) {
   def hasNext: Boolean = (_index + 1) < chunk.length
   def next: Char = {
     _index += 1
-    return chunk.charAt(_index)
+    chunk.charAt(_index)
   }
   def peek: Char = chunk.charAt(_index + 1)
   def reset: this.type = {
     _index = -1
-    return this
+    this
   }
   def startFrom(i: Int): this.type = {
     _index = i - 1
-    return this
+    this
   }
-  def stepBack: Unit = if (_index > -1) _index -= 1
+  def stepBack() {
+    if (_index > -1) _index -= 1
+  }
   def size = chunk.length
 }

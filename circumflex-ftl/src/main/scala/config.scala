@@ -1,11 +1,11 @@
 package ru.circumflex
 package freemarker
-import markeven
+
 import core._
 import web._
-import freemarker.template._
-import freemarker.core.Environment
-import freemarker.cache._
+import _root_.freemarker.template._
+import _root_.freemarker.core.Environment
+import _root_.freemarker.cache._
 import java.io.StringWriter
 
 /*!# Default FreeMarker Configuration
@@ -31,12 +31,12 @@ class DefaultConfiguration extends Configuration {
   def addLoader(loader: TemplateLoader): this.type = {
     _loaders ++= List(loader)
     setTemplateLoader(new MultiTemplateLoader(loaders.toArray))
-    return this
+    this
   }
   def setLoaders(ldrs: TemplateLoader*): this.type = {
     _loaders = ldrs.toList
     setTemplateLoader(new MultiTemplateLoader(loaders.toArray))
-    return this
+    this
   }
 
   // Defaults
@@ -60,7 +60,7 @@ object MarkevenDirective extends TemplateDirectiveModel {
   def execute(env: Environment,
               params: java.util.Map[_, _],
               loopVars: Array[TemplateModel],
-              body: TemplateDirectiveBody) = {
+              body: TemplateDirectiveBody) {
     val nested = new StringWriter
     body.render(nested)
     env.getOut.write(markeven.toHtml(nested.toString))

@@ -1,5 +1,5 @@
-package ru.circumflex
-package maven;
+package ru.circumflex.maven;
+
 import org.apache.commons.io.FilenameUtils;
 import ru.circumflex.core.Msg;
 import ru.circumflex.orm.DDLUnit;
@@ -10,7 +10,6 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 

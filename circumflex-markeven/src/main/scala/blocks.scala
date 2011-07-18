@@ -1,5 +1,6 @@
 package ru.circumflex
 package markeven
+
 import java.io._
 import java.util.regex._
 
@@ -231,37 +232,37 @@ class TableBlock(text: StringEx, selector: Selector)
         else ""
       }
       // let's also flush heading
-      mp.increaseIndent
+      mp.increaseIndent()
       result.append(mp.newLine).append(mp.currentIndent).append("<thead>")
-      mp.increaseIndent
+      mp.increaseIndent()
       result.append(mp.newLine).append(mp.currentIndent).append("<tr>")
-      mp.increaseIndent
+      mp.increaseIndent()
       cells.foreach(th => result.append(mp.newLine).append(mp.currentIndent).append("<th>")
           .append(mp.transform(th)).append("</th>"))
-      mp.decreaseIndent
+      mp.decreaseIndent()
       result.append(mp.newLine).append(mp.currentIndent).append("</tr>")
-      mp.decreaseIndent
+      mp.decreaseIndent()
       result.append(mp.newLine).append(mp.currentIndent).append("</thead>")
-      mp.decreaseIndent
+      mp.decreaseIndent()
       // read first body cells for correct positioning
       cells = parseCells(mp, chunks.next)
-    } else chunks.stepBack
+    } else chunks.stepBack()
     // correct align data to match colsize
     align = align.take(cols).padTo(cols, "")
     // process body
-    mp.increaseIndent
+    mp.increaseIndent()
     result.append(mp.newLine).append(mp.currentIndent).append("<tbody>")
-    mp.increaseIndent
+    mp.increaseIndent()
     while (chunks.hasNext) {
       result.append(mp.newLine).append(mp.currentIndent).append("<tr>")
-      mp.increaseIndent
+      mp.increaseIndent()
       var i = 0
       cells.take(cols).padTo(cols, "").foreach { td =>
         result.append(mp.newLine).append(mp.currentIndent).append("<td")
             .append(align(i)).append(">").append(td).append("</td>")
         i += 1
       }
-      mp.decreaseIndent
+      mp.decreaseIndent()
       result.append(mp.newLine).append(mp.currentIndent).append("</tr>")
       // evaluate next row
       val l = chunks.next
@@ -269,9 +270,9 @@ class TableBlock(text: StringEx, selector: Selector)
         cells = parseCells(mp, l)
     }
     // now close body and we're done
-    mp.decreaseIndent
+    mp.decreaseIndent()
     result.append(mp.newLine).append(mp.currentIndent).append("</tbody>")
-    mp.decreaseIndent
+    mp.decreaseIndent()
     result.append(mp.newLine).append(mp.currentIndent)
     result
   }

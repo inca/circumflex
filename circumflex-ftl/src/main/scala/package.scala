@@ -1,6 +1,6 @@
 package ru.circumflex
 
-import core._, freemarker._, web._
+import core._, web._
 import java.io._
 import _root_.freemarker.template._
 

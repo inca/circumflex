@@ -454,22 +454,26 @@ class MarkevenProcessor() {
   val macros = new HashMap[String, StringEx => CharSequence]()
   val postProcessors = new ListBuffer[(String, StringEx => StringEx)]()
 
-  def increaseIndent: Unit = level += 1
-  def decreaseIndent: Unit = if (level > 0) level -= 1
+  def increaseIndent() {
+    level += 1
+  }
+  def decreaseIndent() {
+    if (level > 0) level -= 1
+  }
 
   def resolveLink(id: String): Option[LinkDefinition] = links.get(id)
 
   def addMacro(name: String, function: StringEx => CharSequence): this.type = {
     macros += (name -> function)
-    return this
+    this
   }
 
-  def postProcess(element: String)(handler: StringEx => StringEx): Unit = {
+  def postProcess(element: String)(handler: StringEx => StringEx) {
     this.postProcessors ++= List(element -> handler)
   }
 
   def currentIndent: String =
-    if (level <= 0) return ""
+    if (level <= 0) ""
     else "  " * level
 
   def normalize(s: StringEx): StringEx = s.replaceAll("\t","    ").replaceAll(regexes.lineEnds, "\n")
@@ -528,7 +532,7 @@ class MarkevenProcessor() {
     val chunks = new ChunkIterator(s.split(regexes.blocks))
     while (chunks.hasNext)
       result += readBlock(chunks)
-    return result
+    result
   }
 
   def readBlock(chunks: ChunkIterator): Block = {
@@ -548,7 +552,7 @@ class MarkevenProcessor() {
       return processComplexChunk(chunks, new CodeBlock(s, selector),
         c => c.startsWith("    "))
     // trim any leading whitespace
-    val indent = s.trimLeft
+    val indent = s.trimLeft()
     // do not include empty freaks
     if (s.length == 0) return EmptyBlock
     // assume fenced code block
@@ -617,11 +621,11 @@ class MarkevenProcessor() {
         chunks.next
       } else eob = true
     }
-    return block
+    block
   }
 
   def isFenceEnd(s: StringEx): Boolean = {
-    s.trimRight
+    s.trimRight()
     if (s.endsWith("```")) {
       s.substring(0, s.length - 3)
       if (s.endsWith("\n"))
@@ -657,7 +661,7 @@ class MarkevenProcessor() {
     // first char must be asterisk or space
     var c = i.next
     if (c == ' ') return true
-    return (c == '*' && i.hasNext && i.peek == ' ')
+    (c == '*' && i.hasNext && i.peek == ' ')
   }
 
   def stripSelector(s: StringEx): Selector = {
@@ -675,10 +679,10 @@ class MarkevenProcessor() {
         }
       ""
     })
-    return new Selector(id, classes)
+    new Selector(id, classes)
   }
 
-  def process(cs: CharSequence, out: Writer): Unit = {
+  def process(cs: CharSequence, out: Writer) {
     val s = new StringEx(cs)
     normalize(s)
     stripLinkDefinitions(s)
@@ -700,11 +704,11 @@ class MarkevenProcessor() {
     doInlineLinks(s)
     doRefLinks(s)
     doSpanEnhancements(s)
-    return unprotect(s)
+    unprotect(s)
   }
 
   def normalizeSpan(s: StringEx): StringEx =
-    s.trim.replaceAll("  \n", "<br/>\n").replaceAll("\n", " ")
+    s.trim().replaceAll("  \n", "<br/>\n").replaceAll("\n", " ")
 
   protected def processSingleMacro(m: Matcher): CharSequence = {
     var name = m.group(1)
@@ -719,12 +723,14 @@ class MarkevenProcessor() {
   def doMacros(s: StringEx): StringEx =
     s.replaceAll(regexes.macro, m => protector.addToken(processSingleMacro(m)))
 
-  def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m => {
-    val s = new StringEx(m.group(2)).trim
-    // there can be protected content inside codespans, so decode them first
-    encodeChars(s)
-    protector.addToken(s.append("</code>").prepend("<code>"))
-  })
+  def doCodeSpans(s: StringEx) {
+    s.replaceAll(regexes.codeSpan, m => {
+      val s = new StringEx(m.group(2)).trim()
+      // there can be protected content inside codespans, so decode them first
+      encodeChars(s)
+      protector.addToken(s.append("</code>").prepend("<code>"))
+    })
+  }
 
   def encodeBackslashEscapes(s: StringEx): StringEx =
     s.replaceAll(regexes.backslashChar, m => {
@@ -824,11 +830,12 @@ class MarkevenProcessor() {
       }
     })
 
-  def writeHtml(blocks: Seq[Block], out: Writer): Unit =
+  def writeHtml(blocks: Seq[Block], out: Writer) {
     blocks.foreach(b => if (b != EmptyBlock) {
       b.writeHtml(this, out)
       out.write(newLine)
     })
+  }
 
   def formHtml(blocks: Seq[Block], indent: Boolean = false): StringEx = {
     val result = new StringEx("")
@@ -836,7 +843,7 @@ class MarkevenProcessor() {
     blocks.foreach(b =>
       if (b != EmptyBlock) result.append(b.toHtml(this)).append(newLine))
     if (indent) level -= 1
-    return result
+    result
   }
 
   def newLine: String = "\n"
@@ -844,7 +851,7 @@ class MarkevenProcessor() {
   def toHtml(cs: CharSequence): String = {
     val out = new StringWriter(cs.length)
     process(cs, out)
-    return out.toString
+    out.toString
   }
 
 }

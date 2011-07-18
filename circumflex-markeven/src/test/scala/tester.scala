@@ -1,10 +1,11 @@
 package ru.circumflex
 package markeven
+
 import javax.swing._
 import java.awt._
 import javax.swing.event._
 import java.awt.event._
-import _, core._
+import core._
 
 object GUITesterMain extends Application {
   new GUITester().setVisible(true)
@@ -17,7 +18,7 @@ class GUITester extends JFrame {
   val out = new JEditorPane
   src.setFont(new Font("Monospaced", Font.PLAIN, 12))
   src.getDocument.addDocumentListener(new DocumentListener() {
-    def process(e: DocumentEvent) = {
+    def process(e: DocumentEvent) {
       val r = time(new MarkevenProcessor().toHtml(src.getText))
       val s = r._2
       if (showHtml.isSelected) {
@@ -30,13 +31,21 @@ class GUITester extends JFrame {
       metrics.setText("Input " + src.getText.length + " chars, " +
           "output " + out.getText.length + " chars, took " + r._1 + "ms.")
     }
-    def changedUpdate(e: DocumentEvent): Unit = process(e)
-    def removeUpdate(e: DocumentEvent): Unit = process(e)
-    def insertUpdate(e: DocumentEvent): Unit = process(e)
+    def changedUpdate(e: DocumentEvent) {
+      process(e)
+    }
+    def removeUpdate(e: DocumentEvent) {
+      process(e)
+    }
+    def insertUpdate(e: DocumentEvent) {
+      process(e)
+    }
   })
   showHtml.setText("Show HTML")
   showHtml.addActionListener(new ActionListener {
-    def actionPerformed(e: ActionEvent): Unit = src.setText(src.getText)
+    def actionPerformed(e: ActionEvent) {
+      src.setText(src.getText)
+    }
   })
   out.setEditable(false)
   // layout stuff

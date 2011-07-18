@@ -1,6 +1,7 @@
 package ru.circumflex
 package freemarker
-import freemarker.template._
+
+import _root_.freemarker.template._
 import java.util.Date
 import org.apache.commons.beanutils.MethodUtils
 import java.lang.String
@@ -31,7 +32,7 @@ class ScalaObjectWrapper extends ObjectWrapper {
     case num: Number => new SimpleNumber(num)
     case bool: Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
     // Everything else
-    case obj => new ScalaBaseWrapper(obj, this)
+    case o => new ScalaBaseWrapper(o, this)
   }
 }
 
@@ -64,7 +65,7 @@ class ScalaIterableWrapper[T](val it: Iterable[T], wrapper: ObjectWrapper)
 
 class ScalaIteratorWrapper[T](val it: Iterator[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(it, wrapper) with TemplateModelIterator with TemplateCollectionModel {
-  def next = wrapper.wrap(it.next)
+  def next = wrapper.wrap(it.next())
   def hasNext = it.hasNext
   def iterator = this
 }

@@ -35,7 +35,7 @@ object CircumflexScalateSpec extends Specification {
       rootPath += (File.separator + "circumflex-scalate")
     }
     cx("cx.webappRoot") = (rootPath + File.separatorChar + "src/test/webapp")
-    MockApp.start
+    MockApp.start()
   }
 
   "Circumflex Scalate Views" should {
@@ -46,6 +46,6 @@ object CircumflexScalateSpec extends Specification {
     }
   }
 
-  doAfterSpec { MockApp.stop }
+  doAfterSpec { MockApp.stop() }
 
 }

@@ -1,9 +1,8 @@
 package ru.circumflex
 package docco
-import core._
-import freemarker._
+
+import core._, freemarker._
 import java.io._
-import markeven
 import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}
 import java.util.{Collection => JCollection}
 import collection.mutable.ListBuffer
@@ -19,21 +18,21 @@ case class Section(private var _doc: String = "", private var _code: String = ""
   private var _md: String = null
 
   def addCode(s: String): this.type = {
-    _committed = true
+    committed = true
     _code += s + "\n"
-    return this
+    this
   }
   def code = trimNewLines(_code)
 
   def addDoc(s: String): this.type = {
     _doc += s + "\n"
     _md = null
-    return this
+    this
   }
   def doc: String = {
     if (_md == null)
       _md = markeven.toHtml(_doc)
-    return _md
+    _md
   }
 
   def isEmpty: Boolean = _doc == "" && _code == ""
@@ -46,11 +45,11 @@ by placing documentation and corresponding code blocks side by side.
 
 The usage is trivial:
 
-    Docco("my.scala").toHtml("my.scala.html")
+    Docco("my.scala").writeHtml("my.scala.html")
 
 or shortcut of above:
 
-    Docco("my.scala").toHtml
+    Docco("my.scala").writeHtml
 
 Docco uses [FreeMarker][1] to process pages, so you can provide your own
 FreeMarker `Configuration` and templates.
@@ -78,7 +77,7 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
     var insideDoc = false
     var insideScaladoc = false
     var indent = ""
-    def flushSection() = {
+    def flushSection() {
       if (!section.isEmpty)
         result ++= List(section)
       section = new Section()
@@ -119,7 +118,7 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
         }
         str = reader.readLine
       }
-      flushSection
+      flushSection()
     } finally {
       reader.close()
     }
@@ -127,21 +126,27 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
   }
 
   /* Export to HTML */
-  def toHtml(writer: Writer): Unit = ftlConfig.getTemplate(pageTemplate)
-      .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
+  def writeHtml(writer: Writer) {
+    ftlConfig.getTemplate(pageTemplate)
+        .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
+  }
 
-  def toHtml(file: File): Unit = {
+  def writeHtml(file: File) {
     val fw = new FileWriter(file)
     try {
-      toHtml(fw)
+      writeHtml(fw)
     } finally {
-      fw.close
+      fw.close()
     }
   }
 
-  def toHtml(file: String): Unit = toHtml(new File(file))
+  def writeHtml(file: String) {
+    writeHtml(new File(file))
+  }
 
-  def toHtml(): Unit = toHtml(file.getAbsolutePath + ".html")
+  def writeHtml() {
+    writeHtml(file.getAbsolutePath + ".html")
+  }
 
 }
 
@@ -189,36 +194,39 @@ class DoccoBatch {
   val skipEmpty: Boolean = cx.get("docco.skipEmpty")
       .map(_.toString.toBoolean).getOrElse(true)
 
-  def addCustomResource(v: String) = { customResources ++= List(v) }
+  def addCustomResource(v: String) { customResources ++= List(v) }
 
-  def prepareCustomResources: Unit =
+  def prepareCustomResources() {
     if (customResources.size > 0) {
       val customResDir = new File(outputPath, ".docco")
       // create output directories if they do not already exist
       FileUtils.forceMkdir(customResDir)
       // copy resources
-      customResources.foreach { r =>
-        var f = new File(r)
-        if (f.isDirectory) FileUtils.copyDirectory(f, customResDir)
-        else if (f.isFile) FileUtils.copyFile(f, customResDir)
-        else { // try to load the resource as stream
-          val res = getClass.getResource(r)
-          if (res != null) {
-            val in = res.openStream
-            val out = new FileOutputStream(new File(customResDir, FilenameUtils.getName(r)))
-            try {
-              IOUtils.copy(in, out)
-            } finally {
-              in.close
-              out.close
+      customResources.foreach {
+        r =>
+          var f = new File(r)
+          if (f.isDirectory) FileUtils.copyDirectory(f, customResDir)
+          else if (f.isFile) FileUtils.copyFile(f, customResDir)
+          else {
+            // try to load the resource as stream
+            val res = getClass.getResource(r)
+            if (res != null) {
+              val in = res.openStream
+              val out = new FileOutputStream(new File(customResDir, FilenameUtils.getName(r)))
+              try {
+                IOUtils.copy(in, out)
+              } finally {
+                in.close()
+                out.close()
+              }
             }
           }
-        }
       }
     }
+  }
 
-  def generate(): Unit = {
-    prepareCustomResources
+  def generate() {
+    prepareCustomResources()
     // crawl basePath for the sources
     val bp = basePath.getCanonicalPath
     val op = outputPath.getCanonicalPath
@@ -238,13 +246,12 @@ class DoccoBatch {
         FileUtils.forceMkdir(outFile.getParentFile)
         val out = new FileWriter(outFile)
         try {
-          var data = Map[String, Any](
+          ftlConfig.getTemplate(pageTemplate).process(Map[String, Any](
             "title" -> f.getName,
             "sections" -> docco.sections,
-            "depth" -> relName.toList.filter(c => c == File.separatorChar).length)
-          ftlConfig.getTemplate(pageTemplate).process(data, out)
+            "depth" -> relName.toList.filter(c => c == File.separatorChar).length), out)
         } finally {
-          out.close
+          out.close()
         }
         Some(outFile)
       } else None
@@ -262,7 +269,7 @@ class DoccoBatch {
       var data = Map[String, Any]("dirs" -> dirs, "index" -> indexMap, "title" -> title)
       ftlConfig.getTemplate(indexTemplate).process(data, out)
     } finally {
-      out.close
+      out.close()
     }
   }
 

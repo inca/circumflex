@@ -1,5 +1,5 @@
-package ru.circumflex
-package maven;
+package ru.circumflex.maven;
+
 import java.io.File;
 
 /**

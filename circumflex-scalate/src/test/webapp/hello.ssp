@@ -1,1 +1,1 @@
-<p>Hello, ${'name()}!</p>
+<p>Hello, ${param("name")}!</p>
