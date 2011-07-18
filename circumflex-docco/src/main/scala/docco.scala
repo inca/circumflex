@@ -11,8 +11,7 @@ import org.apache.commons.io.{FilenameUtils, IOUtils, FileUtils}
 
 case class Section(private var _doc: String = "", private var _code: String = "") {
 
-  private var _committed = false
-  def committed_?() = _committed
+  var committed = false
 
   protected def trimNewLines(s: String) =
     s.replaceAll("^\\n+(.*)", "$1").replaceAll("(.*?)\\n+$", "$1")
@@ -37,7 +36,7 @@ case class Section(private var _doc: String = "", private var _code: String = ""
     return _md
   }
 
-  def empty_?() = _doc == "" && _code == ""
+  def isEmpty: Boolean = _doc == "" && _code == ""
 }
 
 /*!# Documenting Scala files with Docco
@@ -79,8 +78,8 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
     var insideDoc = false
     var insideScaladoc = false
     var indent = ""
-    def flushSection(): Unit = {
-      if (!section.empty_?)
+    def flushSection() = {
+      if (!section.isEmpty)
         result ++= List(section)
       section = new Section()
     }
@@ -89,13 +88,13 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
       while (str != null) {
         str match {
           case docSingleLine(s) if (!insideScaladoc) =>
-            if (section.committed_?)
-              flushSection
+            if (section.committed)
+              flushSection()
             section.addDoc(s)
             insideDoc = false
           case docBegin(i, s) if (!insideScaladoc) =>
-            if (section.committed_?)
-              flushSection
+            if (section.committed)
+              flushSection()
             section.addDoc(s)
             indent = i
             insideDoc = true
@@ -217,7 +216,6 @@ class DoccoBatch {
         }
       }
     }
-
 
   def generate(): Unit = {
     prepareCustomResources

@@ -131,7 +131,6 @@ class ProxyNode[PK, R <: Record[PK, R]](protected[orm] var node: RelationNode[PK
 
   override def toSql = node.toSql
 
-
   override def clone(): this.type = {
     val newNode = super.clone().asInstanceOf[this.type]
     val n = node.clone().asInstanceOf[RelationNode[PK, R]]
@@ -186,7 +185,6 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
   }
 
   override def toSql = dialect.join(this)
-
 
   override def clone(): this.type = super.clone()
       .replaceLeft(this.left.clone)

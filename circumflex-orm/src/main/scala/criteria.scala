@@ -35,12 +35,10 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   // Process the `prefetchSeq` of root relation
   rootNode.relation.prefetchSeq.foreach(prefetch(_))
 
-
   protected def resetProjection(projection: Projection[_]): Unit = projection match {
     case a: AtomicProjection[_] => a.AS("p_" + nextCounter)
     case c: CompositeProjection[_] => c.subProjections.foreach(p => resetProjection(p))
   }
-
 
   protected def replaceLeft(join: JoinNode[PK, R, _, _],
                             node: RelationNode[PK, R]): RelationNode[PK, R] =
@@ -48,7 +46,6 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
       case j: JoinNode[PK, R, _, _] => replaceLeft(j, node)
       case r: RelationNode[PK, R] => join.replaceLeft(node)
     }
-
 
   protected def updateRootTree[PKN, N <: Record[PKN, N]](
       node: RelationNode[PKN, N], association: Association[_, _, _]): RelationNode[PKN, N] =
@@ -66,7 +63,6 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         } else node
     }
 
-
   protected def preparePf[PKN, N <: Record[PKN, N]](
       relation: Relation[PKN, N], association: Association[_, _, _]): RelationNode[PKN, N] = {
     val node = relation.AS("pf_" + nextCounter)
@@ -74,7 +70,6 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     _prefetchSeq ++= List[Association[_, _, _]](association)
     return node
   }
-
 
   protected def updateJoinTree[PKN, N <: Record[PKN, N]](
       node: RelationNode[PKN, N], tree: RelationNode[PK, R]): RelationNode[PK, R] =
@@ -89,7 +84,6 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
       }
       case rel: RelationNode[PK, R] => rel.JOIN(node)
     }
-
 
   protected def processTupleTree[PKN, N <: Record[PKN, N]](
       tuple: Array[_], tree: RelationNode[PKN, N]): Unit =
@@ -117,7 +111,6 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
       case _ =>
     }
 
-
   def add(predicates: Predicate*): Criteria[PK, R] = {
     _restrictions ++= predicates.toList
     return this
@@ -125,12 +118,10 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   def add(expression: String, params: Pair[String, Any]*): Criteria[PK, R] =
     add(prepareExpr(expression, params: _*))
 
-
   def addOrder(orders: Order*): Criteria[PK, R] = {
     _orders ++= orders.toList
     return this
   }
-
 
   def prefetch(association: Association[_, _, _]): Criteria[PK, R] = {
     val a = association.asInstanceOf[Association[PK, R, R]]
@@ -144,12 +135,10 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     return this
   }
 
-
   def addJoin[PKN, N <: Record[PKN, N]](node: RelationNode[PKN, N]): Criteria[PK, R] = {
     _joinTree = updateJoinTree(node, _joinTree)
     return this
   }
-
 
   def mkSelect: SQLQuery[Array[Option[Any]]] =
     SELECT(new UntypedTupleProjection(projections: _*))
@@ -157,18 +146,14 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         .WHERE(predicate)
         .ORDER_BY(_orders: _*)
 
-
   def mkUpdate: Update[PK, R] = UPDATE(rootNode).WHERE(predicate)
 
-
   def mkDelete: Delete[PK, R] = DELETE(rootNode).WHERE(predicate)
-
 
   def projections: Seq[Projection[_]] = {
     _projections.foreach(p => resetProjection(p))
     return _projections
   }
-
 
   def predicate: Predicate = _restrictions.size match {
     case 0 => EmptyPredicate
@@ -176,12 +161,10 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     case _ => orm.AND(_restrictions: _*)
   }
 
-
   def queryPlan: RelationNode[PK, R] = _joinTree match {
     case j: JoinNode[PK, R, _, _] => replaceLeft(j.clone, _rootTree)
     case r: RelationNode[PK, R] => _rootTree
   }
-
 
   def list: Seq[R] = {
     val q = mkSelect
@@ -198,7 +181,6 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     _executionTime = q.executionTime
     return result
   }
-
 
   def unique: Option[R] = {
     val q = mkSelect

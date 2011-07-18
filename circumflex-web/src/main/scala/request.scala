@@ -45,7 +45,7 @@ class HttpRequest(val raw: HttpServletRequest) {
     * `uri` returns the request URI without query string;
     * `queryString` returns the query string that is contained in the request URL after the path;
     * `url` reconstructs an URL the client used to make the request;
-    * `secure_?` returns `true` if the request was made using a secure channel, such as HTTPS.
+    * `isSecure` returns `true` if the request was made using a secure channel, such as HTTPS.
 
   The result of `uri`, `url` and `queryString` is decoded into UTF-8 string using `URLDecoder`.
 
@@ -57,7 +57,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   */
   def protocol = raw.getProtocol
   def scheme = raw.getScheme
-  def secure_?() = raw.isSecure
+  def isSecure() = raw.isSecure
   lazy val method = params.get("_method") match {
     case Some(m) =>
       // store original method in context
@@ -103,7 +103,7 @@ class HttpRequest(val raw: HttpServletRequest) {
     * `sessionId` returns session identifier specified by the client;
     * `userPrincipal` returns `java.security.Principal` for requests authenticated with
     container-managed security mechanisms;
-    * `userInRole_?` indicates whether authenticated principal has specified `role` inside
+    * `isUserInRole` indicates whether authenticated principal has specified `role` inside
     container-managed security system.
   */
   def serverHost: String = raw.getServerName
@@ -118,7 +118,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   def sessionId = raw.getRequestedSessionId
 
   def userPrincipal: Option[Principal] = any2option(raw.getUserPrincipal)
-  def userInRole_?(role: String): Boolean = raw.isUserInRole(role)
+  def isUserInRole(role: String): Boolean = raw.isUserInRole(role)
 
   /*!## Locale
 
@@ -252,10 +252,10 @@ class HttpRequest(val raw: HttpServletRequest) {
   Circumflex Web Framework lets you access the body of the request via `body` object. Following
   methods can be used to work with request body:
 
-    * `xhr_?` returns true if this request is XMLHttpRequest;
+    * `isXHR` returns true if this request is XMLHttpRequest;
     * `encoding` returns or sets the name of the character encoding used in the body of the
     request (as mentioned above, we implicitly set it to `UTF-8`);
-    * `multipart_?` returns `true` if the request has `multipart/form-data` content and is
+    * `isMultipart` returns `true` if the request has `multipart/form-data` content and is
     suitable for [multipart operations](#multipart);
     * `length` returns the length, in bytes, of the request body;
     * `contentType` returns the MIME type of the body of the request;
@@ -271,8 +271,8 @@ class HttpRequest(val raw: HttpServletRequest) {
   */
   object body {
 
-    def xhr_?(): Boolean = headers.getOrElse("X-Requested-With", "") == "XMLHttpRequest"
-    def multipart_?(): Boolean = ServletFileUpload.isMultipartContent(raw)
+    def isXHR: Boolean = headers.getOrElse("X-Requested-With", "") == "XMLHttpRequest"
+    def isMultipart: Boolean = ServletFileUpload.isMultipartContent(raw)
     def encoding: String = raw.getCharacterEncoding
     def encoding_=(enc: String) = raw.setCharacterEncoding(enc)
     def length: Int = raw.getContentLength
@@ -312,23 +312,20 @@ class HttpRequest(val raw: HttpServletRequest) {
     */
 
     def parseFileItems(factory: FileItemFactory): Seq[FileItem] =
-      if (multipart_?) {
+      if (isMultipart) {
         val uploader = new ServletFileUpload(factory)
-        return asScalaBuffer(uploader.parseRequest(raw).asInstanceOf[java.util.List[FileItem]])
+        asScalaBuffer(uploader.parseRequest(raw).asInstanceOf[java.util.List[FileItem]])
       } else Nil
-
 
     def parseFileItems(sizeThreshold: Int, tempStorage: File): Seq[FileItem] =
       parseFileItems(new DiskFileItemFactory(sizeThreshold, tempStorage))
 
-
     def parseFileItems(sizeThreshold: Int, tempStorage: String): Seq[FileItem] =
       parseFileItems(sizeThreshold, new File(tempStorage))
 
-
-    def parseFileStreams(): Iterator[FileItemStream] = if (multipart_?) {
+    def parseFileStreams(): Iterator[FileItemStream] = if (isMultipart) {
       val it = new ServletFileUpload().getItemIterator(raw)
-      return new Iterator[FileItemStream]() {
+      new Iterator[FileItemStream]() {
         def next(): FileItemStream = it.next
         def hasNext: Boolean = it.hasNext
       }

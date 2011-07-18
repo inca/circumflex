@@ -12,10 +12,8 @@ class Protector {
   protected var protectHash: Map[String, CharSequence] = Map()
   protected var unprotectHash: Map[CharSequence, String] = Map()
 
-
   def randomKey = "!}" + (0 until keySize).foldLeft("")((s, i) =>
     s + chars.charAt(rnd.nextInt(chars.length)))
-
 
   def addToken(t: CharSequence): String = unprotectHash.get(t) match {
     case Some(key) => key
@@ -26,12 +24,9 @@ class Protector {
       key
   }
 
-
   def decode(key: String): Option[CharSequence] = protectHash.get(key)
 
-
   def keys = protectHash.keys
-
 
   def clear: Unit = {
     protectHash = Map()

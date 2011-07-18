@@ -1,8 +1,10 @@
-package ru.circumflex.core
+package ru.circumflex
+package core
 
 /*!# Exception
 
-All exceptions thrown from Circumflex components should extend `CircumflexException` class.
+All exceptions thrown from Circumflex components should extend
+`CircumflexException` class.
 */
 class CircumflexException(msg: String, cause: Throwable = null)
     extends RuntimeException(msg, cause) {

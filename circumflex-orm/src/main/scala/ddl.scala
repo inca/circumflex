@@ -111,7 +111,6 @@ class DDLUnit {
         "error" -> e.getMessage))
     }
 
-
   def DROP(): this.type = {
     resetMsgs()
     _drop()
@@ -125,16 +124,15 @@ class DDLUnit {
     // Execute a script.
     dropObjects(postAux)
     dropObjects(views)
-    if (dialect.supportsDropConstraints_?)
+    if (dialect.supportsDropConstraints)
       dropObjects(constraints)
     dropObjects(tables)
     dropObjects(preAux)
-    if (dialect.supportsSchema_?)
+    if (dialect.supportsSchema)
       dropObjects(schemata)
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
   } { throw _ }
-
 
   def CREATE(): this.type = {
     resetMsgs()
@@ -147,7 +145,7 @@ class DDLUnit {
     val autoCommit = conn.getAutoCommit
     conn.setAutoCommit(true)
     // Execute a script.
-    if (dialect.supportsSchema_?)
+    if (dialect.supportsSchema)
       createObjects(schemata)
     createObjects(preAux)
     createObjects(tables)
@@ -157,7 +155,6 @@ class DDLUnit {
     // Restore auto-commit.
     conn.setAutoCommit(autoCommit)
   } { throw _ }
-
 
   def DROP_CREATE(): this.type = {
     resetMsgs()

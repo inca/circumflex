@@ -1,4 +1,5 @@
-package ru.circumflex.core
+package ru.circumflex
+package core
 
 /*!# Data model support
 
@@ -36,7 +37,7 @@ trait Container[T] extends Equals {
   def setters: Seq[T => T] = _setters
   def addSetter(f: T => T): this.type = {
     _setters ++= List(f)
-    return this
+    this
   }
 
   /*!## Accessing & Setting Values
@@ -48,17 +49,17 @@ trait Container[T] extends Equals {
   def get = value
   def apply(): T = value.get
   def getOrElse(default: T): T = value.getOrElse(default)
-  def null_?(): Boolean = value == None
+  def isNull: Boolean = value == None
 
   def set(v: Option[T]): this.type = {
     _value = v.map { v =>
       setters.foldLeft(v) { (v, f) => f(v) }
     }
-    return this
+    this
   }
   def set(v: T): this.type = set(any2option(v))
-  def setNull: this.type = set(None)
-  def :=(v: T): Unit = set(v)
+  def setNull(): this.type = set(None)
+  def :=(v: T) = set(v)
 
   /*!## Methods from `Option`
 

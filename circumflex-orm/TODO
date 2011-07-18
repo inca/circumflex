@@ -1,8 +1,2 @@
-[+] Invalidate inverse cache on update
-[+] Validation
-[+] Xml support
-[+] Criteria merging
-[+] Statistics
-[ ] Query cache
-[ ] Vendors support
-[ ] Inheritance support
+[ ] Clean up implicits
+[ ] Simplify type hierarchy around Expression

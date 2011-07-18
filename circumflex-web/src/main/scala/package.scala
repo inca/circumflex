@@ -154,7 +154,7 @@ package object web {
     if you want to forward the request to another Circumflex route, you must make
     sure that `CircumflexFilter` is mapped with `<dispatcher>FORWARD</dispatcher>`
     in `web.xml`;
-    * `pass_!` sends request and response down the filter chain and then immediately
+    * `pass()` sends request and response down the filter chain and then immediately
     flushes response.
 
   All helpers by convention throw `ResponseSentException` which is caught by
@@ -164,13 +164,13 @@ package object web {
   def send(text: String = "", statusCode: Int = -1): Nothing = {
     if (statusCode != -1)
       response.statusCode(statusCode)
-    response.body(r => r.getWriter.write(text)).flush_!
+    response.body(r => r.getWriter.write(text)).flush()
   }
   def sendError(statusCode: Int, message: String = "No message available."): Nothing =
-    response.body(r => r.sendError(statusCode, message)).flush_!
+    response.body(r => r.sendError(statusCode, message)).flush()
   def sendRedirect(url: String, flashes: (String, Any)*): Nothing = {
     flashes.foreach(kv => flash(kv._1) = kv._2)
-    response.body(r => r.sendRedirect(url)).flush_!
+    response.body(r => r.sendRedirect(url)).flush()
   }
   def sendFile(file: File, filename: String = ""): Nothing = {
     // if filename is provided, add `Content-Disposition` header
@@ -186,7 +186,7 @@ package object web {
       } finally {
         is.close
       }
-    } flush_!
+    } flush()
   }
   def xSendFile(file: File, filename: String = ""): Nothing = {
     // if filename is provided, add `Content-Disposition` header
@@ -196,16 +196,16 @@ package object web {
     send()
   }
   def sendStream(streamFunc: OutputStream => Unit): Nothing =
-    response.body(r => streamFunc(r.getOutputStream)).flush_!
+    response.body(r => streamFunc(r.getOutputStream)).flush()
   def sendChars(writerFunc: Writer => Unit): Nothing =
-    response.body(r => writerFunc(r.getWriter)).flush_!
+    response.body(r => writerFunc(r.getWriter)).flush()
   def forward(url: String): Nothing = {
     request.forward(url)
-    response.flush_!
+    response.flush()
   }
-  def pass_!(): Nothing = {
+  def pass(): Nothing = {
     filterChain.doFilter(request.raw, response.raw)
-    response.flush_!
+    response.flush()
   }
 
   /*!## The `matchers` Helper

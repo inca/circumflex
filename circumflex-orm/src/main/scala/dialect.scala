@@ -21,10 +21,12 @@ class Dialect {
     throw new ORMException("Missing mandatory configuration parameter 'orm.connection.driver'.")
 
   /*!## JDBC methods */
+
   def prepareStatement(conn: Connection, sql: String): PreparedStatement =
     conn.prepareStatement(sql)
 
   /*!## SQL types */
+
   def longType = "BIGINT"
   def integerType = "INTEGER"
   def numericType(precision: Int, scale: Int): String =
@@ -39,6 +41,7 @@ class Dialect {
   def xmlType = "XML"
 
   /*!## Actions for Foreign Keys */
+
   def fkNoAction = "NO ACTION"
   def fkCascade = "CASCADE"
   def fkRestrict = "RESTRICT"
@@ -46,12 +49,14 @@ class Dialect {
   def fkSetDefault = "SET DEFAULT"
 
   /*!## Join Keywords */
+
   def innerJoin = "INNER JOIN"
   def leftJoin = "LEFT JOIN"
   def rightJoin = "RIGHT JOIN"
   def fullJoin = "FULL JOIN"
 
   /*!## Predicates */
+
   def EQ(ex1: String, ex2: String = "?") = ex1 + " = " + ex2
   def NE(ex1: String, ex2: String = "?") = ex1 + " <> " + ex2
   def GT(ex1: String, ex2: String = "?") = ex1 + " > " + ex2
@@ -82,6 +87,7 @@ class Dialect {
   def NOT_EXISTS = "NOT EXISTS"
 
   /*!## Functions and others */
+
   def NULL = "NULL"
   def DISTINCT = "DISTINCT"
   def COUNT(ex: String) = "COUNT(" + ex + ")"
@@ -92,6 +98,7 @@ class Dialect {
   def AVG(ex: String) = "AVG(" + ex + ")"
 
   /*!## Set operations */
+
   def UNION = "UNION"
   def UNION_ALL = "UNION ALL"
   def EXCEPT = "EXCEPT"
@@ -100,21 +107,23 @@ class Dialect {
   def INTERSECT_ALL = "INTERSECT ALL"
 
   /*!## Order specificators */
+
   def asc = "ASC"
   def desc = "DESC"
 
   /*!## Param placeholders */
+
   def placeholder = "?"
   def xmlPlaceholder = "XMLPARSE(DOCUMENT ?)"
 
   /*!## Features Compliance */
-  def supportsSchema_?(): Boolean = true
-  def supportsDropConstraints_?(): Boolean = true
+
+  def supportsSchema: Boolean = true
+  def supportsDropConstraints: Boolean = true
 
   /*!## Commons */
 
   def quoteLiteral(expr: String) = "'" + expr.replace("'", "''") + "'"
-
 
   def escapeParameter(value: Any): String = value match {
     case Some(v) => escapeParameter(v)
@@ -122,25 +131,19 @@ class Dialect {
     case v => quoteLiteral(v.toString)
   }
 
-
   def relationQualifiedName(relation: Relation[_, _]) =
-    if (supportsSchema_?) relation.schema.name + "." + relation.relationName
+    if (supportsSchema) relation.schema.name + "." + relation.relationName
     else relation.relationName
-
 
   def alias(expression: String, alias: String) =
     expression + " AS " + alias
 
-
   def qualifyColumn(vh: ValueHolder[_, _], tableAlias: String) =
     tableAlias + "." + vh.name
 
-
   def ON(expression: Expression) = "ON (" + expression.toInlineSql + ")"
 
-
   def not(expression: String) = "NOT (" + expression + ")"
-
 
   def subquery(expression: String, subquery: SQLQuery[_]) =
     expression + " ( " + subquery.toSql + " )"
@@ -150,77 +153,62 @@ class Dialect {
   def constraintDefinition(constraint: Constraint) =
     "CONSTRAINT " + constraint.constraintName + " " + constraint.sqlDefinition
 
-
   def alterTable(rel: Relation[_, _], action: String) =
     "ALTER TABLE " + rel.qualifiedName + " " + action
-
 
   def alterTableAddConstraint(constraint: Constraint) =
     alterTable(constraint.relation, "ADD " + constraintDefinition(constraint));
 
-
   def alterTableDropConstraint(constraint: Constraint) =
     alterTable(constraint.relation, "DROP CONSTRAINT " + constraint.constraintName);
 
-
   def createSchema(schema: Schema) = "CREATE SCHEMA " + schema.name
 
-
   def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name + " CASCADE"
-
 
   def createTable[PK, R <: Record[PK, R]](table: Table[PK, R]) =
     "CREATE TABLE " + table.qualifiedName + " (" +
         table.fields.map(_.toSql).mkString(", ") +
         ", PRIMARY KEY (" + table.PRIMARY_KEY.name + "))"
 
-
   def dropTable[PK, R <: Record[PK, R]](table: Table[PK, R]) =
     "DROP TABLE " + table.qualifiedName
-
 
   def createView[PK, R <: Record[PK, R]](view: View[PK, R]) =
     "CREATE VIEW " + view.qualifiedName + " (" +
         view.fields.map(_.name).mkString(", ") + ") AS " +
         view.query.toInlineSql
 
-
   def dropView[PK, R <: Record[PK, R]](view: View[PK, R]) =
     "DROP VIEW " + view.qualifiedName
 
-
   def createIndex(idx: Index): String = {
     var result = "CREATE "
-    if (idx.unique_?) result += "UNIQUE "
+    if (idx.isUnique) result += "UNIQUE "
     result += "INDEX " + idx.name + " ON " + idx.relation.qualifiedName +
         " USING " + idx.using + " (" + idx.expression + ")"
     if (idx.where != EmptyPredicate)
       result += " WHERE " + idx.where.toInlineSql
-    return result
+    result
   }
-
 
   def dropIndex(idx: Index) =
     "DROP INDEX " + idx.relation.schema.name + "." + idx.name
 
-
   def columnDefinition[R <: Record[_, R]](field: Field[_, R]): String = {
     var result = field.name + " " + field.sqlType
-    if (field.notNull_?) result += " NOT NULL"
+    if (!field.isNotNull) result += " NOT NULL"
     result += defaultExpression(field)
-    return result
+    result
   }
-
 
   def compositeFieldName(names: String*): String = names.mkString(", ")
 
+  def initializeRelation[R <: Record[_, R]](relation: Relation[_, R]) = {}
 
-  def initializeRelation[R <: Record[_, R]](relation: Relation[_, R]): Unit = {}
-
-
-  def initializeField[R <: Record[_, R]](field: Field[_, R]): Unit = field match {
+  def initializeField[R <: Record[_, R]](field: Field[_, R]) = field match {
     case f: AutoIncrementable[_, _]
-      if (f.autoIncrement_? && !field.record.relation.isInstanceOf[View[_, R]]) => {
+      if (f.isAutoIncrement && !field.record.relation.isInstanceOf[View[_, R]]) => {
       val seqName = sequenceName(f)
       val seq = new SchemaObject {
         val objectName = "SEQUENCE " + seqName
@@ -232,24 +220,20 @@ class Dialect {
     case _ =>
   }
 
-
   def defaultExpression[R <: Record[_, R]](field: Field[_, R]): String =
     field match {
-      case a: AutoIncrementable[_, _] if (a.autoIncrement_?) =>
+      case a: AutoIncrementable[_, _] if (a.isAutoIncrement) =>
         " DEFAULT NEXTVAL('" + sequenceName(field) + "')"
       case _ =>
         field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
     }
 
-
   def sequenceName[R <: Record[_, R]](vh: ValueHolder[_, R]) =
     vh.record.relation.schema.name + "." +
         vh.record.relation.relationName + "_" + vh.name + "_seq"
 
-
   def uniqueKeyDefinition(uniq: UniqueKey) =
     "UNIQUE (" + uniq.columns.map(_.name).mkString(", ") + ")"
-
 
   def foreignKeyDefinition(fk: ForeignKey) =
     "FOREIGN KEY (" + fk.childColumns.map(_.name).mkString(", ") +
@@ -258,14 +242,12 @@ class Dialect {
         "ON DELETE " + fk.onDelete.toSql + " " +
         "ON UPDATE " + fk.onUpdate.toSql
 
-
   def checkConstraintDefinition(check: CheckConstraint) =
     "CHECK (" + check.expression + ")"
 
   /*!## Structured Query Language */
 
   def join(j: JoinNode[_, _, _, _]): String = joinInternal(j, null)
-
 
   protected def joinInternal(node: RelationNode[_, _], on: String): String = {
     var result = ""
@@ -278,13 +260,12 @@ class Dialect {
         result += node.toSql
         if (on != null) result += " " + on
     }
-    return result
+    result
   }
-
 
   def select(q: Select[_]): String = {
     var result = "SELECT "
-    if (q.distinct_?)
+    if (q.isDistinct)
       result += "DISTINCT "
     result += q.projections.map(_.toSql).mkString(", ")
     if (q.from.size > 0)
@@ -306,17 +287,14 @@ class Dialect {
       result += " LIMIT " + q.limit
     if (q.offset > 0)
       result += " OFFSET " + q.offset
-    return result
+    result
   }
-
 
   def identityLastIdPredicate[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Predicate =
     new SimpleExpression(node.alias + "." + node.relation.PRIMARY_KEY.name + " = LASTVAL()", Nil)
 
-
   def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
     new Select(expr[PK]("LASTVAL()"))
-
 
   def sequenceNextValQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
     new Select(expr[PK]("NEXTVAL('" + sequenceName(node.relation.PRIMARY_KEY) + "')"))
@@ -329,27 +307,24 @@ class Dialect {
       result += " (" + dml.fields.map(_.name).mkString(", ") +
           ") VALUES (" + dml.fields.map(_.placeholder).mkString(", ") + ")"
     else result += " DEFAULT VALUES"
-    return result
+    result
   }
-
 
   def insertSelect[PK, R <: Record[PK, R]](dml: InsertSelect[PK, R]) =
     "INSERT INTO " + dml.relation.qualifiedName + " (" +
         dml.relation.fields.map(_.name).mkString(", ") + ") " + dml.query.toSql
 
-
   def update[PK, R <: Record[PK, R]](dml: Update[PK, R]): String = {
     var result = "UPDATE " + dml.node.toSql + " SET " +
         dml.setClause.map(f => f._1.name + " = " + f._1.placeholder).mkString(", ")
     if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
-    return result
+    result
   }
-
 
   def delete[PK, R <: Record[PK, R]](dml: Delete[PK, R]): String = {
     var result = "DELETE FROM " + dml.node.toSql
     if (dml.where != EmptyPredicate) result += " WHERE " + dml.where.toSql
-    return result
+    result
   }
 
 }

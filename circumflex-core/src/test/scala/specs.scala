@@ -1,4 +1,5 @@
-package ru.circumflex.core
+package ru.circumflex
+package core
 
 import org.specs.runner.JUnit4
 import org.specs.Specification
@@ -45,16 +46,16 @@ object CircumflexCoreSpec extends Specification {
 
   "Circumflex Context" should {
     "be initialized and destroyed properly" in {
-      Context.live_? must beFalse
+      Context.isLive must beFalse
       Context.init()
-      Context.live_? must beTrue
+      Context.isLive must beTrue
       Context.destroy()
-      Context.live_? must beFalse
+      Context.isLive must beFalse
     }
     "initialize on demand" in {
-      Context.live_? must beFalse
+      Context.isLive must beFalse
       Context.get must notBeNull
-      Context.live_? must beTrue
+      Context.isLive must beTrue
     }
     "process events" in {
       var inits = 0;

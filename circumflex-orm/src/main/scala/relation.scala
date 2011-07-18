@@ -65,19 +65,19 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
    */
   def schema: Schema = defaultSchema
 
-  /*! The `readOnly_?()` method is used to indicate whether the DML operations
+  /*! The `isReadOnly` method is used to indicate whether the DML operations
   are allowed with this relation. Tables usually allow them and views usually don't.
    */
-  def readOnly_?(): Boolean
+  def isReadOnly: Boolean
 
-  /*! The `autorefresh_?()` method is used to indicate whether the record should be immediately
+  /*! The `isAutoRefresh` method is used to indicate whether the record should be immediately
   refreshed after every successful `INSERT` or `UPDATE` operation. By default it returns `false`
   to maximize performance. However, if the relation contains columns with auto-generated values
   (e.g. `DEFAULT` clauses, auto-increments, triggers, etc.) then you should override this method.
    */
-  def autorefresh_?(): Boolean = false
+  def isAutoRefresh: Boolean = false
 
-  /*! Use the `AS` method to create a relation node from this relation with explicit alias. */
+  /*! Use the `AS` method to create a relation node from this relation with an explicit alias. */
   def AS(alias: String): RelationNode[PK, R] = new RelationNode(this).AS(alias)
 
   def findAssociation[T, F <: Record[T, F]](relation: Relation[T, F]): Option[Association[T, R, F]] =
@@ -158,7 +158,7 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
   private def processHolder(vh: ValueHolder[_, R], m: Method): Unit = vh match {
     case f: Field[_, R] =>
       this._fields ++= List(f)
-      if (f.unique_?) this.UNIQUE(f)
+      if (f.isUnique) this.UNIQUE(f)
       this._methodsMap += (f -> m)
     case a: Association[_, R, _] =>
       this._associations ++= List[Association[_, R, _]](a)
@@ -192,13 +192,11 @@ trait Relation[PK, R <: Record[PK, R]] extends Record[PK, R] with SchemaObject {
       }
     }
 
-
   protected[orm] def copyFields(src: R, dst: R): Unit = fields.foreach { f =>
     val m = methodsMap(f)
     val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
     getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
   }
-
 
   protected[orm] def getField[T](record: R, field: Field[T, R]): Field[T, R] =
     methodsMap(field).invoke(record) match {
@@ -347,7 +345,7 @@ The `Table` class represents plain-old database table which will be created to s
 records.
 */
 trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
-  def readOnly_?(): Boolean = false
+  def isReadOnly(): Boolean = false
   def objectName: String = "TABLE " + qualifiedName
   def sqlCreate: String = {
     init()
@@ -365,10 +363,10 @@ The `View` class represents a database view, whose definition is designated by
 the `query` method. By default we assume that views are not updateable, so
 DML operations are not allowed on view records. If you implement updateable
 views on backend somehow (with triggers in Oracle or rules in PostgreSQL),
-override the `readOnly_?` method accordingly.
+override the `isReadOnly` method accordingly.
 */
 trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
-  def readOnly_?(): Boolean = true
+  def isReadOnly(): Boolean = true
   def objectName: String = "VIEW " + qualifiedName
   def sqlDrop: String = {
     init()

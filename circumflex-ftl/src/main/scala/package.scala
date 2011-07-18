@@ -20,15 +20,13 @@ package object freemarker {
   val ftlConfig: Configuration = cx.instantiate[Configuration](
     "ftl.configuration", new DefaultConfiguration)
 
-
   def ftl(template: String, data: Any = ctx): Nothing =
-    response.body(r => ftlConfig.getTemplate(template).process(data, r.getWriter)).flush_!
-
+    response.body(r => ftlConfig.getTemplate(template).process(data, r.getWriter)).flush()
 
   def ftl2string(template: String, root: Any = ctx): String = {
     val result = new StringWriter
     ftlConfig.getTemplate(template).process(root, result)
-    return result.toString
+    result.toString
   }
 
   /*!# Configuring Object Wrapper

@@ -134,7 +134,7 @@ class IdentAuto extends Record[Long, IdentAuto] with IdentityGenerator[Long, Ide
 
 object IdentAuto extends IdentAuto with Table[Long, IdentAuto] {
   override def schema: Schema = IdGen
-  override def autorefresh_?(): Boolean = true
+  override def isAutoRefresh(): Boolean = true
 }
 
 class SeqNoAuto extends Record[Long, SeqNoAuto] with SequenceGenerator[Long, SeqNoAuto] {
@@ -155,7 +155,7 @@ class SeqAuto extends Record[Long, SeqAuto] with SequenceGenerator[Long, SeqAuto
 
 object SeqAuto extends SeqAuto with Table[Long, SeqAuto] {
   override def schema: Schema = IdGen
-  override def autorefresh_?(): Boolean = true
+  override def isAutoRefresh(): Boolean = true
 }
 
 // SQL Types test model
@@ -170,5 +170,5 @@ class DecimalRecord extends Record[BigDecimal, DecimalRecord] {
 
 object DecimalRecord extends DecimalRecord with Table[BigDecimal, DecimalRecord] {
   override def schema = DecimalSchema
-  override def autorefresh_?(): Boolean = true
+  override def isAutoRefresh(): Boolean = true
 }

@@ -1,6 +1,6 @@
 [#ftl]
 [#include "layout.ftl"]
-[@page]
+[#assign content]
 <h1>Welcome to Simple Circumflex Web Application!</h1>
 <p>Please take a moment to observe your project layout.</p>
 <ul>
@@ -54,4 +54,6 @@
    further information.</p>
 <p style="font-weight:bold">
   We hope you'll get a lot of fun developing with Circumflex! Good luck!</p>
-[/@page]
+[/#assign]
+
+[#include "/layout.ftl"/]

@@ -33,7 +33,6 @@ trait ConnectionProvider {
 
   def openConnection(): Connection
 
-
   def close(): Unit
 }
 
@@ -82,7 +81,6 @@ class DefaultConnectionProvider extends ConnectionProvider {
       Connection.TRANSACTION_READ_COMMITTED
     }
   }
-
 
   protected def createDataSource: DataSource = cx.get("orm.connection.datasource") match {
     case Some(jndiName: String) => {
@@ -148,7 +146,6 @@ If you intend to use custom types, provide your own implementation.
 */
 class TypeConverter {
 
-
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int): Unit =
     parameter match {
       case None | null => st.setObject(paramIndex, null)
@@ -184,18 +181,18 @@ class Transaction {
   // Statements are cached by actual SQL
   protected val _statementsCache = new HashMap[String, PreparedStatement]()
 
-  def live_?(): Boolean =
+  def isLive: Boolean =
     _connection != null && !_connection.isClosed
 
   def commit(): Unit =
-    if (live_? && !_connection.getAutoCommit) _connection.commit
+    if (isLive && !_connection.getAutoCommit) _connection.commit
 
   def rollback(): Unit = {
-    if (live_? && !_connection.getAutoCommit) _connection.rollback
+    if (isLive && !_connection.getAutoCommit) _connection.rollback
     contextCache.invalidate
   }
 
-  def close(): Unit = if (live_?) try {
+  def close(): Unit = if (isLive) try {
     // close all cached statements
     _statementsCache.values.foreach(_.close)
   } finally {
@@ -261,9 +258,7 @@ class Transaction {
 
 trait TransactionManager {
 
-
-  def hasLive_?(): Boolean
-
+  def hasisLive(): Boolean
 
   def get: Transaction
 }
@@ -287,7 +282,7 @@ class DefaultTransactionManager extends TransactionManager {
     get.close
   })
 
-  def hasLive_?(): Boolean = ctx.contains("orm.transaction")
+  def hasisLive(): Boolean = ctx.contains("orm.transaction")
 
   def get: Transaction = ctx.get("orm.transaction") match {
     case Some(t: Transaction) => t

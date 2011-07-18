@@ -557,14 +557,14 @@ class MarkevenProcessor() {
       if (c.startsWith("\n"))
         c.substring(1)
       // self-contained block?
-      if (fence_end_?(c))
+      if (isFenceEnd(c))
         return new CodeBlock(c, selector).fenced()
       var inside = true
       return processComplexChunk(chunks, new CodeBlock(c, selector).fenced(), { c =>
         val chunk = unprotect(c)
         if (!inside) false
         else {
-          if (fence_end_?(chunk))
+          if (isFenceEnd(chunk))
             inside = false
           true
         }
@@ -573,10 +573,10 @@ class MarkevenProcessor() {
     // assume unordered list and ordered list
     if (s.startsWith("* "))
       return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent),
-        c => ul_?(c, indent))
+        c => isUl(c, indent))
     if (s.startsWith("1. "))
       return processComplexChunk(chunks, new OrderedListBlock(s, selector, indent),
-        c => ol_?(c, indent))
+        c => isOl(c, indent))
     // assume blockquote and section
     if (s.startsWith(">"))
       if (s.matches(regexes.d_blockquote)) {
@@ -620,7 +620,7 @@ class MarkevenProcessor() {
     return block
   }
 
-  def fence_end_?(s: StringEx): Boolean = {
+  def isFenceEnd(s: StringEx): Boolean = {
     s.trimRight
     if (s.endsWith("```")) {
       s.substring(0, s.length - 3)
@@ -628,10 +628,10 @@ class MarkevenProcessor() {
         s.substring(0, s.length - 1)
       return true
     }
-    return false
+    false
   }
 
-  def ol_?(s: StringEx, indent: Int): Boolean = {
+  def isOl(s: StringEx, indent: Int): Boolean = {
     val i = new CharIterator(s)
     while (i.hasNext && i.index < indent - 1)
       if (i.next != ' ') return false
@@ -646,10 +646,10 @@ class MarkevenProcessor() {
       if (c == '.' && i.hasNext && i.peek == ' ') return true
       else if (!c.isDigit) return false
     }
-    return false
+    false
   }
 
-  def ul_?(s: StringEx, indent: Int): Boolean = {
+  def isUl(s: StringEx, indent: Int): Boolean = {
     val i = new CharIterator(s)
     while (i.hasNext && i.index < indent - 1)
       if (i.next != ' ') return false
@@ -659,7 +659,6 @@ class MarkevenProcessor() {
     if (c == ' ') return true
     return (c == '*' && i.hasNext && i.peek == ' ')
   }
-
 
   def stripSelector(s: StringEx): Selector = {
     var id = ""

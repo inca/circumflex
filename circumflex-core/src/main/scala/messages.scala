@@ -1,10 +1,10 @@
-package ru.circumflex.core
+package ru.circumflex
+package core
 
-import java.lang.String
 import collection.{Iterator, Map}
 import collection.JavaConversions._
-import collection.mutable.{ArrayBuffer, HashMap}
-import java.util.{ResourceBundle, Locale, Properties, Enumeration => JEnumeration, Date}
+import collection.mutable.HashMap
+import java.util.{ResourceBundle, Locale, Properties, Enumeration => JEnum, Date}
 import java.text.MessageFormat
 import java.io._
 import org.apache.commons.io.FilenameUtils
@@ -118,13 +118,13 @@ class DelegatingMessageResolver(initialResolvers: MessageResolver*) extends Mess
   def addResolver(r: MessageResolver): this.type = {
     _resolvers ++= List(r)
     _lastModified = new Date()
-    return this
+    this
   }
   def iterator: Iterator[(String, String)] =
     resolvers.map(_.iterator).reduceLeft((a, b) => a ++ b)
   protected def resolve(key: String): Option[String] = {
     resolvers.foreach(r => r.get(key).map(msg => return Some(msg)))
-    return None
+    None
   }
 }
 
@@ -174,16 +174,16 @@ class PropertyFileResolver extends MessageResolver {
       try {
         props.load(is)
       } finally {
-        is.close
+        is.close()
       }
-      return Some(props)
+      Some(props)
     }
   }
 
   def fallbackSuffix(suffix: String): String = {
     val i = suffix.lastIndexOf("_")
-    if (i == -1) return ""
-    else return suffix.substring(0, i)
+    if (i == -1) ""
+    else suffix.substring(0, i)
   }
 
   def localeSuffix = "_" + locale.toString
@@ -195,12 +195,12 @@ class PropertyFileResolver extends MessageResolver {
       suffix += "_" + part
       getProps(suffix) map { props => result ++= iteratorInternal(suffix) }
     }
-    return result
+    result
   }
 
   protected def iteratorInternal(suffix: String): Iterator[(String, String)] =
     getProps(suffix).map { props =>
-      props.keys.asInstanceOf[JEnumeration[String]].map(k => k -> props.getProperty(k))
+      props.keys.asInstanceOf[JEnum[String]].map(k => k -> props.getProperty(k))
     }.getOrElse(Iterator.empty)
 
   protected def resolve(key: String): Option[String] = resolveInternal(key, localeSuffix)

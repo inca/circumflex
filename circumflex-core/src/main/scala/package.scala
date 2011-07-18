@@ -12,23 +12,17 @@ You should import this package if you intend to use Circumflex API:
 */
 package object core {
 
-
   val CX_LOG = new Logger("ru.circumflex.core")
-
 
   val cx = Circumflex
 
-
-  def ctx = Context.get
-
+  def ctx = Context.get()
 
   lazy val msg = cx.instantiate[MessageResolver]("cx.messages", new PropertyFileResolver)
 
   // Utils
 
-
   def camelCaseToUnderscore(arg: String) = arg.replaceAll("(?<!^)([A-Z])","_$1").toLowerCase
-
 
   def time[T](block: => T): (Long, T) = {
     val startTime = System.currentTimeMillis
@@ -36,9 +30,7 @@ package object core {
     (System.currentTimeMillis - startTime, result)
   }
 
-
   def any2option[T](obj: T): Option[T] = if (obj == null) None else Some(obj)
-
 
   def digest(algorithm: String, text: String) = {
     val md = MessageDigest.getInstance(algorithm)
@@ -52,6 +44,7 @@ package object core {
   def sha256(text: String) = digest("sha-256", text)
 
   /* Implicits */
+
   @inline implicit def symbol2string(sym: Symbol): String = sym.name
   @inline implicit def symbol2contextVarHelper(sym: Symbol): ContextVarHelper =
     new ContextVarHelper(sym)

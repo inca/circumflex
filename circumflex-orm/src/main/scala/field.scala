@@ -49,25 +49,25 @@ class Field[T, R <: Record[_, R]](val name: String,
     the field.
   */
   protected var _notNull: Boolean = false
-  def notNull_?(): Boolean = _notNull
+  def isNotNull: Boolean = _notNull
   def NOT_NULL(): this.type = {
     _notNull = true
-    return this
+    this
   }
   def NOT_NULL(initialValue: T): this.type = NOT_NULL().set(initialValue)
 
   protected var _unique: Boolean = false
-  def unique_?(): Boolean = _unique
+  def isUnique: Boolean = _unique
   def UNIQUE(): this.type = {
     _unique = true
-    return this
+    this
   }
 
   protected var _defaultExpression: Option[String] = None
   def defaultExpression: Option[String] = _defaultExpression
   def DEFAULT(expr: String): this.type = {
     _defaultExpression = Some(expr)
-    return this
+    this
   }
 
   def REFERENCES[P <: Record[T, P]](relation: Relation[T, P]): Association[T, R, P] =
@@ -134,10 +134,10 @@ class Field[T, R <: Record[_, R]](val name: String,
 
 trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
   protected var _autoIncrement: Boolean = false
-  def autoIncrement_?(): Boolean = _autoIncrement
+  def isAutoIncrement: Boolean = _autoIncrement
   def AUTO_INCREMENT(): this.type = {
     _autoIncrement = true
-    return this
+    this
   }
 }
 
@@ -260,14 +260,14 @@ class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
         _1.setNull
         _2.setNull
     }
-    return this
+    this
   }
 
   protected def _getPrefix = aliasStack.pop.map(_ + ".").getOrElse("")
 
   override def aliasedName: String = {
     val prefix = _getPrefix
-    return dialect.compositeFieldName(prefix + _1.name, prefix + _2.name)
+    dialect.compositeFieldName(prefix + _1.name, prefix + _2.name)
   }
 
   override def EQ(value: (T1, T2)) = {

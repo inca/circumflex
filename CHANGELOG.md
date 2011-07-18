@@ -1,5 +1,18 @@
 # Circumflex Change Log
 
+## 2.1
+
+* Migrated to Scala 2.9
+
+* Method naming (introduce incompatibilities!):
+
+  * methods with names ending with `_?` and `_!` been replaced with analogs
+    (except DML methods which omit validation in ORM)
+
+  * more careful with parentheses around methods which introduce side-effects
+
+  * some method names became more strict (e.g. `whereClause` instead of `where`)
+
 ## 2.0.3
 
 * Moved to Jetty 7.2.4 to allow Web Sockets support.

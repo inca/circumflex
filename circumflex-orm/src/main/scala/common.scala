@@ -17,9 +17,7 @@ with SQL expressions with JDBC-style parameters.
 */
 trait Expression extends SQLable {
 
-
   def parameters: Seq[Any]
-
 
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
     sql.replaceFirst("\\?", dialect.escapeParameter(p)
@@ -46,9 +44,7 @@ trait SchemaObject {
 
   def sqlCreate: String
 
-
   def sqlDrop: String
-
 
   def objectName: String
 
@@ -105,7 +101,7 @@ trait ValueHolder[T, R <: Record[_, R]] extends Container[T] with Wrapper[Option
       id.setNull
       id := 1l
 
-  The `null_?` method indicates whether the underlying value is `null` or not.
+  The `isNull` method indicates whether the underlying value is `null` or not.
 
   ## Methods from `Option`
 

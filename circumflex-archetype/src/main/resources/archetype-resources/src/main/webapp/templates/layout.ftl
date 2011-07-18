@@ -1,5 +1,4 @@
 [#ftl]
-[#macro page]
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -16,7 +15,7 @@
     </div>
     <div id="outer">
       <div id="content">
-        [#nested/]
+        ${content}
       </div>
       <div id="footer">
         <span class="copyright">2008-${currentDate?string("yyyy")}</span> ©
@@ -27,4 +26,3 @@
     </div>
   </body>
 </html>
-[/#macro]

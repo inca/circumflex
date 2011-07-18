@@ -1,4 +1,5 @@
-package ru.circumflex.core
+package ru.circumflex
+package core
 
 import scala.collection.mutable.HashMap
 import java.util.Date
@@ -47,41 +48,37 @@ object Context {
   protected var initListeners: Seq[Context => Unit] = Nil
   protected var destroyListeners: Seq[Context => Unit] = Nil
 
-
-  def addInitListener(listener: Context => Unit): Unit =
+  def addInitListener(listener: Context => Unit) = {
     initListeners ++= List(listener)
-
-  def addDestroyListener(listener: Context => Unit): Unit =
-    destroyListeners ++= List(listener)
-
-
-  def get(): Context = {
-    if (!live_?) init()
-    return threadLocal.get
   }
 
+  def addDestroyListener(listener: Context => Unit) = {
+    destroyListeners ++= List(listener)
+  }
 
-  def live_?(): Boolean = threadLocal.get != null
+  def get(): Context = {
+    if (!isLive) init()
+    threadLocal.get
+  }
 
+  def isLive: Boolean = threadLocal.get != null
 
-  def init(): Unit = {
+  def init() = {
     threadLocal.set(cx.instantiate[Context]("cx.context", new Context))
     initListeners.foreach(l => l.apply(get()))
   }
 
-
-  def destroy(): Unit = {
-    if (!live_?) return
-    destroyListeners.foreach(l => l.apply(get()))
+  def destroy() = if (isLive) {
+    destroyListeners.foreach(_.apply(get()))
     threadLocal.set(null)
   }
 
-
   def executeInNew[A](block: Context => A): A = {
-    val previousCtx: Option[Context] = if (live_?) Some(get) else None
+    val previousCtx: Option[Context] = if (isLive) Some(get()) else None
     try {
       Context.init()
-      block(get)
+      val _ctx = get()
+      block(_ctx)
     } finally {
       Context.destroy()
       previousCtx.map(threadLocal.set(_))
@@ -113,14 +110,15 @@ class ContextVarHelper(val key: Symbol) {
   def apply[T](): T = ctx.as[T](key)
   def get[T](): Option[T] = ctx.getAs[T](key)
   def getOrElse[T >: Any](default: T): T = ctx.getOrElse[T](key, default)
-  def update(value: Any): Unit = ctx.update(key, value)
-  def :=(value: Any): Unit = update(value)
   def getString(key: String): String = getOrElse(key, "").toString
-
   def getString: String = ctx.getString(key)
   def getBoolean: Boolean = ctx.getBoolean(key)
   def getInt: Int = ctx.getInt(key)
   def getLong: Long = ctx.getLong(key)
   def getDouble: Double = ctx.getDouble(key)
   def getDate(pattern: String): Date = ctx.getDate(key, pattern)
+
+  def update(value: Any) = ctx.update(key, value)
+  def :=(value: Any) = update(value)
+
 }

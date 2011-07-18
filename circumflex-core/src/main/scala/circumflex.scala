@@ -1,4 +1,5 @@
-package ru.circumflex.core
+package ru.circumflex
+package core
 
 import java.util.{Date, ResourceBundle, Locale}
 import java.text.SimpleDateFormat
@@ -112,7 +113,6 @@ trait UntypedContainer extends Map[String, Any] {
   def instantiate[C](name: String): C = instantiate[C](name, throw new CircumflexException(
     "Could not perform instantiation for parameter " + name))
 
-  // Internally the instantiation is performed by the `instantiateObject` method.
   protected def instantiateObject[C](name: String, c: Class[_]): C = try {
     c.getField("MODULE$").get(null).asInstanceOf[C]
   } catch {

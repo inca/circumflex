@@ -21,7 +21,6 @@ The cache consists of two logical parts:
 */
 trait CacheService {
 
-
   def invalidate: Unit = {
     invalidateRecords
     invalidateInverse

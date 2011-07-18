@@ -2,7 +2,6 @@ package ru.circumflex.orm
 
 import xml._
 import java.io.File
-import ru.circumflex.core._
 
 /*!# XML (de)serialization
 
@@ -33,12 +32,12 @@ class Deployment(val id: String,
                  val validate: Boolean = true,
                  val entries: Seq[Node]) {
 
-  def process(): Unit = try {
+  def process() = try {
     entries.foreach(e => processNode(e, Nil))
-    COMMIT
+    COMMIT()
   } catch {
     case e =>
-      ROLLBACK
+      ROLLBACK()
       throw e
   }
 
@@ -70,7 +69,7 @@ class Deployment(val id: String,
     }
     var foreigns: Seq[Pair[Association[_, _, _], Node]] = Nil
     // Secondly, we set fields provided via attributes
-    node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString))
+    node.attributes.foreach(a => setRecordField(r, a.key, a.value.toString()))
     // Next we process element body
     node.child.foreach {
       case n: Elem => try {
@@ -104,16 +103,16 @@ class Deployment(val id: String,
     foreigns.foreach(p =>
       processNode(p._2, parentPath ++ List(p._1.asInstanceOf[Association[Any, R, R]] -> r)))
     // And return our record
-    return r
+    r
   }
 
   protected def pickClass(node: Node): Class[_] = {
     var p = ""
     if (prefix != "") p = prefix + "."
-    return Class.forName(p + node.label, true, Thread.currentThread().getContextClassLoader())
+    Class.forName(p + node.label, true, Thread.currentThread().getContextClassLoader)
   }
 
-  protected def setRecordField[R <: Record[_, R]](r: R, k: String, v: String): Unit = {
+  protected def setRecordField[R <: Record[_, R]](r: R, k: String, v: String) = {
     val m = r.getClass.getMethod(k)
     if (classOf[Field[_, _]].isAssignableFrom(m.getReturnType)) {    // only scalar fields are accepted
       val field = m.invoke(r).asInstanceOf[Field[Any, R]]
@@ -127,11 +126,11 @@ class Deployment(val id: String,
     n.attributes.foreach(a => {
       val k = a.key
       val field = r.relation.getClass.getMethod(k).invoke(r).asInstanceOf[Field[Any, R]]
-      val v = convertValue(field, a.value.toString)
+      val v = convertValue(field, a.value.toString())
       aliasStack.push("root")
       crit.add(field EQ v)
     })
-    return crit
+    crit
   }
 
   protected def convertValue(field: Field[Any, _], v: String): Option[Any] = field match {
@@ -166,7 +165,7 @@ object Deployment {
       case "false" | "f" | "no" | "off" => false
       case _ => true
     }
-    return new Deployment(id, prefix, onExist, validate, n.child.filter(n => n.isInstanceOf[Elem]))
+    new Deployment(id, prefix, onExist, validate, n.child.filter(n => n.isInstanceOf[Elem]))
   } else throw new ORMException("<deployment> expected, but <" + n.label + "> found.")
 
   def readAll(n: Node): Seq[Deployment] = if (n.label == "deployments")
@@ -176,5 +175,5 @@ object Deployment {
 }
 
 class DeploymentHelper(f: File) {
-  def loadData(): Unit = Deployment.readAll(XML.loadFile(f)).foreach(_.process)
+  def loadData() = Deployment.readAll(XML.loadFile(f)).foreach(_.process())
 }

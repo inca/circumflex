@@ -17,21 +17,21 @@ class RecordValidator[PK, R <: Record[PK, R]] {
   }
 
   def addForTransient(validator: R => Option[Msg]): this.type =
-    add(r => if (r.transient_?) validator(r) else None)
+    add(r => if (r.isTransient) validator(r) else None)
 
   def addForPersisted(validator: R => Option[Msg]): this.type =
-    add(r => if (!r.transient_?) validator(r) else None)
+    add(r => if (!r.isTransient) validator(r) else None)
 
   def notNull(f: R => Field[_, R]): this.type = add { r =>
     val field = f(r)
-    if (field.null_?)
+    if (field.isNull)
       Some(new Msg(field.uuid + ".null", "record" -> r, "field" -> field))
     else None
   }
 
   def notEmpty(f: R => TextField[R]): this.type = add { r =>
     val field = f(r)
-    if (field.null_?)
+    if (field.isNull)
       Some(new Msg(field.uuid + ".null", "record" -> r, "field" -> field))
     else if (field().trim == "")
       Some(new Msg(field.uuid + ".empty", "record" -> r, "field" -> field))
@@ -40,7 +40,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
 
   def pattern(f: R => TextField[R], regex: String, key: String = "pattern"): this.type = add { r =>
     val field = f(r)
-    if (field.null_?)
+    if (field.isNull)
       None
     else if (!field().matches(regex))
       Some(new Msg(field.uuid + "." + key, "regex" -> regex,
@@ -53,7 +53,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
   def unique[T](f: R => Field[T, R], key: String = "unique"): this.type = add { r =>
     val field = f(r)
     r.relation.criteria.add(field EQ field()).unique match {
-      case Some(a) if (r.transient_? || a != r) =>
+      case Some(a) if (r.isTransient || a != r) =>
         Some(new Msg(field.uuid + "." + key, "record" -> r, "field" -> field))
       case _ => None
     }
@@ -67,7 +67,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
       case _ =>
     }
     crit.unique match {
-      case Some(a: R) if (r.transient_? || a != r) =>
+      case Some(a: R) if (r.isTransient || a != r) =>
          Some(new Msg(r.uuid + "." + key, "record" -> r))
       case _ => None
     }

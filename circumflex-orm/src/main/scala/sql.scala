@@ -80,24 +80,24 @@ class Index(val name: String,
     extends SchemaObject {
 
   protected var _unique: Boolean = false
-  def unique_?() = _unique
+  def isUnique = _unique
   def UNIQUE: this.type = {
     this._unique = true
-    return this
+    this
   }
 
   private var _method: String = "btree"
-  def using = _method
+  def usingClause = _method
   def USING(method: String): this.type = {
     this._method = method
-    return this
+    this
   }
 
   private var _where: Predicate = EmptyPredicate
-  def where = _where
+  def whereClause = _where
   def WHERE(predicate: Predicate): this.type = {
     this._where = predicate
-    return this
+    this
   }
 
   def objectName = "INDEX " + name
@@ -121,7 +121,7 @@ class ConstraintHelper(name: String, relation: Relation[_, _]) {
                   columns: (ValueHolder[_, _], ValueHolder[_, _])*): ForeignKey = {
     val childColumns = columns.map(_._1)
     val parentColumns = columns.map(_._2)
-    return FOREIGN_KEY(parentRelation, childColumns, parentColumns)
+    FOREIGN_KEY(parentRelation, childColumns, parentColumns)
   }
 
   def FOREIGN_KEY(localColumns: ValueHolder[_, _]*): ForeignKeyHelper =

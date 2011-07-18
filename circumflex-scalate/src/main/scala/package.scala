@@ -66,12 +66,12 @@ package object scalate {
              layout: Boolean = true): Nothing = {
     response.statusCode(statusCode)
     acquireRenderContext.include(template, layout)
-    response.flush_!
+    response.flush
   }
 
   def view(view: String, it: AnyRef): Nothing = {
     acquireRenderContext.view(it, view)
-    response.flush_!
+    response.flush
   }
 
 }

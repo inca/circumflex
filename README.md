@@ -33,4 +33,3 @@ An application skeleton for SBT has been kindly provided by
 simple Circumflex application to build with SBT. You can clone it from
 <http://github.com/andreyshikov/circumflex-sbt-quickstart>.
 
-

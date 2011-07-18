@@ -36,7 +36,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   _primary key_. You should specify what field hold the primary key of your record
   by implementing the `PRIMARY_KEY` method.
 
-  The `transient_?` method indicates, whether the record was not persisted into a database
+  The `isTransient` method indicates, whether the record was not persisted into a database
   yet or it was. The default logic is simple: if the primary key contains `null` then the
   record is _transient_ (i.e. not persisted), otherwise the record is considered persistent.
 
@@ -46,7 +46,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   will act a relation for this type of records.
   */
   def PRIMARY_KEY: ValueHolder[PK, R]
-  def transient_?(): Boolean = PRIMARY_KEY.null_?
+  def isTransient: Boolean = PRIMARY_KEY.isNull()
   def relation: Relation[PK, R]
   def uuid = getClass.getName
 
@@ -66,22 +66,22 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   to use different strategy mix in one of the `Generator` traits or simply override the `persist`
   method.
   */
-  def refresh(): this.type = if (transient_?)
+  def refresh(): this.type = if (isTransient)
     throw new ORMException("Could not refresh transient record.")
   else {
     val root = relation.AS("root")
     val id = PRIMARY_KEY()
     contextCache.evictRecord(id, relation)
-    SELECT(root.*).FROM(root).WHERE(root.PRIMARY_KEY EQ id).unique match {
+    SELECT(root.*).FROM(root).WHERE(root.PRIMARY_KEY EQ id).unique() match {
       case Some(r: R) =>
         relation.copyFields(r, this)
-        return this
+        this
       case _ =>
         throw new ORMException("Could not refresh a record because it is missing in the backend.")
     }
   }
 
-  def INSERT_!(fields: Field[_, R]*): Int = if (relation.readOnly_?)
+  def INSERT_!(fields: Field[_, R]*): Int = if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else {
     // Execute events
@@ -93,27 +93,27 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     contextCache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
     // Execute events
     relation.afterInsert.foreach(c => c(this))
-    return result
+    result
   }
 
   def INSERT(fields: Field[_, R]*): Int = {
-    validate_!
+    validate_!()
     INSERT_!(fields: _*)
   }
 
   protected def _persist(fields: Seq[Field[_, R]]): Int = PRIMARY_KEY.value match {
     case Some(id: PK) =>
-      val result = new Insert(relation, fields.filter(!_.null_?)).execute()
-      if (relation.autorefresh_?) refresh()
+      val result = new Insert(relation, fields.filter(!_.isNull)).execute()
+      if (relation.isAutoRefresh) refresh()
       result
     case _ => throw new ORMException("Application-assigned identifier is expected. " +
         "Use one of the generators if you wish identifiers to be generated automatically.")
   }
 
-  def UPDATE_!(fields: Field[_, R]*): Int = if (relation.readOnly_?)
+  def UPDATE_!(fields: Field[_, R]*): Int = if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else {
-    if (PRIMARY_KEY.null_?)
+    if (PRIMARY_KEY.isNull())
       throw new ORMException("Update is only allowed with non-null PRIMARY KEY field.")
     // Execute events
     relation.beforeUpdate.foreach(c => c(this))
@@ -124,25 +124,25 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
         .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkUpdate
     f.foreach(f => q.SET[Any](f.asInstanceOf[Field[Any, R]], f.value))
     val result = q.execute()
-    if (relation.autorefresh_?) refresh()
+    if (relation.isAutoRefresh) refresh()
     // Invalidate caches
     contextCache.evictInverse[PK, R](this)
     contextCache.evictRecord(PRIMARY_KEY(), relation)
     contextCache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
-    return result
+    result
   }
 
   def UPDATE(fields: Field[_, R]*): Int = {
-    validate_!
+    validate_!()
     UPDATE_!(fields: _*)
   }
 
-  def DELETE_!(): Int = if (relation.readOnly_?)
+  def DELETE_!(): Int = if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else {
-    if (PRIMARY_KEY.null_?)
+    if (PRIMARY_KEY.isNull())
       throw new ORMException("Delete is only allowed with non-null PRIMARY KEY field.")
     // Execute events
     relation.beforeDelete.foreach(c => c(this))
@@ -154,7 +154,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     contextCache.evictInverse[PK, R](this)
     // Execute events
     relation.afterDelete.foreach(c => c(this))
-    return result
+    result
   }
 
   def validate(): Option[Seq[Msg]] = {
@@ -163,9 +163,9 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     else Some(List(errors: _*))
   }
 
-  def validate_!(): Unit = validate.map(errors => throw new ValidationException(errors))
+  def validate_!() = validate().map(errors => throw new ValidationException(errors))
 
-  def save_!(): Int = if (transient_?)
+  def save_!(): Int = if (isTransient)
     throw new ORMException("Application-assigned identifier is expected. " +
         "Use one of the generators if you wish identifiers to be generated automatically.")
   else relation.get(PRIMARY_KEY()) match {
@@ -220,7 +220,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   */
   override def equals(that: Any) = that match {
     case that: Record[_, _] =>
-      !(this.PRIMARY_KEY.null_? || that.PRIMARY_KEY.null_?) &&
+      !(this.PRIMARY_KEY.isNull || that.PRIMARY_KEY.isNull) &&
           this.PRIMARY_KEY.value == that.PRIMARY_KEY.value &&
           this.getClass == that.getClass
     case _ => false
@@ -257,7 +257,7 @@ traits. Following identity generators are supported out-of-box:
 trait Generator[PK, R <: Record[PK, R]] extends Record[PK, R] { this: R =>
   override protected def _persist(fields: scala.Seq[Field[_, R]]): Int = persist(fields)
   def persist(fields: Seq[Field[_, R]]): Int
-  override def save_!(): Int = if (transient_?) INSERT_!() else UPDATE_!()
+  override def save_!(): Int = if (isTransient) INSERT_!() else UPDATE_!()
 }
 
 trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this: R =>
@@ -265,21 +265,21 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     // Make sure that PRIMARY_KEY contains `NULL`
     this.PRIMARY_KEY.setNull
     // Persist all not-null fields
-    val result = new Insert(relation, fields.filter(!_.null_?)).execute()
+    val result = new Insert(relation, fields.filter(!_.isNull)).execute()
     // Fetch either the whole record or just an identifier.
     val root = relation.AS("root")
-    if (relation.autorefresh_?)
-      SELECT(root.*).FROM(root).WHERE(dialect.identityLastIdPredicate(root)).unique match {
+    if (relation.isAutoRefresh)
+      SELECT(root.*).FROM(root).WHERE(dialect.identityLastIdPredicate(root)).unique() match {
         case Some(r) => relation.copyFields(r, this)
         case _ => throw new ORMException("Backend didn't return last inserted record. " +
             "Try another identifier generation strategy.")
       }
-    else dialect.identityLastIdQuery(root).unique match {
+    else dialect.identityLastIdQuery(root).unique() match {
       case Some(id: PK) => this.PRIMARY_KEY := id
       case _ => throw new ORMException("Backend didn't return last generated identity. " +
           "Try another identifier generation strategy.")
     }
-    return result
+    result
   }
 }
 
@@ -287,19 +287,19 @@ trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
   def persist(fields: scala.Seq[Field[_, R]]): Int = {
     // Poll database for next sequence value
     val root = relation.AS("root")
-    dialect.sequenceNextValQuery(root).unique match {
+    dialect.sequenceNextValQuery(root).unique() match {
       case Some(id: PK) =>
         // Assign retrieved id and persist all not-null fields
         val f = fields.map { f =>
           if (f == this.PRIMARY_KEY)
             f.asInstanceOf[Field[PK, R]].set(Some(id))
           f
-        }.filter(!_.null_?)
+        }.filter(!_.isNull)
         val result = new Insert(relation, f).execute()
         // Perform additional select if required
-        if (relation.autorefresh_?)
+        if (relation.isAutoRefresh)
           refresh()
-        return result
+        result
       case _ => throw new ORMException("Backend didn't return next sequence value. " +
           "Try another identifier generation strategy.")
     }

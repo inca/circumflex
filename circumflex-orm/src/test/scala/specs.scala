@@ -67,7 +67,7 @@ object CircumflexORMSpec extends Specification {
           new DDLUnit(r).CREATE
           val record = r.recordClass.newInstance
           record.INSERT_!()
-          record.transient_? must beFalse
+          record.isTransient must beFalse
           new DDLUnit(r).DROP
         } catch {
           case e: UnsupportedOperationException =>
