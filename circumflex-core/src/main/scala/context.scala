@@ -48,11 +48,11 @@ object Context {
   protected var initListeners: Seq[Context => Unit] = Nil
   protected var destroyListeners: Seq[Context => Unit] = Nil
 
-  def addInitListener(listener: Context => Unit) = {
+  def addInitListener(listener: Context => Unit) {
     initListeners ++= List(listener)
   }
 
-  def addDestroyListener(listener: Context => Unit) = {
+  def addDestroyListener(listener: Context => Unit) {
     destroyListeners ++= List(listener)
   }
 
@@ -107,7 +107,7 @@ The implicit conversions from `Symbol` into `ContextVarHelper` are available in 
 `ru.circumflex.core` package.
 */
 class ContextVarHelper(val sym: Symbol) {
-  val key = sym.toString
+  val key = sym.toString()
   def apply[T]: T = ctx.as[T](key)
   def get[T]: Option[T] = ctx.getAs[T](key)
   def getOrElse[T >: Any](default: T): T = ctx.getOrElse[T](key, default)
@@ -119,7 +119,11 @@ class ContextVarHelper(val sym: Symbol) {
   def getDouble: Double = ctx.getDouble(key)
   def getDate(pattern: String): Date = ctx.getDate(key, pattern)
 
-  def update(value: Any) = ctx.update(key, value)
-  def :=(value: Any) = update(value)
+  def update(value: Any) {
+    ctx.update(key, value)
+  }
+  def :=(value: Any) {
+    update(value)
+  }
 
 }
