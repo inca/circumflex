@@ -10,6 +10,11 @@ Predicates are designed to participate in `WHERE` clauses of SQL queries.
 */
 trait Predicate extends Expression
 
+object Predicate {
+  implicit def toAggregateHelper(predicate: Predicate) =
+    new AggregatePredicateHelper(predicate)
+}
+
 object EmptyPredicate extends Predicate {
   def parameters: scala.Seq[Any] = Nil
   def toSql: String = dialect.emptyPredicate

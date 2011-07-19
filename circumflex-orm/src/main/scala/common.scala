@@ -36,6 +36,11 @@ trait Expression extends SQLable {
   override def toString = toSql
 }
 
+object Expression {
+  implicit def toPredicate(expression: Expression): Predicate =
+      new SimpleExpression(expression.toSql, expression.parameters)
+}
+
 /*!# Schema Object
 
 Every database object which could be created or dropped should
@@ -172,6 +177,15 @@ trait ValueHolder[T, R <: Record[_, R]] extends Container[T] with Wrapper[Option
   def IS_NOT_NULL: Predicate =
     new SimpleExpression(dialect.IS_NOT_NULL(aliasedName), Nil)
 
+}
+
+object ValueHolder {
+  implicit def toColExpr[T, R <: Record[_, R]](vh: ValueHolder[T, R]): ColumnExpression[T, R] =
+    new ColumnExpression(vh)
+  implicit def toOrder(vh: ValueHolder[_, _]): Order =
+    new Order(vh.aliasedName, Nil)
+  implicit def toProjection[T](vh: ValueHolder[T, _]): Projection[T] =
+    new ExpressionProjection[T](vh.aliasedName)
 }
 
 class ColumnExpression[T, R <: Record[_, R]](column: ValueHolder[T, R])

@@ -83,37 +83,17 @@ package object orm {
     }
   }
 
-  implicit def vh2colExpr[T, R <: Record[_, R]](vh: ValueHolder[T, R]): ColumnExpression[T, R] =
-    new ColumnExpression(vh)
+  // Pimping core libs
+
   implicit def str2expr(str: String): SimpleExpression = prepareExpr(str)
-
-  // for predicates
-
   implicit def string2helper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
   implicit def string2predicate(expression: String): Predicate =
     new SimpleExpression(expression, Nil)
-  implicit def expr2predicate(expression: Expression): Predicate =
-    new SimpleExpression(expression.toSql, expression.parameters)
-  implicit def predicate2aggregateHelper(predicate: Predicate) =
-    new AggregatePredicateHelper(predicate)
-  implicit def boolean2predicate(f: BooleanField[_]): Predicate =
-    string2predicate(f.aliasedName)
-
-  // for orders
-
   implicit def string2order(expression: String): Order =
     new Order(expression, Nil)
-  implicit def vh2order(vh: ValueHolder[_, _]): Order =
-    new Order(vh.aliasedName, Nil)
-
-  // for projections
-
   implicit def string2projection(expression: String): Projection[Any] =
     new ExpressionProjection[Any](expression)
-  implicit def vh2projection[T](vh: ValueHolder[T, _]): Projection[T] =
-    new ExpressionProjection[T](vh.aliasedName)
-
   implicit def pair2proj[T1, T2](t: (Projection[T1], Projection[T2])) =
     new PairProjection(t._1, t._2)
 

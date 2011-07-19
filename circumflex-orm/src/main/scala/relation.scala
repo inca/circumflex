@@ -352,7 +352,7 @@ the default alias `this` will be assigned to the node. Use `AS` method perform t
 explicit conversion if you need to specify an alias manually.
 */
 object Relation {
-  implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
+  implicit def toNode[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
     new RelationNode[PK, R](relation)
 }
 

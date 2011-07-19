@@ -131,7 +131,7 @@ To understand this, consider following code:
                           // is recovered later.
 */
 object RelationNode {
-  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): R = {
+  implicit def toRelation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): R = {
     aliasStack.push(node.alias)
     node.relation.asInstanceOf[R]
   }

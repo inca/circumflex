@@ -212,6 +212,11 @@ class BooleanField[R <: Record[_, R]](name: String, record: R)
     try Some(str.toBoolean) catch { case _ => None }
 }
 
+object BooleanField {
+  implicit def toPredicate(f: BooleanField[_]): Predicate =
+    string2predicate(f.aliasedName)
+}
+
 class TimestampField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, dialect.timestampType) {
   def fromString(str: String): Option[Date] =
