@@ -1,9 +1,9 @@
 package ru.circumflex
 
 import core._
-import java.util.regex.Pattern
 import net.sf.ehcache.CacheManager
 import collection.mutable.Stack
+import java.util.regex.Pattern
 
 /*!# The `orm` Package
 
@@ -85,15 +85,12 @@ package object orm {
 
   // Pimping core libs
 
-  implicit def str2expr(str: String): SimpleExpression = prepareExpr(str)
+  implicit def str2expr(str: String): Expression = new Expression {
+    def toSql = str
+    def parameters = Nil
+  }
   implicit def string2helper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
-  implicit def string2predicate(expression: String): Predicate =
-    new SimpleExpression(expression, Nil)
-  implicit def string2order(expression: String): Order =
-    new Order(expression, Nil)
-  implicit def string2projection(expression: String): Projection[Any] =
-    new ExpressionProjection[Any](expression)
   implicit def pair2proj[T1, T2](t: (Projection[T1], Projection[T2])) =
     new PairProjection(t._1, t._2)
 
@@ -125,8 +122,7 @@ package object orm {
     new AggregatePredicateHelper(predicates.head).OR(predicates.tail: _*)
   def NOT(predicate: Predicate) =
     new SimpleExpression(dialect.not(predicate.toSql), predicate.parameters)
-  def expr[T](expression: String): ExpressionProjection[T] =
-    new ExpressionProjection[T](expression)
+
   def prepareExpr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
     var sqlText = expression
     var parameters: Seq[Any] = Nil
@@ -151,6 +147,8 @@ package object orm {
 
   // Simple projections
 
+  def expr[T](expression: String): ExpressionProjection[T] =
+      new ExpressionProjection[T](expression)
   def COUNT(expr: Expression): Projection[Long] =
     new ExpressionProjection[Long](dialect.COUNT(expr.toSql))
   def COUNT_DISTINCT(expr: Expression): Projection[Long] =

@@ -39,6 +39,8 @@ trait Expression extends SQLable {
 object Expression {
   implicit def toPredicate(expression: Expression): Predicate =
       new SimpleExpression(expression.toSql, expression.parameters)
+  implicit def toProjection[T](expression: Expression): Projection[T] =
+    new ExpressionProjection[T](expression.toSql)
 }
 
 /*!# Schema Object

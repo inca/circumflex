@@ -214,7 +214,7 @@ class BooleanField[R <: Record[_, R]](name: String, record: R)
 
 object BooleanField {
   implicit def toPredicate(f: BooleanField[_]): Predicate =
-    string2predicate(f.aliasedName)
+    new SimpleExpression(f.aliasedName, Nil)
 }
 
 class TimestampField[R <: Record[_, R]](name: String, record: R)
