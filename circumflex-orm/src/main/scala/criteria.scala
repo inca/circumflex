@@ -1,8 +1,6 @@
 package ru.circumflex
 package orm
 
-import core._
-
 /*!# Criteria API
 
 The `Criteria` class provides simplified API for querying records in neat
@@ -264,8 +262,8 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   def OR(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.OR)
 
   /*! Criteria can be merged with inverse associations to create logical scopes. Same
-  rules are applied as with criteria merging, except that a criteria object with
-  proper restrictions is created from inverse association implicitly.
+  rules are applied as with criteria merging, except that the criteria object with
+  proper restrictions is created from the inverse association implicitly.
   */
   protected def merge(inverse: InverseAssociation[_, R, _, _], operator: String): Criteria[PK, R] = {
     val criteria = new Criteria[PK, R](rootNode)

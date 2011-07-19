@@ -345,6 +345,17 @@ trait Relation[PK, R <: Record[PK, R]]
     throw new ORMException("This method cannot be invoked on relation instance.")
 }
 
+/*!## Implicit Conversions
+
+`Relation` is converted to `RelationNode` implicitly if necessary. If this happens,
+the default alias `this` will be assigned to the node. Use `AS` method perform the
+explicit conversion if you need to specify an alias manually.
+*/
+object Relation {
+  implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
+    new RelationNode[PK, R](relation)
+}
+
 /*!# Table {#table}
 
 The `Table` class represents plain-old database table which will be created to store

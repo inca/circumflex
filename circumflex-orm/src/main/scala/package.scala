@@ -83,16 +83,6 @@ package object orm {
     }
   }
 
-  // Implicits
-
-  // for nodes
-
-  implicit def relation2node[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
-    new RelationNode[PK, R](relation)
-  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): R = {
-    aliasStack.push(node.alias)
-    node.relation.asInstanceOf[R]
-  }
   implicit def vh2colExpr[T, R <: Record[_, R]](vh: ValueHolder[T, R]): ColumnExpression[T, R] =
     new ColumnExpression(vh)
   implicit def str2expr(str: String): SimpleExpression = prepareExpr(str)

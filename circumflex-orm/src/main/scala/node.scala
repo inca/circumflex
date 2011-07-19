@@ -109,6 +109,34 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
   override def toString: String = toSql
 }
 
+/*!## Implicit Convertions
+
+`RelationNode` is implicitly converted to the `Relation` if necessary exposing
+all the methods of the underlying relation. The alias is saved in a special
+thread local stack so that it could become possible to refer to the alias
+carried by this node, because otherwise it would be lost after conversion.
+
+To understand this, consider following code:
+
+    class User extends Record[...] {
+      val id = "id".BIGINT
+    }
+    object User extends User[...] with Table[...] {...}
+
+    val u = User AS "u"   // RelationNode of User with alias "u"
+    SELECT(u.id).FROM(u)  // The `id` member does not exist in RelationNode,
+                          // but it exists on the User, so the conversion works.
+                          // But this eliminates the alias which will be refered
+                          // by the projection. So it is saved into a stack and
+                          // is recovered later.
+*/
+object RelationNode {
+  implicit def node2relation[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): R = {
+    aliasStack.push(node.alias)
+    node.relation.asInstanceOf[R]
+  }
+}
+
 /*! The `ProxyNode` wraps a node and provides functionality to arrange
 joined nodes into a query plan (tree-like structure) by allowing to replace
 an underlying `node` with it's equivalent `JoinNode`. Most methods delegate
