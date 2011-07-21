@@ -24,9 +24,11 @@ trait Projection[T] extends SQLable {
   def read(rs: ResultSet): Option[T]
 
   def sqlAliases: Seq[String]
-  protected[orm] var alias: String = "this"
+
+  protected var _alias: String = "this"
+  def alias = _alias
   def AS(alias: String): this.type = {
-    this.alias = alias
+    this._alias = alias
     this
   }
 

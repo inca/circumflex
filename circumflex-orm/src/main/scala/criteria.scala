@@ -92,8 +92,8 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         val pNode = j.left
         val cNode = j.right
         val a = j.association
-        val pIndex = _projections.findIndexOf(p => p.node.alias == pNode.alias)
-        val cIndex = _projections.findIndexOf(p => p.node.alias == cNode.alias)
+        val pIndex = _projections.indexWhere(_.node.alias == pNode.alias)
+        val cIndex = _projections.indexWhere(_.node.alias == cNode.alias)
         if (pIndex == -1 || cIndex == -1) return
         tuple(pIndex).asInstanceOf[Option[N]] map {
           parent =>

@@ -200,10 +200,10 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   One-to-one and one-to-many relationships can be implemented using `inverseOne`
   or `inverseMany` methods.
   */
-  protected def inverseOne[C <: Record[_, C]](association: Association[PK, C, R]) =
+  def inverseOne[C <: Record[_, C]](association: Association[PK, C, R]) =
     new InverseOne[PK, C, R](this, association)
 
-  protected def inverseMany[C <: Record[_, C]](association: Association[PK, C, R]) =
+  def inverseMany[C <: Record[_, C]](association: Association[PK, C, R]) =
     new InverseMany[PK, C, R](this, association)
 
   /*!## Equality & Others

@@ -86,7 +86,7 @@ trait Relation[PK, R <: Record[PK, R]]
     associations.find(_.parentRelation == relation)
         .asInstanceOf[Option[Association[T, R, F]]]
 
-  protected val validation = new RecordValidator[PK, R]()
+  val validation = new RecordValidator[PK, R]()
 
   /*!## Simple queries
 
@@ -178,7 +178,7 @@ trait Relation[PK, R <: Record[PK, R]]
         .ON_DELETE(a.onDeleteClause)
         .ON_UPDATE(a.onUpdateClause)
 
-  protected[orm] def init() {
+  def init() {
     if (!_initialized) synchronized {
       if (!_initialized) try {
         findMembers(this.getClass)
@@ -197,14 +197,14 @@ trait Relation[PK, R <: Record[PK, R]]
     }
   }
 
-  protected[orm] def copyFields(src: R, dst: R) {
+  def copyFields(src: R, dst: R) {
     fields.foreach { f =>
         val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
         getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
     }
   }
 
-  protected[orm] def getField[T](record: R, field: Field[T, R]): Field[T, R] =
+  def getField[T](record: R, field: Field[T, R]): Field[T, R] =
     methodsMap(field).invoke(record) match {
       case a: Association[T, R, _] => a.field
       case f: Field[T, R] => f
@@ -230,8 +230,8 @@ trait Relation[PK, R <: Record[PK, R]]
   Circumflex ORM allows you to define constraints and indexes inside the
   relation body using DSL style.
   */
-  protected def CONSTRAINT(name: String) = new ConstraintHelper(name, this)
-  protected def UNIQUE(columns: ValueHolder[_, R]*) =
+  def CONSTRAINT(name: String) = new ConstraintHelper(name, this)
+  def UNIQUE(columns: ValueHolder[_, R]*) =
     CONSTRAINT(relationName + "_" + columns.map(_.name).mkString("_") + "_key")
         .UNIQUE(columns: _*)
 
@@ -243,14 +243,14 @@ trait Relation[PK, R <: Record[PK, R]]
   the creating of all the tables, the latter indicates that the auxiliary
   object creation will be delayed until all tables are created.
   */
-  protected[orm] var _preAux: List[SchemaObject] = Nil
+  protected var _preAux: List[SchemaObject] = Nil
   def preAux: Seq[SchemaObject] = _preAux
   def addPreAux(objects: SchemaObject*): this.type = {
     objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
     this
   }
 
-  protected[orm] var _postAux: List[SchemaObject] = Nil
+  protected var _postAux: List[SchemaObject] = Nil
   def postAux: Seq[SchemaObject] = _postAux
   def addPostAux(objects: SchemaObject*): this.type = {
     objects.foreach(o => if (!_postAux.contains(o)) _postAux ++= List(o))

@@ -142,7 +142,7 @@ joined nodes into a query plan (tree-like structure) by allowing to replace
 an underlying `node` with it's equivalent `JoinNode`. Most methods delegate
 to underlying `node`.
 */
-class ProxyNode[PK, R <: Record[PK, R]](protected[orm] var node: RelationNode[PK, R])
+class ProxyNode[PK, R <: Record[PK, R]](var node: RelationNode[PK, R])
     extends RelationNode[PK, R](node.relation) {
 
   override def alias = node.alias

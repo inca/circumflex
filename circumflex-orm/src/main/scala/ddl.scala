@@ -250,7 +250,7 @@ object DDLUnit {
           throw new IllegalStateException("Class directory " + classDir.getAbsolutePath + " does not exist.")
         // Iterate class files
         val files = FileUtils.listFiles(classDir, Array("class"), true).asInstanceOf[java.util.Collection[File]]
-        for (file <- asScalaIterable(files)) {
+        for (file <- collectionAsScalaIterable(files)) {
           val relPath = file.getCanonicalPath.substring(dir.getCanonicalPath.length + 1)
           val className = relPath.substring(0, relPath.length - ".class".length).replaceAll(File.separator, ".")
           // Ensure that anonymous objects are not processed separately.
