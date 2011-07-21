@@ -2,6 +2,12 @@ package ru.circumflex
 package orm
 
 import core._
+import java.io.File
+import java.lang.IllegalStateException
+import org.apache.commons.io.FileUtils
+import collection.JavaConversions._
+import org.apache.commons.io.filefilter.IOFileFilter
+import java.lang.reflect.Modifier
 
 /*!# Exporting Database Schema
 
@@ -179,15 +185,16 @@ class DDLUnit {
     connectionProvider.close()
   }
 
+  def objectsCount: Int = schemata.size +
+    tables.size +
+    constraints.size +
+    views.size +
+    preAux.size +
+    postAux.size
+
   override def toString: String = {
     var result = "Circumflex DDL Unit: "
     if (messages.size == 0) {
-      val objectsCount = (schemata.size +
-          tables.size +
-          constraints.size +
-          views.size +
-          preAux.size +
-          postAux.size)
       result += objectsCount + " objects in queue."
     } else {
       val infoCount = messages.filter(_.key == "orm.ddl.info").size
@@ -196,4 +203,92 @@ class DDLUnit {
     }
     result
   }
+}
+
+/*!# Building Schema from Sources
+
+The `DDLUnit` singleton can inspect your compiled classes to find the relations and build
+schema from them. The usage is pretty simple:
+
+    DDLUnit.fromClasspath().CREATE()
+
+You can also specify package prefix for searching (using either slashes or dots as delimiters):
+
+    DDLUnit.fromClasspath("com.myapp.model").CREATE()
+
+By default, the compiled classes are being searched in `target/classes` and `target/test-classes`
+directories relative to your project's root. You can override this setting using `cx.build.outputDirs`
+configuration parameter (paths are split from String using `File.pathSeparator`, i.e. colon ":" in UNIX
+and ";" in Windows).
+
+Actual resolving is performed using context class loader of current thread (obtained via
+`Thread.currentThread.getContextClassLoader`) so that you can override it in any time.
+*/
+object DDLUnit {
+
+  def outputDirs: Iterable[File] = cx.get("cx.build.outputDirs") match {
+    case Some(i: Iterable[File]) => i
+    case Some(s: String) => s.split(File.pathSeparator).map(s => new File(s))
+    case _ => List(new File("target/classes"), new File("target/test-classes"))
+  }
+
+  def fromClasspath(pkgPrefix: String = ""): DDLUnit = {
+    val loader = Thread.currentThread.getContextClassLoader
+    val ddl = new DDLUnit()
+    for (dir <- outputDirs) {
+      try {
+        // Resolve directories and paths
+        val pkgPath = pkgPrefix.replaceAll("\\.", "/")
+        val outUrl = dir.toURI.toURL
+        val pkgUrl = loader.getResource(pkgPath)
+        val classDir = new File(outUrl.getFile, pkgPath)
+        ORM_LOG.debug("Looking for schema objects in " + classDir.getAbsolutePath)
+        // Make sure that requisite paths exist
+        if (pkgUrl == null)
+          throw new IllegalStateException("Could not resolve package '" + pkgPath + "'")
+        if (!classDir.isDirectory)
+          throw new IllegalStateException("Class directory " + classDir.getAbsolutePath + " does not exist.")
+        // Iterate class files
+        val files = FileUtils.listFiles(classDir, Array("class"), true).asInstanceOf[java.util.Collection[File]]
+        for (file <- asScalaIterable(files)) {
+          val relPath = file.getCanonicalPath.substring(dir.getCanonicalPath.length + 1)
+          val className = relPath.substring(0, relPath.length - ".class".length).replaceAll(File.separator, ".")
+          // Ensure that anonymous objects are not processed separately.
+          if (className.matches("[^\\$]+(?:\\$$)?"))
+            try {
+              val c = loader.loadClass(className)
+              var so: SchemaObject = null
+              // try to treat it as a singleton
+              try {
+                val module = c.getField("MODULE$")
+                if (isSchemaObjectType(module.getType))
+                  so = module.get(null).asInstanceOf[SchemaObject]
+              } catch {
+                case e: NoSuchFieldException =>
+                  // Try to instantiate it as a POJO.
+                  if (isSchemaObjectType(c))
+                    so = c.newInstance.asInstanceOf[SchemaObject]
+              }
+              if (so != null) {
+                ddl.addObject(so)
+                ORM_LOG.debug("Found schema object: " + c.getName)
+              }
+            } catch {
+              case e: Exception =>
+              // Omit non-schema classes silently
+            }
+        }
+      } catch {
+        case e: Exception => ORM_LOG.warn(e.getMessage)
+      }
+    }
+    ORM_LOG.debug("Lookup complete, " + ddl.objectsCount + " objects found.")
+    ddl
+  }
+
+  protected def isSchemaObjectType(c: Class[_]): Boolean =
+    classOf[SchemaObject].isAssignableFrom(c) &&
+      !Modifier.isAbstract(c.getModifiers) &&
+      !Modifier.isInterface(c.getModifiers)
+
 }
