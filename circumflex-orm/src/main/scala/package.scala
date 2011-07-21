@@ -85,12 +85,11 @@ package object orm {
 
   // Pimping core libs
 
-  implicit def str2expr(str: String): Expression = new Expression {
-    def toSql = str
-    def parameters = Nil
-  }
-  implicit def string2helper(expression: String): SimpleExpressionHelper =
+  implicit def str2expr(str: String): Expression = prepareExpr(str)
+  implicit def string2exprHelper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
+  implicit def string2nativeHelper(expression: String): NativeQueryHelper =
+    new NativeQueryHelper(expression)
   implicit def pair2proj[T1, T2](t: (Projection[T1], Projection[T2])) =
     new PairProjection(t._1, t._2)
 
@@ -129,9 +128,12 @@ package object orm {
     val paramsMap = Map[String, Any](params: _*)
     val pattern = Pattern.compile(":(\\w+)\\b")
     val matcher = pattern.matcher(expression)
-    while(matcher.find) paramsMap.get(matcher.group(1)) match {
-      case Some(param) => parameters ++= List(param)
-      case _ => parameters ++= List(null)
+    while (matcher.find) {
+      val name = matcher.group(1)
+      paramsMap.get(name) match {
+        case Some(param) => parameters ++= List(param)
+        case _ => parameters ++= List(":" + name)
+      }
     }
     sqlText = matcher.replaceAll("?")
     new SimpleExpression(sqlText, parameters)

@@ -1,4 +1,0 @@
-[+] Clean up implicits
-[ ] Simplify type hierarchy around Expression
-[ ] Simplify DDLUnit messaging, provide out-of-box schema creation (like in Maven plugin)
-[ ] Think of Native SQL/DML DSLs

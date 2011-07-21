@@ -170,6 +170,15 @@ object CircumflexORMSpec extends Specification {
       l(0).name() must_== "Lausanne"
       l(1).name() must_== "Zurich"
     }
+    "handle native SQL" in {
+      val p = expr[String]("c.name")
+      val q = "SELECT {*} FROM orm.country c where c.code LIKE :code".toSql(p)
+      q.set("code", "ch").unique.get must_== "Switzerland"
+      q.set("code", "ru").unique.get must_== "Russia"
+    }
+    "handle native DML" in {
+      "UPDATE orm.country c SET c.code = c.code".toDml.execute() must_== 3
+    }
   }
 
   "Transaction API" should {

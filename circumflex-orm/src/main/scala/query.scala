@@ -383,3 +383,35 @@ class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   def toSql: String = dialect.update(this)
 
 }
+
+/*!# Native Queries DSL
+
+You can construct Native query from any `String` using either `toSql` or
+`toDml` methods, which are pimped onto `String` by implicit conversion
+into `NativeQueryHelper`. Use `toSql` for selection queries and `toDml`
+for manipulation queries.
+
+In case of `toSql` method you should provide a `Projection` parameterized
+with target query type.
+
+Here are some examples. Let's take a look at querying first.
+
+    // first, determine query result type (the SELECT clause):
+    val p = expr[String]("c.name")
+    // second, convert String to Native SQL using specified projection:
+    val q = "SELECT {*} FROM orm.country c where c.code LIKE :code".toSql(p)
+    // now execute the query, using specified parameters
+    q.set("code", "ch").unique.get must_== "Switzerland"
+    // note that named parameters allow reusing queries
+    q.set("code", "ru").unique.get must_== "Russia"
+
+And now let's take a look at the manipulation example.
+
+    // It's that easy:
+    "UPDATE orm.country c SET c.code = c.code".toDml.execute()
+*/
+class NativeQueryHelper(val expr: String) {
+  def toSql[T](projection: Projection[T]): NativeSQLQuery[T] =
+    new NativeSQLQuery[T](projection, prepareExpr(expr))
+  def toDml: NativeDMLQuery = new NativeDMLQuery(prepareExpr(expr))
+}
