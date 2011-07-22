@@ -57,7 +57,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   It evicts the record from cache and performs SQL `SELECT` using primary key-based predicate.
 
   The `INSERT_!`, `UPDATE_!` and `DELETE_!` methods are used to insert, update or delete a single
-  record. The `insert` and `update` do the same as their equivalents except that validation
+  record. The `INSERT` and `UPDATE` do the same as their equivalents except that validation
   is performed before actual execution. The `refresh` method performs select with primary key
   criteria and updates the fields with retrieved values.
 
