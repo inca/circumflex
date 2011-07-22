@@ -2,9 +2,11 @@
 
 ## 2.1
 
-* Schema objects can now be resolved from classpath using `DDLUnit.fromClasspath()` 
-
 * Migrated to Scala 2.9
+
+* Schema objects can now be resolved from classpath using `DDLUnit.fromClasspath()`
+
+* New DSL for composing native SQL and DML queries (see `query.scala`)
 
 * Method naming (introduce incompatibilities!):
 

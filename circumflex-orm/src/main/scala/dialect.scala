@@ -198,7 +198,7 @@ class Dialect {
 
   def columnDefinition[R <: Record[_, R]](field: Field[_, R]): String = {
     var result = field.name + " " + field.sqlType
-    if (!field.isNotNull) result += " NOT NULL"
+    if (field.isNotNull) result += " NOT NULL"
     result += defaultExpression(field)
     result
   }
