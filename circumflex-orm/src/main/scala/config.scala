@@ -25,6 +25,48 @@ Following objects configure different aspects of Circumflex ORM:
   * _transaction manager_ is responsible for allocating current transactions
   for execution contexts.
 */
+
+trait ORMConfiguration {
+  def dialect: Dialect
+  def connectionProvider: ConnectionProvider
+  def typeConverter: TypeConverter
+  def transactionManager: TransactionManager
+  def defaultSchema: Schema
+  def statisticsManager: StatisticsManager
+
+  def cacheService = ctx.get("orm.contextCache") match {
+    case Some(cs: CacheService) => cs
+    case _ =>
+      val cs = cx.instantiate[CacheService]("orm.contextCache", new DefaultCacheService)
+      ctx.update("orm.contextCache", cs)
+      cs
+  }
+}
+
+class DefaultORMConfiguration extends ORMConfiguration {
+  val dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
+    case Some(url: String) =>
+      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
+      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
+      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
+      else if (url.startsWith("jdbc:h2:")) new H2Dialect
+      else if (url.startsWith("jdbc:sqlserver:")) new MSSQLDialect
+      else if (url.startsWith("jdbc:db2:")) new DB2Dialect
+      else new Dialect
+    case _ => new Dialect
+  })
+  val connectionProvider = cx.instantiate[ConnectionProvider](
+    "orm.connectionProvider", new DefaultConnectionProvider)
+  val typeConverter = cx.instantiate[TypeConverter](
+    "orm.typeConverter", new TypeConverter)
+  val transactionManager = cx.instantiate[TransactionManager](
+    "orm.transactionManager", new DefaultTransactionManager)
+  val defaultSchema = new Schema(
+    cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
+  val statisticsManager = cx.instantiate[StatisticsManager](
+    "orm.statisticsManager", new StatisticsManager)
+}
+
 /*!## Connection Provider
 
 The `ConnectionProvider` is a simple trait responsible for acquiring JDBC
@@ -97,7 +139,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
       }
       val driver = cx.get("orm.connection.driver") match {
         case Some(s: String) => s
-        case _ => dialect.driverClass
+        case _ => ormConf.dialect.driverClass
       }
       val username = cx.get("orm.connection.username") match {
         case Some(s: String) => s
@@ -144,7 +186,6 @@ The `TypeConverter` trait is used to set JDBC prepared statement values for exec
 If you intend to use custom types, provide your own implementation.
 */
 class TypeConverter {
-
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int) {
     parameter match {
       case None | null => st.setObject(paramIndex, null)
@@ -190,7 +231,7 @@ class Transaction {
 
   def rollback() {
     if (isLive && !_connection.getAutoCommit) _connection.rollback()
-    contextCache.invalidate()
+    ormConf.cacheService.invalidate()
   }
 
   def close() {
@@ -202,15 +243,15 @@ class Transaction {
       _statementsCache.clear()
       // close connection
       _connection.close()
-      Statistics.connectionsClosed.incrementAndGet()
+      ormConf.statisticsManager.connectionsClosed.incrementAndGet()
       ORM_LOG.trace("Closed a JDBC connection.")
     }
   }
 
   protected def getConnection: Connection = {
     if (_connection == null || _connection.isClosed) {
-      _connection = connectionProvider.openConnection()
-      Statistics.connectionsOpened.incrementAndGet()
+      _connection = ormConf.connectionProvider.openConnection()
+      ormConf.statisticsManager.connectionsOpened.incrementAndGet()
       ORM_LOG.trace("Opened a JDBC connection.")
     }
     _connection
@@ -219,13 +260,13 @@ class Transaction {
   def execute[A](connActions: Connection => A,
                  errActions: Throwable => A): A =
     try {
-      Statistics.executions.incrementAndGet()
+      ormConf.statisticsManager.executions.incrementAndGet()
       val result = connActions(getConnection)
-      Statistics.executionsSucceeded.incrementAndGet()
+      ormConf.statisticsManager.executionsSucceeded.incrementAndGet()
       result
     } catch {
       case e =>
-        Statistics.executionsFailed.incrementAndGet()
+        ormConf.statisticsManager.executionsFailed.incrementAndGet()
         errActions(e)
     }
 
@@ -234,7 +275,7 @@ class Transaction {
                  errActions: Throwable => A): A = execute({ conn =>
     ORM_LOG.debug(sql)
     val st =_statementsCache.get(sql).getOrElse {
-      val statement = dialect.prepareStatement(conn, sql)
+      val statement = ormConf.dialect.prepareStatement(conn, sql)
       _statementsCache.update(sql, statement)
       statement
     }

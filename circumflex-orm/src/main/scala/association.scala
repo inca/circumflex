@@ -55,17 +55,17 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]] (
   // Simple expressions
 
   def IS(record: P): Predicate =
-    new SimpleExpression(dialect.EQ(aliasedName, placeholder), List(record.PRIMARY_KEY.get))
+    new SimpleExpression(ormConf.dialect.EQ(aliasedName, placeholder), List(record.PRIMARY_KEY.get))
   def IS_NOT(record: P): Predicate =
-    new SimpleExpression(dialect.NE(aliasedName, placeholder), List(record.PRIMARY_KEY.get))
+    new SimpleExpression(ormConf.dialect.NE(aliasedName, placeholder), List(record.PRIMARY_KEY.get))
   def IN(params: Iterable[P]): Predicate = new SimpleExpression(
-    dialect.parameterizedIn(aliasedName, params.map(p => placeholder)),
+    ormConf.dialect.parameterizedIn(aliasedName, params.map(p => placeholder)),
     params.map(_.PRIMARY_KEY.get).toList)
 
   def joinPredicate(childAlias: String, parentAlias: String): Predicate = {
-    val lh = dialect.qualifyColumn(field, childAlias)
-    val rh = dialect.qualifyColumn(parentRelation.PRIMARY_KEY, parentAlias)
-    new SimpleExpression(dialect.EQ(lh, rh), Nil)
+    val lh = ormConf.dialect.qualifyColumn(field, childAlias)
+    val rh = ormConf.dialect.qualifyColumn(parentRelation.PRIMARY_KEY, parentAlias)
+    new SimpleExpression(ormConf.dialect.EQ(lh, rh), Nil)
   }
 
 }
@@ -84,7 +84,7 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
   def association: Association[K, C, P]
   def record: P
   def fetch(): Seq[C] = if (record.isTransient) Nil
-  else contextCache.cacheInverse(record.PRIMARY_KEY(), association, {
+  else ormConf.cacheService.cacheInverse(record.PRIMARY_KEY(), association, {
     val root = association.field.record.relation AS "root"
     aliasStack.push(root.alias)
     SELECT(root.*).FROM(root).WHERE(association.field EQ record.PRIMARY_KEY()).list()

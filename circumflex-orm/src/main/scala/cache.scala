@@ -1,7 +1,6 @@
 package ru.circumflex
 package orm
 
-import core._
 import collection.mutable.HashMap
 import net.sf.ehcache._
 import java.util.concurrent.atomic._
@@ -114,10 +113,10 @@ class DefaultCacheService extends CacheService {
       case _ =>
         val c = _recordsCache(relation)
         c.get(id).map { r =>
-          Statistics.recordCacheHits.incrementAndGet()
+          ormConf.statisticsManager.recordCacheHits.incrementAndGet()
           r.asInstanceOf[R]
         } orElse {
-          Statistics.recordCacheMisses.incrementAndGet()
+          ormConf.statisticsManager.recordCacheMisses.incrementAndGet()
           val v = record
           v.map { r =>
             c.update(id, r)
@@ -140,10 +139,10 @@ class DefaultCacheService extends CacheService {
     val cache = _inverseCache(association)
     cache.get(parentId) match {
       case Some(children: Seq[C]) =>
-        Statistics.inverseCacheHits.incrementAndGet()
+        ormConf.statisticsManager.inverseCacheHits.incrementAndGet()
         children
       case _ =>
-        Statistics.inverseCacheMisses.incrementAndGet()
+        ormConf.statisticsManager.inverseCacheMisses.incrementAndGet()
         val c = children
         cache.update(parentId, c)
         c
@@ -163,17 +162,6 @@ class DefaultCacheService extends CacheService {
     }
   }
 
-}
-
-/*! The `CacheService` object is used to retrieve context-bound cache service. */
-object CacheService {
-  def get: CacheService = ctx.get("orm.contextCache") match {
-    case Some(cs: CacheService) => cs
-    case _ =>
-      val cs = cx.instantiate[CacheService]("orm.contextCache", new DefaultCacheService)
-      ctx.update("orm.contextCache", cs)
-      cs
-  }
 }
 
 /*!# Application-Level Cache
@@ -196,10 +184,10 @@ trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
       elem = new Element(id, record)
       _cache.put(elem)
       cacheMisses.incrementAndGet()
-      Statistics.recordCacheMisses.incrementAndGet()
+      ormConf.statisticsManager.recordCacheMisses.incrementAndGet()
     } else {
       cacheHits.incrementAndGet()
-      Statistics.recordCacheHits.incrementAndGet()
+      ormConf.statisticsManager.recordCacheHits.incrementAndGet()
     }
     elem.getValue.asInstanceOf[Option[R]]
   }

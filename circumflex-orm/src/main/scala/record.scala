@@ -72,7 +72,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   else {
     val root = relation.AS("root")
     val id = PRIMARY_KEY()
-    contextCache.evictRecord(id, relation)
+    ormConf.cacheService.evictRecord(id, relation)
     SELECT(root.*).FROM(root).WHERE(root.PRIMARY_KEY EQ id).unique() match {
       case Some(r: R) =>
         relation.copyFields(r, this)
@@ -90,8 +90,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     // Prepare and execute query
     val result = _persist(evalFields(fields))
     // Update cache
-    contextCache.evictRecord(PRIMARY_KEY(), relation)
-    contextCache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
+    ormConf.cacheService.evictRecord(PRIMARY_KEY(), relation)
+    ormConf.cacheService.cacheRecord(PRIMARY_KEY(), relation, Some(this))
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     result
@@ -127,9 +127,9 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     val result = q.execute()
     if (relation.isAutoRefresh) refresh()
     // Invalidate caches
-    contextCache.evictInverse[PK, R](this)
-    contextCache.evictRecord(PRIMARY_KEY(), relation)
-    contextCache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
+    ormConf.cacheService.evictInverse[PK, R](this)
+    ormConf.cacheService.evictRecord(PRIMARY_KEY(), relation)
+    ormConf.cacheService.cacheRecord(PRIMARY_KEY(), relation, Some(this))
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     result
@@ -151,8 +151,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     val result = (relation AS "root")
         .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkDelete().execute()
     // Invalidate caches
-    contextCache.evictRecord(PRIMARY_KEY(), relation)
-    contextCache.evictInverse[PK, R](this)
+    ormConf.cacheService.evictRecord(PRIMARY_KEY(), relation)
+    ormConf.cacheService.evictInverse[PK, R](this)
     // Execute events
     relation.afterDelete.foreach(c => c(this))
     result
@@ -270,12 +270,12 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     // Fetch either the whole record or just an identifier.
     val root = relation.AS("root")
     if (relation.isAutoRefresh)
-      SELECT(root.*).FROM(root).WHERE(dialect.identityLastIdPredicate(root)).unique() match {
-        case Some(r) => relation.copyFields(r, this)
+      SELECT(root.*).FROM(root).WHERE(ormConf.dialect.identityLastIdPredicate(root)).unique() match {
+        case Some(r: R) => relation.copyFields(r, this)
         case _ => throw new ORMException("Backend didn't return last inserted record. " +
             "Try another identifier generation strategy.")
       }
-    else dialect.identityLastIdQuery(root).unique() match {
+    else ormConf.dialect.identityLastIdQuery(root).unique() match {
       case Some(id: PK) => this.PRIMARY_KEY := id
       case _ => throw new ORMException("Backend didn't return last generated identity. " +
           "Try another identifier generation strategy.")
@@ -288,7 +288,7 @@ trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
   def persist(fields: scala.Seq[Field[_, R]]): Int = {
     // Poll database for next sequence value
     val root = relation.AS("root")
-    dialect.sequenceNextValQuery(root).unique() match {
+    ormConf.dialect.sequenceNextValQuery(root).unique() match {
       case Some(id: PK) =>
         // Assign retrieved id and persist all not-null fields
         val f = fields.map { f =>

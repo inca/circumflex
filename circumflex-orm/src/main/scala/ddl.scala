@@ -138,11 +138,11 @@ class DDLUnit {
       // Execute a script.
       dropObjects(postAux)
       dropObjects(views)
-      if (dialect.supportsDropConstraints)
+      if (ormConf.dialect.supportsDropConstraints)
         dropObjects(constraints)
       dropObjects(tables)
       dropObjects(preAux)
-      if (dialect.supportsSchema)
+      if (ormConf.dialect.supportsSchema)
         dropObjects(schemata)
       // Restore auto-commit.
       conn.setAutoCommit(autoCommit)
@@ -161,7 +161,7 @@ class DDLUnit {
       val autoCommit = conn.getAutoCommit
       conn.setAutoCommit(true)
       // Execute a script.
-      if (dialect.supportsSchema)
+      if (ormConf.dialect.supportsSchema)
         createObjects(schemata)
       createObjects(preAux)
       createObjects(tables)
@@ -182,7 +182,7 @@ class DDLUnit {
 
   def close() {
     tx.close()
-    connectionProvider.close()
+    ormConf.connectionProvider.close()
   }
 
   def objectsCount: Int = schemata.size +

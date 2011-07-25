@@ -60,12 +60,12 @@ trait Relation[PK, R <: Record[PK, R]]
   */
   val _relationName = camelCaseToUnderscore(recordClass.getSimpleName)
   def relationName = _relationName
-  def qualifiedName = dialect.relationQualifiedName(this)
+  def qualifiedName = ormConf.dialect.relationQualifiedName(this)
 
   /*! Default schema name is configured via the `orm.defaultSchema` configuration property.
   You may provide different schema for different relations by overriding their `schema` method.
    */
-  def schema: Schema = defaultSchema
+  def schema: Schema = ormConf.defaultSchema
 
   /*! The `isReadOnly` method is used to indicate whether the DML operations
   are allowed with this relation. Tables usually allow them and views usually don't.
@@ -96,7 +96,7 @@ trait Relation[PK, R <: Record[PK, R]]
     * `all` retrieves all records.
    */
   def get(id: PK): Option[R] =
-    contextCache.cacheRecord(id, this,
+    ormConf.cacheService.cacheRecord(id, this,
       (this.AS("root")).map(r => r.criteria.add(r.PRIMARY_KEY EQ id).unique()))
 
   def all: Seq[R] = this.AS("root").criteria.list()
@@ -182,8 +182,8 @@ trait Relation[PK, R <: Record[PK, R]]
     if (!_initialized) synchronized {
       if (!_initialized) try {
         findMembers(this.getClass)
-        dialect.initializeRelation(this)
-        _fields.foreach(dialect.initializeField(_))
+        ormConf.dialect.initializeRelation(this)
+        _fields.foreach(ormConf.dialect.initializeField(_))
         this._initialized = true
       } catch {
         case e: NullPointerException =>
@@ -366,11 +366,11 @@ trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   def objectName: String = "TABLE " + qualifiedName
   def sqlCreate: String = {
     init()
-    dialect.createTable(this)
+    ormConf.dialect.createTable(this)
   }
   def sqlDrop: String = {
     init()
-    dialect.dropTable(this)
+    ormConf.dialect.dropTable(this)
   }
 }
 
@@ -387,11 +387,11 @@ trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   def objectName: String = "VIEW " + qualifiedName
   def sqlDrop: String = {
     init()
-    dialect.dropView(this)
+    ormConf.dialect.dropView(this)
   }
   def sqlCreate: String = {
     init()
-    dialect.createView(this)
+    ormConf.dialect.createView(this)
   }
   def query: Select[_]
 }

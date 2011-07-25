@@ -97,12 +97,12 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         if (pIndex == -1 || cIndex == -1) return
         tuple(pIndex).asInstanceOf[Option[N]] map {
           parent =>
-            var children = contextCache.cacheInverse(parent.PRIMARY_KEY(), a, Nil)
+            var children = ormConf.cacheService.cacheInverse(parent.PRIMARY_KEY(), a, Nil)
             tuple(cIndex).asInstanceOf[Option[N]] map {
               child =>
                 if (!children.contains(child))
                   children ++= List(child)
-                contextCache.updateInverse(parent.PRIMARY_KEY(), a, children)
+                ormConf.cacheService.updateInverse(parent.PRIMARY_KEY(), a, children)
             }
         }
         processTupleTree(tuple, j.left)
@@ -258,8 +258,8 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     result
   }
 
-  def AND(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.AND)
-  def OR(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, dialect.OR)
+  def AND(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, ormConf.dialect.AND)
+  def OR(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, ormConf.dialect.OR)
 
   /*! Criteria can be merged with inverse associations to create logical scopes. Same
   rules are applied as with criteria merging, except that the criteria object with
@@ -271,7 +271,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     criteria.add(inverse.association.asInstanceOf[Association[_, _, R]] IS inverse.record.asInstanceOf[R])
     merge(criteria, operator)
   }
-  def AND(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.AND)
-  def OR(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, dialect.OR)
+  def AND(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, ormConf.dialect.AND)
+  def OR(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, ormConf.dialect.OR)
 
 }

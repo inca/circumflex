@@ -18,38 +18,14 @@ package object orm {
 
   val ORM_LOG = new Logger("ru.circumflex.orm")
 
-  // Commons
+  implicit val DEFAULT_ORM_CONF = new DefaultORMConfiguration()
 
-  val dialect: Dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
-    case Some(url: String) =>
-      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
-      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
-      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
-      else if (url.startsWith("jdbc:h2:")) new H2Dialect
-      else if (url.startsWith("jdbc:sqlserver:")) new MSSQLDialect
-      else if (url.startsWith("jdbc:db2:")) new DB2Dialect
-      else new Dialect
-    case _ => new Dialect
-  })
-
-  val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
-    "orm.connectionProvider", new DefaultConnectionProvider)
-
-  val typeConverter: TypeConverter = cx.instantiate[TypeConverter](
-    "orm.typeConverter", new TypeConverter)
-
-  val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
-    "orm.transactionManager", new DefaultTransactionManager)
-
-  val defaultSchema: Schema = new Schema(
-    cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
+  def ormConf = implicitly[ORMConfiguration]
 
   val ehcacheManager: CacheManager = cx.instantiate[CacheManager](
     "orm.ehcache.manager", new CacheManager())
 
-  def contextCache = CacheService.get
-
-  def tx: Transaction = transactionManager.get
+  def tx: Transaction = ormConf.transactionManager.get
   def COMMIT() {
     tx.commit()
   }
@@ -95,23 +71,23 @@ package object orm {
 
   // Constants
 
-  val NO_ACTION = ForeignKeyAction(dialect.fkNoAction)
-  val CASCADE = ForeignKeyAction(dialect.fkCascade)
-  val RESTRICT = ForeignKeyAction(dialect.fkRestrict)
-  val SET_NULL = ForeignKeyAction(dialect.fkSetNull)
-  val SET_DEFAULT = ForeignKeyAction(dialect.fkSetDefault)
+  val NO_ACTION = ForeignKeyAction(ormConf.dialect.fkNoAction)
+  val CASCADE = ForeignKeyAction(ormConf.dialect.fkCascade)
+  val RESTRICT = ForeignKeyAction(ormConf.dialect.fkRestrict)
+  val SET_NULL = ForeignKeyAction(ormConf.dialect.fkSetNull)
+  val SET_DEFAULT = ForeignKeyAction(ormConf.dialect.fkSetDefault)
 
-  val INNER = JoinType(dialect.innerJoin)
-  val LEFT = JoinType(dialect.leftJoin)
-  val RIGHT = JoinType(dialect.rightJoin)
-  val FULL = JoinType(dialect.fullJoin)
+  val INNER = JoinType(ormConf.dialect.innerJoin)
+  val LEFT = JoinType(ormConf.dialect.leftJoin)
+  val RIGHT = JoinType(ormConf.dialect.rightJoin)
+  val FULL = JoinType(ormConf.dialect.fullJoin)
 
-  val OP_UNION = SetOperation(dialect.UNION)
-  val OP_UNION_ALL = SetOperation(dialect.UNION_ALL)
-  val OP_EXCEPT = SetOperation(dialect.EXCEPT)
-  val OP_EXCEPT_ALL = SetOperation(dialect.EXCEPT_ALL)
-  val OP_INTERSECT = SetOperation(dialect.INTERSECT)
-  val OP_INTERSECT_ALL = SetOperation(dialect.INTERSECT_ALL)
+  val OP_UNION = SetOperation(ormConf.dialect.UNION)
+  val OP_UNION_ALL = SetOperation(ormConf.dialect.UNION_ALL)
+  val OP_EXCEPT = SetOperation(ormConf.dialect.EXCEPT)
+  val OP_EXCEPT_ALL = SetOperation(ormConf.dialect.EXCEPT_ALL)
+  val OP_INTERSECT = SetOperation(ormConf.dialect.INTERSECT)
+  val OP_INTERSECT_ALL = SetOperation(ormConf.dialect.INTERSECT_ALL)
 
   // Predicates DSL
 
@@ -120,7 +96,7 @@ package object orm {
   def OR(predicates: Predicate*) =
     new AggregatePredicateHelper(predicates.head).OR(predicates.tail: _*)
   def NOT(predicate: Predicate) =
-    new SimpleExpression(dialect.not(predicate.toSql), predicate.parameters)
+    new SimpleExpression(ormConf.dialect.not(predicate.toSql), predicate.parameters)
 
   def prepareExpr(expression: String, params: Pair[String, Any]*): SimpleExpression = {
     var sqlText = expression
@@ -142,29 +118,28 @@ package object orm {
   // Simple subqueries DSL
 
   def EXISTS(subquery: SQLQuery[_]) =
-    new SubqueryExpression(dialect.EXISTS, subquery)
-
+    new SubqueryExpression(ormConf.dialect.EXISTS, subquery)
   def NOT_EXISTS(subquery: SQLQuery[_]) =
-    new SubqueryExpression(dialect.NOT_EXISTS, subquery)
+    new SubqueryExpression(ormConf.dialect.NOT_EXISTS, subquery)
 
   // Simple projections
 
   def expr[T](expression: String): ExpressionProjection[T] =
       new ExpressionProjection[T](expression)
   def COUNT(expr: Expression): Projection[Long] =
-    new ExpressionProjection[Long](dialect.COUNT(expr.toSql))
+    new ExpressionProjection[Long](ormConf.dialect.COUNT(expr.toSql))
   def COUNT_DISTINCT(expr: Expression): Projection[Long] =
-    new ExpressionProjection[Long](dialect.COUNT_DISTINCT(expr.toSql))
+    new ExpressionProjection[Long](ormConf.dialect.COUNT_DISTINCT(expr.toSql))
   def MAX(expr: Expression): Projection[Any] =
-    new ExpressionProjection[Any](dialect.MAX(expr.toSql))
+    new ExpressionProjection[Any](ormConf.dialect.MAX(expr.toSql))
   def MIN(expr: Expression) =
-    new ExpressionProjection[Any](dialect.MIN(expr.toSql))
+    new ExpressionProjection[Any](ormConf.dialect.MIN(expr.toSql))
   def SUM(expr: Expression) =
-    new ExpressionProjection[Any](dialect.SUM(expr.toSql))
+    new ExpressionProjection[Any](ormConf.dialect.SUM(expr.toSql))
   def AVG(expr: Expression) =
-    new ExpressionProjection[Any](dialect.AVG(expr.toSql))
+    new ExpressionProjection[Any](ormConf.dialect.AVG(expr.toSql))
 
-  // Queries DSL
+    // Queries DSL
 
   def SELECT[T](p1: Projection[T], p2: Projection[_], pn: Projection[_]*) = {
     val projections = List(p1, p2) ++ pn

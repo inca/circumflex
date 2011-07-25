@@ -21,7 +21,7 @@ trait Expression extends SQLable {
   def parameters: Seq[Any]
 
   def toInlineSql: String = parameters.foldLeft(toSql)((sql, p) =>
-    sql.replaceFirst("\\?", dialect.escapeParameter(p)
+    sql.replaceFirst("\\?", ormConf.dialect.escapeParameter(p)
         .replaceAll("\\\\", "\\\\\\\\")
         .replaceAll("\\$", "\\\\\\$")))
 
@@ -147,7 +147,7 @@ trait ValueHolder[T, R <: Record[_, R]] extends Container[T] with Wrapper[Option
   inside JDBC `PreparedStatement` (usually `?` works, but custom data-type may require
   some special treatment).
    */
-  def placeholder = dialect.placeholder
+  def placeholder = ormConf.dialect.placeholder
 
   /*! ## Composing predicates
 
@@ -167,17 +167,17 @@ trait ValueHolder[T, R <: Record[_, R]] extends Container[T] with Wrapper[Option
   }
 
   def EQ(value: T): Predicate =
-    new SimpleExpression(dialect.EQ(aliasedName, placeholder), List(value))
+    new SimpleExpression(ormConf.dialect.EQ(aliasedName, placeholder), List(value))
   def EQ(col: ColumnExpression[_, _]): Predicate =
-    new SimpleExpression(dialect.EQ(aliasedName, col.toSql), Nil)
+    new SimpleExpression(ormConf.dialect.EQ(aliasedName, col.toSql), Nil)
   def NE(value: T): Predicate =
-    new SimpleExpression(dialect.NE(aliasedName, placeholder), List(value))
+    new SimpleExpression(ormConf.dialect.NE(aliasedName, placeholder), List(value))
   def NE(col: ColumnExpression[_, _]): Predicate =
-    new SimpleExpression(dialect.NE(aliasedName, col.toSql), Nil)
+    new SimpleExpression(ormConf.dialect.NE(aliasedName, col.toSql), Nil)
   def IS_NULL: Predicate =
-    new SimpleExpression(dialect.IS_NULL(aliasedName), Nil)
+    new SimpleExpression(ormConf.dialect.IS_NULL(aliasedName), Nil)
   def IS_NOT_NULL: Predicate =
-    new SimpleExpression(dialect.IS_NOT_NULL(aliasedName), Nil)
+    new SimpleExpression(ormConf.dialect.IS_NOT_NULL(aliasedName), Nil)
 
 }
 

@@ -30,7 +30,7 @@ Following statistical data is available:
   * `heaviestSqlTime` -- the time (in milliseconds) of the heaviest SQL query execution;
   * `heaviestSql` -- the SQL statement of the heaviest data-retrieval query.
 */
-object Statistics {
+class StatisticsManager {
 
   val connectionsOpened = new AtomicInteger(0)
   val connectionsClosed = new AtomicInteger(0)

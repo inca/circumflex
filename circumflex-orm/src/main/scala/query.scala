@@ -38,7 +38,7 @@ trait Query extends SQLable with Expression with Cloneable {
   def setParams(st: PreparedStatement, index: Int): Int = {
     var paramsCounter = index;
     parameters.foreach(p => {
-      typeConverter.write(st, convertNamedParam(p), paramsCounter)
+      ormConf.typeConverter.write(st, convertNamedParam(p), paramsCounter)
       paramsCounter += 1
     })
     paramsCounter
@@ -106,7 +106,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
       }, { throw _ })
     }
     _executionTime = result._1
-    Statistics.executeSql(this)
+    ormConf.statisticsManager.executeSql(this)
     result._2
   }
 
@@ -157,7 +157,7 @@ trait SearchQuery extends Query {
     whereClause match {
       case EmptyPredicate =>
         this._where = AND(predicates: _*)
-      case p: AggregatePredicate if (p.operator == dialect.AND) =>
+      case p: AggregatePredicate if (p.operator == ormConf.dialect.AND) =>
         p.add(predicates: _*)
       case p =>
         this._where = _where.AND(predicates: _*)
@@ -303,7 +303,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
 
   // Miscellaneous
 
-  def toSql = dialect.select(this)
+  def toSql = ormConf.dialect.select(this)
 
 }
 
@@ -318,7 +318,7 @@ trait DMLQuery extends Query {
       }, { throw _ })
     }
     _executionTime = result._1
-    Statistics.executeDml(this)
+    ormConf.statisticsManager.executeDml(this)
     result._2
   }
 }
@@ -332,7 +332,7 @@ class Insert[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
                                      val fields: Seq[Field[_, R]])
     extends DMLQuery {
   def parameters = fields.map(_.value)
-  def toSql: String = dialect.insert(this)
+  def toSql: String = ormConf.dialect.insert(this)
 }
 
 class InsertSelect[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
@@ -341,7 +341,7 @@ class InsertSelect[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
   if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   def parameters = query.parameters
-  def toSql: String = dialect.insertSelect(this)
+  def toSql: String = ormConf.dialect.insertSelect(this)
 }
 
 class InsertSelectHelper[PK, R <: Record[PK, R]](val relation: Relation[PK, R]) {
@@ -355,7 +355,7 @@ class Delete[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
   def parameters = _where.parameters
-  def toSql: String = dialect.delete(this)
+  def toSql: String = ormConf.dialect.delete(this)
 }
 
 class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
@@ -380,7 +380,7 @@ class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     SET_NULL(association.field)
 
   def parameters = _setClause.map(_._2) ++ _where.parameters
-  def toSql: String = dialect.update(this)
+  def toSql: String = ormConf.dialect.update(this)
 
 }
 

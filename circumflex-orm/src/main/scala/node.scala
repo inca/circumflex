@@ -102,7 +102,7 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
       this.relation == that.relation
   }
 
-  def toSql: String = dialect.alias(relation.qualifiedName, alias)
+  def toSql: String = ormConf.dialect.alias(relation.qualifiedName, alias)
 
   override def clone(): this.type = super.clone.asInstanceOf[this.type]
 
@@ -199,7 +199,7 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     this
   }
 
-  def sqlOn = dialect.on(this.onClause)
+  def sqlOn = ormConf.dialect.on(this.onClause)
 
   override def projections = left.projections ++ right.projections
 
@@ -213,7 +213,7 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     this
   }
 
-  override def toSql = dialect.join(this)
+  override def toSql = ormConf.dialect.join(this)
 
   override def clone(): this.type = super.clone()
       .replaceLeft(this.left.clone())

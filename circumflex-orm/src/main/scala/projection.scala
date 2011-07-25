@@ -63,7 +63,7 @@ trait CompositeProjection[T] extends Projection[T] {
 class ExpressionProjection[T](val expression: String)
     extends AtomicProjection[T] {
 
-  def toSql = dialect.alias(expression, alias)
+  def toSql = ormConf.dialect.alias(expression, alias)
 
   def read(rs: ResultSet): Option[T] = {
     val o = rs.getObject(alias)
@@ -85,9 +85,9 @@ class FieldProjection[T, R <: Record[_, R]](
         val field: Field[T, R])
     extends AtomicProjection[T] {
 
-  def expr = dialect.qualifyColumn(field, node.alias)
+  def expr = ormConf.dialect.qualifyColumn(field, node.alias)
 
-  def toSql = dialect.alias(expr, alias)
+  def toSql = ormConf.dialect.alias(expr, alias)
 
   def read(rs: ResultSet) = field.read(rs, alias)
 
@@ -119,7 +119,7 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   }
 
   def read(rs: ResultSet): Option[R] = _readCell(rs, node.relation.PRIMARY_KEY).flatMap(id =>
-    contextCache.cacheRecord(id, node.relation, Some(readRecord(rs))))
+    ormConf.cacheService.cacheRecord(id, node.relation, Some(readRecord(rs))))
 
   protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance
