@@ -18,8 +18,8 @@ package object orm {
 
   val ORM_LOG = new Logger("ru.circumflex.orm")
 
+  // TODO think of ways to inject these thingies without implicit parameters juggling
   implicit val DEFAULT_ORM_CONF = new DefaultORMConfiguration()
-
   def ormConf = implicitly[ORMConfiguration]
 
   val ehcacheManager: CacheManager = cx.instantiate[CacheManager](

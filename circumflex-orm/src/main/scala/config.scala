@@ -27,6 +27,7 @@ Following objects configure different aspects of Circumflex ORM:
 */
 
 trait ORMConfiguration {
+
   def dialect: Dialect
   def connectionProvider: ConnectionProvider
   def typeConverter: TypeConverter
@@ -43,28 +44,59 @@ trait ORMConfiguration {
   }
 }
 
-class DefaultORMConfiguration extends ORMConfiguration {
-  val dialect = cx.instantiate[Dialect]("orm.dialect", cx.get("orm.connection.url") match {
-    case Some(url: String) =>
-      if (url.startsWith("jdbc:postgresql:")) new PostgreSQLDialect
-      else if (url.startsWith("jdbc:mysql:")) new MySQLDialect
-      else if (url.startsWith("jdbc:oracle:")) new OracleDialect
-      else if (url.startsWith("jdbc:h2:")) new H2Dialect
-      else if (url.startsWith("jdbc:sqlserver:")) new MSSQLDialect
-      else if (url.startsWith("jdbc:db2:")) new DB2Dialect
-      else new Dialect
+trait SimpleORMConfiguration extends ORMConfiguration {
+  def url: String
+  def username: String
+  def password: String
+  lazy val dialect = cx.instantiate[Dialect]("orm.dialect", url match {
+    case u if (u.startsWith("jdbc:postgresql:")) => new PostgreSQLDialect
+    case u if (u.startsWith("jdbc:mysql:")) => new MySQLDialect
+    case u if (u.startsWith("jdbc:oracle:")) => new OracleDialect
+    case u if (u.startsWith("jdbc:h2:")) => new H2Dialect
+    case u if (u.startsWith("jdbc:sqlserver:")) => new MSSQLDialect
+    case u if (u.startsWith("jdbc:db2:")) => new DB2Dialect
     case _ => new Dialect
   })
-  val connectionProvider = cx.instantiate[ConnectionProvider](
-    "orm.connectionProvider", new DefaultConnectionProvider)
-  val typeConverter = cx.instantiate[TypeConverter](
+  lazy val driver = cx.get("orm.connection.driver") match {
+    case Some(s: String) => s
+    case _ => dialect.driverClass
+  }
+  lazy val isolation: Int = cx.get("orm.connection.isolation") match {
+    case Some("none") => Connection.TRANSACTION_NONE
+    case Some("read_uncommitted") => Connection.TRANSACTION_READ_UNCOMMITTED
+    case Some("read_committed") => Connection.TRANSACTION_READ_COMMITTED
+    case Some("repeatable_read") => Connection.TRANSACTION_REPEATABLE_READ
+    case Some("serializable") => Connection.TRANSACTION_SERIALIZABLE
+    case _ => {
+      ORM_LOG.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
+      Connection.TRANSACTION_READ_COMMITTED
+    }
+  }
+  lazy val typeConverter = cx.instantiate[TypeConverter](
     "orm.typeConverter", new TypeConverter)
-  val transactionManager = cx.instantiate[TransactionManager](
+  lazy val transactionManager = cx.instantiate[TransactionManager](
     "orm.transactionManager", new DefaultTransactionManager)
-  val defaultSchema = new Schema(
+  lazy val defaultSchema = new Schema(
     cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
-  val statisticsManager = cx.instantiate[StatisticsManager](
+  lazy val statisticsManager = cx.instantiate[StatisticsManager](
     "orm.statisticsManager", new StatisticsManager)
+  lazy val connectionProvider = cx.instantiate[ConnectionProvider](
+    "orm.connectionProvider", new SimpleConnectionProvider(driver, url, username, password, isolation))
+}
+
+class DefaultORMConfiguration extends SimpleORMConfiguration {
+  val url = cx.get("orm.connection.url")
+      .map(_.toString)
+      .getOrElse(throw new ORMException(
+    "Missing mandatory configuration parameter 'orm.connection.url'."))
+  val username = cx.get("orm.connection.username")
+      .map(_.toString)
+      .getOrElse(throw new ORMException(
+    "Missing mandatory configuration parameter 'orm.connection.username'."))
+  val password = cx.get("orm.connection.password")
+      .map(_.toString)
+      .getOrElse(throw new ORMException(
+    "Missing mandatory configuration parameter 'orm.connection.password'."))
 }
 
 /*!## Connection Provider
@@ -85,7 +117,6 @@ It behaves as follows:
   * if `orm.connection.datasource` is missing, construct a connection
   pool using [c3p0][] and following configuration parameters:
 
-     * `orm.connection.driver`
      * `orm.connection.url`
      * `orm.connection.username`
      * `orm.connection.password`
@@ -97,31 +128,20 @@ It behaves as follows:
  If c3p0 data source is used you can fine tune it's configuration with `c3p0.properties`
  file (see [c3p0 documentation][c3p0-cfg] for more details).
 
- Though `DefaultConnectionProvider` is an optimal choice for most applications, you
+ Though `SimpleConnectionProvider` is an optimal choice for most applications, you
  can create your own connection provider by implementing the `ConnectionProvider` trait
  and setting the `orm.connectionProvider` configuration parameter.
 
    [c3p0]: http://www.mchange.com/projects/c3p0
    [c3p0-cfg]: http://www.mchange.com/projects/c3p0/index.html#configuration_properties
 */
-class DefaultConnectionProvider extends ConnectionProvider {
-
-  protected val autocommit: Boolean = cx.get("orm.connection.autocommit") match {
-    case Some("true") => true
-    case _ => false
-  }
-
-  protected val isolation: Int = cx.get("orm.connection.isolation") match {
-    case Some("none") => Connection.TRANSACTION_NONE
-    case Some("read_uncommitted") => Connection.TRANSACTION_READ_UNCOMMITTED
-    case Some("read_committed") => Connection.TRANSACTION_READ_COMMITTED
-    case Some("repeatable_read") => Connection.TRANSACTION_REPEATABLE_READ
-    case Some("serializable") => Connection.TRANSACTION_SERIALIZABLE
-    case _ => {
-      ORM_LOG.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
-      Connection.TRANSACTION_READ_COMMITTED
-    }
-  }
+class SimpleConnectionProvider(
+        val driverClass: String,
+        val url: String,
+        val username: String,
+        val password: String,
+        val isolation: Int)
+    extends ConnectionProvider {
 
   protected def createDataSource: DataSource = cx.get("orm.connection.datasource") match {
     case Some(jndiName: String) => {
@@ -132,27 +152,8 @@ class DefaultConnectionProvider extends ConnectionProvider {
     }
     case _ => {
       ORM_LOG.info("Using c3p0 connection pool.")
-      val url = cx.get("orm.connection.url") match {
-        case Some(s: String) => s
-        case _ =>
-          throw new ORMException("Missing mandatory configuration parameter 'orm.connection.url'.")
-      }
-      val driver = cx.get("orm.connection.driver") match {
-        case Some(s: String) => s
-        case _ => ormConf.dialect.driverClass
-      }
-      val username = cx.get("orm.connection.username") match {
-        case Some(s: String) => s
-        case _ =>
-          throw new ORMException("Missing mandatory configuration parameter 'orm.connection.username'.")
-      }
-      val password = cx.get("orm.connection.password") match {
-        case Some(s: String) => s
-        case _ =>
-          throw new ORMException("Missing mandatory configuration parameter 'orm.connection.password'.")
-      }
       val ds = new ComboPooledDataSource()
-      ds.setDriverClass(driver)
+      ds.setDriverClass(driverClass)
       ds.setJdbcUrl(url)
       ds.setUser(username)
       ds.setPassword(password)
@@ -169,7 +170,7 @@ class DefaultConnectionProvider extends ConnectionProvider {
 
   def openConnection(): Connection = {
     val conn = dataSource.getConnection
-    conn.setAutoCommit(autocommit)
+    conn.setAutoCommit(false)
     conn.setTransactionIsolation(isolation)
     conn
   }
