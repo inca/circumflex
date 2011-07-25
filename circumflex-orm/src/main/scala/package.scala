@@ -18,9 +18,11 @@ package object orm {
 
   val ORM_LOG = new Logger("ru.circumflex.orm")
 
-  // TODO think of ways to inject these thingies without implicit parameters juggling
-  implicit val DEFAULT_ORM_CONF = new DefaultORMConfiguration()
-  def ormConf = implicitly[ORMConfiguration]
+  val DEFAULT_ORM_CONF = new DefaultORMConfiguration()
+  def ormConf = ctx.get("orm.conf") match {
+    case Some(c: ORMConfiguration) => c
+    case _ => DEFAULT_ORM_CONF
+  }
 
   val ehcacheManager: CacheManager = cx.instantiate[CacheManager](
     "orm.ehcache.manager", new CacheManager())
@@ -32,6 +34,21 @@ package object orm {
   def ROLLBACK() {
     tx.rollback()
   }
+
+  def using[A](newConf: ORMConfiguration)(block: => A): A = {
+    // remember old configuration
+    val oldConf = ormConf
+    try {
+      ctx.update("orm.conf", newConf)
+      block
+    } finally {
+      // restore old configuration
+      ctx.update("orm.conf", oldConf)
+    }
+  }
+
+  def usingAll[A](newConfs: ORMConfiguration*)(block: ORMConfiguration => A): Seq[A] =
+    newConfs.map(c => using(c) { block(c) })
 
   /*! ## Alias Stack
 
