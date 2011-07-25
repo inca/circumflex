@@ -172,7 +172,7 @@ Note that since one record instance may become accessible to several threads, th
 modification of such records is a subject for concurrency control.
 */
 trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
-  protected val _cache: Ehcache = ehcacheManager.addCacheIfAbsent(qualifiedName)
+  protected def _cache: Ehcache = ehcacheManager.addCacheIfAbsent(ormConf.prefix(":") + qualifiedName)
 
   // Per-relation statistics
   val cacheHits = new AtomicInteger(0)

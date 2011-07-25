@@ -18,7 +18,7 @@ package object orm {
 
   val ORM_LOG = new Logger("ru.circumflex.orm")
 
-  val DEFAULT_ORM_CONF = new DefaultORMConfiguration()
+  val DEFAULT_ORM_CONF = new DefaultORMConfiguration("")
   def ormConf = ctx.get("orm.conf") match {
     case Some(c: ORMConfiguration) => c
     case _ => DEFAULT_ORM_CONF
@@ -35,20 +35,14 @@ package object orm {
     tx.rollback()
   }
 
-  def using[A](newConf: ORMConfiguration)(block: => A): A = {
-    // remember old configuration
-    val oldConf = ormConf
-    try {
+  def using[A](newConf: ORMConfiguration)(block: => A): A =
+    Context.executeInNew { ctx =>
       ctx.update("orm.conf", newConf)
       block
-    } finally {
-      // restore old configuration
-      ctx.update("orm.conf", oldConf)
     }
-  }
 
   def usingAll[A](newConfs: ORMConfiguration*)(block: ORMConfiguration => A): Seq[A] =
-    newConfs.map(c => using(c) { block(c) })
+    newConfs.map { c => using(c) { block(c) } }
 
   /*! ## Alias Stack
 
@@ -142,7 +136,7 @@ package object orm {
   // Simple projections
 
   def expr[T](expression: String): ExpressionProjection[T] =
-      new ExpressionProjection[T](expression)
+    new ExpressionProjection[T](expression)
   def COUNT(expr: Expression): Projection[Long] =
     new ExpressionProjection[Long](ormConf.dialect.COUNT(expr.toSql))
   def COUNT_DISTINCT(expr: Expression): Projection[Long] =
@@ -156,7 +150,7 @@ package object orm {
   def AVG(expr: Expression) =
     new ExpressionProjection[Any](ormConf.dialect.AVG(expr.toSql))
 
-    // Queries DSL
+  // Queries DSL
 
   def SELECT[T](p1: Projection[T], p2: Projection[_], pn: Projection[_]*) = {
     val projections = List(p1, p2) ++ pn

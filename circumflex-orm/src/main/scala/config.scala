@@ -28,6 +28,9 @@ Following objects configure different aspects of Circumflex ORM:
 
 trait ORMConfiguration {
 
+  def name: String
+  def prefix(sym: String) = if (name == "") "" else name + sym
+
   def dialect: Dialect
   def connectionProvider: ConnectionProvider
   def typeConverter: TypeConverter
@@ -84,7 +87,7 @@ trait SimpleORMConfiguration extends ORMConfiguration {
     "orm.connectionProvider", new SimpleConnectionProvider(driver, url, username, password, isolation))
 }
 
-class DefaultORMConfiguration extends SimpleORMConfiguration {
+class DefaultORMConfiguration(val name: String) extends SimpleORMConfiguration {
   val url = cx.get("orm.connection.url")
       .map(_.toString)
       .getOrElse(throw new ORMException(
@@ -274,7 +277,7 @@ class Transaction {
   def execute[A](sql: String,
                  stActions: PreparedStatement => A,
                  errActions: Throwable => A): A = execute({ conn =>
-    ORM_LOG.debug(sql)
+    ORM_LOG.debug(ormConf.prefix(": ")  + sql)
     val st =_statementsCache.get(sql).getOrElse {
       val statement = ormConf.dialect.prepareStatement(conn, sql)
       _statementsCache.update(sql, statement)

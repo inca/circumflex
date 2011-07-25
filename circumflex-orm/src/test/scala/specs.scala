@@ -15,9 +15,9 @@ object Sample {
   def dropSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).DROP()
 }
 
-class SpecsTest extends JUnit4(CircumflexORMSpec)
+class SpecsTest extends JUnit4(BasicSpec, MultiDataSourceSpec)
 
-object CircumflexORMSpec extends Specification {
+object BasicSpec extends Specification {
 
   val ci = City AS "ci"
   val co = Country AS "co"
