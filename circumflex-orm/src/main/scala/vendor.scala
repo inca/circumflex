@@ -32,7 +32,6 @@ class H2Dialect extends Dialect {
 class PostgreSQLDialect extends Dialect {
   override def driverClass = "org.postgresql.Driver"
   override def timestampType = "TIMESTAMPTZ"
-
 }
 
 class MySQLDialect extends Dialect {

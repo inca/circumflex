@@ -40,6 +40,7 @@ class Dialect {
   def timeType = "TIME"
   def timestampType = "TIMESTAMP"
   def xmlType = "XML"
+  def binaryType = "BYTEA"
 
   /*!## Actions for Foreign Keys */
 

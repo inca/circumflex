@@ -217,6 +217,15 @@ object BooleanField {
     new SimpleExpression(f.aliasedName, Nil)
 }
 
+class BinaryField[R <: Record[_, R]](name: String, record: R)
+    extends Field[Array[Byte], R](name, record, ormConf.dialect.binaryType) {
+  override def read(rs: ResultSet, alias: String): Option[Array[Byte]] = {
+    val o = rs.getBytes(alias)
+    if (rs.wasNull) None
+    else Some(o)
+  }
+}
+
 class TimestampField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, ormConf.dialect.timestampType) {
   def fromString(str: String): Option[Date] =

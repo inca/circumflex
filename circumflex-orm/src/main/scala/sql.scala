@@ -151,6 +151,7 @@ class DefinitionHelper[R <: Record[_, R]](name: String, record: R) {
   def TIME = new TimeField(name, record)
   def TIMESTAMP = new TimestampField(name, record)
   def XML(root: String = name) = new XmlField(name, record, root)
+  def BINARY = new BinaryField(name, record)
 
   def INDEX(expression: String) = new Index(name, record.relation, expression)
 }

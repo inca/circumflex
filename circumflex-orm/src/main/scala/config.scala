@@ -197,6 +197,7 @@ class TypeConverter {
       case p: Date => st.setObject(paramIndex, new Timestamp(p.getTime))
       case x: Elem => st.setString(paramIndex, x.toString())
       case bd: BigDecimal => st.setBigDecimal(paramIndex, bd.bigDecimal)
+      case ba: Array[Byte] => st.setBytes(paramIndex, ba)
       case v => st.setObject(paramIndex, v)
     }
   }
