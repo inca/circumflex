@@ -4,6 +4,8 @@
 
 * Migrated to Scala 2.9
 
+* `getOrHead` route is removed, all `get` routes respond to `HEAD` requests as well.
+
 * Schema objects can now be resolved from classpath using `DDLUnit.fromClasspath()`
 
 * New DSL for composing native SQL and DML queries (see `query.scala`)
@@ -16,6 +18,13 @@
   * more careful with parentheses around methods which introduce side-effects
 
   * some method names became more strict (e.g. `whereClause` instead of `where`)
+
+* Configuration in ORM is decoupled from `package object orm`.
+
+* Introduced support for multiple data sources with `using` and `usingAll`
+  constructs.
+
+* Added `BinaryField` for handling SQL data type BYTEA.
 
 ## 2.0.3
 

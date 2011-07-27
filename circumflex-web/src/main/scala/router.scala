@@ -70,10 +70,9 @@ class RequestRouter(var prefix: String = "") {
       new Regex(servletContext.getContextPath + prefix + regex.toString))
 
   // Routes
-  val get = new Route("get")
-  val head = new Route("head")
+  val get = new Route("get", "head")
   val getOrPost = new Route("get", "post")
-  val getOrHead = new Route("get", "head")
+  val head = new Route("head")
   val post = new Route("post")
   val put = new Route("put")
   val patch = new Route("patch")
