@@ -52,15 +52,15 @@ class Field[T, R <: Record[_, R]](
   */
   protected var _notNull: Boolean = false
   def isNotNull: Boolean = _notNull
-  def NOT_NULL(): this.type = {
+  def NOT_NULL: this.type = {
     _notNull = true
     this
   }
-  def NOT_NULL(initialValue: T): this.type = NOT_NULL().set(initialValue)
+  def NOT_NULL(initialValue: T): this.type = NOT_NULL.set(initialValue)
 
   protected var _unique: Boolean = false
   def isUnique: Boolean = _unique
-  def UNIQUE(): this.type = {
+  def UNIQUE: this.type = {
     _unique = true
     this
   }
