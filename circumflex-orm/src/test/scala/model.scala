@@ -118,7 +118,7 @@ object Membership extends Membership with Table[(String, String), Membership]
 object IdGen extends Schema("idgen")
 
 class IdentNoAuto extends Record[Long, IdentNoAuto] with IdentityGenerator[Long, IdentNoAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT()
+  val id = "id".BIGINT.AUTO_INCREMENT
   def relation = IdentNoAuto
   def PRIMARY_KEY = id
 }
@@ -128,7 +128,7 @@ object IdentNoAuto extends IdentNoAuto with Table[Long, IdentNoAuto] {
 }
 
 class IdentAuto extends Record[Long, IdentAuto] with IdentityGenerator[Long, IdentAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT()
+  val id = "id".BIGINT.AUTO_INCREMENT
   def relation = IdentAuto
   def PRIMARY_KEY = id
 }
@@ -139,7 +139,7 @@ object IdentAuto extends IdentAuto with Table[Long, IdentAuto] {
 }
 
 class SeqNoAuto extends Record[Long, SeqNoAuto] with SequenceGenerator[Long, SeqNoAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT()
+  val id = "id".BIGINT.AUTO_INCREMENT
   def relation = SeqNoAuto
   def PRIMARY_KEY = id
 }
@@ -149,7 +149,7 @@ object SeqNoAuto extends SeqNoAuto with Table[Long, SeqNoAuto] {
 }
 
 class SeqAuto extends Record[Long, SeqAuto] with SequenceGenerator[Long, SeqAuto] {
-  val id = "id".BIGINT.AUTO_INCREMENT()
+  val id = "id".BIGINT.AUTO_INCREMENT
   def relation = SeqAuto
   def PRIMARY_KEY = id
 }

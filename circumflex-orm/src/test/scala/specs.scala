@@ -145,7 +145,7 @@ object BasicSpec extends Specification {
     }
     "handle distincts, joins and predicates" in {
       SELECT(co.*)
-          .DISTINCT()
+          .DISTINCT
           .FROM(co JOIN ci)
           .WHERE(ci.name LIKE "Lausanne")
           .unique.get.code() must_== "ch"

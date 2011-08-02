@@ -193,7 +193,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
   override def projections = List(projection) ++ _auxProjections
 
   def isDistinct: Boolean = _distinct
-  def DISTINCT(): Select[T] = {
+  def DISTINCT: Select[T] = {
     this._distinct = true
     this
   }

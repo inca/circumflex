@@ -137,7 +137,7 @@ class Field[T, R <: Record[_, R]](
 trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
   protected var _autoIncrement: Boolean = false
   def isAutoIncrement: Boolean = _autoIncrement
-  def AUTO_INCREMENT(): this.type = {
+  def AUTO_INCREMENT: this.type = {
     _autoIncrement = true
     this
   }
