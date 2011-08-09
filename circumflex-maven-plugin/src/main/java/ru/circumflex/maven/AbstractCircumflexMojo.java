@@ -57,10 +57,11 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
         urls.add(new File(o.toString()).toURI().toURL());
       for (Object o : project.getTestClasspathElements())
         urls.add(new File(o.toString()).toURI().toURL());
-      ArtifactResolutionResult deps = artifactResolver.resolveTransitively(project.getDependencyArtifacts(),
+      ArtifactResolutionResult deps = artifactResolver.resolveTransitively(
+          project.getDependencyArtifacts(),
           project.getArtifact(),
           localRepository,
-          Collections.EMPTY_LIST,
+          project.getRemoteArtifactRepositories(),
           artifactMetaDataSource,
           new ScopeArtifactFilter(Artifact.SCOPE_COMPILE));
       for (Object o : deps.getArtifacts())
