@@ -48,7 +48,7 @@ trait Container[T] extends Equals {
   def value: Option[T] = _value
   def get = value
   def apply(): T = value.get
-  def getOrElse(default: T): T = value.getOrElse(default)
+  def getOrElse(default: => T): T = value.getOrElse(default)
   def isNull: Boolean = value == None
 
   def set(v: Option[T]): this.type = {
