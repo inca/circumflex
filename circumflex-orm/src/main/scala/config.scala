@@ -38,13 +38,6 @@ trait ORMConfiguration {
   def defaultSchema: Schema
   def statisticsManager: StatisticsManager
 
-  def cacheService = ctx.get("orm.contextCache") match {
-    case Some(cs: CacheService) => cs
-    case _ =>
-      val cs = cx.instantiate[CacheService]("orm.contextCache", new DefaultCacheService)
-      ctx.update("orm.contextCache", cs)
-      cs
-  }
 }
 
 trait SimpleORMConfiguration extends ORMConfiguration {
@@ -236,7 +229,7 @@ class Transaction {
 
   def rollback() {
     if (isLive && !_connection.getAutoCommit) _connection.rollback()
-    ormConf.cacheService.invalidate()
+    this.cache.invalidate()
   }
 
   def close() {
@@ -261,6 +254,12 @@ class Transaction {
     }
     _connection
   }
+
+  // Cache service
+
+  val cache: CacheService = new DefaultCacheService()
+
+  // Execution methods
 
   def execute[A](connActions: Connection => A,
                  errActions: Throwable => A): A =

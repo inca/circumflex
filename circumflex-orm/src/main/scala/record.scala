@@ -72,7 +72,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   else {
     val root = relation.AS("root")
     val id = PRIMARY_KEY()
-    ormConf.cacheService.evictRecord(id, relation)
+    tx.cache.evictRecord(id, relation)
     SELECT(root.*).FROM(root).WHERE(root.PRIMARY_KEY EQ id).unique() match {
       case Some(r: R) =>
         relation.copyFields(r, this)
@@ -90,8 +90,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     // Prepare and execute query
     val result = _persist(evalFields(fields))
     // Update cache
-    ormConf.cacheService.evictRecord(PRIMARY_KEY(), relation)
-    ormConf.cacheService.cacheRecord(PRIMARY_KEY(), relation, Some(this))
+    tx.cache.evictRecord(PRIMARY_KEY(), relation)
+    tx.cache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     result
@@ -127,9 +127,9 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     val result = q.execute()
     if (relation.isAutoRefresh) refresh()
     // Invalidate caches
-    ormConf.cacheService.evictInverse[PK, R](this)
-    ormConf.cacheService.evictRecord(PRIMARY_KEY(), relation)
-    ormConf.cacheService.cacheRecord(PRIMARY_KEY(), relation, Some(this))
+    tx.cache.evictInverse[PK, R](this)
+    tx.cache.evictRecord(PRIMARY_KEY(), relation)
+    tx.cache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     result
@@ -151,8 +151,8 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
     val result = (relation AS "root")
         .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkDelete().execute()
     // Invalidate caches
-    ormConf.cacheService.evictRecord(PRIMARY_KEY(), relation)
-    ormConf.cacheService.evictInverse[PK, R](this)
+    tx.cache.evictRecord(PRIMARY_KEY(), relation)
+    tx.cache.evictInverse[PK, R](this)
     // Execute events
     relation.afterDelete.foreach(c => c(this))
     result

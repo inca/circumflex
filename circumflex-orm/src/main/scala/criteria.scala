@@ -97,12 +97,12 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         if (pIndex == -1 || cIndex == -1) return
         tuple(pIndex).asInstanceOf[Option[N]] map {
           parent =>
-            var children = ormConf.cacheService.cacheInverse(parent.PRIMARY_KEY(), a, Nil)
+            var children = tx.cache.cacheInverse(parent.PRIMARY_KEY(), a, Nil)
             tuple(cIndex).asInstanceOf[Option[N]] map {
               child =>
                 if (!children.contains(child))
                   children ++= List(child)
-                ormConf.cacheService.updateInverse(parent.PRIMARY_KEY(), a, children)
+                tx.cache.updateInverse(parent.PRIMARY_KEY(), a, children)
             }
         }
         processTupleTree(tuple, j.left)

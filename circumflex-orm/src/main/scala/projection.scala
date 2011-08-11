@@ -119,7 +119,7 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   }
 
   def read(rs: ResultSet): Option[R] = _readCell(rs, node.relation.PRIMARY_KEY).flatMap(id =>
-    ormConf.cacheService.cacheRecord(id, node.relation, Some(readRecord(rs))))
+    tx.cache.cacheRecord(id, node.relation, Some(readRecord(rs))))
 
   protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance

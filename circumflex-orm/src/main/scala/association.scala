@@ -84,7 +84,7 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
   def association: Association[K, C, P]
   def record: P
   def fetch(): Seq[C] = if (record.isTransient) Nil
-  else ormConf.cacheService.cacheInverse(record.PRIMARY_KEY(), association, {
+  else tx.cache.cacheInverse(record.PRIMARY_KEY(), association, {
     val root = association.field.record.relation AS "root"
     aliasStack.push(root.alias)
     SELECT(root.*).FROM(root).WHERE(association.field EQ record.PRIMARY_KEY()).list()
