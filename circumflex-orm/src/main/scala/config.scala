@@ -337,3 +337,9 @@ class DefaultTransactionManager extends TransactionManager {
   }
 
 }
+
+// Special helper for single-user REPL usage
+class ConsoleTransactionManager extends TransactionManager {
+  var currentTransaction = new Transaction
+  def get = currentTransaction
+}
