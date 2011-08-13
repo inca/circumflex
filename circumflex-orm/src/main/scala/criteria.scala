@@ -143,11 +143,40 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     this
   }
 
+  /*!## Limits & offsets
+
+  Use methods `limit` and `offset` to provide paging/scrolling on the result set
+  of the select query produced by `mkSelect`. Note that these clauses interfere
+  with one-to-many joins or prefetches, which typically require larger result sets.
+
+  If you find yourself in the situation where you are required to use one-to-many
+  prefetching or joins, simulate result set limiting using subqueries in the `WHERE`
+  clause.
+  */
+
+  protected var _limit: Int = -1
+  def limit: Int = _limit
+  def limit(l: Int): this.type = {
+    _limit = l
+    this
+  }
+
+  protected var _offset: Int = 0
+  def offset: Int = _offset
+  def offset(o: Int): this.type = {
+    _offset = o
+    this
+  }
+
+  // Querying
+
   def mkSelect(): SQLQuery[Array[Option[Any]]] =
     SELECT(new UntypedTupleProjection(projections: _*))
         .FROM(queryPlan)
         .WHERE(predicate)
         .ORDER_BY(_orders: _*)
+        .LIMIT(offset)
+        .OFFSET(offset)
   def mkUpdate(): Update[PK, R] = UPDATE(rootNode).WHERE(predicate)
   def mkDelete(): Delete[PK, R] = DELETE(rootNode).WHERE(predicate)
 
