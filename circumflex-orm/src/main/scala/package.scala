@@ -142,14 +142,14 @@ package object orm {
     new ExpressionProjection[Long](ormConf.dialect.COUNT(expr.toSql))
   def COUNT_DISTINCT(expr: Expression): Projection[Long] =
     new ExpressionProjection[Long](ormConf.dialect.COUNT_DISTINCT(expr.toSql))
-  def MAX(expr: Expression): Projection[Any] =
-    new ExpressionProjection[Any](ormConf.dialect.MAX(expr.toSql))
-  def MIN(expr: Expression) =
-    new ExpressionProjection[Any](ormConf.dialect.MIN(expr.toSql))
-  def SUM(expr: Expression) =
-    new ExpressionProjection[Any](ormConf.dialect.SUM(expr.toSql))
-  def AVG(expr: Expression) =
-    new ExpressionProjection[Any](ormConf.dialect.AVG(expr.toSql))
+  def MAX[T](expr: Expression) =
+    new ExpressionProjection[T](ormConf.dialect.MAX(expr.toSql))
+  def MIN[T](expr: Expression) =
+    new ExpressionProjection[T](ormConf.dialect.MIN(expr.toSql))
+  def SUM[T](expr: Expression) =
+    new ExpressionProjection[T](ormConf.dialect.SUM(expr.toSql))
+  def AVG[T](expr: Expression) =
+    new ExpressionProjection[T](ormConf.dialect.AVG(expr.toSql))
 
   // Queries DSL
 
