@@ -139,7 +139,7 @@ trait Relation[PK, R <: Record[PK, R]]
   private def findMembers(cl: Class[_]) {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
     cl.getDeclaredFields
-        .flatMap(f => try Some(cl.getMethod(f.getName)) catch { case _ => None })
+        .flatMap(f => try Some(cl.getMethod(f.getName)) catch { case e: Exception => None })
         .foreach(processMember(_))
   }
 

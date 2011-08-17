@@ -41,7 +41,7 @@ class StandaloneServer {
   }
   val port: Int = cx.get("cx.port") match {
     case Some(p: Int) => p
-    case Some(s: String) => try { s.toInt } catch { case _ => 8180 }
+    case Some(s: String) => try { s.toInt } catch { case e: Exception => 8180 }
     case _ => 8180
   }
   val webappRoot: String = cx.get("cx.webappRoot") match {

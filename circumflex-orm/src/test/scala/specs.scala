@@ -200,7 +200,7 @@ object BasicSpec extends Specification {
           case _ => "xx"  // already exist => fail
         }
         new Country(code, "Test").INSERT()
-      } catch { case _ => }
+      } catch { case e: Exception => }
       SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list.size must_== 3
       ROLLBACK()
       SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list.size must_== 0

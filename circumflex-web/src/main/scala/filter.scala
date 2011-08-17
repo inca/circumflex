@@ -123,7 +123,7 @@ class CircumflexFilter extends Filter {
               case e: InvocationTargetException => e.getCause match {
                 case ex: ResponseSentException => throw ex
                 case ex: FileNotFoundException => onNotFound(ex)
-                case ex => onRouterError(ex)
+                case ex: Exception => onRouterError(ex)
               }
             }
           } catch {

@@ -109,7 +109,7 @@ class ResourceBundleMessageResolver(val bundleName: String) extends MessageResol
   def iterator: Iterator[(String, String)] = bundle.getKeys
       .map(k => (k -> bundle.getString(k)))
   protected def resolve(key: String): Option[String] =
-    try { Some(bundle.getString(key)) } catch { case _ => None }
+    try { Some(bundle.getString(key)) } catch { case e: Exception => None }
 }
 
 class DelegatingMessageResolver(initialResolvers: MessageResolver*) extends MessageResolver {
@@ -153,7 +153,7 @@ class PropertyFileResolver extends MessageResolver {
               case Some(p: Properties) =>
                 _cache(suffix) = (p, f.lastModified)
                 Some(p)
-              case None =>    // previously cached file does not exist anymore
+              case _ =>    // previously cached file does not exist anymore
                 _cache.remove(suffix)
                 getProps(suffix)
             }

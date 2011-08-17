@@ -269,7 +269,7 @@ class Transaction {
       ormConf.statisticsManager.executionsSucceeded.incrementAndGet()
       result
     } catch {
-      case e =>
+      case e: Exception =>
         ormConf.statisticsManager.executionsFailed.incrementAndGet()
         errActions(e)
     }
@@ -294,7 +294,7 @@ class Transaction {
       case e: ControlThrowable =>
         ORM_LOG.trace("Escaped nested transaction via ControlThrowable, ROLLBACK is suppressed.")
         throw e
-      case e =>
+      case e: Exception =>
         getConnection.rollback(sp)
         throw e
     } finally {

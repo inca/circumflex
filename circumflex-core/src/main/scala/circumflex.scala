@@ -38,7 +38,7 @@ object Circumflex extends HashMap[String, Any] with UntypedContainer {
       this(k) = bundle.getString(k)
     }
   } catch {
-    case _ => CX_LOG.error("Could not read configuration parameters from cx.properties.")
+    case e: Exception => CX_LOG.error("Could not read configuration parameters from cx.properties.")
   }
 
   override def stringPrefix = "cx"
@@ -116,7 +116,7 @@ trait UntypedContainer extends Map[String, Any] {
   protected def instantiateObject[C](name: String, c: Class[_]): C = try {
     c.getField("MODULE$").get(null).asInstanceOf[C]
   } catch {
-    case _ => c.newInstance.asInstanceOf[C]
+    case e: Exception => c.newInstance.asInstanceOf[C]
   }
 
 }

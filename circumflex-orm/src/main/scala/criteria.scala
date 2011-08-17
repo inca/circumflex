@@ -79,7 +79,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         j.replaceLeft(updateJoinTree(node, j.left))
         j.replaceRight(updateJoinTree(node, j.right))
       } catch {
-        case e =>                               // try the right side
+        case e: Exception =>                    // try the right side
           j.replaceRight(updateJoinTree(node, j.right))
       }
       case rel: RelationNode[PK, R] => rel.JOIN(node)

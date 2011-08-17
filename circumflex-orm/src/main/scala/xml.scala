@@ -38,7 +38,7 @@ class Deployment(val id: String,
       entries.foreach(e => processNode(e, Nil))
       COMMIT()
     } catch {
-      case e =>
+      case e: Exception =>
         ROLLBACK()
         throw e
     }

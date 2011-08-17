@@ -49,7 +49,7 @@ class DefaultConfiguration extends Configuration {
   try {
     addLoader(new WebappTemplateLoader(servletContext, "/templates"))
   } catch {
-    case e =>
+    case e: Exception =>
       CX_LOG.warn("Not running in webapp context.")
   }
   addLoader(new ClassTemplateLoader(getClass, "/"))

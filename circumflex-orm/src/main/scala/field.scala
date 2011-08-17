@@ -147,14 +147,14 @@ class IntField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Int, R](name, record, ormConf.dialect.integerType)
     with AutoIncrementable[Int, R] {
   def fromString(str: String): Option[Int] =
-    try Some(str.toInt) catch { case _ => None }
+    try Some(str.toInt) catch { case e: Exception => None }
 }
 
 class LongField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Long, R](name, record, ormConf.dialect.longType)
     with AutoIncrementable[Long, R]{
   def fromString(str: String): Option[Long] =
-    try Some(str.toLong) catch { case _ => None }
+    try Some(str.toLong) catch { case e: Exception => None }
 }
 
 class DoubleField[R <: Record[_, R]](
@@ -170,7 +170,7 @@ class DoubleField[R <: Record[_, R]](
     else Some(d)
   }
   def fromString(str: String): Option[Double] =
-    try Some(str.toDouble) catch { case _ => None }
+    try Some(str.toDouble) catch { case e: Exception => None }
 }
 
 class NumericField[R <: Record[_, R]](
@@ -182,7 +182,7 @@ class NumericField[R <: Record[_, R]](
     extends XmlSerializable[BigDecimal, R](
       name, record, ormConf.dialect.numericType(precision, scale)) {
   def fromString(str: String): Option[BigDecimal] =
-    try Some(BigDecimal(str)) catch { case _ => None }
+    try Some(BigDecimal(str)) catch { case e: Exception => None }
   override def read(rs: ResultSet, alias: String): Option[BigDecimal] = {
     val bd = rs.getBigDecimal(alias)
     if (rs.wasNull) None
@@ -209,7 +209,7 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
 class BooleanField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Boolean, R](name, record, ormConf.dialect.booleanType) {
   def fromString(str: String): Option[Boolean] =
-    try Some(str.toBoolean) catch { case _ => None }
+    try Some(str.toBoolean) catch { case e: Exception => None }
 }
 
 object BooleanField {
@@ -229,7 +229,7 @@ class BinaryField[R <: Record[_, R]](name: String, record: R)
 class TimestampField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, ormConf.dialect.timestampType) {
   def fromString(str: String): Option[Date] =
-    try Some(new Date(java.sql.Timestamp.valueOf(str).getTime)) catch { case _ => None }
+    try Some(new Date(java.sql.Timestamp.valueOf(str).getTime)) catch { case e: Exception => None }
   override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Timestamp(v.getTime).toString).getOrElse("")
 }
@@ -237,7 +237,7 @@ class TimestampField[R <: Record[_, R]](name: String, record: R)
 class DateField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, ormConf.dialect.dateType) {
   def fromString(str: String): Option[Date] =
-    try Some(new Date(java.sql.Date.valueOf(str).getTime)) catch { case _ => None }
+    try Some(new Date(java.sql.Date.valueOf(str).getTime)) catch { case e: Exception => None }
   override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Date(v.getTime).toString).getOrElse("")
 }
@@ -245,7 +245,7 @@ class DateField[R <: Record[_, R]](name: String, record: R)
 class TimeField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, ormConf.dialect.timeType) {
   def fromString(str: String): Option[Date] =
-    try Some(new Date(java.sql.Time.valueOf(str).getTime)) catch { case _ => None }
+    try Some(new Date(java.sql.Time.valueOf(str).getTime)) catch { case e: Exception => None }
   override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Time(v.getTime).toString).getOrElse("")
 }
