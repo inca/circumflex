@@ -96,11 +96,11 @@ trait MessageResolver extends Map[String, String] {
   }
 
   def fmt(key: String, params: (String, Any)*): String =
-    params.foldLeft(getOrElse(key, "")) { (result, p) =>
+    params.foldLeft(getOrElse(key, key)) { (result, p) =>
       result.replaceAll("\\{" + p._1 + "\\}", p._2.toString)
     }
   def format(key: String, params: AnyRef*): String =
-    MessageFormat.format(getOrElse(key, ""), params: _*)
+    MessageFormat.format(getOrElse(key, key), params: _*)
 }
 
 class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {

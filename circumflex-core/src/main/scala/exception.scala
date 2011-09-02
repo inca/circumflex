@@ -12,7 +12,8 @@ class CircumflexException(msg: String, cause: Throwable = null)
 }
 
 class ValidationException(val errors: Seq[Msg])
-    extends CircumflexException("Validation failed.") {
+    extends CircumflexException("") {
+  override def getMessage = "Validation failed: " + errors
   def this(msg: Msg) = this(List(msg))
   def this(msg: Msg, msgs: Msg*) = this(List(msg) ++ msgs.toSeq)
 }
