@@ -9,7 +9,7 @@ import java.io.{File}
 
 class SpecsTest extends JUnit4(CircumflexWebSpec)
 
-class MockRouter extends RequestRouter {
+class MockRouter extends Router {
   get("/") = "preved"
   post("/") = "preved from POST"
   get("/decode me") = "preved"
@@ -32,11 +32,11 @@ class MockRouter extends RequestRouter {
   new MatchingMockRouter
 }
 
-class SubMockRouter extends RequestRouter("/sub") {
+class SubMockRouter extends Router("/sub") {
   get("/") = "preved"
 }
 
-class MatchingMockRouter extends RequestRouter("/matching") {
+class MatchingMockRouter extends Router("/matching") {
   get("/uri/:name.:ext") = uri("name") + "->" + uri("ext")
   get("/uri/:name") = "preved, " + uri("name")
   get("/uri/*/one/:two/+.:three") = uri(1) + uri("two") + uri(3) + uri("three")
@@ -80,7 +80,7 @@ object CircumflexWebSpec extends Specification {
 
   doAfterSpec { MockApp.stop() }
 
-  "RequestRouter" should {
+  "Router" should {
     "return 404 by default on non-matched requests" in {
       MockApp.get("/this/does/not/match/any/routes").execute().statusCode must_== 404
     }

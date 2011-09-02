@@ -109,7 +109,7 @@ trait ValueHolder[T, R <: Record[_, R]] extends Container[T] with Wrapper[Option
       id.setNull
       id := 1l
 
-  The `isNull` method indicates whether the underlying value is `null` or not.
+  The `isEmpty` method indicates whether the underlying value is `null` or not.
 
   ## Methods from `Option`
 

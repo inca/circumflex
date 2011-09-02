@@ -22,7 +22,7 @@ Here's the example usage from Circumflex Web Application:
 
     import ru.circumflex._, core._, web._, scalate._
 
-    class Main extends RequestRouter {
+    class Main extends Router {
        get("/hello/:name") = render("/templates/hello.ssp")
     }
 

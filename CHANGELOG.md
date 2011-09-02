@@ -10,7 +10,7 @@
 
 * New DSL for composing native SQL and DML queries (see `query.scala`)
 
-* Method naming (introduce incompatibilities!):
+* Methods and classes naming (introduce incompatibilities!):
 
   * methods with names ending with `_?` and `_!` been replaced with analogs
     (except DML methods which omit validation in ORM)
@@ -18,6 +18,10 @@
   * more careful with parentheses around methods which introduce side-effects
 
   * some method names became more strict (e.g. `whereClause` instead of `where`)
+
+  * `isNull` in `ValueHolder` is replaced by more conventional `isEmpty`
+
+  * `RequestRouter` class is renamed into `Router`
 
 * Configuration in ORM is decoupled from `package object orm`.
 

@@ -7,7 +7,7 @@ import java.io.File
 
 class SpecsTest extends JUnit4(CircumflexScalateSpec)
 
-class MockRouter extends RequestRouter {
+class MockRouter extends Router {
 
   get("/hello.ssp/:name") = {
     'name := param("name")

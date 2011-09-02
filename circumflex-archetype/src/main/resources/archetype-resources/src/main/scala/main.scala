@@ -6,7 +6,7 @@ package ${package}
 import ru.circumflex._, core._, web._, freemarker._
 import java.util.Date
 
-class Main extends RequestRouter {
+class Main extends Router {
   val log = new Logger("${package}")
 
   'currentDate := new Date

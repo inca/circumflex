@@ -25,14 +25,14 @@ class RecordValidator[PK, R <: Record[PK, R]] {
 
   def notNull(f: R => Field[_, R]): this.type = add { r =>
     val field = f(r)
-    if (field.isNull)
+    if (field.isEmpty)
       Some(new Msg(field.uuid + ".null", "record" -> r, "field" -> field))
     else None
   }
 
   def notEmpty(f: R => TextField[R]): this.type = add { r =>
     val field = f(r)
-    if (field.isNull)
+    if (field.isEmpty)
       Some(new Msg(field.uuid + ".null", "record" -> r, "field" -> field))
     else if (field().trim == "")
       Some(new Msg(field.uuid + ".empty", "record" -> r, "field" -> field))
@@ -41,7 +41,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
 
   def pattern(f: R => TextField[R], regex: String, key: String = "pattern"): this.type = add { r =>
     val field = f(r)
-    if (field.isNull)
+    if (field.isEmpty)
       None
     else if (!field().matches(regex))
       Some(new Msg(field.uuid + "." + key, "regex" -> regex,

@@ -13,7 +13,7 @@ Each route defines a `Matcher` which describes the conditions a request must sat
 in order to be matched. If such conditions are met, an attached block is executed
 which yields `RouteResponse` to the client.
 
-Routes are declared right inside the body of `RequestRouter` and are executed one-by-one
+Routes are declared right inside the body of `Router` and are executed one-by-one
 until first successful match. If no routes match the request, the `404 NOT FOUND` is sent
 to the client (unless `onNoMatch` method is overriden in `CircumflexFilter`).
 
@@ -44,7 +44,7 @@ affect patterns ending with `/+`: in this case trailing slash is required.
 
    [tests]: http://github.com/inca/circumflex/tree/master/circumflex-web/src/test/scala/
 */
-class RequestRouter(var prefix: String = "") {
+class Router(var prefix: String = "") {
 
   implicit def string2response(str: String): RouteResponse =
     new RouteResponse(str)
@@ -53,7 +53,7 @@ class RequestRouter(var prefix: String = "") {
     new RouteResponse("<?xml version=\"1.0\"?>\n" + xml.toString)
   }
 
-  implicit def router2response(router: RequestRouter): RouteResponse =
+  implicit def router2response(router: Router): RouteResponse =
     sendError(404)
 
   implicit def string2uriMatcher(str: String): RegexMatcher = {
@@ -119,7 +119,7 @@ class RequestRouter(var prefix: String = "") {
 
   Consider the following example:
 
-      class UsersRouter extends RequestRouter("/users") {
+      class UsersRouter extends Router("/users") {
         get("/") = "list all users"
         any("/:userId/+") = User.get(param("userId")) match {
           case Some(u: User) => subroute("/" + u.id()) {

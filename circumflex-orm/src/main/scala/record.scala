@@ -47,7 +47,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   will act a relation for this type of records.
   */
   def PRIMARY_KEY: ValueHolder[PK, R]
-  def isTransient: Boolean = PRIMARY_KEY.isNull
+  def isTransient: Boolean = PRIMARY_KEY.isEmpty
   def relation: Relation[PK, R]
   def uuid = getClass.getName
 
@@ -104,7 +104,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
 
   protected def _persist(fields: Seq[Field[_, R]]): Int = PRIMARY_KEY.value match {
     case Some(id: PK) =>
-      val result = new Insert(relation, fields.filter(!_.isNull)).execute()
+      val result = new Insert(relation, fields.filter(!_.isEmpty)).execute()
       if (relation.isAutoRefresh) refresh()
       result
     case _ => throw new ORMException("Application-assigned identifier is expected. " +
@@ -114,7 +114,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   def UPDATE_!(fields: Field[_, R]*): Int = if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else {
-    if (PRIMARY_KEY.isNull)
+    if (PRIMARY_KEY.isEmpty)
       throw new ORMException("Update is only allowed with non-null PRIMARY KEY field.")
     // Execute events
     relation.beforeUpdate.foreach(c => c(this))
@@ -143,7 +143,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   def DELETE_!(): Int = if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else {
-    if (PRIMARY_KEY.isNull)
+    if (PRIMARY_KEY.isEmpty)
       throw new ORMException("Delete is only allowed with non-null PRIMARY KEY field.")
     // Execute events
     relation.beforeDelete.foreach(c => c(this))
@@ -221,7 +221,7 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   */
   override def equals(that: Any) = that match {
     case that: Record[_, _] =>
-      !(this.PRIMARY_KEY.isNull || that.PRIMARY_KEY.isNull) &&
+      !(this.PRIMARY_KEY.isEmpty || that.PRIMARY_KEY.isEmpty) &&
           this.PRIMARY_KEY.value == that.PRIMARY_KEY.value &&
           this.getClass == that.getClass
     case _ => false
@@ -266,7 +266,7 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     // Make sure that PRIMARY_KEY contains `NULL`
     this.PRIMARY_KEY.setNull()
     // Persist all not-null fields
-    val result = new Insert(relation, fields.filter(!_.isNull)).execute()
+    val result = new Insert(relation, fields.filter(!_.isEmpty)).execute()
     // Fetch either the whole record or just an identifier.
     val root = relation.AS("root")
     if (relation.isAutoRefresh)
@@ -295,7 +295,7 @@ trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
           if (f == this.PRIMARY_KEY)
             f.asInstanceOf[Field[PK, R]].set(Some(id))
           f
-        }.filter(!_.isNull)
+        }.filter(!_.isEmpty)
         val result = new Insert(relation, f).execute()
         // Perform additional select if required
         if (relation.isAutoRefresh)
