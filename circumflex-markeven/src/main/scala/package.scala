@@ -163,7 +163,7 @@ package object markeven {
     val ty_reg = Pattern.compile("\\([rR]\\)")
     val ty_copy = Pattern.compile("\\([cC]\\)")
     val ty_ldquo = Pattern.compile("(?<=\\s|\\A|\\()(?:\"|&quot;)(?=\\S)")
-    val ty_rdquo = Pattern.compile("(?<=[\\p{L})?!.])(?:\"|&quot;)(?=[.,;?!*)]|\\s|\\Z)")
+    val ty_rdquo = Pattern.compile("(?<=[\\p{L}\\d\\)\\]>?!.])(?:\"|&quot;)(?=[.,;?!*\\)\\]<]|\\s|\\Z)")
   }
 
   object typographics {
