@@ -461,7 +461,7 @@ class MarkevenProcessor() {
     if (level > 0) level -= 1
   }
 
-  def resolveLink(id: String): Option[LinkDefinition] = links.get(id)
+  def resolveLink(id: String): Option[LinkDefinition] = links.get(id.toLowerCase)
 
   def addMacro(name: String, function: StringEx => CharSequence): this.type = {
     macros += (name -> function)
@@ -742,7 +742,7 @@ class MarkevenProcessor() {
     val linkText = m.group(1)
     var id = m.group(2)
     if (id == "") id = linkText
-    id = id.trim.toLowerCase
+    id = id.trim
     val linkContent = new StringEx(linkText)
     doSpanEnhancements(linkContent)
     val result = resolveLink(id)
@@ -756,7 +756,7 @@ class MarkevenProcessor() {
     val altText = m.group(1)
     var id = m.group(2)
     if (id == "") id = altText
-    id = id.trim.toLowerCase
+    id = id.trim
     val result = resolveLink(id)
         .map(ld => ld.toImageLink(altText))
         .getOrElse(new StringEx(m.group(0)))
