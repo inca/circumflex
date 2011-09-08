@@ -104,8 +104,8 @@ trait UntypedContainer extends Map[String, Any] {
     get(key).map(v => new SimpleDateFormat(pattern).parse(v.toString)).getOrElse(new Date)
 
   def instantiate[C](name: String, default: =>C): C = this.get(name) match {
-    case Some(c: Class[_]) => instantiateObject(name, c)
-    case Some(s: String) if (s.trim() != "") => instantiateObject(name, Class.forName(
+    case Some(c: Class[_]) => instantiateObject[C](name, c)
+    case Some(s: String) if (s.trim() != "") => instantiateObject[C](name, Class.forName(
       s.trim(), true, Thread.currentThread.getContextClassLoader))
     case v => default
   }
