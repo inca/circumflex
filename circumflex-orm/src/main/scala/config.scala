@@ -28,59 +28,13 @@ Following objects configure different aspects of Circumflex ORM:
 
 trait ORMConfiguration {
 
+  // Configuration identification
+
   def name: String
   def prefix(sym: String) = if (name == "") "" else name + sym
 
-  def dialect: Dialect
-  def connectionProvider: ConnectionProvider
-  def typeConverter: TypeConverter
-  def transactionManager: TransactionManager
-  def defaultSchema: Schema
-  def statisticsManager: StatisticsManager
+  // Database connectivity parameters
 
-}
-
-trait SimpleORMConfiguration extends ORMConfiguration {
-  def url: String
-  def username: String
-  def password: String
-  lazy val dialect = cx.instantiate[Dialect]("orm.dialect", url match {
-    case u if (u.startsWith("jdbc:postgresql:")) => new PostgreSQLDialect
-    case u if (u.startsWith("jdbc:mysql:")) => new MySQLDialect
-    case u if (u.startsWith("jdbc:oracle:")) => new OracleDialect
-    case u if (u.startsWith("jdbc:h2:")) => new H2Dialect
-    case u if (u.startsWith("jdbc:sqlserver:")) => new MSSQLDialect
-    case u if (u.startsWith("jdbc:db2:")) => new DB2Dialect
-    case _ => new Dialect
-  })
-  lazy val driver = cx.get("orm.connection.driver") match {
-    case Some(s: String) => s
-    case _ => dialect.driverClass
-  }
-  lazy val isolation: Int = cx.get("orm.connection.isolation") match {
-    case Some("none") => Connection.TRANSACTION_NONE
-    case Some("read_uncommitted") => Connection.TRANSACTION_READ_UNCOMMITTED
-    case Some("read_committed") => Connection.TRANSACTION_READ_COMMITTED
-    case Some("repeatable_read") => Connection.TRANSACTION_REPEATABLE_READ
-    case Some("serializable") => Connection.TRANSACTION_SERIALIZABLE
-    case _ => {
-      ORM_LOG.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
-      Connection.TRANSACTION_READ_COMMITTED
-    }
-  }
-  lazy val typeConverter = cx.instantiate[TypeConverter](
-    "orm.typeConverter", new TypeConverter)
-  lazy val transactionManager = cx.instantiate[TransactionManager](
-    "orm.transactionManager", new DefaultTransactionManager)
-  lazy val defaultSchema = new Schema(
-    cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
-  lazy val statisticsManager = cx.instantiate[StatisticsManager](
-    "orm.statisticsManager", new StatisticsManager)
-  lazy val connectionProvider = cx.instantiate[ConnectionProvider](
-    "orm.connectionProvider", new SimpleConnectionProvider(driver, url, username, password, isolation))
-}
-
-class DefaultORMConfiguration(val name: String) extends SimpleORMConfiguration {
   val url = cx.get("orm.connection.url")
       .map(_.toString)
       .getOrElse(throw new ORMException(
@@ -93,7 +47,49 @@ class DefaultORMConfiguration(val name: String) extends SimpleORMConfiguration {
       .map(_.toString)
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.password'."))
+
+  lazy val dialect = cx.instantiate[Dialect]("orm.dialect", url match {
+    case u if (u.startsWith("jdbc:postgresql:")) => new PostgreSQLDialect
+    case u if (u.startsWith("jdbc:mysql:")) => new MySQLDialect
+    case u if (u.startsWith("jdbc:oracle:")) => new OracleDialect
+    case u if (u.startsWith("jdbc:h2:")) => new H2Dialect
+    case u if (u.startsWith("jdbc:sqlserver:")) => new MSSQLDialect
+    case u if (u.startsWith("jdbc:db2:")) => new DB2Dialect
+    case _ => new Dialect
+  })
+
+  lazy val driver = cx.get("orm.connection.driver") match {
+    case Some(s: String) => s
+    case _ => dialect.driverClass
+  }
+
+  lazy val isolation: Int = cx.get("orm.connection.isolation") match {
+    case Some("none") => Connection.TRANSACTION_NONE
+    case Some("read_uncommitted") => Connection.TRANSACTION_READ_UNCOMMITTED
+    case Some("read_committed") => Connection.TRANSACTION_READ_COMMITTED
+    case Some("repeatable_read") => Connection.TRANSACTION_REPEATABLE_READ
+    case Some("serializable") => Connection.TRANSACTION_SERIALIZABLE
+    case _ => {
+      ORM_LOG.info("Using READ COMMITTED isolation, override 'orm.connection.isolation' if necesssary.")
+      Connection.TRANSACTION_READ_COMMITTED
+    }
+  }
+
+  // Configuration objects
+
+  lazy val typeConverter: TypeConverter = cx.instantiate[TypeConverter](
+    "orm.typeConverter", new TypeConverter)
+  lazy val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
+    "orm.transactionManager", new DefaultTransactionManager)
+  lazy val defaultSchema: Schema = new Schema(
+    cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
+  lazy val statisticsManager: StatisticsManager = cx.instantiate[StatisticsManager](
+    "orm.statisticsManager", new StatisticsManager)
+  lazy val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
+    "orm.connectionProvider", new SimpleConnectionProvider(driver, url, username, password, isolation))
 }
+
+class SimpleORMConfiguration(val name: String) extends ORMConfiguration
 
 /*!## Connection Provider
 

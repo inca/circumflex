@@ -19,7 +19,7 @@ package object orm {
   val ORM_LOG = new Logger("ru.circumflex.orm")
 
   lazy val DEFAULT_ORM_CONF = cx.instantiate[ORMConfiguration](
-    "orm.configuration", new DefaultORMConfiguration(""))
+    "orm.configuration", new SimpleORMConfiguration(""))
   def ormConf = ctx.get("orm.conf") match {
     case Some(c: ORMConfiguration) => c
     case _ => DEFAULT_ORM_CONF

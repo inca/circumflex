@@ -3,18 +3,18 @@ package orm
 
 import org.specs.Specification
 
-object FooDB extends SimpleORMConfiguration {
+object FooDB extends ORMConfiguration {
   def name = "foo"
-  def url = "jdbc:h2:mem:foodb"
-  def username = "foo"
-  def password = ""
+  override val url = "jdbc:h2:mem:foodb"
+  override val username = "foo"
+  override val password = ""
 }
 
-object BarDB extends SimpleORMConfiguration {
+object BarDB extends ORMConfiguration {
   def name = "bar"
-  def url = "jdbc:h2:mem:bardb"
-  def username = "bar"
-  def password = ""
+  override val url = "jdbc:h2:mem:bardb"
+  override val username = "bar"
+  override val password = ""
 }
 
 object MultiDataSourceSpec extends Specification {
