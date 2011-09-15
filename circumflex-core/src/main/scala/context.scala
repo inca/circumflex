@@ -1,8 +1,8 @@
 package ru.circumflex
 package core
 
-import scala.collection.mutable.HashMap
 import java.util.Date
+import collection.mutable.{ListBuffer, HashMap}
 
 /*!# Context API
 
@@ -45,15 +45,22 @@ object Context {
 
   protected val threadLocal = new ThreadLocal[Context]
 
-  protected var initListeners: Seq[Context => Unit] = Nil
-  protected var destroyListeners: Seq[Context => Unit] = Nil
-
+  protected val _initListeners = new ListBuffer[Context => Unit]
+  def initListeners = _initListeners
   def addInitListener(listener: Context => Unit) {
-    initListeners ++= List(listener)
+    _initListeners += listener
+  }
+  def insertInitListener(index: Int, listener: Context => Unit) {
+    _initListeners.insert(index, listener)
   }
 
+  protected val _destroyListeners = new ListBuffer[Context => Unit]
+  def destroyListeners = _destroyListeners
   def addDestroyListener(listener: Context => Unit) {
-    destroyListeners ++= List(listener)
+    _destroyListeners += listener
+  }
+  def insertDestroyListener(index: Int, listener: Context => Unit) {
+    _destroyListeners.insert(index, listener)
   }
 
   def get(): Context = {
