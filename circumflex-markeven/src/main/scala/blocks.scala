@@ -121,7 +121,7 @@ object EmptyBlock extends Block(new StringEx(""), new Selector()) {
 class InlineHtmlBlock(text: StringEx)
     extends Block(text, new Selector) {
   def element = ""
-  override def toHtml(mp: MarkevenProcessor): StringEx = text
+  override def toHtml(mp: MarkevenProcessor): StringEx = mp.unprotect(text)
 }
 
 class HorizontalRulerBlock(selector: Selector)
