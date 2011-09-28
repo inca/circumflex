@@ -4,7 +4,9 @@
 
 * Migrated to Scala 2.9
 
-* `getOrHead` route is removed, all `get` routes respond to `HEAD` requests as well.
+* Added `circumflex-cache` module
+
+* `getOrHead` route is removed, all `get` routes respond to `HEAD` requests as well
 
 * Schema objects can now be resolved from classpath using `DDLUnit.fromClasspath()`
 
@@ -23,12 +25,12 @@
 
   * `RequestRouter` class is renamed into `Router`
 
-* Configuration in ORM is decoupled from `package object orm`.
+* Configuration in ORM is decoupled from `package object orm`
 
 * Introduced support for multiple data sources with `using` and `usingAll`
   constructs.
 
-* Added `BinaryField` for handling SQL data type BYTEA.
+* Added `BinaryField` for handling SQL data type BYTEA
 
 ## 2.0.3
 

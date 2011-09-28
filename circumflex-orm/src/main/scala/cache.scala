@@ -172,17 +172,21 @@ Note that since one record instance may become accessible to several threads, th
 modification of such records is a subject for concurrency control.
 */
 trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
-  protected def _cache: Ehcache = ehcacheManager.addCacheIfAbsent(ormConf.prefix(":") + qualifiedName)
+
+  def cacheName = ormConf.prefix(":") + qualifiedName
+
+  def ehcache: Ehcache = ru.circumflex.cache.ehcacheManager
+      .addCacheIfAbsent(cacheName)
 
   // Per-relation statistics
   val cacheHits = new AtomicInteger(0)
   val cacheMisses = new AtomicInteger(0)
 
   def cache(id: PK, record: => Option[R]): Option[R] = {
-    var elem = _cache.get(id)
+    var elem = ehcache.get(id)
     if (elem == null) {
       elem = new Element(id, record)
-      _cache.put(elem)
+      ehcache.put(elem)
       cacheMisses.incrementAndGet()
       ormConf.statisticsManager.recordCacheMisses.incrementAndGet()
     } else {
@@ -192,10 +196,10 @@ trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
     elem.getValue.asInstanceOf[Option[R]]
   }
   def evict(id: PK) {
-    _cache.remove(id)
+    ehcache.remove(id)
   }
   def invalidateCache() {
-    _cache.removeAll()
+    ehcache.removeAll()
   }
 
   afterInsert(r => cache(r.PRIMARY_KEY(), Some(r)))

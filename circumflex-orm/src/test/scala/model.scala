@@ -22,9 +22,10 @@ class Country extends Record[String, Country] {
   override def toString = name.getOrElse("<unknown>")
 }
 
-object Country extends Country
-with Table[String, Country]
-with Cacheable[String, Country] {
+object Country
+    extends Country
+    with Table[String, Country]
+    with Cacheable[String, Country] {
   val nameIdx = "name_idx".INDEX("name")
 
   validation.notEmpty(_.code).pattern(_.code, "^[a-z]{2}$", "syntax")

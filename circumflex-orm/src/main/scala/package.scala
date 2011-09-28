@@ -1,7 +1,6 @@
 package ru.circumflex
 
 import core._
-import net.sf.ehcache.CacheManager
 import collection.mutable.Stack
 import java.util.regex.Pattern
 
@@ -24,9 +23,6 @@ package object orm {
     case Some(c: ORMConfiguration) => c
     case _ => DEFAULT_ORM_CONF
   }
-
-  val ehcacheManager: CacheManager = cx.instantiate[CacheManager](
-    "orm.ehcache.manager", new CacheManager())
 
   def tx: Transaction = ormConf.transactionManager.get
   def COMMIT() {

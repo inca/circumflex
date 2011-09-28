@@ -4,10 +4,11 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>ru.circumflex</groupId>
-  <artifactId>circumflex-orm</artifactId>
+  <artifactId>circumflex-cache</artifactId>
   <packaging>jar</packaging>
   <version>2.1</version>
-  <name>Circumflex ORM Framework</name>
+  <name>Circumflex Cache</name>
+  <description>Circumflex Simple Caching Framework</description>
 
   <parent>
     <groupId>ru.circumflex</groupId>
@@ -16,13 +17,6 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <properties>
-    <orm.connection.url>jdbc:h2:mem:test</orm.connection.url>
-    <orm.connection.username>test</orm.connection.username>
-    <orm.connection.password>test</orm.connection.password>
-    <orm.defaultSchema>orm</orm.defaultSchema>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>ru.circumflex</groupId>
@@ -30,35 +24,18 @@
       <version>2.1</version>
     </dependency>
     <dependency>
-      <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-cache</artifactId>
-      <version>2.1</version>
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>ehcache-core</artifactId>
+      <version>2.4.4</version>
     </dependency>
     <dependency>
-      <groupId>c3p0</groupId>
-      <artifactId>c3p0</artifactId>
-      <version>0.9.1.2</version>
-    </dependency>
-    <!-- Testing -->
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <version>1.2.142</version>
-      <scope>test</scope>
+      <groupId>javax.transaction</groupId>
+      <artifactId>jta</artifactId>
+      <version>1.1</version>
     </dependency>
   </dependencies>
 
   <build>
-    <testResources>
-      <testResource>
-        <directory>src/test/resources</directory>
-        <filtering>true</filtering>
-        <includes>
-          <include>**/*.properties</include>
-          <include>**/*.xml</include>
-        </includes>
-      </testResource>
-    </testResources>
     <plugins>
       <plugin>
         <groupId>org.scala-tools</groupId>

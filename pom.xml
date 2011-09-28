@@ -16,6 +16,7 @@
 
   <modules>
     <module>circumflex-core</module>
+    <module>circumflex-cache</module>
     <module>circumflex-web</module>
     <module>circumflex-orm</module>
     <module>circumflex-markeven</module>
