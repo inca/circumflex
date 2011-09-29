@@ -122,6 +122,7 @@ package object web {
     def -=(key: String): this.type = this
     def iterator: Iterator[(String, String)] = ctx.iterator.flatMap(p => p._2 match {
       case m: MatchResult => m.params.iterator
+      case s: String => Seq(p._1 -> s).iterator
       case _ => Iterator.empty
     }) ++ request.params.iterator
     def get(key: String): Option[String] = iterator.find(_._1 == key).map(_._2)
