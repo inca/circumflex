@@ -35,6 +35,11 @@ trait Projection[T] extends SQLable {
   override def toString = toSql
 }
 
+object Projection {
+  implicit def toOrder(p: Projection[_]): Order =
+    new Order(p.alias, Nil)
+}
+
 trait AtomicProjection[T] extends Projection[T] {
   def sqlAliases = List(alias)
 }
