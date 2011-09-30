@@ -727,6 +727,7 @@ class MarkevenProcessor() {
     s.replaceAll(regexes.codeSpan, m => {
       val s = new StringEx(m.group(2)).trim()
       // there can be protected content inside codespans, so decode them first
+      unprotect(s)
       encodeChars(s)
       protector.addToken(s.append("</code>").prepend("<code>"))
     })

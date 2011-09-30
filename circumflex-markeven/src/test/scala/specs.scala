@@ -33,7 +33,7 @@ object MarkevenSpec extends Specification {
       "Blockquotes with code blocks" :: "Inline HTML" :: 
       "Links, inline style" :: "Links, reference style" :: "Literal quotes in titles" ::
       "Nested blockquotes" :: "Spans inside headers" :: "Em, strong, del" ::
-      "Crazy test" :: "Fenced code blocks" :: Nil
+      "Crazy test" :: "Fenced code blocks" :: "Tags inside code spans" :: Nil
 
   "MarkevenProcessor" should process {
     samples.map { s =>
