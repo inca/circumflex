@@ -11,10 +11,10 @@ import collection.JavaConversions
 trait Cache[T <: Cached] {
   private val _lock = new Object
 
-  def retrieve(key: String): Option[T]
-  def store(key: String, value: T)
-  def delete(key: String)
-  def clear()
+  protected def retrieve(key: String): Option[T]
+  protected def store(key: String, value: T)
+  protected def delete(key: String)
+  protected def clear()
   def keys: Iterable[String]
 
   def getOption[E <: T](key: String, default: => Option[E]): Option[E] =
@@ -72,19 +72,19 @@ class CacheCell[A <: Cached](val initializer: () => A) {
 
 class Ehcache[T <: Cached](val name: String) extends Cache[T] {
   val ehcache = ehcacheManager.addCacheIfAbsent(name)
-  def retrieve(key: String): Option[T] = {
+  protected def retrieve(key: String): Option[T] = {
     val e = ehcache.get(key)
     if (e == null) None
     else Some(e.getValue.asInstanceOf[T])
   }
-  def store(key: String, value: T) {
+  protected def store(key: String, value: T) {
     val e = new Element(key, value)
     ehcache.put(e)
   }
-  def delete(key: String) {
+  protected def delete(key: String) {
     ehcache.remove(key)
   }
-  def clear() {
+  protected def clear() {
     ehcache.removeAll()
   }
   def keys: Iterable[String] = JavaConversions
@@ -95,14 +95,14 @@ class Ehcache[T <: Cached](val name: String) extends Cache[T] {
 class HashCache[T <: Cached] extends Cache[T] {
   protected val _storage = new HashMap[String, T]
   def storage: HashMap[String, T] = _storage
-  def retrieve(key: String) = storage.get(key)
-  def store(key: String, value: T) {
+  protected def retrieve(key: String) = storage.get(key)
+  protected def store(key: String, value: T) {
     storage.update(key, value)
   }
-  def delete(key: String) {
+  protected def delete(key: String) {
     storage.remove(key)
   }
-  def clear() {
+  protected def clear() {
     _storage.clear()
   }
   def keys: Iterable[String] = _storage.keys
