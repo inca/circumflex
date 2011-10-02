@@ -132,6 +132,12 @@ class HorizontalRulerBlock(selector: Selector)
 class ParagraphBlock(text: StringEx, selector: Selector)
     extends Block(text, selector) {
   def element = "p"
+  override def toHtml(mp: MarkevenProcessor): StringEx = {
+    text.trim()
+    if (text.startsWith("!}") && text.length == keySize + 2) {
+      mp.unprotect(text)
+    } else super.toHtml(mp)
+  }
   override def processContent(mp: MarkevenProcessor): StringEx = mp.transform(text)
 }
 

@@ -480,18 +480,19 @@ class MarkevenProcessor() {
 
   def cleanEmptyLines(s: StringEx): StringEx = s.replaceAll(regexes.blankLines, "")
 
-  def stripLinkDefinitions(s: StringEx): StringEx = s.replaceAll(regexes.linkDefinition, m => {
-    val id = m.group(1).trim.toLowerCase
-    val url = processUrl(m.group(2))
-    var t = m.group(4)
-    val title = new StringEx(if (t == null) "" else t)
-    encodeChars(title)
-    encodeBackslashEscapes(title)
-    encodeChars(url)
-    encodeBackslashEscapes(url)
-    links += id -> new LinkDefinition(url, title)
-    ""
-  })
+  def stripLinkDefinitions(s: StringEx): StringEx = s.replaceAll(
+    regexes.linkDefinition, m => {
+      val id = m.group(1).trim.toLowerCase
+      val url = processUrl(m.group(2))
+      var t = m.group(4)
+      val title = new StringEx(if (t == null) "" else t)
+      encodeChars(title)
+      encodeBackslashEscapes(title)
+      encodeChars(url)
+      encodeBackslashEscapes(url)
+      links += id -> new LinkDefinition(url, title)
+      ""
+    })
 
   def hashHtmlBlocks(s: StringEx): StringEx =
     s.replaceIndexed(regexes.inlineHtmlBlockStart, m => {
@@ -517,15 +518,14 @@ class MarkevenProcessor() {
       }
       // add to protector and replace
       val key = protector.addToken(s.buffer.subSequence(startIdx, endIdx))
-      ("\n\n" + key + "\n\n", endIdx)
+      (key, endIdx)
     })
 
-  def hashInlineHtml(s: StringEx): StringEx = s.replaceAll(regexes.htmlTag, { m =>
-    protector.addToken(m.group(0))
-  })
+  def hashInlineHtml(s: StringEx): StringEx = s.replaceAll(regexes.htmlTag,
+    m => protector.addToken(m.group(0)))
 
-  def hashHtmlComments(s: StringEx): StringEx = s.replaceAll(regexes.htmlComment, m =>
-    "\n\n" + protector.addToken(m.group(0)) + "\n\n")
+  def hashHtmlComments(s: StringEx): StringEx = s.replaceAll(regexes.htmlComment,
+    m => protector.addToken(m.group(0)))
 
   def readBlocks(s: StringEx): Seq[Block] = {
     val result = new ListBuffer[Block]()
@@ -540,13 +540,6 @@ class MarkevenProcessor() {
     val s = chunks.next
     // strip selector if any
     val selector = stripSelector(s)
-    // assume hashed inline HTML
-    if (s.buffer.length == keySize + 2 &&
-        s.buffer.charAt(0) == '!' && s.buffer.charAt(1) == '}')
-      protector.decode(s.buffer.toString) match {
-        case Some(content) => return new InlineHtmlBlock(new StringEx(content))
-        case _ => return new ParagraphBlock(s, selector)
-      }
     // assume code block
     if (s.startsWith("    "))
       return processComplexChunk(chunks, new CodeBlock(s, selector),
