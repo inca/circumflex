@@ -558,10 +558,9 @@ class MarkevenProcessor() {
         return new CodeBlock(c, selector).fenced()
       var inside = true
       return processComplexChunk(chunks, new CodeBlock(c, selector).fenced(), { c =>
-        val chunk = unprotect(c)
         if (!inside) false
         else {
-          if (isFenceEnd(chunk))
+          if (isFenceEnd(c))
             inside = false
           true
         }

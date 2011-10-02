@@ -169,7 +169,7 @@ class CodeBlock(text: StringEx, selector: Selector)
         .append("</code></pre>")
   }
   override def processContent(mp: MarkevenProcessor): StringEx = {
-    var result = text
+    var result = mp.unprotect(text)
     if (!_fenced)
       result = result.replaceAll(regexes.outdent(4), "")
     encodeChars(result)
