@@ -275,8 +275,8 @@ class Dialect {
       result += " FROM " + q.fromClause.map(_.toSql).mkString(", ")
     if (q.whereClause != EmptyPredicate)
       result += " WHERE " + q.whereClause.toSql
-    if (q.groupByClause.size > 0)
-      result += " GROUP BY " + q.groupByClause.flatMap(_.sqlAliases).mkString(", ")
+    if (q.groupByClause != "")
+      result += " GROUP BY " + q.groupByClause
     if (q.havingClause != EmptyPredicate)
       result += " HAVING " + q.havingClause.toSql
     q.setOps.foreach {

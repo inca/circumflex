@@ -41,6 +41,7 @@ object Projection {
 }
 
 trait AtomicProjection[T] extends Projection[T] {
+  def expression: String
   def sqlAliases = List(alias)
 }
 
@@ -90,9 +91,9 @@ class FieldProjection[T, R <: Record[_, R]](
         val field: Field[T, R])
     extends AtomicProjection[T] {
 
-  def expr = ormConf.dialect.qualifyColumn(field, node.alias)
+  def expression = ormConf.dialect.qualifyColumn(field, node.alias)
 
-  def toSql = ormConf.dialect.alias(expr, alias)
+  def toSql = ormConf.dialect.alias(expression, alias)
 
   def read(rs: ResultSet) = field.read(rs, alias)
 

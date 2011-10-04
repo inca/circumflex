@@ -1,6 +1,8 @@
 package ru.circumflex
 package orm
 
+import java.sql.ResultSet
+
 /*!# Schema objects
 
 Following classes represent various database schema objects:

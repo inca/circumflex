@@ -228,7 +228,8 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
 
   // GROUP BY clause
 
-  def groupByClause: Seq[Projection[_]] = _groupBy
+  protected var _groupByClause = ""
+  def groupByClause = _groupByClause
 
   def GROUP_BY(proj: Projection[_]*): Select[T] = {
     proj.toList.foreach(p => addGroupByProjection(p))
@@ -238,10 +239,24 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
   protected def addGroupByProjection(proj: Projection[_]) {
     findProjection(projection, p => p.equals(proj)) match {
       case None =>
-        ensureProjectionAlias(proj)
-        this._groupBy ++= List(proj)
-      case Some(p) => this._groupBy ++= List(p)
+        this.appendUnaliasedGroupBy(proj)
+      case Some(p) =>
+        this.appendGroupBy(p.sqlAliases.mkString(", "))
     }
+  }
+
+  protected def appendUnaliasedGroupBy(projection: Projection[_]) {
+    projection match {
+      case ap: AtomicProjection[_] => appendGroupBy(ap.expression)
+      case cp: CompositeProjection[_] =>
+        cp.subProjections.foreach(p => appendUnaliasedGroupBy(p))
+      case _ =>
+    }
+  }
+
+  protected def appendGroupBy(expr: String) {
+    if (groupByClause == "") _groupByClause += expr
+    else _groupByClause += ", " + expr
   }
 
   protected def findProjection(projection: Projection[_],
