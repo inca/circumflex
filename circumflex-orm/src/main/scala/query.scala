@@ -173,7 +173,6 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
 
   // Commons
   protected var _distinct: Boolean = false
-  protected var _auxProjections: Seq[Projection[_]] = Nil
   protected var _relations: Seq[RelationNode[_, _]] = Nil
 
   protected var _having: Predicate = EmptyPredicate
@@ -190,7 +189,7 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
 
   // SELECT clause
 
-  override def projections = List(projection) ++ _auxProjections
+  override def projections = List(projection)
 
   def isDistinct: Boolean = _distinct
   def DISTINCT: Select[T] = {
@@ -240,7 +239,6 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
     findProjection(projection, p => p.equals(proj)) match {
       case None =>
         ensureProjectionAlias(proj)
-        this._auxProjections ++= List(proj)
         this._groupBy ++= List(proj)
       case Some(p) => this._groupBy ++= List(p)
     }
