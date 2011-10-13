@@ -21,7 +21,7 @@ object MultiDataSourceSpec extends Specification {
 
   doBeforeSpec {
     usingAll(FooDB, BarDB) { conf =>
-      DDLUnit.fromClasspath().CREATE()
+      new DDLUnit(Country).CREATE()
     }
   }
 
