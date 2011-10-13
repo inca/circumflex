@@ -29,6 +29,11 @@
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
+      <artifactId>circumflex-ftl</artifactId>
+      <version>2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-docco</artifactId>
       <version>2.1</version>
     </dependency>

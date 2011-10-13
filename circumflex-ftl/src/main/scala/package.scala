@@ -17,11 +17,17 @@ You should import this package to use Circumflex FreeMarker Helper in your appli
  */
 package object freemarker {
 
+  val FTL_LOG = new Logger("ru.circumflex.ftl")
+
   val ftlConfig: Configuration = cx.instantiate[Configuration](
     "ftl.configuration", new DefaultConfiguration)
 
   def ftl(template: String, data: Any = ctx): Nothing =
-    response.body(r => ftlConfig.getTemplate(template).process(data, r.getWriter)).flush()
+    response.body { r =>
+      ftlConfig
+          .getTemplate(template)
+          .process(data, r.getWriter)
+    }.flush()
 
   def ftl2string(template: String, root: Any = ctx): String = {
     val result = new StringWriter
