@@ -79,8 +79,9 @@ class HttpResponse(val raw: HttpServletResponse) {
     this
   }
 
-  // set encoding implicitly
+  // set encoding and content type implicitly
   encoding("UTF-8")
+  contentType("text/html")
 
   /*!## Response Body
 

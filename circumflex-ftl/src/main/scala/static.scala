@@ -72,6 +72,7 @@ class StaticHtmlGenerator(val templatesRoot: File,
         } catch {
           case e: Exception =>
             FTL_LOG.warn("Skipping " + template + " due to " + e.getClass.getSimpleName)
+            FTL_LOG.debug("Exception in static generation", e)
         }
       }
     }
