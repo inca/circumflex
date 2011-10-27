@@ -6,13 +6,13 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-scalate</artifactId>
   <packaging>jar</packaging>
-  <version>2.1</version>
+  <version>2.1.1</version>
   <name>Circumflex Scalate Helper</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>2.1</version>
+    <version>2.1.1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -20,7 +20,7 @@
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-web</artifactId>
-      <version>2.1</version>
+      <version>2.1.1</version>
     </dependency>
     <!-- Scalate -->
     <dependency>
