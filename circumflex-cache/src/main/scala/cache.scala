@@ -119,12 +119,17 @@ class ContextCache[T <: Cached](val key: String) extends HashCache[T] {
 }
 
 trait Cached extends Serializable {
-  val createdAt = new Date(System.currentTimeMillis)
+  protected var _createdAt = new Date(System.currentTimeMillis)
   CACHE_LOG.debug("Instantiated new " + this.getClass.getSimpleName)
   protected var _invalidated = false
+  def expired: Boolean
+  def createdAt = _createdAt
+  def isValid = !_invalidated && !expired
   def invalidate() {
     _invalidated = true
   }
-  def expired: Boolean
-  def isValid = !_invalidated && !expired
+  def reclaim() {
+    _createdAt = new Date(System.currentTimeMillis)
+    _invalidated = false
+  }
 }

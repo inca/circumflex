@@ -1,5 +1,11 @@
 # Circumflex Change Log
 
+## 2.1.1
+
+* Cached objects now have an option to be reclaimed: the `createdAt` is set to
+  current timestamp and the `invalidated` flag is set to false. Creation time,
+  therefore, is mutable now.
+
 ## 2.1
 
 * Migrated to Scala 2.9
