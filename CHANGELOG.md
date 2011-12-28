@@ -14,6 +14,8 @@
 
 * Markeven now has a built-in sanitizer based on [jsoup](http://jsoup.org).
 
+* Added `circumflex-xml` helper module.
+
 ## 2.1.1
 
 * Cached objects now have an option to be reclaimed: the `createdAt` is set to
