@@ -50,7 +50,7 @@
         <version>1.2</version>
         <configuration>
           <classpathScope>test</classpathScope>
-          <mainClass>ru.circumflex.markeven.GUITesterMain$</mainClass>
+          <mainClass>ru.circumflex.markeven.MarkevenTesterMain$</mainClass>
         </configuration>
       </plugin>
     </plugins>
