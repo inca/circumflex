@@ -6,7 +6,7 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-parent</artifactId>
   <packaging>pom</packaging>
-  <version>2.1.1-SNAPSHOT</version>
+  <version>3.0-SNAPSHOT</version>
   <name>Circumflex</name>
   <description>
     Circumflex is a set of software components for quick and robust application
@@ -23,12 +23,11 @@
     <module>circumflex-docco</module>
     <module>circumflex-maven-plugin</module>
     <module>circumflex-ftl</module>
-    <module>circumflex-scalate</module>
     <module>circumflex-archetype</module>
   </modules>
 
   <properties>
-    <scala.version>2.9.0-1</scala.version>
+    <scala.version>2.9.1</scala.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -65,8 +64,8 @@
     </dependency>
     <dependency>
       <groupId>org.scala-tools.testing</groupId>
-      <artifactId>specs_2.9.0-1</artifactId>
-      <version>1.6.8</version>
+      <artifactId>specs_2.9.1</artifactId>
+      <version>1.6.9</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -126,7 +125,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.4</version>
+              <version>1.7</version>
               <executions>
                 <execution>
                   <id>scaladocs-jar</id>
@@ -191,6 +190,13 @@
             <scalaVersion>${scala.version}</scalaVersion>
             <useFsc>true</useFsc>
           </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.scala-lang</groupId>
+              <artifactId>jline</artifactId>
+              <version>${scala.version}</version>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -204,7 +210,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>2.1.1</version>
+          <version>2.1.2</version>
           <executions>
             <execution>
               <id>sources</id>
@@ -250,11 +256,6 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.0-beta-7</version>
-      </plugin>
     </plugins>
   </build>
 
@@ -264,7 +265,7 @@
       <name>Boris Okunskiy</name>
       <email>incarnate@whiteants.net</email>
       <organization>wbt</organization>
-      <timezone>+3</timezone>
+      <timezone>+4</timezone>
       <roles>
         <role>founder</role>
         <role>committer</role>
@@ -275,7 +276,7 @@
       <name>Stanislav Lakhtin</name>
       <email>sl@whiteants.net</email>
       <organization>wbt</organization>
-      <timezone>+3</timezone>
+      <timezone>+4</timezone>
       <roles>
         <role>project director</role>
       </roles>
@@ -285,9 +286,19 @@
       <name>Vasily Polovnyov</name>
       <email>vazilla@gmail.com</email>
       <organization>wbt</organization>
-      <timezone>+3</timezone>
+      <timezone>+4</timezone>
       <roles>
-        <role>steering committee</role>
+        <role>committer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>ryuugan</id>
+      <name>Valery Aligorsky</name>
+      <email>stdammit@gmail.com</email>
+      <organization>wbt</organization>
+      <timezone>+4</timezone>
+      <roles>
+        <role>committer</role>
       </roles>
     </developer>
   </developers>
@@ -301,7 +312,7 @@
 
   <licenses>
     <license>
-      <name>BSD-like Circumflex License</name>
+      <name>Circumflex License (BSD-like)</name>
       <distribution>repo</distribution>
       <url>http://circumflex.ru/license.html</url>
     </license>

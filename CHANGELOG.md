@@ -1,5 +1,12 @@
 # Circumflex Change Log
 
+## 3.0
+
+* Experimental integration with Scalate is no longer supported by Circumflex community
+  (`circumflex-scalate` module removed from repository). Scalate can be as easily
+  integrated into Circumflex application by invoking `ServletRenderContext.view`
+  (or whatever else method you find suitable) from any route.
+
 ## 2.1.1
 
 * Cached objects now have an option to be reclaimed: the `createdAt` is set to
