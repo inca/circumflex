@@ -12,8 +12,6 @@
 * Total rewrite to Circumflex Markeven yielding about x15 performance, more strict
   ruleset and lesser memory footprint.
 
-* Markeven now has a built-in sanitizer based on [jsoup](http://jsoup.org).
-
 * Added `circumflex-xml` helper module.
 
 ## 2.1.1

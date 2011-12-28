@@ -7,7 +7,6 @@ import java.awt._
 import javax.swing.event._
 import java.awt.event._
 import java.io.StringWriter
-import org.jsoup.parser.Parser
 
 object MarkevenTesterMain extends App {
   new MarkevenTester().setVisible(true)
@@ -29,9 +28,7 @@ class MarkevenTester extends JFrame {
       }
       val s = r._2
       if (showHtml.isSelected) {
-        val doc = Parser.parseBodyFragmentRelaxed(s, "")
-        doc.outputSettings.prettyPrint(true)
-        out.setText("<html><body>" + doc.body.html + "</body></html>")
+        out.setText("<html><body>" + s + "</body></html>")
         out.setContentType("text/html")
       } else {
         out.setText(s)
