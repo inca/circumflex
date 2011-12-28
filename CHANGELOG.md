@@ -2,10 +2,17 @@
 
 ## 3.0
 
+* Compiled against Scala 2.9.1.
+
 * Experimental integration with Scalate is no longer supported by Circumflex community
   (`circumflex-scalate` module removed from repository). Scalate can be as easily
   integrated into Circumflex application by invoking `ServletRenderContext.view`
   (or whatever else method you find suitable) from any route.
+
+* Total rewrite to Circumflex Markeven yielding about x15 performance, more strict
+  ruleset and lesser memory footprint.
+
+* Markeven now has a built-in sanitizer based on [jsoup](http://jsoup.org).
 
 ## 2.1.1
 

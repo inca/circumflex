@@ -1,8 +1,8 @@
 package ru.circumflex
 package freemarker
 
-import core._
-import web._
+import core._, web._
+import markeven.BlockProcessor
 import _root_.freemarker.template._
 import _root_.freemarker.core.Environment
 import _root_.freemarker.cache._
@@ -63,6 +63,6 @@ object MarkevenDirective extends TemplateDirectiveModel {
               body: TemplateDirectiveBody) {
     val nested = new StringWriter
     body.render(nested)
-    env.getOut.write(markeven.toHtml(nested.toString))
+    new BlockProcessor(env.getOut, markeven.conf).process(nested.toString)
   }
 }

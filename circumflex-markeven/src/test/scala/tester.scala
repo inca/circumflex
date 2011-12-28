@@ -1,17 +1,19 @@
 package ru.circumflex
 package markeven
 
+import core._
 import javax.swing._
 import java.awt._
 import javax.swing.event._
 import java.awt.event._
-import core._
+import java.io.StringWriter
+import org.jsoup.parser.Parser
 
-object GUITesterMain extends Application {
-  new GUITester().setVisible(true)
+object MarkevenTesterMain extends App {
+  new MarkevenTester().setVisible(true)
 }
 
-class GUITester extends JFrame {
+class MarkevenTester extends JFrame {
   val showHtml = new JCheckBox
   val metrics = new JLabel
   val src = new JEditorPane
@@ -19,10 +21,17 @@ class GUITester extends JFrame {
   src.setFont(new Font("Monospaced", Font.PLAIN, 12))
   src.getDocument.addDocumentListener(new DocumentListener() {
     def process(e: DocumentEvent) {
-      val r = time(new MarkevenProcessor().toHtml(src.getText))
+      val r = time {
+        val w = new StringWriter
+        val processor = new BlockProcessor(w)
+        processor.process(src.getText)
+        w.toString
+      }
       val s = r._2
       if (showHtml.isSelected) {
-        out.setText("<html><body>" + s + "</body></html>")
+        val doc = Parser.parseBodyFragmentRelaxed(s, "")
+        doc.outputSettings.prettyPrint(true)
+        out.setText("<html><body>" + doc.body.html + "</body></html>")
         out.setContentType("text/html")
       } else {
         out.setText(s)
@@ -65,4 +74,5 @@ class GUITester extends JFrame {
   setSize(800, 600)
   setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
   add(splitPane)
+  setTitle("Markeven Tester")
 }
