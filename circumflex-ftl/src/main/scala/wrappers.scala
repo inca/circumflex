@@ -24,6 +24,7 @@ class ScalaObjectWrapper extends ObjectWrapper {
     // Scala base types
     case xml: NodeSeq => new ScalaXmlWrapper(xml, this)
     case seq: Seq[Any] => new ScalaSeqWrapper(seq, this)
+    case array: Array[Any] => new ScalaArrayWrapper(array, this)
     case map: Map[Any, Any] => new ScalaMapWrapper(map, this)
     case it: Iterable[Any] => new ScalaIterableWrapper(it, this)
     case it: Iterator[Any] => new ScalaIteratorWrapper(it, this)
@@ -46,6 +47,12 @@ class ScalaSeqWrapper[T](val seq: Seq[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(seq, wrapper) with TemplateSequenceModel {
   def get(index: Int) = wrapper.wrap(seq(index))
   def size = seq.size
+}
+
+class ScalaArrayWrapper[T](val array: Array[T], wrapper: ObjectWrapper)
+    extends ScalaBaseWrapper(array, wrapper) with TemplateSequenceModel {
+  def get(index: Int) = wrapper.wrap(array(index))
+  def size = array.length
 }
 
 class ScalaMapWrapper(val map: Map[Any, Any], wrapper: ObjectWrapper)

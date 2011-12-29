@@ -62,6 +62,10 @@ object CircumflexFtlSpec extends Specification {
       </root>
       "XML" must beFine
     }
+    "handle arrays" in {
+      'arr := Array("one", "two", "three")
+      "Arrays" must beFine
+    }
   }
 
 }
