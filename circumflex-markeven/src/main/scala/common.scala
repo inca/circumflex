@@ -15,8 +15,8 @@ object const {
   val htmlComment = Pattern.compile("<!--.*?-->", Pattern.DOTALL)
   val backslashEscape = Pattern.compile("\\\\([\\.\\+\\*\\[\\]\\(\\)\\`\\{\\}\\_\\!\\-\\|\\~\\\\])")
   val fragment = Pattern.compile("\\{\\{([a-zA-Z0-9_-]+)\\}\\}")
-  val inlineLink = Pattern.compile("\\[(.*?)\\]\\((.*?)\\)")
-  val refLink = Pattern.compile("\\[(.*?)\\]\\[(.+?)\\]")
+  val inlineLink = Pattern.compile("\\((.*?)\\)")
+  val refLink = Pattern.compile("\\[(.+?)\\]")
   val selector = Pattern.compile(
     "\\{(#[a-zA-Z0-9_-]+)?((\\.[a-zA-Z0-9_-]+)+)?\\}(?=[ \\t]*(?:\\n|\\r|\\Z))")
   val hr = Pattern.compile("---\\s*", Pattern.DOTALL)

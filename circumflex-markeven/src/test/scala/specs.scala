@@ -260,7 +260,7 @@ object MarkevenSpec extends Specification {
       var w = new StringWriter
       new InlineProcessor(w).process(input)
       w.toString must_== "Simple <a href=\"/url\"><em>inline</em> link</a>."
-      input = "Kinda \\[[confusing []\\(\\) now](/?a=b&c=d)]"
+      input = "Kinda \\[[confusing [\\]() now](/?a=b&c=d)]"
       w = new StringWriter
       new InlineProcessor(w).process(input)
       w.toString must_== "Kinda [<a href=\"/?a=b&amp;c=d\">confusing []() now</a>]"
@@ -279,6 +279,14 @@ object MarkevenSpec extends Specification {
           "title=\"EduArea &amp; Friends\">A &amp; B</a>\n" +
           "<a href=\"http://circumflex.ru\">Lookup <code>&lt;a&gt;</code> in book</a>\n" +
           "<img src=\"http://eduarea.com/img/acorn.png\" title=\"EduArea Acorn Logo\" alt=\"\"/>"
+    }
+    "process mixed inline-reference links" in {
+      val input = "[A & B](ea)\n[Lookup `<a>` in book][cx]\n[](acorn)"
+      val w = new StringWriter
+      new InlineProcessor(w, testConf).process(input)
+      w.toString must_== "<a href=\"ea\">A &amp; B</a>\n" +
+          "<a href=\"http://circumflex.ru\">Lookup <code>&lt;a&gt;</code> in book</a>\n" +
+          "<a href=\"acorn\"></a>"
     }
     "process headless links" in {
       val input = "Headless link to [[ea]]"

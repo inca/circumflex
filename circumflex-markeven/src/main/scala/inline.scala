@@ -340,18 +340,29 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
   }
 
   // Resolves link definition and moves walker to the end of that definition
-  def resolveLinkDef(walk: Walker, media: Boolean): Option[(String, LinkDef)] =
+  def resolveLinkDef(walk: Walker, media: Boolean): Option[(String, LinkDef)] = {
+    assert(walk.at("["))
+    walk.skip()
+    val startIdx = walk.position
+    while (walk.hasCurrent && !walk.at("]"))
+      if (walk.at("\\]")) walk.skip(2)
+      else walk.skip()
+    if (!walk.hasCurrent) {
+      walk.startFrom(startIdx - 1)
+      return None
+    }
+    assert(walk.at("]"))
+    val text = walk.subSequence(startIdx, walk.position).toString
+    walk.skip()
     walk.at(const.inlineLink) flatMap { m =>
       val s = m.group(0)
       walk.skip(s.length)
-      val text = m.group(1)
-      val url = m.group(2)
+      val url = m.group(1)
       Some(text -> new LinkDef(url))
     } orElse {
       walk.at(const.refLink) flatMap { m =>
         val s = m.group(0)
-        val text = m.group(1)
-        val id = m.group(2)
+        val id = m.group(1)
         val ld = if (media) conf.resolveMedia(id) else conf.resolveLink(id)
         ld match {
           case Some(linkDef) =>
@@ -360,7 +371,12 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
           case _ => None
         }
       }
+    } orElse {
+      // reset the original walker to point to initial "[" in case of any failure
+      walk.startFrom(startIdx - 1)
+      None
     }
+  }
 
   def tryTypographics(walk: Walker): Boolean = {
     if (walk.at("--")) {
