@@ -1,9 +1,9 @@
 package ru.circumflex
 package core
 
-import java.util.{Date, ResourceBundle, Locale}
 import java.text.SimpleDateFormat
 import collection.mutable.{HashMap, Map}
+import java.util.{MissingResourceException, Date, ResourceBundle, Locale}
 
 /*!# Configuration API
 
@@ -28,17 +28,35 @@ manual filtering sources and resources.
 */
 object Circumflex extends HashMap[String, Any] with UntypedContainer {
 
+  def locateBundle: Option[ResourceBundle] = try {
+    Some(ResourceBundle.getBundle(
+      "cx", Locale.getDefault, Thread.currentThread.getContextClassLoader))
+  } catch {
+    case e: MissingResourceException =>
+      CX_LOG.trace("Could not find ResourceBundle for Circumflex configuration" +
+          " using thread context class loader.")
+      try {
+        Some(ResourceBundle.getBundle("cx"))
+      } catch {
+        case e: MissingResourceException =>
+          CX_LOG.error("cx.properties not found in classpath. " +
+              "Starting with empty configuration.")
+          None
+      }
+  }
+
   // The configuration object is initialized by reading `cx.properties`.
   try {
-    val bundle = ResourceBundle.getBundle(
-      "cx", Locale.getDefault, Thread.currentThread.getContextClassLoader)
-    val keys = bundle.getKeys
-    while (keys.hasMoreElements) {
-      val k = keys.nextElement
-      this(k) = bundle.getString(k)
+    locateBundle.map { bundle =>
+      val keys = bundle.getKeys
+      while (keys.hasMoreElements) {
+        val k = keys.nextElement
+        this(k) = bundle.getString(k)
+      }
     }
   } catch {
-    case e: Exception => CX_LOG.error("Could not read configuration parameters from cx.properties.")
+    case e: Exception =>
+      CX_LOG.error("Could not read configuration parameters from cx.properties.", e)
   }
 
   override def stringPrefix = "cx"
