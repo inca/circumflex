@@ -53,7 +53,7 @@ class DefaultConfiguration extends Configuration {
       CX_LOG.warn("Not running in webapp context.")
   }
   addLoader(new ClassTemplateLoader(getClass, "/"))
-
+  addLoader(new FileTemplateLoader())
 }
 
 object MarkevenDirective extends TemplateDirectiveModel {
