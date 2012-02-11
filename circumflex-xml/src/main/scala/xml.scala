@@ -5,8 +5,8 @@ import core._, cache._
 import java.lang.reflect.Modifier
 import java.io._
 import javax.xml.stream._
-import org.apache.commons.io.FileUtils
 import collection.Iterator
+import org.apache.commons.io.{IOUtils, FileUtils}
 
 // Homegrown minimalistic XML (de)serialization library
 
@@ -117,9 +117,12 @@ trait Holder {
       readXml(it)
     }
   }
-  def saveTo(file: File) {
-    XML_LOG.trace("Saving " + getClass.getSimpleName + " instance to " + file.getCanonicalPath)
-    FileUtils.writeStringToFile(file, "<?xml version=\"1.0\"?>\n" + toXml, "UTF-8")
+  def loadFrom(is: InputStream) {
+    xml.parseStream(is) { it =>
+      XML_LOG.trace("Loading " + getClass.getSimpleName + " instance from stream.")
+      it.next()
+      readXml(it)
+    }
   }
   def loadString(string: String) {
     xml.parseString(string) { it =>
@@ -127,6 +130,15 @@ trait Holder {
       it.next()
       readXml(it)
     }
+  }
+
+  def saveTo(file: File) {
+    XML_LOG.trace("Saving " + getClass.getSimpleName + " instance to " + file.getCanonicalPath)
+    FileUtils.writeStringToFile(file, "<?xml version=\"1.0\"?>\n" + toXml, "UTF-8")
+  }
+  def saveTo(out: OutputStream) {
+    XML_LOG.trace("Saving " + getClass.getSimpleName + " instance to stream.")
+   IOUtils.write("<?xml version=\"1.0\"?>\n" + toXml, out, "UTF-8")
   }
 
   def canEqual(that: Any): Boolean = that match {
