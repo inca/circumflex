@@ -4,6 +4,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import ru.circumflex.docco.DoccoBatch;
 import ru.circumflex.core.Circumflex;
+
+import java.io.File;
 import java.util.Properties;
 
 /**
@@ -16,9 +18,18 @@ public class DoccoMojo extends AbstractCircumflexMojo {
    */
   protected String[] customResources;
 
+  /**
+   * @parameter expression="${project.build.sourceDirectory}
+   */
+  protected File sourceDirectory;
+
+  /**
+   * @parameter expression="${project.build.directory}
+   */
+  protected File buildDirectory;
+
   public void execute() throws MojoExecutionException, MojoFailureException {
     Thread.currentThread().setContextClassLoader(prepareClassLoader());
-    if (!project.isExecutionRoot()) return;
     // Configure Circumflex
     Properties props = collectProps();
     for (Object k : props.keySet()) {
@@ -32,5 +43,14 @@ public class DoccoMojo extends AbstractCircumflexMojo {
         db.addCustomResource(res);
     getLog().info("Generating docco in " + db.outputPath());
     db.generate();
+  }
+
+  @Override
+  protected Properties getDefaultProperties() {
+    Properties props = new Properties();
+    props.setProperty("docco.basePath", sourceDirectory.getParentFile().getAbsolutePath());
+    props.setProperty("docco.outputPath", new File(buildDirectory, "docco").getAbsolutePath());
+    props.setProperty("docco.filenameRegex", ".*\\.(java|scala)$");
+    return props;
   }
 }

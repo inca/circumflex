@@ -6,7 +6,7 @@ import markeven.BlockProcessor
 import _root_.freemarker.template._
 import _root_.freemarker.core.Environment
 import _root_.freemarker.cache._
-import java.io.StringWriter
+import java.io.{File, StringWriter}
 
 /*!# Default FreeMarker Configuration
 
@@ -53,7 +53,7 @@ class DefaultConfiguration extends Configuration {
       CX_LOG.warn("Not running in webapp context.")
   }
   addLoader(new ClassTemplateLoader(getClass, "/"))
-  addLoader(new FileTemplateLoader())
+  addLoader(new FileTemplateLoader(new File("/")))
 }
 
 object MarkevenDirective extends TemplateDirectiveModel {
