@@ -179,6 +179,9 @@ class DoccoBatch {
       .map(_.toString).getOrElse("/docco-batch-page.html.ftl")
   val indexTemplate: String = cx.get("docco.indexTemplate")
       .map(_.toString).getOrElse("/docco-index.html.ftl")
+  val indexFile: String = cx.get("docco.indexFile")
+    .map(_.toString).getOrElse("index.html")
+
   // Regex to filter sources
   val filenameRegex = cx.get("docco.filenameRegex").map(_.toString)
       .getOrElse(".*\\.scala$")
@@ -264,7 +267,7 @@ class DoccoBatch {
       (dirName -> filenames)
     }
     val dirs = indexMap.keys.toList.sortBy(_.toString)
-    val out = new FileWriter(new File(outputPath, "index.html"))
+    val out = new FileWriter(new File(outputPath, indexFile))
     try {
       var data = Map[String, Any]("dirs" -> dirs, "index" -> indexMap, "title" -> title)
       ftlConfig.getTemplate(indexTemplate).process(data, out)
