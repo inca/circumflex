@@ -1,6 +1,6 @@
 # Circumflex Change Log
 
-## 3.0
+## 2.2
 
 * Compiled against Scala 2.9.1.
 

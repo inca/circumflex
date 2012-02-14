@@ -39,7 +39,7 @@ is available throughout your configuration via the `filterConfig` method of the
 class CircumflexFilter extends Filter {
 
   def init(filterConfig: FilterConfig) {
-    WEB_LOG.info("Circumflex 2.1.1")
+    WEB_LOG.info("Circumflex 2.2")
     cx("cx.filterConfig") = filterConfig
   }
 
