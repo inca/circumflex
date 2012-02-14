@@ -3,28 +3,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>ru.circumflex</groupId>
+  <groupId>pro.circumflex</groupId>
   <artifactId>circumflex-parent</artifactId>
   <packaging>pom</packaging>
-  <version>2.2-SNAPSHOT</version>
-  <name>Circumflex</name>
+  <version>3.0-SNAPSHOT</version>
+  <name>Circumflex Application Framework</name>
   <description>
-    Circumflex is a set of software components for quick and robust application
-    development using Scala programming language.
+    Circumflex 3 -- full stack web application framework for Scala.
   </description>
-  <url>http://circumflex.ru</url>
+  <url>http://circumflex.pro</url>
 
   <modules>
     <module>circumflex-core</module>
-    <module>circumflex-cache</module>
-    <module>circumflex-xml</module>
-    <module>circumflex-web</module>
-    <module>circumflex-orm</module>
-    <module>circumflex-markeven</module>
-    <module>circumflex-docco</module>
-    <module>circumflex-maven-plugin</module>
-    <module>circumflex-ftl</module>
-    <module>circumflex-archetype</module>
   </modules>
 
   <properties>
@@ -38,17 +28,13 @@
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-compiler</artifactId>
       <version>${scala.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>jline</artifactId>
-      <version>${scala.version}</version>
-      <scope>test</scope>
+      <scope>provided</scope>
     </dependency>
     <!-- Logging -->
     <dependency>
@@ -58,21 +44,9 @@
     </dependency>
     <!-- Testing -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.7</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.scala-tools.testing</groupId>
-      <artifactId>specs_2.9.1</artifactId>
-      <version>1.6.9</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-lang</groupId>
-      <artifactId>commons-lang</artifactId>
-      <version>2.5</version>
+      <groupId>org.specs2</groupId>
+      <artifactId>specs2_2.9.1</artifactId>
+      <version>1.8</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -208,24 +182,24 @@
             <target>1.6</target>
           </configuration>
         </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>2.1.2</version>
-          <executions>
-            <execution>
-              <id>sources</id>
-              <phase>verify</phase>
-              <goals>
-                <goal>jar-no-fork</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
       </plugins>
     </pluginManagement>
 
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.1.2</version>
+        <executions>
+          <execution>
+            <id>sources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -302,6 +276,16 @@
         <role>committer</role>
       </roles>
     </developer>
+    <developer>
+      <id>heit</id>
+      <name>Kirill Kosinov</name>
+      <email>kirill.kosinov@gmail.com</email>
+      <organization>wbt</organization>
+      <timezone>+4</timezone>
+      <roles>
+        <role>committer</role>
+      </roles>
+    </developer>
   </developers>
 
   <scm>
@@ -315,7 +299,7 @@
     <license>
       <name>Circumflex License (BSD-like)</name>
       <distribution>repo</distribution>
-      <url>http://circumflex.ru/license.html</url>
+      <url>http://circumflex.pro/license.html</url>
     </license>
   </licenses>
 
