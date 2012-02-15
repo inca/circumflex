@@ -1,13 +1,13 @@
 package pro.circumflex
 package core
 
-import collection.Map
 import java.text.SimpleDateFormat
 import java.util.Date
 
 /*!# Key-value coercion
 
-Trait `KeyValueCoercion` mixed into any `Map[String, Any]` brings a whole bunch
+Trait `KeyValueCoercion` mixed into any key-value generic storage
+(like `Map[String, Any]`) brings a whole bunch
 of methods for quick coercion the Any-typed value to specific type.
 
 The methods are:
@@ -25,7 +25,9 @@ The methods are:
 
 */
 
-trait KeyValueCoercion extends Map[String, Any] {
+trait KeyValueCoercion {
+
+  def get(key: String): Option[_]
 
   def safeGet[T](key: String)(convert: Any => T): Option[T] =
     get(key).flatMap { v =>
@@ -101,7 +103,7 @@ class DefaultConfigurable {
 
 // Global definition
 object conf {
-  val configurable = cfg.instantiate[Configurable](
+  val configurable = cx.instantiate[Configurable](
       "myapp.configurable", new DefaultConfigurable)
 }
 
