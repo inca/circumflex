@@ -1,4 +1,5 @@
-package pro.circumflex.core
+package pro.circumflex
+package core
 
 import org.specs2.mutable.SpecificationWithJUnit
 import collection.mutable.HashMap
@@ -22,6 +23,8 @@ class KeyValueCoercionTest extends SpecificationWithJUnit {
   m += "boolean_s" -> "false"
   m += "date" -> "29.01.1988"
   m += "timestamp" -> "1988-01-29 20:16:05 +0500"
+  m += "dummy" -> "pro.circumflex.core.Dummy"
+  m += "dummy_s" -> "pro.circumflex.core.Dummy$"
 
   "KeyValueCoercion mixed into map" should {
     "coerce values to String" in {
@@ -71,6 +74,18 @@ class KeyValueCoercionTest extends SpecificationWithJUnit {
       m.getDate("str", "dd.MM.yyyy") must_== None
       m.getTimestamp("timestamp").map(_.getTime) must_==
           Some(570467765000l)
+    }
+    "instantiate an object" in {
+      // Instantiation
+      val d = m.instantiate[Dummy]("dummy", Dummy)
+      d.toString must_== "Simple dummy instance"
+      // Equality check
+      d must_!= m.instantiate[Dummy]("dummy", Dummy)
+      // Singleton instantiation
+      val ds = m.instantiate[Dummy]("dummy_s", Dummy)
+      Dummy must_== ds
+      // Default fallback
+      m.instantiate[Dummy]("nop", Dummy) must_== Dummy
     }
   }
 

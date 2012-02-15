@@ -38,7 +38,8 @@ trait KeyValueCoercion {
       }
     }
 
-  def getString(key: String): Option[String] = get(key).map(_.toString)
+  def getString(key: String): Option[String] =
+    get(key).map(_.toString)
 
   def getInt(key: String): Option[Int] =
     safeGet(key) { _.toString.toInt }
@@ -72,14 +73,6 @@ trait KeyValueCoercion {
 
   def getTimestamp(key: String): Option[Date] =
     getDate(key, "yyyy-MM-dd HH:mm:ss Z")
-
-  def instantiate[C](name: String, default: => C): C = get(name) match {
-    case Some(instance: C) => instance
-    case Some(c: Class[C]) => _instantiate[C](name, c)
-    case Some(s: String) if (s.trim() != "") =>
-      _instantiate[C](name, Class.forName(s.trim()))
-    case v => default
-  }
 
   /*!## Dependency Injection
 
@@ -130,6 +123,14 @@ myapp.configurable=com.myapp.impl.CustomConfigurable
 This mechanism is used by Circumflex in places, which are designed to be
 configurable.
   */
+
+  def instantiate[C](name: String, default: => C): C = get(name) match {
+    case Some(c: Class[C]) => _instantiate[C](name, c)
+    case Some(s: String) if (s.trim() != "") =>
+      _instantiate[C](name, Class.forName(s.trim()))
+    case v => default
+  }
+
   protected def _instantiate[C](name: String, c: Class[_]): C = try {
     c.getField("MODULE$").get(null).asInstanceOf[C]
   } catch {
