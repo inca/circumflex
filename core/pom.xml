@@ -4,7 +4,7 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>pro.circumflex</groupId>
-  <artifactId>circumflex-core</artifactId>
+  <artifactId>core</artifactId>
   <packaging>jar</packaging>
   <version>3.0-SNAPSHOT</version>
   <name>Circumflex Core</name>
@@ -12,8 +12,8 @@
     used by other modules.</description>
 
   <parent>
-    <groupId>ru.circumflex</groupId>
-    <artifactId>circumflex-parent</artifactId>
+    <groupId>pro.circumflex</groupId>
+    <artifactId>circumflex</artifactId>
     <version>3.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
