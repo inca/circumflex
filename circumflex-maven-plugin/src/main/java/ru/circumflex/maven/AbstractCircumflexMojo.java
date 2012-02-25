@@ -75,12 +75,18 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
 
   protected Properties collectProps() {
     Properties result = new Properties();
+    copyProps(getDefaultProperties(), result);
     copyProps(project.getProperties(), result);
     copyProps(System.getProperties(), result);
     return result;
   }
 
-  private void copyProps(Properties src, Properties dst) {
+    protected Properties getDefaultProperties()
+    {
+        return new Properties();
+    }
+
+    private void copyProps(Properties src, Properties dst) {
     for (Object key : src.keySet()) {
       String value = src.get(key).toString().trim();
       if (skipUnresolved && value.matches(".*\\$\\{.*\\}.*")) {
