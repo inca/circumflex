@@ -1,7 +1,6 @@
 package ru.circumflex
 package core
 
-import java.util.Date
 import collection.mutable.{ListBuffer, HashMap}
 
 /*!# Context API
@@ -19,7 +18,7 @@ lifecycle. For example, [Circumflex Web Framework](http://circumflex.ru/projects
 takes care of context initialization and finalization inside `CircumflexFilter`.
 See [Context Lifecycle](#lifecycle) for more information.
 
-Circumflex context also extends `UntypedContainer` so you may access instantiation
+Circumflex context also extends `KeyValueCoercion` so you may access instantiation
 fancies as well as coercing parameters to expected types.
 
 # Context Lifecycle {#lifecycle}
@@ -35,7 +34,7 @@ Context is initialized when it is first accessed via `Context.get` method.
 You can override default context implementation by setting `cx.context`
 configuration parameter.
 */
-class Context extends HashMap[String, Any] with UntypedContainer {
+class Context extends HashMap[String, Any] with KeyValueCoercion {
   override def stringPrefix = "ctx"
 }
 
@@ -101,38 +100,15 @@ object Context {
 Circumflex enables you to use Scala `Symbol` to access and set context variables in a DSL
 fashion.
 
-Following syntaxes are available for accessing context variables:
-
-    'key.apply[T]                // T                                           {.scala}
-    'key.get[T]                  // Option[T]
-    'key.getOrElse(default: T)   // T
-
 Following syntaxes are available for setting context variables:
 
     'key := value                                                               {.scala}
-    'key.update(value)
 
 The implicit conversions from `Symbol` into `ContextVarHelper` are available in the
 `ru.circumflex.core` package.
 */
 class ContextVarHelper(val sym: Symbol) {
-  val key = sym.name
-  def apply[T]: T = ctx.as[T](key)
-  def get[T]: Option[T] = ctx.getAs[T](key)
-  def getOrElse[T >: Any](default: T): T = ctx.getOrElse[T](key, default)
-  def getString(key: String): String = getOrElse(key, "").toString
-  def getString: String = ctx.getString(key)
-  def getBoolean: Boolean = ctx.getBoolean(key)
-  def getInt: Int = ctx.getInt(key)
-  def getLong: Long = ctx.getLong(key)
-  def getDouble: Double = ctx.getDouble(key)
-  def getDate(pattern: String): Date = ctx.getDate(key, pattern)
-
-  def update(value: Any) {
-    ctx.update(key, value)
-  }
   def :=(value: Any) {
-    update(value)
+    ctx.update(sym.name, value)
   }
-
 }

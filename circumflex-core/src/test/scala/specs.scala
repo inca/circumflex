@@ -77,17 +77,7 @@ object CircumflexCoreSpec extends Specification {
     }
     "provide DSL for setting and getting context variables" in {
       'test := "preved"
-      'test.get must_== Some("preved")
-    }
-    "provide untyped container functionality" in {
-      'dummy := DefaultDummy
-      'dummy.apply[Dummy].uuid must_== DefaultDummy.uuid
-      'testInt := "0"
-      'testInt.getInt must_== 0
-      'testBoolean := "false"
-      'testBoolean.getBoolean must_== false
-      'testDate := "29.01.1988 +0300"
-      'testDate.getDate("dd.MM.yyyy ZZ").getTime must_== 570402000000l
+      ctx.get("test") must_== Some("preved")
     }
   }
 

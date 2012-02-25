@@ -179,7 +179,7 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   Circumflex Web Framework lets you access request attributes via the `attrs` object.
   */
-  object attrs extends Map[String, Any] with UntypedContainer {
+  object attrs extends Map[String, Any] with KeyValueCoercion {
     def +=(kv: (String, Any)): this.type = {
       raw.setAttribute(kv._1, kv._2)
       this
@@ -227,7 +227,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   if you attempt to add an attribute into it via `update` or `+` method, all other methods
   will return empty values without implicitly creating a session.
   */
-  object session extends Map[String, Any] with UntypedContainer {
+  object session extends Map[String, Any] with KeyValueCoercion {
     def +=(kv: (String, Any)): this.type = {
       raw.getSession(true).setAttribute(kv._1, kv._2)
       this
