@@ -81,6 +81,16 @@ class HttpRequest(val raw: HttpServletRequest) {
   // implicitly set request encoding to UTF-8
   raw.setCharacterEncoding("UTF-8")
 
+  // prefixes for URI matching
+
+  def prefix = raw.getContextPath + ctx.getAs[String]("cx.web.uriPrefix").getOrElse("")
+  def setPrefix(newPrefix: String) {
+    ctx.update("cx.web.uriPrefix", newPrefix)
+  }
+  def resetPrefix() {
+    ctx -= "cx.web.uriPrefix"
+  }
+
   /*!## Client & Server Information
 
   Following methods provide information about the server:

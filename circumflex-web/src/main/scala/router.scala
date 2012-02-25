@@ -1,8 +1,9 @@
 package ru.circumflex
 package web
+
 import core._
 import util.matching.Regex
-import xml.Node
+import scala.xml.Node
 
 /*!# Routing
 
@@ -22,29 +23,8 @@ Match results are stored in `Context`, you can look them up by name.
 
 Take a look at our test sources at [`circumflex-web/src/test/scala`][tests] to see routers
 in action.
-
-## A bit on trailing slashes
-
-If you write lots of RESTful code, you probably come across following routing paradigm:
-
-    any("/items/:itemId/&#42;") = Items.get(param("itemId")) map { i =>
-      subroute("/items/" + i.id) {
-        get("/?") = { ... }
-      }
-    }
-
-With code like this you would expect `/items/6` to hit the inner route,
-but it does not satisfy the outer route. In earlier versions you would have
-to forward the route `/items/:itemId` to enforce trailing slash inside subroutes.
-Since Circumflex 2.1 we made this a bit easier to you:
-we simply do not take trailing slash into consideration when matching against the
-pattern ending with `/&#42;` (a slash and an asterisk). Note that this only
-affects string patterns, regex-patterns are processed normally. This also does not
-affect patterns ending with `/+`: in this case trailing slash is required.
-
-   [tests]: http://github.com/inca/circumflex/tree/master/circumflex-web/src/test/scala/
 */
-class Router(var prefix: String = "") {
+class Router {
 
   implicit def string2response(str: String): RouteResponse =
     new RouteResponse(str)
@@ -56,18 +36,10 @@ class Router(var prefix: String = "") {
   implicit def router2response(router: Router): RouteResponse =
     sendError(404)
 
-  implicit def string2uriMatcher(str: String): RegexMatcher = {
-    var _uri = request.uri
-    var pattern = servletContext.getContextPath + prefix + str
-    if (str.endsWith("/*")) {
-      _uri += "/"
-      pattern += "/?"
-    }
-    new RegexMatcher("uri", _uri, pattern)
-  }
-  implicit def regex2uriMatcher(regex: Regex): RegexMatcher =
-    new RegexMatcher("uri", request.uri,
-      new Regex(servletContext.getContextPath + prefix + regex.toString))
+  implicit def string2uriMatcher(str: String): UriMatcher =
+    new UriMatcher(request.prefix + str)
+  implicit def regex2uriMatcher(regex: Regex): UriMatcher =
+    new UriMatcher(new Regex(request.prefix + regex.toString))
 
   // Routes
   val get = new Route("get", "head")
@@ -115,41 +87,34 @@ class Router(var prefix: String = "") {
   /*!## Subroutes
 
   Subroutes represent an easy and powerful concept which allows nesting
-  routes inside each other without creating additional routers.
+  routes inside each other without creating additional routers or repeating
+  URI prefixes in matchers.
 
   Consider the following example:
 
-      class UsersRouter extends Router("/users") {
-        get("/") = "list all users"
-        any("/:userId/+") = User.get(param("userId")) match {
-          case Some(u: User) => subroute("/" + u.id()) {
-            // continue matching with prefix "/users/:userId"
-            get("/profile") = "Profile of user #" + u.id()
-            get("/accounts") = "Accounts of user #" + u.id()
-            // ...
+      class UsersRouter extends Router {
+
+        sub("/users") = {
+          get("/?") = "list all users"
+          sub("/:userId") = User.get(param("userId")) match {
+            case Some(u: User) =>
+              // continue matching with prefix "/users/:userId"
+              get("/profile") = "Profile of user #" + u.id()
+              get("/accounts") = "Accounts of user #" + u.id()
+              // ...
+            case _ => sendError(404)
           }
-          case _ => sendError(404)
         }
       }
-
-  When entering `subroute`, specified `newPrefix` is appended to current prefix
-  and specified `block` gets executed. All routes inside this block will be matched
-  with respect to this new prefix. If no routes match inside specified `block`,
-  `404 NOT FOUND` is sent.
   */
-  def subroute(newPrefix: String)(block: => Unit): Nothing = {
-    prefix += newPrefix
-    block
-    sendError(404)
-  }
-
+  val sub = new SubRoute
 }
 
 trait RoutingContext[-T] {
   def matches: Boolean
   protected def dispatch(block: => T)
   def and: RoutingContext[T] = if (matches) this else NopRoute
-  def apply(matcher: Matcher): RoutingContext[T] = matcher.apply() match {
+  def apply(matcher: Matcher): RoutingContext[T] = matcher.apply match {
     case Some(matchResults) if matches =>
       matchResults.foreach(m => ctx.update(m.name, m))
       this
@@ -185,6 +150,16 @@ class RewriteRoute extends RoutingContext[String] {
   protected def dispatch(block: => String) {
     val newUri = block
     ctx.update("cx.web.uri", newUri)
+  }
+}
+
+class SubRoute extends Route("*") {
+  override def apply(matcher: Matcher) = matcher.matchPrefix match {
+    case Some((p, matchResults)) if matches =>
+      request.setPrefix(p)
+      matchResults.foreach(m => ctx.update(m.name, m))
+      new Route("*")
+    case _ => NopRoute
   }
 }
 

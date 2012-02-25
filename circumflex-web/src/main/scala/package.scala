@@ -215,7 +215,7 @@ package object web {
 
       import ru.circumflex.web.{matchers => m}
 
-      get("/" & m.ACCEPT(":mime")) = "You are accepting " + param("mime")
+      get("/").and(m.ACCEPT(":mime")) = "You are accepting " + param("mime")
   */
   object matchers {
     val ACCEPT = new HeaderMatcherHelper("Accept")

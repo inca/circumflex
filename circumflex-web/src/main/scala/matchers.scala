@@ -6,13 +6,14 @@ import collection.Iterator
 
 /*!# Matchers
 
-The `Matcher` trait and the `MatchResult` class are the cornerstone of request routing.
+The `MatchResult` and `Matcher` are the cornerstone of request routing.
 
 Matchers define mechanisms which perform request matching. They yield zero or more
 match results on successful match and are used in routes definition.
 
 Match results are subsequently used inside matched route's block.
 */
+
 /*!## Match Results
 
 The results of matching contain information about successful match. The `name` reflects
@@ -43,44 +44,9 @@ class MatchResult(val name: String,
   override def toString() = apply(0)
 }
 
-/*! Matchers can be composed together using the `&` method. The `CompositeMatcher` will
-only yield match results if all it's matchers succeed.*/
-trait Matcher {
-  def apply(): Option[Seq[MatchResult]]
-  def add(matcher: Matcher): CompositeMatcher
-  def &(matcher: Matcher) = add(matcher)
-}
+/*!## Matcher
 
-trait AtomicMatcher extends Matcher {
-  def name: String
-  def add(matcher: Matcher) = new CompositeMatcher()
-      .add(this)
-      .add(matcher)
-}
-
-class CompositeMatcher extends Matcher {
-  private var _matchers: Seq[Matcher] = Nil
-  def matchers = _matchers
-  def add(matcher: Matcher): CompositeMatcher = {
-    _matchers ++= List(matcher)
-    this
-  }
-  def apply() = try {
-    val matches = _matchers.flatMap(_.apply() match {
-      case Some(matches: Seq[MatchResult]) => matches
-      case _ => throw new MatchError
-    })
-    if (matches.size > 0) Some(matches)
-    else None
-  } catch {
-    case e: MatchError => None
-  }
-}
-
-/*!## The `RegexMatcher`
-
-The `RegexMatcher` is designed to provide common request matching functionality to all
-matchers.
+The `Matcher` is designed to provide common request matching functionality.
 
 It can be used either with regular expressions or with String expressions.
 
@@ -94,9 +60,9 @@ When using String expressions, following processing occurs:
   * the named parameters like ":param" are recognized within the expression; they
   are transformed into reluctant regex groups `([^/?&#.]+?)` which match any
   characters except `/`, `?`, `?`, `&`, `#` and `.`;
-  * all occurences of the `*` character is replaced with reluctant groups `(.*?)`
+  * all occurrences of the `*` character are replaced with reluctant groups `(.*?)`
   which match zero or more characters;
-  * all occurences of the `+` character is replaced with reluctant groups `(.+?)`
+  * all occurrences of the `+` character are replaced with reluctant groups `(.+?)`
   which match one or more characters;
   * `?` remains the same and indicates that the preceding character is optional
   for matching (for example, `get("/files/?")` matches both `/files` and `/files/`
@@ -107,10 +73,11 @@ the corresponding `MatchResult`. All other parameters are accessible via the `pa
 method (note that named parameters are groups too, so they appear inside `params`
 and have their index as well).
 */
-class RegexMatcher(val name: String,
-                   val value: String,
-                   protected var regex: Regex,
-                   protected var groupNames: Seq[String] = Nil) extends AtomicMatcher {
+class Matcher(val name: String,
+              val value: String,
+              protected var regex: Regex,
+              protected var groupNames: Seq[String] = Nil) {
+
   def this(name: String, value: String, pattern: String) = {
     this(name, value, null, Nil)
     processPattern(pattern)
@@ -131,20 +98,37 @@ class RegexMatcher(val name: String,
   def groupName(index: Int): String=
     if (groupNames.indices.contains(index)) groupNames(index)
     else "splat"
-  def apply(): Option[Seq[MatchResult]] = {
+
+  def apply: Option[Seq[MatchResult]] = {
     val m = regex.pattern.matcher(value)
     if (m.matches) {
       val matches = (0 to m.groupCount).map(i => groupName(i) -> m.group(i))
       Some(List(new MatchResult(name, matches: _*)))
     } else None
   }
+
+  def matchPrefix: Option[(String, Seq[MatchResult])] = {
+    val m = regex.pattern.matcher(value)
+    if (m.lookingAt) {
+      val matches = (0 to m.groupCount).map(i => groupName(i) -> m.group(i))
+      Some(value.substring(m.start, m.end) -> Seq(new MatchResult(name, matches: _*)))
+    } else None
+  }
+}
+
+class UriMatcher(regex: Regex, groupNames: Seq[String] = Nil)
+    extends Matcher("uri", request.uri, regex, groupNames) {
+
+  def this(pattern: String) = {
+    this(null, Nil)
+    processPattern(pattern)
+  }
+
 }
 
 /*! `HeaderMatcher` is used to match the requests by contents of their headers. */
-class HeaderMatcher(name: String,
-                    regex: Regex,
-                    groupNames: Seq[String] = Nil)
-    extends RegexMatcher(name, request.headers.getOrElse(name,""), regex, groupNames) {
+class HeaderMatcher(name: String, regex: Regex, groupNames: Seq[String] = Nil)
+    extends Matcher(name, request.headers.getOrElse(name,""), regex, Nil) {
   def this(name: String, pattern: String) = {
     this(name, null, Nil)
     processPattern(pattern)
@@ -154,7 +138,6 @@ class HeaderMatcher(name: String,
 /*! `HeaderMatcherHelper` provides DSL for matching requests by headers. See `matchers` object
 in package `ru.circumflex.web` for more information. */
 class HeaderMatcherHelper(name: String) {
-  def apply(regex: Regex, groupNames: Seq[String] = Nil) =
-    new HeaderMatcher(name, regex, groupNames)
+  def apply(regex: Regex) = new HeaderMatcher(name, regex, Nil)
   def apply(pattern: String) = new HeaderMatcher(name, pattern)
 }

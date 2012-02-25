@@ -19,7 +19,7 @@ class MockRouter extends Router {
   get("/error") = error(503)
   get("/redirect") = redirect("/")
 
-  any("/sub/*") = new SubMockRouter
+  sub("/sub") = new SubMockRouter
 
   var counter = 0
 
@@ -29,24 +29,23 @@ class MockRouter extends Router {
 
   get("/filter") = counter.toString
 
-  new MatchingMockRouter
+  sub("/matching") = new MatchingMockRouter
 }
 
-class SubMockRouter extends Router("/sub") {
-  get("/") = "preved"
+class SubMockRouter extends Router {
+  get("/?") = "preved"
 }
 
-class MatchingMockRouter extends Router("/matching") {
+class MatchingMockRouter extends Router {
   get("/uri/:name.:ext") = uri("name") + "->" + uri("ext")
   get("/uri/:name") = "preved, " + uri("name")
   get("/uri/*/one/:two/+.:three") = uri(1) + uri("two") + uri(3) + uri("three")
 
-  get("/param" & HOST(":host")) = "" +
-      "host is " + param("host")
+  get("/param").and(HOST(":host")) = "host is " + param("host")
 
-  get("/composite" & ACCEPT("text/:format") & REFERER("localhost")) =
+  get("/composite").and(ACCEPT("text/:format")).and(REFERER("localhost")) =
       "3 conditions met (" + param("format") + ")"
-  get("/composite" & ACCEPT("text/:format")) =
+  get("/composite").and(ACCEPT("text/:format")) =
       "2 conditions met (" + param("format") + ")"
   get("/composite") = "1 condition met"
 
