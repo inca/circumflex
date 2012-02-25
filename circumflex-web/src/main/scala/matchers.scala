@@ -58,7 +58,7 @@ When using String expressions, following processing occurs:
   * the characters `.`, `(` and `)` are escaped so that they are not mistreated by
   regex engine;
   * the named parameters like ":param" are recognized within the expression; they
-  are transformed into reluctant regex groups `([^/?&#.]+?)` which match any
+  are transformed into greedy regex groups `([^/?&#.]+)` which match any
   characters except `/`, `?`, `?`, `&`, `#` and `.`;
   * all occurrences of the `*` character are replaced with reluctant groups `(.*?)`
   which match zero or more characters;
@@ -92,7 +92,7 @@ class Matcher(val name: String,
         "\\\\" + m.group(0)
       case _ =>
         groupNames ++= List(m.group(0).substring(1))
-        "([^/?#]+?)"
+        "([^/?#]+)"
     })).r
   }
   def groupName(index: Int): String=

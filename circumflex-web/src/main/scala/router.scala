@@ -26,6 +26,8 @@ in action.
 */
 class Router {
 
+  def prefix = request.prefix
+
   implicit def string2response(str: String): RouteResponse =
     new RouteResponse(str)
   implicit def xml2response(xml: Node): RouteResponse = {
@@ -37,9 +39,9 @@ class Router {
     sendError(404)
 
   implicit def string2uriMatcher(str: String): UriMatcher =
-    new UriMatcher(request.prefix + str)
+    new UriMatcher(prefix + str)
   implicit def regex2uriMatcher(regex: Regex): UriMatcher =
-    new UriMatcher(new Regex(request.prefix + regex.toString))
+    new UriMatcher(new Regex(prefix + regex.toString))
 
   // Routes
   val get = new Route("get", "head")
@@ -153,13 +155,18 @@ class RewriteRoute extends RoutingContext[String] {
   }
 }
 
-class SubRoute extends Route("*") {
+class SubRoute extends RoutingContext[Any] {
   override def apply(matcher: Matcher) = matcher.matchPrefix match {
     case Some((p, matchResults)) if matches =>
       request.setPrefix(p)
       matchResults.foreach(m => ctx.update(m.name, m))
-      new Route("*")
+      this
     case _ => NopRoute
+  }
+  def matches = true
+  protected def dispatch(block: => Any) {
+    block
+    sendError(404)
   }
 }
 
