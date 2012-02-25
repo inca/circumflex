@@ -6,6 +6,7 @@ import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import java.io._
 import java.net.URLDecoder
+import util.control.ControlThrowable
 import core._
 
 /*!# Circumflex Filter
@@ -117,17 +118,17 @@ class CircumflexFilter extends Filter {
             WEB_LOG.trace(req)
             // execute main router
             try {
-              cx.instantiate("cx.router") // ResponseSentException must be thrown
+              cx.instantiate("cx.router") // ResponseSentMarker must be thrown
               onNoMatch()
             } catch {
               case e: InvocationTargetException => e.getCause match {
-                case ex: ResponseSentException => throw ex
+                case ex: ResponseSentMarker => throw ex
                 case ex: FileNotFoundException => onNotFound(ex)
                 case ex: Exception => onRouterError(ex)
               }
             }
           } catch {
-            case e: ResponseSentException => WEB_LOG.trace(res)
+            case e: ResponseSentMarker => WEB_LOG.trace(res)
           }
         }
       case _ =>
@@ -185,3 +186,15 @@ class CircumflexFilter extends Filter {
   }
 
 }
+
+/*!## Response Sent Marker
+
+The `ResponseSentMarker` is thrown by response helpers and routes upon successful matching
+and are caught by `CircumflexFilter`. They indicate that the response has been processed
+successfully (and, possibly, already flushed to the client) and that no additional actions
+need to be taken.
+
+In general `ResponseSentMarker` should not be caught by try-catch blocks. It inherits
+from Scala's `ControlThrowable` to save some performance.
+ */
+class ResponseSentMarker extends ControlThrowable

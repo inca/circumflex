@@ -157,7 +157,7 @@ package object web {
     * `pass()` sends request and response down the filter chain and then immediately
     flushes response.
 
-  All helpers by convention throw `ResponseSentException` which is caught by
+  All helpers by convention throw `ResponseSentMarker` which is caught by
   `CircumflexFilter` to indicate that the response have been processed
   successfully.
   */

@@ -38,7 +38,7 @@ class HttpResponse(val raw: HttpServletResponse) {
       raw.flushBuffer()
     }
     // throw an exception to the container
-    throw new ResponseSentException()
+    throw new ResponseSentMarker()
   }
 
   /*!## Response Basics
