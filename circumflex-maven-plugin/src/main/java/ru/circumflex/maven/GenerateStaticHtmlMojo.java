@@ -25,14 +25,8 @@ public class GenerateStaticHtmlMojo extends AbstractCircumflexMojo {
   private File targetDir;
 
   public void execute() throws MojoExecutionException {
-    ClassLoader oldCld = Thread.currentThread().getContextClassLoader();
-    try {
-      ClassLoader cld = prepareClassLoader();
-      Thread.currentThread().setContextClassLoader(cld);
-      new StaticHtmlGenerator(templatesRoot, sourcePath, targetDir).generate();
-    } finally {
-      Thread.currentThread().setContextClassLoader(oldCld);
-    }
+    prepareClassLoader();
+    new StaticHtmlGenerator(templatesRoot, sourcePath, targetDir).generate();
   }
 
 }

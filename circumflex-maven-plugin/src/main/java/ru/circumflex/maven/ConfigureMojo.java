@@ -4,6 +4,7 @@ import java.io.File;
 
 /**
  * @goal cfg
+ * @requiresDependencyResolution complie+runtime
  */
 public class ConfigureMojo extends AbstractConfigureMojo {
 

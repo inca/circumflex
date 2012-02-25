@@ -9,6 +9,7 @@ import org.apache.maven.artifact.resolver.filter.ScopeArtifactFilter;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.classworlds.realm.ClassRealm;
 
 import java.io.File;
 import java.net.URL;
@@ -50,7 +51,7 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
    */
   protected boolean skipUnresolved;
 
-  protected ClassLoader prepareClassLoader() throws MojoExecutionException {
+  protected void prepareClassLoader() throws MojoExecutionException {
     try {
       List<URL> urls = new ArrayList<URL>();
       for (Object o : project.getRuntimeClasspathElements())
@@ -66,8 +67,12 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
           new ScopeArtifactFilter(Artifact.SCOPE_COMPILE));
       for (Object o : deps.getArtifacts())
         urls.add(((Artifact)o).getFile().toURI().toURL());
-      return URLClassLoader.newInstance(urls.toArray(new URL[urls.size()]),
-          Thread.currentThread().getContextClassLoader());
+      ClassLoader cld = URLClassLoader.newInstance(urls.toArray(new URL[urls.size()]));
+      // Inject classloader into Maven's classworlds
+      ClassRealm r = ((ClassRealm)this.getClass().getClassLoader());
+      for (URL url : urls) {
+        r.addURL(url);
+      }
     } catch (Exception e) {
       throw new MojoExecutionException("Could not prepare class loader.", e);
     }

@@ -15,6 +15,7 @@ import java.util.List;
 
 /**
  * @goal schema
+ * @requiresDependencyResolution complie+runtime
  */
 public class GenerateSchemaMojo extends AbstractCircumflexMojo {
 
@@ -46,10 +47,8 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
   private DDLUnit ddl = new DDLUnit();
 
   public void execute() throws MojoExecutionException {
-    ClassLoader oldCld = Thread.currentThread().getContextClassLoader();
+    prepareClassLoader();
     try {
-      ClassLoader cld = prepareClassLoader();
-      Thread.currentThread().setContextClassLoader(cld);
       processSchema();
       processDeployments();
     } catch (Exception e) {
@@ -58,7 +57,6 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
       if (closeConnectionProvider) {
         ddl.close();
       }
-      Thread.currentThread().setContextClassLoader(oldCld);
     }
   }
 

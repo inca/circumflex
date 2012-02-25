@@ -17,7 +17,6 @@ public class DoccoMojo extends AbstractCircumflexMojo {
   protected String[] customResources;
 
   public void execute() throws MojoExecutionException, MojoFailureException {
-    Thread.currentThread().setContextClassLoader(prepareClassLoader());
     if (!project.isExecutionRoot()) return;
     // Configure Circumflex
     Properties props = collectProps();
