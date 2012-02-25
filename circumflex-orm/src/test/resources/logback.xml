@@ -8,4 +8,5 @@
   <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>
+  <logger name="ru.circumflex.orm" level="debug"/>
 </configuration>
