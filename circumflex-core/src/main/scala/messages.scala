@@ -104,8 +104,7 @@ trait MessageResolver extends Map[String, String] {
 }
 
 class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
-  protected def bundle = ResourceBundle.getBundle(
-    bundleName, locale, Thread.currentThread.getContextClassLoader)
+  protected def bundle = ResourceBundle.getBundle(bundleName)
   def iterator: Iterator[(String, String)] = bundle.getKeys
       .map(k => (k -> bundle.getString(k)))
   protected def resolve(key: String): Option[String] =

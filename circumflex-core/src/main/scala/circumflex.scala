@@ -28,20 +28,12 @@ manual filtering sources and resources.
 object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
 
   def locateBundle: Option[ResourceBundle] = try {
-    Some(ResourceBundle.getBundle(
-      "cx", Locale.getDefault, Thread.currentThread.getContextClassLoader))
+    Some(ResourceBundle.getBundle("cx"))
   } catch {
     case e: MissingResourceException =>
-      CX_LOG.trace("Could not find ResourceBundle for Circumflex configuration" +
-          " using thread context class loader.")
-      try {
-        Some(ResourceBundle.getBundle("cx"))
-      } catch {
-        case e: MissingResourceException =>
-          CX_LOG.error("cx.properties not found in classpath. " +
-              "Starting with empty configuration.")
-          None
-      }
+      CX_LOG.error("cx.properties not found in classpath. " +
+          "Starting with empty configuration.")
+      None
   }
 
   // The configuration object is initialized by reading `cx.properties`.

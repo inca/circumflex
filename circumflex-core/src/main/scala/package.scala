@@ -20,11 +20,13 @@ package object core {
   * `cx` for accessing Circumflex configuration singleton;
   * `ctx` for accessing the context -- special key-value storage attached
     to currently executing thread;
-  * `msg` for accessing localized messages defined in `Messages.properties` (by default).
+  * `msg` for accessing localized messages defined in `Messages.properties` (by default);
+  * `transaction` for executing a block of code in new context.
   */
   val cx = Circumflex
   def ctx = Context.get()
   lazy val msg = cx.instantiate[MessageResolver]("cx.messages", new PropertyFileResolver)
+  def transaction[A](block: => A): A = Context.executeInNew(ctx => block)
 
   /*! Circumflex Core package also includes helpers for various common tasks like
   random generation of UUIDs and alphanumeric strings, converting between camelCase and

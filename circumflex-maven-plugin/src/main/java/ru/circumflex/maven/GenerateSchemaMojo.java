@@ -83,7 +83,7 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
     String pkgPath = pkg.replaceAll("\\.", "/");
     try {
       URL outputDir = new URL("file://" + project.getBuild().getOutputDirectory() + "/");
-      URL pkgUrl = Thread.currentThread().getContextClassLoader().getResource(pkgPath);
+      URL pkgUrl = getClass().getClassLoader().getResource(pkgPath);
       if (pkgUrl != null) {
         File classDir = new File(outputDir.getFile() + pkgPath);
         if (!classDir.exists()) return;
@@ -93,9 +93,7 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
                 f.getName().substring(0, f.getName().length() - ".class".length());
             // Let's ensure that anonymous objects are not processed separately.
             if (!className.matches("[^\\$]+(?:\\$$)?")) continue;
-            Class c = Thread.currentThread()
-                .getContextClassLoader()
-                .loadClass(className);
+            Class c = getClass().getClassLoader().loadClass(className);
             SchemaObject so = null;
             try {
               // Try to process it as a singleton.

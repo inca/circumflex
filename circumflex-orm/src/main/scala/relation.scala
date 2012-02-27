@@ -47,10 +47,8 @@ trait Relation[PK, R <: Record[PK, R]]
  you should override the `recordClass` method.
   */
   val _recordClass: Class[R] = Class.forName(
-    this.getClass.getName.replaceAll("\\$(?=\\Z)", ""),
-    true,
-    Thread.currentThread.getContextClassLoader
-  ).asInstanceOf[Class[R]]
+    this.getClass.getName.replaceAll("\\$(?=\\Z)", ""))
+      .asInstanceOf[Class[R]]
   def recordClass: Class[R] = _recordClass
 
   /*! By default the relation name is inferred from `recordClass` by replacing
@@ -199,8 +197,8 @@ trait Relation[PK, R <: Record[PK, R]]
 
   def copyFields(src: R, dst: R) {
     fields.foreach { f =>
-        val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
-        getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
+      val value = getField(src, f.asInstanceOf[Field[Any, R]]).value
+      getField(dst, f.asInstanceOf[Field[Any, R]]).set(value)
     }
   }
 
@@ -220,7 +218,7 @@ trait Relation[PK, R <: Record[PK, R]]
   protected var _prefetchSeq: Seq[Association[_, _, _]] = Nil
   def prefetchSeq = _prefetchSeq
   def prefetch[K, C <: Record[_, C], P <: Record[K, P]](
-        association: Association[K, C, P]): this.type = {
+                                                           association: Association[K, C, P]): this.type = {
     this._prefetchSeq ++= List(association)
     this
   }

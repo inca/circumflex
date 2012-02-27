@@ -112,7 +112,7 @@ class Deployment(val id: String,
   protected def pickClass(node: Node): Class[_] = {
     var p = ""
     if (prefix != "") p = prefix + "."
-    Class.forName(p + node.label, true, Thread.currentThread().getContextClassLoader)
+    Class.forName(p + node.label)
   }
 
   protected def setRecordField[R <: Record[_, R]](r: R, k: String, v: String) = {

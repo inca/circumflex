@@ -6,7 +6,6 @@ import java.io.File
 import java.lang.IllegalStateException
 import org.apache.commons.io.FileUtils
 import collection.JavaConversions._
-import org.apache.commons.io.filefilter.IOFileFilter
 import java.lang.reflect.Modifier
 
 /*!# Exporting Database Schema
@@ -220,9 +219,6 @@ By default, the compiled classes are being searched in `target/classes` and `tar
 directories relative to your project's root. You can override this setting using `cx.build.outputDirs`
 configuration parameter (paths are split from String using `File.pathSeparator`, i.e. colon ":" in UNIX
 and ";" in Windows).
-
-Actual resolving is performed using context class loader of current thread (obtained via
-`Thread.currentThread.getContextClassLoader`) so that you can override it in any time.
 */
 object DDLUnit {
 
@@ -233,7 +229,7 @@ object DDLUnit {
   }
 
   def fromClasspath(pkgPrefix: String = ""): DDLUnit = {
-    val loader = Thread.currentThread.getContextClassLoader
+    val loader = this.getClass.getClassLoader
     val ddl = new DDLUnit()
     for (dir <- outputDirs) {
       try {
