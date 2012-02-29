@@ -90,7 +90,7 @@ trait Configurable {
 }
 
 // Default implementation
-class DefaultConfigurable {
+class DefaultConfigurable extends Configurable {
   def doWork() {
     println("I'm finished!")
   }
