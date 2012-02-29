@@ -17,7 +17,7 @@ class Protector {
    * Generates a random hash key.
    */
   def randomKey = "!}" + (0 until keySize).foldLeft("")((s, i) =>
-    s + chars.charAt(rnd.nextInt(keySize)))
+    s + chars.charAt(rnd.nextInt(chars.length)))
 
   /**
    * Adds the specified token to hash and returns the protection key.
@@ -40,6 +40,14 @@ class Protector {
    * Returns hash keys that are currently in use.
    */
   def keys = protectHash.keys
+
+  /**
+   * Clears both hashes.
+   */
+  def clear: Unit = {
+    protectHash = Map()
+    unprotectHash = Map()
+  }
 
   override def toString = protectHash.toString
 }
@@ -129,12 +137,26 @@ class StringEx(var buffer: StringBuilder) extends CharSequence {
     return this
   }
 
+  def outdent(): this.type = replaceAll(regexes.outdent(4), "")
+
   def startsWith(cs: CharSequence): Boolean = {
     if (cs.length == 0) return true
     if (cs.length > buffer.length) return false
     var i = 0
     while (i < cs.length) {
       if (cs.charAt(i) != buffer.charAt(i))
+        return false
+      i += 1
+    }
+    return true
+  }
+
+  def endsWith(cs: CharSequence): Boolean = {
+    if (cs.length == 0) return true
+    if (cs.length > buffer.length) return false
+    var i = 1
+    while (i <= cs.length) {
+      if (cs.charAt(cs.length - i) != buffer.charAt(buffer.length - i))
         return false
       i += 1
     }
@@ -149,10 +171,25 @@ class StringEx(var buffer: StringBuilder) extends CharSequence {
 
   def trimLeft(): Int = {
     var i = 0
-    while ((i < buffer.length) && (buffer.charAt(i) <= ' ')) i += 1
+    while ((i < buffer.length) && (buffer.charAt(i) <= ' '))
+      i += 1
     if (i > 0)
       buffer.delete(0, i)
     return i
+  }
+  
+  def trimRight(): Int = {
+    var i = 0
+    while ((i < buffer.length) && (buffer.charAt(buffer.length - i - 1) <= ' '))
+      i += 1
+    if (i > 0) buffer.delete(buffer.length - i, buffer.length)
+    return i
+  }
+
+  def trim(): this.type = {
+    trimLeft
+    trimRight
+    return this
   }
 
   def matches(pattern: Pattern): Boolean =
@@ -174,4 +211,20 @@ class StringEx(var buffer: StringBuilder) extends CharSequence {
 
   override def toString = buffer.toString
 
+}
+
+class ChunkIterator(val chunks: Seq[StringEx]) {
+  private var index = -1
+  def hasNext: Boolean = (index + 1) < chunks.length
+  def next: StringEx = {
+    index += 1
+    return chunks(index)
+  }
+  def peek: StringEx = chunks(index + 1)
+  def reset: this.type = {
+    index = -1
+    return this
+  }
+  def stepBack: Unit = if (index > -1) index -= 1
+  def size = chunks.size
 }

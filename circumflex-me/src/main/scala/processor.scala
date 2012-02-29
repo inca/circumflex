@@ -4,37 +4,29 @@ import java.util.regex._
 import collection.mutable.{HashMap, ListBuffer}
 import ru.circumflex.core._
 
-class Selector(val id: String = "", val classes: Seq[String] = Nil) {
-  override val toString = {
-    var result = ""
-    if (id != "") result += " id=\"" + id + "\""
-    if (classes.size > 0)
-      result += " class=\"" + classes.mkString(" ") + "\""
-    result
-  }
-}
 
-class LinkDefinition(val url: String, val title: String)
+/*!# The Markeven Processor
 
-class ChunkIterator(val chunks: Seq[StringEx]) {
-  private var index = -1
-  def hasNext: Boolean = (index + 1) < chunks.length
-  def next: StringEx = {
-    index += 1
-    return chunks(index)
-  }
-  def peek: StringEx = chunks(index + 1)
-  def reset: this.type = {
-    index = -1
-    return this
-  }
-}
+`MarkevenProcessor` transforms text files into HTML using a set of simple rules.
+It takes most ideas from [Markdown][], but has more strict rules, which lead to better
+source structure and enhanced performance.
 
+  [Markdown]: http://daringfireball.net/projects/markdown/syntax
+*/
 class MarkevenProcessor() {
 
   val protector = new Protector
   val links = new HashMap[String, LinkDefinition]()
   var level = 0
+  val macros = new HashMap[String, CharSequence => CharSequence]()
+
+  def increaseIndent: Unit = level += 1
+  def decreaseIndent: Unit = if (level > 0) level -= 1
+
+  def addMacro(name: String, function: CharSequence => CharSequence): this.type = {
+    macros += (name -> function)
+    return this
+  }
 
   def currentIndent: String =
     if (level <= 0) return ""
@@ -46,41 +38,51 @@ class MarkevenProcessor() {
   def cleanEmptyLines(s: StringEx): StringEx = s.replaceAll(regexes.blankLines, "")
 
   def stripLinkDefinitions(s: StringEx): StringEx = s.replaceAll(regexes.linkDefinition, m => {
-    val id = m.group(1).toLowerCase
-    val url = m.group(2)
-    var title = m.group(3)
-    if (title != null) title = title.replace("\"", "&quot;")
-    else title = ""
+    val id = m.group(1).trim.toLowerCase
+    val url = new StringEx(m.group(2))
+    var t = m.group(4)
+    val title = new StringEx(if (t == null) "" else t)
+    encodeChars(title)
+    encodeBackslashEscapes(title)
+    encodeChars(url)
+    encodeBackslashEscapes(url)
     links += id -> new LinkDefinition(url, title)
     ""
   })
 
-  def hashHtmlBlocks(s: StringEx): StringEx = s.replaceIndexed(regexes.inlineHtmlStart, m => {
-    var startIdx = m.start
-    var endIdx = 0
-    if (m.group(2) != null) {
-      // self-closing tag, escape as is
-      endIdx = m.end
-    } else {
-      // find end-index of matching closing tag
-      val tagName = m.group(1)
-      // following regex will have `group(1) == null` for closing tags;
-      // `group(2)` determines if a tag is self-closing.
-      val tm = Pattern.compile("(<" + tagName + "\\b.*?(/)?>)|(</" + tagName + "\\s*>)",
-        Pattern.CASE_INSENSITIVE).matcher(s.buffer)
-      var depth = 1
-      var idx = m.end
-      while (depth > 0 && idx < s.length && tm.find(idx)) {
-        if (tm.group(1) == null) depth -= 1        // closing tag
-        else if (tm.group(2) == null) depth += 1   // opening tag
-        idx = tm.end
+  def hashInlineHtml(s: StringEx, pattern: Pattern, out: String => String): StringEx =
+    s.replaceIndexed(pattern, m => {
+      var startIdx = m.start
+      var endIdx = 0
+      if (m.group(2) != null) {
+        // self-closing tag, escape as is
+        endIdx = m.end
+      } else {
+        // find end-index of matching closing tag
+        val tagName = m.group(1)
+        // following regex will have `group(1) == null` for closing tags;
+        // `group(2)` determines if a tag is self-closing.
+        val tm = Pattern.compile("(<" + tagName + "\\b.*?(/)?>)|(</" + tagName + "\\s*>)",
+          Pattern.CASE_INSENSITIVE).matcher(s.buffer)
+        var depth = 1
+        var idx = m.end
+        while (depth > 0 && idx < s.length && tm.find(idx)) {
+          if (tm.group(1) == null) depth -= 1        // closing tag
+          else if (tm.group(2) == null) depth += 1   // opening tag
+          idx = tm.end
+        }
+        endIdx = idx
       }
-      endIdx = idx
-    }
-    // add to protector and replace
-    val key = protector.addToken(s.buffer.subSequence(startIdx, endIdx))
-    ("\n\n" + key + "\n\n", endIdx)
-  })
+      // add to protector and replace
+      val key = protector.addToken(s.buffer.subSequence(startIdx, endIdx))
+      (out(key), endIdx)
+    })
+
+  def hashHtmlBlocks(s: StringEx): StringEx =
+    hashInlineHtml(s, regexes.inlineHtmlBlockStart, key => "\n\n" + key + "\n\n")
+
+  def hashHtmlComments(s: StringEx): StringEx = s.replaceAll(regexes.htmlComment, m =>
+    "\n\n" + protector.addToken(m.group(0)) + "\n\n")
 
   def readBlocks(s: StringEx): Seq[Block] = {
     val result = new ListBuffer[Block]()
@@ -103,12 +105,12 @@ class MarkevenProcessor() {
       }
     // assume code block
     if (s.matches(regexes.d_code))
-      return processComplexChunk(chunks, new CodeBlock(s, selector), c => {
-        c.matches(regexes.d_code)
-      })
+      return processComplexChunk(chunks, new CodeBlock(s, selector), c => c.matches(regexes.d_code))
     // trim any leading whitespace
     val indent = s.trimLeft
-    // assume unordered list, ordered list and definition list
+    // do not include empty freaks
+    if (s.length == 0) return EmptyBlock
+    // assume unordered list and ordered list
     if (s.startsWith("* "))
       return processComplexChunk(chunks, new UnorderedListBlock(s, selector, indent), c => {
         c.startsWith("* ") || c.startsWith(" ")
@@ -117,16 +119,12 @@ class MarkevenProcessor() {
       return processComplexChunk(chunks, new OrderedListBlock(s, selector, indent), c => {
         c.startsWith(" ") || c.matches(regexes.d_ol)
       })
-    if (s.startsWith(": "))
-      return processComplexChunk(chunks, new DefinitionListBlock(s, selector, indent), c => {
-        c.startsWith(" ") || c.startsWith(": ")
-      })
     // assume blockquote and section
     if (s.startsWith("> ")) return new BlockquoteBlock(s, selector)
     if (s.startsWith("| ")) return new SectionBlock(s, selector)
     // assume table, headings and hrs
     s.matches(regexes.d_table, m => {
-      new TableBlock(new StringEx(m.group(1)), selector)
+      new TableBlock(s, selector)
     }) orElse s.matches(regexes.d_heading, m => {
       val marker = m.group(1)
       val body = m.group(2)
@@ -184,19 +182,101 @@ class MarkevenProcessor() {
     normalize(s)
     stripLinkDefinitions(s)
     hashHtmlBlocks(s)
+    hashHtmlComments(s)
     cleanEmptyLines(s)
     val blocks = readBlocks(s)
     return formHtml(blocks)
   }
 
+  def transform(s: StringEx): StringEx = {
+    protector.clear
+    normalizeSpan(s)
+    hashInlineHtml(s, regexes.inlineHtmlSpanStart, key => key)
+    doMacros(s)
+    encodeChars(s)
+    doCodeSpans(s)
+    encodeBackslashEscapes(s)
+    doRefLinks(s)
+    doInlineLinks(s)
+    doEmphasis(s)
+    doStrong(s)
+    doDel(s)
+    return unprotect(s)
+  }
+
+  def normalizeSpan(s: StringEx): StringEx =
+    s.trim.replaceAll("  \n", "<br/>\n").replaceAll("\n", " ")
+
+  def encodeChars(s: StringEx): StringEx =
+    s.replaceAll(regexes.e_amp, "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+
+  def doMacros(s: StringEx): StringEx = s.replaceAll(regexes.macro, m => {
+    var name = m.group(1)
+    if (name == null) name = ""
+    if (name.length > 0)
+      name = name.substring(0, name.length - 1)
+    val contents = m.group(2)
+    val replacement = macros.get(name).map(f => f(contents)).getOrElse(
+      "<span class=\"" + name + "\">" + contents + "</span>")
+    protector.addToken(replacement)
+  })
+
+  def doCodeSpans(s: StringEx): Unit = s.replaceAll(regexes.codeSpan, m => {
+    val s = new StringEx(m.group(2)).trim
+    // there can be protected content inside codespans, so decode them first
+    unprotect(s)
+    encodeChars(s)
+    protector.addToken(s.append("</code>").prepend("<code>"))
+  })
+
+  def encodeBackslashEscapes(s: StringEx): StringEx = s.replaceAll(regexes.backslashChar, m => {
+    val c = m.group(0)
+    escapeMap.getOrElse(c, c)
+  })
+
+  def doRefLinks(s: StringEx): StringEx = s.replaceAll(regexes.refLinks, m => {
+    val linkText = m.group(1)
+    var id = m.group(2).trim.toLowerCase
+    if (id == "") id = linkText
+    links.get(id).map(ld => ld.toLink(linkText)).getOrElse(m.group(0))
+  })
+
+  def doInlineLinks(s: StringEx): StringEx = s.replaceAll(regexes.inlineLinks, m => {
+    val linkText = m.group(1)
+    val url = m.group(2)
+    var title = m.group(4)
+    if (title == null) title = ""
+    new LinkDefinition(new StringEx(url), new StringEx(title)).toLink(linkText)
+  })
+
+  def doEmphasis(s: StringEx): StringEx = s.replaceAll(regexes.emphasis, m =>
+    "<em>" + m.group(1) + "</em>")
+
+  def doStrong(s: StringEx): StringEx = s.replaceAll(regexes.strong, m =>
+    "<strong>" + m.group(1) + "</strong>")
+
+  def doDel(s: StringEx): StringEx = s.replaceAll(regexes.del, m =>
+    "<del>" + m.group(1) + "</del>")
+
+  def unprotect(s: StringEx): StringEx = s.replaceAll(regexes.protectKey, m => {
+    val key = m.group(0)
+    protector.decode(key).getOrElse(key)
+  })
+
   def formHtml(blocks: Seq[Block], indent: Boolean = false): StringEx = {
     val result = new StringEx("")
     if (indent) level += 1
-    blocks.foreach(b => result.append(b.toHtml(this).buffer).append("\n\n"))
+    blocks.foreach(b =>
+      if (b != EmptyBlock) result.append(b.toHtml(this).buffer).append(newLine))
     if (indent) level -= 1
     return result
   }
 
+  def newLine: String = "\n"
+
   def toHtml(cs: CharSequence): String = process(cs).toString
 
 }
+
