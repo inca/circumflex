@@ -167,9 +167,15 @@ class HttpRequest(val raw: HttpServletRequest) {
             .asInstanceOf[JEnumeration[String]]
             .map(k => (k -> raw.getHeader(k)))
     def get(key: String): Option[String] = any2option(raw.getHeader(key))
-    def getAsMillis(key: String): Option[Long] = any2option(raw.getDateHeader(key))
+    def getAsMillis(key: String): Option[Long] = {
+      val m = raw.getDateHeader(key)
+      if (m == -1) None else Some(m)
+    }
+    def getAsInt(key: String): Option[Long] = {
+      val m = raw.getIntHeader(key)
+      if (m == -1) None else Some(m)
+    }
     def getAsDate(key: String): Option[Date] = getAsMillis(key).map(new Date(_))
-    def getAsInt(key: String): Option[Long] = any2option(raw.getIntHeader(key))
   }
 
   /*!## Attributes
