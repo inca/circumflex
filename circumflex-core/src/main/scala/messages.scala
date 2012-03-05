@@ -58,7 +58,7 @@ corresponding value).
 You can use `ResourceBundleMessageResolver` to resolve messages from Java `ResourceBundle`s.
 
 The default implementation (the `msg` method in package `ru.circumflex.core`)
-uses uses property files with base name `Messages` to lookup messages. You can override
+uses property files with base name `Messages` to lookup messages. You can override
 the default implementation by setting `cx.messages` configuration parameter. Unlike Java
 `ResourceBundle` it effectively caches property files and allows hot editing (cache is
 based on last modified dates).
