@@ -17,6 +17,11 @@ Build with Maven:
     cd circumflex
     mvn clean install
 
+Or build a single module:
+
+    cd circumflex
+    mvn clean install -pl <module-name> -am
+
 ## 3. Create new project
 
 Create a new project from Circumflex Archetype:
