@@ -67,7 +67,6 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
           new ScopeArtifactFilter(Artifact.SCOPE_COMPILE));
       for (Object o : deps.getArtifacts())
         urls.add(((Artifact)o).getFile().toURI().toURL());
-      ClassLoader cld = URLClassLoader.newInstance(urls.toArray(new URL[urls.size()]));
       // Inject classloader into Maven's classworlds
       ClassRealm r = ((ClassRealm)this.getClass().getClassLoader());
       for (URL url : urls) {
