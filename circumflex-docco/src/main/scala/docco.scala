@@ -57,11 +57,13 @@ FreeMarker `Configuration` and templates.
  [1]: http://freemarker.org "FreeMarker Templating Engine"
 */
 object Docco {
-  def apply(sourceFile: String, stripScaladoc: Boolean = true): Docco =
-    new Docco(new File(sourceFile), stripScaladoc)
+  def apply(sourceFile: String, stripScaladoc: Boolean = true,
+    useScaladoc: Boolean = false): Docco = 
+  new Docco(new File(sourceFile), stripScaladoc, useScaladoc)
 }
 
-class Docco(val file: File, val stripScaladoc: Boolean = true) {
+class Docco(val file: File, val stripScaladoc: Boolean = true,
+    val useScaladoc: Boolean = false) {
 
   val pageTemplate: String = cx.get("docco.pageTemplate")
       .map(_.toString).getOrElse("/docco-single-page.html.ftl")
@@ -82,26 +84,30 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
         result ++= List(section)
       section = new Section()
     }
+    def flushSectionIfCommitted(s: String) {
+      if (section.committed)
+        flushSection()
+        section.addDoc(s)
+    }
     try {
       var str = reader.readLine
       while (str != null) {
         str match {
           case docSingleLine(s) if (!insideScaladoc) =>
-            if (section.committed)
-              flushSection()
-            section.addDoc(s)
+            flushSectionIfCommitted(s)
             insideDoc = false
           case docBegin(i, s) if (!insideScaladoc) =>
-            if (section.committed)
-              flushSection()
-            section.addDoc(s)
+            flushSectionIfCommitted(s)
             indent = i
             insideDoc = true
           case scaladocBegin(i, s) if (!insideDoc) =>
+            if (useScaladoc) flushSectionIfCommitted(s)
             insideScaladoc = true
             if (!stripScaladoc) section.addCode(str)
           case docEnd(s) =>
             if (insideDoc)
+              section.addDoc(s)
+            if (insideScaladoc && useScaladoc)
               section.addDoc(s)
             if (insideScaladoc && !stripScaladoc)
               section.addCode(str)
@@ -110,6 +116,9 @@ class Docco(val file: File, val stripScaladoc: Boolean = true) {
           case s => {
             if (insideDoc) {
               section.addDoc(s.replaceAll("^" + indent, ""))
+            } else if (insideScaladoc) {
+              if (useScaladoc)
+                section.addDoc(s.replaceAll("^" + indent, "").replaceFirst("\\*", ""))
             } else {
               if (!insideScaladoc || !stripScaladoc)
                 section.addCode(s)
@@ -193,6 +202,9 @@ class DoccoBatch {
   // Should we ignore files with no docco?
   val skipEmpty: Boolean = cx.get("docco.skipEmpty")
       .map(_.toString.toBoolean).getOrElse(true)
+  // Should we use Scaladoc for docco?
+  val useScaladoc: Boolean = cx.get("docco.useScaladoc")
+      .map(_.toString.toBoolean).getOrElse(false)
 
   def addCustomResource(v: String) { customResources ++= List(v) }
 
@@ -238,7 +250,7 @@ class DoccoBatch {
       sources += srcIt.next
     // generate doccos
     val doccos = sources.flatMap { f =>
-      val docco = new Docco(f, stripScaladoc)
+      val docco = new Docco(f, stripScaladoc, useScaladoc)
       if (!skipEmpty || docco.sections.size > 1) {
         val fp = f.getCanonicalPath
         val relName = fp.substring(bp.length + 1) + ".html"
