@@ -38,6 +38,12 @@ trait Cache[T <: Cached] {
 
   def get[E <: T](key: String, default: => E): E =
     getOption(key, Some(default)).get
+  
+  def put[E <: T](key: String, value: E) {
+    _sync {
+      store(key, value)
+    }
+  }
 
   def evict(key: String) {
     _sync {
