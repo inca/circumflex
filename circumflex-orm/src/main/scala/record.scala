@@ -92,8 +92,8 @@ abstract class Record[PK, R <: Record[PK, R]]
     // Prepare and execute query
     val result = _persist(evalFields(fields))
     // Update cache
-    val id = PRIMARY_KEY()
-    relation.cache.put(id.toString, this)
+    relation.cache.put(PRIMARY_KEY().toString, this)
+    relation.associations.foreach(_.inverseCache.invalidate())
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     result
@@ -130,8 +130,6 @@ abstract class Record[PK, R <: Record[PK, R]]
     if (relation.isAutoRefresh) refresh()
     // Invalidate caches
     relation.cache.put(PRIMARY_KEY().toString, this)
-    // Also scan all associations and clear their inverse caches
-    // to preserve cases with ON UPDATE CASCADE
     relation.associations.foreach(_.inverseCache.invalidate())
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
@@ -155,8 +153,6 @@ abstract class Record[PK, R <: Record[PK, R]]
         .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkDelete().execute()
     // Invalidate caches
     relation.cache.evict(PRIMARY_KEY().toString)
-    // Also scan all associations and clear their inverse caches
-    // to preserve cases with ON DELETE CASCADE
     relation.associations.foreach(_.inverseCache.invalidate())
     // Execute events
     relation.afterDelete.foreach(c => c(this))

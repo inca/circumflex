@@ -3,7 +3,7 @@ package orm
 
 import org.specs.runner.JUnit4
 import org.specs.Specification
-import xml._
+import scala.xml._
 import core._
 
 object Sample {
@@ -148,24 +148,26 @@ object BasicSpec extends Specification {
           .DISTINCT
           .FROM(co JOIN ci)
           .WHERE(ci.name LIKE "Lausanne")
-          .unique.get.code() must_== "ch"
+          .unique()
+          .get
+          .code() must_== "ch"
     }
     "handle projections" in {
-      SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ch").unique.get must_== 3l
+      SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ch").unique().get must_== 3l
     }
     "handle unions" in {
       SELECT(ci.name).FROM(ci).UNION(SELECT(co.name).FROM(co)).list().size must_== 10
     }
     "handle subqueries" in {
       val q = SELECT(ci.country.field).FROM(ci).WHERE(ci.name LIKE "Lausanne")
-      SELECT(co.*).FROM(co).WHERE(co.code IN q).unique.get.code() must_== "ch"
+      SELECT(co.*).FROM(co).WHERE(co.code IN q).unique().get.code() must_== "ch"
     }
     "handle limits, offsets and order-by's" in {
       SELECT(co.*).FROM(co).LIMIT(1).OFFSET(1).ORDER_BY(co.name ASC).unique().get.code() must_== "ch"
     }
     "handle criteria and inverse association merging" in {
       val ch = Country.get("ch").get
-      val l = (City.byName("%u%") AND ch.cities).list
+      val l = (City.byName("%u%") AND ch.cities).list()
       l.size must_== 2
       l(0).name() must_== "Lausanne"
       l(1).name() must_== "Zurich"
@@ -201,9 +203,9 @@ object BasicSpec extends Specification {
         }
         new Country(code, "Test").INSERT()
       } catch { case e: Exception => }
-      SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list.size must_== 3
+      SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list().size must_== 3
       ROLLBACK()
-      SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list.size must_== 0
+      SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list().size must_== 0
     }
   }
 
