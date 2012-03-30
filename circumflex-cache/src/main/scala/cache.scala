@@ -17,10 +17,13 @@ trait Cache[T <: Cached] {
   protected def clear()
   def keys: Iterable[String]
 
+  @inline protected def _sync[A](actions: => A): A =
+    _lock.synchronized(actions)
+
   def getOption[E <: T](key: String, default: => Option[E]): Option[E] =
     retrieve(key) match {
       case Some(e: E) if (e.isValid) => Some(e)
-      case _ => _lock.synchronized {
+      case _ => _sync {
         retrieve(key) match {
           case Some(e: E) if (e.isValid) => Some(e)
           case _ => default match {
@@ -37,25 +40,29 @@ trait Cache[T <: Cached] {
     getOption(key, Some(default)).get
 
   def evict(key: String) {
-    _lock.synchronized {
+    _sync {
       delete(key)
     }
   }
 
   def invalidate() {
-    _lock.synchronized {
+    _sync {
       clear()
     }
   }
 
   def evictByPrefix(prefix: String) {
-    _lock.synchronized {
+    _sync {
       keys.foreach { k =>
         if (k.startsWith(prefix))
           delete(k)
       }
     }
   }
+}
+
+trait NoLock[T <: Cached] extends Cache[T] {
+  override protected def _sync[A](actions: => A) = actions
 }
 
 class CacheCell[A <: Cached](val initializer: () => A) {
