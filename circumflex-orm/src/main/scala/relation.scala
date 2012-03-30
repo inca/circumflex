@@ -94,8 +94,9 @@ trait Relation[PK, R <: Record[PK, R]]
     * `all` retrieves all records.
    */
   def get(id: PK): Option[R] =
-    tx.cache.cacheRecord(id, this,
-      (this.AS("root")).map(r => r.criteria.add(r.PRIMARY_KEY EQ id).unique()))
+    tx.cache.cacheRecord(id, this, this.AS("root").map { r =>
+      r.criteria.add(r.PRIMARY_KEY EQ id).unique()
+    })
 
   def all: Seq[R] = this.AS("root").criteria.list()
 

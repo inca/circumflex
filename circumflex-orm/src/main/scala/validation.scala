@@ -69,7 +69,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
     }
     crit.unique() match {
       case Some(a: R) if (r.isTransient || a != r) =>
-         Some(new Msg(r.uuid + "." + key, "record" -> r))
+         Some(new Msg(r.getClass.getName + "." + key, "record" -> r))
       case _ => None
     }
   }

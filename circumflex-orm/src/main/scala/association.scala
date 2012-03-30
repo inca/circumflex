@@ -1,7 +1,7 @@
 package ru.circumflex
 package orm
 
-import core._
+import core._, cache._
 
 /*!# Association
 
@@ -20,7 +20,7 @@ We use some terminology when speaking about associations:
   match the type of parent relation's primary key.
 */
 class Association[K, C <: Record[_, C], P <: Record[K, P]] (
-        val field: Field[K, C], val parentRelation: Relation[K, P])
+                                                               val field: Field[K, C], val parentRelation: Relation[K, P])
     extends ValueHolder[P, C] { assoc =>
 
   def name = field.name
@@ -101,13 +101,13 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
 }
 
 class InverseMany[K, C <: Record[_, C], P <: Record[K, P]](
-        val record: P, val association: Association[K, C, P])
+                                                              val record: P, val association: Association[K, C, P])
     extends InverseAssociation[K, C, P, Seq[C]] {
   def get: Seq[C] = fetch()
 }
 
-class InverseOne[K, C <: Record[_, C], P <: Record[K, P]](
-        val record: P, val association: Association[K, C, P])
+class InverseOne[K, C <: Record[_, C], P <: Record[K, P]](val record: P,
+                                                          val association: Association[K, C, P])
     extends InverseAssociation[K, C, P, Option[C]] {
   def get: Option[C] = {
     val children = fetch()
@@ -117,4 +117,11 @@ class InverseOne[K, C <: Record[_, C], P <: Record[K, P]](
           "Add a UNIQUE constraint or stick with InverseMany.")
     Some(children(0))
   }
+}
+
+/*! `InverseSeq` is a cacheable wrapper over the collection of records,
+ which must be returned from `inverseOne` and `inverseMany` methods.*/
+class InverseSeq[PK, R <: Record[PK, R]](var records: Seq[R] = Nil)
+    extends Cached {
+  def expired = false
 }

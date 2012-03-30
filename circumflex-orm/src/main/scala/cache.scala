@@ -1,9 +1,10 @@
 package ru.circumflex
 package orm
 
+import core._, cache._
 import collection.mutable.HashMap
-import net.sf.ehcache._
 import java.util.concurrent.atomic._
+import net.sf.ehcache.Element
 
 /*!# Context-Level Cache
 
@@ -175,8 +176,8 @@ trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
 
   def cacheName = ormConf.prefix(":") + qualifiedName
 
-  def ehcache: Ehcache = ru.circumflex.cache.ehcacheManager
-      .addCacheIfAbsent(cacheName)
+  def ehcache: net.sf.ehcache.Ehcache =
+    ehcacheManager.addCacheIfAbsent(cacheName)
 
   // Per-relation statistics
   val cacheHits = new AtomicInteger(0)

@@ -1,7 +1,7 @@
 package ru.circumflex
 package orm
 
-import core._
+import core._, cache._
 
 /*!# Record
 
@@ -23,7 +23,10 @@ of fictional record `Country`:
     }
 
 */
-abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
+abstract class Record[PK, R <: Record[PK, R]]
+    extends Equals with Cached { this: R =>
+
+  def expired = false
 
   implicit def fieldPair2cmp[T1, T2](pair: (Field[T1, R], Field[T2, R])): FieldComposition2[T1, T2, R] =
     composition(pair._1, pair._2)
@@ -49,7 +52,6 @@ abstract class Record[PK, R <: Record[PK, R]] extends Equals { this: R =>
   def PRIMARY_KEY: ValueHolder[PK, R]
   def isTransient: Boolean = PRIMARY_KEY.isEmpty
   def relation: Relation[PK, R]
-  def uuid = getClass.getName
 
   /*!## Persistence & Validation
 

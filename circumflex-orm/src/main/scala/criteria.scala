@@ -48,9 +48,9 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     }
 
   protected def updateRootTree[PKN, N <: Record[PKN, N]](
-      node: RelationNode[PKN, N], association: Association[_, _, _]): RelationNode[PKN, N] =
+                                                            node: RelationNode[PKN, N], association: Association[_, _, _]): RelationNode[PKN, N] =
     node match {
-    // we don't actually care about types here, since type annotations are eliminated by erasure
+      // we don't actually care about types here, since type annotations are eliminated by erasure
       case j: JoinNode[PKN, N, PKN, N] =>
         j.replaceLeft(updateRootTree(j.left, association))
             .replaceRight(updateRootTree(j.right, association))
@@ -64,7 +64,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     }
 
   protected def preparePf[PKN, N <: Record[PKN, N]](
-      relation: Relation[PKN, N], association: Association[_, _, _]): RelationNode[PKN, N] = {
+                                                       relation: Relation[PKN, N], association: Association[_, _, _]): RelationNode[PKN, N] = {
     val node = relation.AS("pf_" + nextCounter)
     _projections ++= List(node.*)
     _prefetchSeq ++= List[Association[_, _, _]](association)
@@ -72,9 +72,9 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   }
 
   protected def updateJoinTree[PKN, N <: Record[PKN, N]](
-      node: RelationNode[PKN, N], tree: RelationNode[PK, R]): RelationNode[PK, R] =
+                                                            node: RelationNode[PKN, N], tree: RelationNode[PK, R]): RelationNode[PK, R] =
     tree match {
-    // outra vez, types are not really important here
+      // outra vez, types are not really important here
       case j: JoinNode[PK, R, PK, R] => try {   // try the left side
         j.replaceLeft(updateJoinTree(node, j.left))
         j.replaceRight(updateJoinTree(node, j.right))
@@ -86,7 +86,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     }
 
   protected def processTupleTree[PKN, N <: Record[PKN, N]](
-      tuple: Array[_], tree: RelationNode[PKN, N]) {
+                                                              tuple: Array[_], tree: RelationNode[PKN, N]) {
     tree match {
       case j: OneToManyJoin[PKN, N, PKN, N] =>
         val pNode = j.left
@@ -95,15 +95,13 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         val pIndex = _projections.indexWhere(_.node.alias == pNode.alias)
         val cIndex = _projections.indexWhere(_.node.alias == cNode.alias)
         if (pIndex == -1 || cIndex == -1) return
-        tuple(pIndex).asInstanceOf[Option[N]] map {
-          parent =>
-            var children = tx.cache.cacheInverse(parent.PRIMARY_KEY(), a, Nil)
-            tuple(cIndex).asInstanceOf[Option[N]] map {
-              child =>
-                if (!children.contains(child))
-                  children ++= List(child)
-                tx.cache.updateInverse(parent.PRIMARY_KEY(), a, children)
-            }
+        tuple(pIndex).asInstanceOf[Option[N]] map { parent =>
+          var children = tx.cache.cacheInverse(parent.PRIMARY_KEY(), a, Nil)
+          tuple(cIndex).asInstanceOf[Option[N]] map { child =>
+            if (!children.contains(child))
+              children ++= List(child)
+            tx.cache.updateInverse(parent.PRIMARY_KEY(), a, children)
+          }
         }
         processTupleTree(tuple, j.left)
         processTupleTree(tuple, j.right)

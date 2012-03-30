@@ -87,8 +87,8 @@ class ExpressionProjection[T](val expression: String)
 }
 
 class FieldProjection[T, R <: Record[_, R]](
-        val node: RelationNode[_, R],
-        val field: Field[T, R])
+                                               val node: RelationNode[_, R],
+                                               val field: Field[T, R])
     extends AtomicProjection[T] {
 
   def expression = ormConf.dialect.qualifyColumn(field, node.alias)
@@ -124,8 +124,10 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     }
   }
 
-  def read(rs: ResultSet): Option[R] = _readCell(rs, node.relation.PRIMARY_KEY).flatMap(id =>
-    tx.cache.cacheRecord(id, node.relation, Some(readRecord(rs))))
+  def read(rs: ResultSet): Option[R] =
+    _readCell(rs, node.relation.PRIMARY_KEY).flatMap { id =>
+      tx.cache.cacheRecord(id, node.relation, Some(readRecord(rs)))
+    }
 
   protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance
