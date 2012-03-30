@@ -126,7 +126,7 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
 
   def read(rs: ResultSet): Option[R] =
     _readCell(rs, node.relation.PRIMARY_KEY).flatMap { id =>
-      tx.cache.cacheRecord(id, node.relation, Some(readRecord(rs)))
+      node.relation.cache.getOption(id.toString, Some(readRecord(rs)))
     }
 
   protected def readRecord(rs: ResultSet): R = {

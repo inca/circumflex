@@ -96,11 +96,10 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         val cIndex = _projections.indexWhere(_.node.alias == cNode.alias)
         if (pIndex == -1 || cIndex == -1) return
         tuple(pIndex).asInstanceOf[Option[N]] map { parent =>
-          var children = tx.cache.cacheInverse(parent.PRIMARY_KEY(), a, Nil)
+          val children = a.inverseCache.get(parent.PRIMARY_KEY().toString, new InverseSeq[N])
           tuple(cIndex).asInstanceOf[Option[N]] map { child =>
-            if (!children.contains(child))
-              children ++= List(child)
-            tx.cache.updateInverse(parent.PRIMARY_KEY(), a, children)
+            if (!children.records.contains(child))
+              children.add(child)
           }
         }
         processTupleTree(tuple, j.left)

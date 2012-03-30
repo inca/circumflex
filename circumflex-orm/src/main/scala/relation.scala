@@ -1,8 +1,9 @@
 package ru.circumflex
 package orm
 
-import core._
+import core._, cache._
 import java.lang.reflect.Method
+import collection.mutable.HashMap
 
 /*!# Relations
 
@@ -93,12 +94,25 @@ trait Relation[PK, R <: Record[PK, R]]
     * `get` retrieves a record either from cache or from database by specified `id`;
     * `all` retrieves all records.
    */
-  def get(id: PK): Option[R] =
-    tx.cache.cacheRecord(id, this, this.AS("root").map { r =>
-      r.criteria.add(r.PRIMARY_KEY EQ id).unique()
-    })
+  def get(id: PK): Option[R] = cache.getOption(id.toString, {
+    val r = this.AS("root")
+    r.criteria.add(r.PRIMARY_KEY EQ id).unique()
+  })
 
   def all: Seq[R] = this.AS("root").criteria.list()
+
+  /*!## Cache
+
+  Caches are used to temporarily store records at transaction-scoped cache
+  to avoid unnecessary selects (particularly, when consequently using `get(id)`
+  method or accessing associatios).
+  
+  By mixing in `Cacheable` trait, transaction-level caches are turned into
+  application-level caches.
+  */
+  def cacheName = ormConf.prefix(":") + qualifiedName
+
+  def cache: Cache[R] = tx.cache.forRelation(this)
 
   /*!## Metadata
 
@@ -393,4 +407,31 @@ trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
     ormConf.dialect.createView(this)
   }
   def query: Select[_]
+}
+
+/*!# Application-scoped cache
+
+Circumflex ORM lets you organize application-scope cache (backed by Terracotta Ehcache)
+for any relation of your application: just mix in the `Cacheable` trait into your relation.
+*/
+
+trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
+
+  protected object _cache extends HashMap[String, Cache[_]] {
+    def forName(name: String): Cache[R] = {
+      get(name) match {
+        case Some(cache: Cache[R]) => cache
+        case _ =>
+          val cache = new Ehcache[R](name)
+          update(name, cache)
+          cache
+      }
+    }
+  }
+
+  override def cache: Cache[R] = _cache.forName(cacheName)
+
+  afterInsert(r => cache.put(r.PRIMARY_KEY().toString, r))
+  afterUpdate(r => cache.put(r.PRIMARY_KEY().toString, r))
+  afterDelete(r => cache.evict(r.PRIMARY_KEY().toString))
 }

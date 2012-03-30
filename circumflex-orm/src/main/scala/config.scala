@@ -1,14 +1,14 @@
 package ru.circumflex
 package orm
 
-import core._
+import core._, cache._
 import javax.sql.DataSource
 import javax.naming.InitialContext
 import java.util.Date
 import java.sql.{Timestamp, Connection, PreparedStatement}
 import com.mchange.v2.c3p0.{DataSources, ComboPooledDataSource}
 import collection.mutable.HashMap
-import xml._
+import scala.xml._
 import util.control.ControlThrowable
 
 /*!# ORM Configuration Objects
@@ -128,11 +128,11 @@ It behaves as follows:
    [c3p0-cfg]: http://www.mchange.com/projects/c3p0/index.html#configuration_properties
 */
 class SimpleConnectionProvider(
-        val driverClass: String,
-        val url: String,
-        val username: String,
-        val password: String,
-        val isolation: Int)
+                                  val driverClass: String,
+                                  val url: String,
+                                  val username: String,
+                                  val password: String,
+                                  val isolation: Int)
     extends ConnectionProvider {
 
   protected def createDataSource: DataSource = cx.get("orm.connection.datasource") match {
@@ -225,7 +225,7 @@ class Transaction {
 
   def rollback() {
     if (isLive && !_connection.getAutoCommit) _connection.rollback()
-    this.cache.invalidate()
+    cache.invalidateAll()
   }
 
   def close() {
@@ -253,7 +253,35 @@ class Transaction {
 
   // Cache service
 
-  val cache: CacheService = new DefaultCacheService()
+  object cache extends HashMap[String, Cache[_]] {
+
+    def forRelation[PK, R <: Record[PK, R]](rel: Relation[PK, R]): Cache[R] = {
+      val _key = "RELATION:" + rel.cacheName
+      get(_key) match {
+        case Some(cache: Cache[R]) => cache
+        case _ =>
+          val cache = new HashCache[R] with NoLock[R]
+          update(_key, cache)
+          cache
+      }
+    }
+
+    def forAssociation[K, C <: Record[_, C], P <: Record[K, P]](association: Association[K, C, P]): Cache[InverseSeq[C]] = {
+      val _key = "ASSOCIATION:" + association.cacheName
+      get(_key) match {
+        case Some(cache: Cache[InverseSeq[C]]) => cache
+        case _ =>
+          val cache = new HashCache[InverseSeq[C]] with NoLock[InverseSeq[C]]
+          update(_key, cache)
+          cache
+      }
+    }
+
+    def invalidateAll() {
+      values.foreach(_.invalidate())
+    }
+
+  }
 
   // Execution methods
 

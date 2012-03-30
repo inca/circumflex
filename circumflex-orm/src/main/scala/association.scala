@@ -19,12 +19,18 @@ We use some terminology when speaking about associations:
   * the `K` type parameter is a type of this association field's value, it must
   match the type of parent relation's primary key.
 */
-class Association[K, C <: Record[_, C], P <: Record[K, P]] (
-                                                               val field: Field[K, C], val parentRelation: Relation[K, P])
+class Association[K, C <: Record[_, C], P <: Record[K, P]] (val field: Field[K, C],
+                                                            val parentRelation: Relation[K, P])
     extends ValueHolder[P, C] { assoc =>
 
   def name = field.name
   def record = field.record
+
+  // Caching
+
+  def cacheName = parentRelation.qualifiedName + ":" + field.name
+
+  def inverseCache: Cache[InverseSeq[C]] = tx.cache.forAssociation(this)
 
   // Cascading actions
 
@@ -83,12 +89,17 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
   def item: T = get
   def association: Association[K, C, P]
   def record: P
-  def fetch(): Seq[C] = if (record.isTransient) Nil
-  else tx.cache.cacheInverse(record.PRIMARY_KEY(), association, {
-    val root = association.field.record.relation AS "root"
-    aliasStack.push(root.alias)
-    SELECT(root.*).FROM(root).WHERE(association.field EQ record.PRIMARY_KEY()).list()
-  })
+  def fetch(): Seq[C] =
+    if (record.isTransient) Nil
+    else association.inverseCache.get(record.PRIMARY_KEY().toString, {
+      val root = association.field.record.relation AS "root"
+      aliasStack.push(root.alias)
+      val records = SELECT(root.*)
+          .FROM(root)
+          .WHERE(association.field EQ record.PRIMARY_KEY())
+          .list()
+      new InverseSeq[C](records)
+    }).records
   def get: T
   def apply: T = get
 
@@ -100,8 +111,8 @@ trait InverseAssociation[K, C <: Record[_, C], P <: Record[K, P], T]
   override def hashCode: Int = association.hashCode
 }
 
-class InverseMany[K, C <: Record[_, C], P <: Record[K, P]](
-                                                              val record: P, val association: Association[K, C, P])
+class InverseMany[K, C <: Record[_, C], P <: Record[K, P]](val record: P,
+                                                           val association: Association[K, C, P])
     extends InverseAssociation[K, C, P, Seq[C]] {
   def get: Seq[C] = fetch()
 }
@@ -121,7 +132,14 @@ class InverseOne[K, C <: Record[_, C], P <: Record[K, P]](val record: P,
 
 /*! `InverseSeq` is a cacheable wrapper over the collection of records,
  which must be returned from `inverseOne` and `inverseMany` methods.*/
-class InverseSeq[PK, R <: Record[PK, R]](var records: Seq[R] = Nil)
+class InverseSeq[R <: Record[_, R]](protected var _records: Seq[R] = Nil)
     extends Cached {
   def expired = false
+  def records = _records
+  def add(record: R) {
+    _records ++= Seq(record)
+  }
+  def clear() {
+    _records = Nil
+  }
 }

@@ -74,7 +74,7 @@ abstract class Record[PK, R <: Record[PK, R]]
   else {
     val root = relation.AS("root")
     val id = PRIMARY_KEY()
-    tx.cache.evictRecord(id, relation)
+    relation.cache.evict(id.toString)
     SELECT(root.*).FROM(root).WHERE(root.PRIMARY_KEY EQ id).unique() match {
       case Some(r: R) =>
         relation.copyFields(r, this)
@@ -92,8 +92,8 @@ abstract class Record[PK, R <: Record[PK, R]]
     // Prepare and execute query
     val result = _persist(evalFields(fields))
     // Update cache
-    tx.cache.evictRecord(PRIMARY_KEY(), relation)
-    tx.cache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
+    val id = PRIMARY_KEY()
+    relation.cache.put(id.toString, this)
     // Execute events
     relation.afterInsert.foreach(c => c(this))
     result
@@ -123,15 +123,16 @@ abstract class Record[PK, R <: Record[PK, R]]
     // Collect fields which will participate in query
     val f = evalFields(fields).filter(_ != PRIMARY_KEY)
     // Prepare and execute a query
-    val q = (relation AS "root")
-        .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkUpdate()
+    val r = relation AS "root"
+    val q = r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY()).mkUpdate()
     f.foreach(f => q.SET[Any](f.asInstanceOf[Field[Any, R]], f.value))
     val result = q.execute()
     if (relation.isAutoRefresh) refresh()
     // Invalidate caches
-    tx.cache.evictInverse[PK, R](this)
-    tx.cache.evictRecord(PRIMARY_KEY(), relation)
-    tx.cache.cacheRecord(PRIMARY_KEY(), relation, Some(this))
+    relation.cache.put(PRIMARY_KEY().toString, this)
+    // Also scan all associations and clear their inverse caches
+    // to preserve cases with ON UPDATE CASCADE
+    relation.associations.foreach(_.inverseCache.invalidate())
     // Execute events
     relation.afterUpdate.foreach(c => c(this))
     result
@@ -153,8 +154,10 @@ abstract class Record[PK, R <: Record[PK, R]]
     val result = (relation AS "root")
         .map(r => r.criteria.add(r.PRIMARY_KEY EQ PRIMARY_KEY())).mkDelete().execute()
     // Invalidate caches
-    tx.cache.evictRecord(PRIMARY_KEY(), relation)
-    tx.cache.evictInverse[PK, R](this)
+    relation.cache.evict(PRIMARY_KEY().toString)
+    // Also scan all associations and clear their inverse caches
+    // to preserve cases with ON DELETE CASCADE
+    relation.associations.foreach(_.inverseCache.invalidate())
     // Execute events
     relation.afterDelete.foreach(c => c(this))
     result
