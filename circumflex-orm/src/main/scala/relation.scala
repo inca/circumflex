@@ -429,7 +429,12 @@ trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
     }
   }
 
-  override def cache: Cache[R] = _cache.forName(cacheName)
+  override def cache: Cache[R] = {
+    val c = _cache.forName(cacheName)
+    // add it to current transaction scope
+    tx.cache.update("RELATION:" + cacheName, c)
+    c
+  }
 
   afterInsert(r => cache.put(r.PRIMARY_KEY().toString, r))
   afterUpdate(r => cache.put(r.PRIMARY_KEY().toString, r))
