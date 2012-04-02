@@ -33,13 +33,13 @@ trait ORMConfiguration {
 
   // Database connectivity parameters
 
-  val url = cx.getString("orm.connection.url")
+  lazy val url = cx.getString("orm.connection.url")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.url'."))
-  val username = cx.getString("orm.connection.username")
+  lazy val username = cx.getString("orm.connection.username")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.username'."))
-  val password = cx.getString("orm.connection.password")
+  lazy val password = cx.getString("orm.connection.password")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.password'."))
 

@@ -5,16 +5,16 @@ import org.specs.Specification
 
 object FooDB extends ORMConfiguration {
   def name = "foo"
-  override val url = "jdbc:h2:mem:foodb"
-  override val username = "foo"
-  override val password = ""
+  override lazy val url = "jdbc:h2:mem:foodb"
+  override lazy val username = "foo"
+  override lazy val password = ""
 }
 
 object BarDB extends ORMConfiguration {
   def name = "bar"
-  override val url = "jdbc:h2:mem:bardb"
-  override val username = "bar"
-  override val password = ""
+  override lazy val url = "jdbc:h2:mem:bardb"
+  override lazy val username = "bar"
+  override lazy val password = ""
 }
 
 object MultiDataSourceSpec extends Specification {
