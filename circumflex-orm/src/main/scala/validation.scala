@@ -42,7 +42,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
 
   def pattern(f: R => TextField[R],
               regex: Pattern,
-              key: String = "pattern"): this.type = add { r =>
+              key: String): this.type = add { r =>
     val field = f(r)
     if (field.isEmpty)
       None
