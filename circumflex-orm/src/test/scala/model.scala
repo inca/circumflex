@@ -28,7 +28,7 @@ object Country
     with Cacheable[String, Country] {
   val nameIdx = "name_idx".INDEX("name")
 
-  validation.notEmpty(_.code).pattern(_.code, "^[a-z]{2}$", "syntax")
+  validation.notEmpty(_.code).pattern(_.code, "^[a-z]{2}$".r.pattern, "syntax")
 }
 
 class City extends Record[String, City] {

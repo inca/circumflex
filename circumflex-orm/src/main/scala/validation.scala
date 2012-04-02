@@ -42,7 +42,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
 
   def pattern(f: R => TextField[R],
               regex: Pattern,
-              key: String): this.type = add { r =>
+              key: String = "pattern"): this.type = add { r =>
     val field = f(r)
     if (field.isEmpty)
       None
@@ -56,11 +56,6 @@ class RecordValidator[PK, R <: Record[PK, R]] {
       else None
     }
   }
-
-  def pattern(f: R => TextField[R],
-              regex: String,
-              key: String = "pattern"): this.type =
-    pattern(f, Pattern.compile(regex), key)
 
   def unique[T](f: R => Field[T, R], key: String = "unique"): this.type = add { r =>
     val field = f(r)
