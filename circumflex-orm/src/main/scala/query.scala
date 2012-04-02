@@ -169,7 +169,7 @@ trait SearchQuery extends Query {
 }
 
 class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
-    with SearchQuery {
+with SearchQuery {
 
   // Commons
   protected var _distinct: Boolean = false
@@ -324,6 +324,9 @@ class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
 trait DMLQuery extends Query {
 
   def execute(): Int = {
+    if (ormConf.readOnly)
+      throw new CircumflexException(
+        "Read-only configuration does not allow DML statements.")
     val result = time {
       tx.execute(toSql, { st =>
         setParams(st, 1)

@@ -88,6 +88,9 @@ class DDLUnit {
   }
 
   protected def dropObjects(objects: Seq[SchemaObject]) {
+    if (ormConf.readOnly)
+      throw new CircumflexException(
+        "Read-only configuration does not allow DDL statements.")
     objects.reverse.foreach { o =>
       tx.execute(o.sqlDrop, { st =>
         st.executeUpdate()
@@ -106,6 +109,9 @@ class DDLUnit {
   }
 
   protected def createObjects(objects: Seq[SchemaObject]) {
+    if (ormConf.readOnly)
+      throw new CircumflexException(
+        "Read-only configuration does not allow DDL statements.")
     objects.foreach { o =>
       tx.execute(o.sqlCreate, { st =>
         st.executeUpdate()

@@ -33,16 +33,13 @@ trait ORMConfiguration {
 
   // Database connectivity parameters
 
-  val url = cx.get("orm.connection.url")
-      .map(_.toString)
+  val url = cx.getString("orm.connection.url")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.url'."))
-  val username = cx.get("orm.connection.username")
-      .map(_.toString)
+  val username = cx.getString("orm.connection.username")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.username'."))
-  val password = cx.get("orm.connection.password")
-      .map(_.toString)
+  val password = cx.getString("orm.connection.password")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.password'."))
 
@@ -85,6 +82,9 @@ trait ORMConfiguration {
     "orm.statisticsManager", new StatisticsManager)
   lazy val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
     "orm.connectionProvider", new SimpleConnectionProvider(driver, url, username, password, isolation))
+
+  // Override to forbid `executeUpdate` statements on configuration-level
+  def readOnly = false
 }
 
 class SimpleORMConfiguration(val name: String) extends ORMConfiguration

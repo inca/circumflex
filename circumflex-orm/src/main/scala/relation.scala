@@ -121,31 +121,31 @@ trait Relation[PK, R <: Record[PK, R]]
   */
   protected var _methodsMap: Map[Field[_, R], Method] = Map()
   def methodsMap: Map[Field[_, R], Method] = {
-    init()
+    _init()
     _methodsMap
   }
 
   protected var _fields: List[Field[_, R]] = Nil
   def fields: Seq[Field[_, R]] = {
-    init()
+    _init()
     _fields
   }
 
   protected var _associations: List[Association[_, R, _]] = Nil
   def associations: Seq[Association[_, R, _]] = {
-    init()
+    _init()
     _associations
   }
 
   protected var _constraints: List[Constraint] = Nil
   def constraints: Seq[Constraint] = {
-    init()
+    _init()
     _constraints
   }
 
   protected var _indexes: List[Index] = Nil
   def indexes: Seq[Index] = {
-    init()
+    _init()
     _indexes
   }
 
@@ -191,12 +191,15 @@ trait Relation[PK, R <: Record[PK, R]]
         .ON_DELETE(a.onDeleteClause)
         .ON_UPDATE(a.onUpdateClause)
 
-  def init() {
+  protected def _init() {
     if (!_initialized) synchronized {
       if (!_initialized) try {
+        // Introspect record/relation members
         findMembers(this.getClass)
+        // Ask dialect to initialize relation
         ormConf.dialect.initializeRelation(this)
         _fields.foreach(ormConf.dialect.initializeField(_))
+        // We are done
         this._initialized = true
       } catch {
         case e: NullPointerException =>
@@ -378,11 +381,11 @@ trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   def isReadOnly: Boolean = false
   def objectName: String = "TABLE " + qualifiedName
   def sqlCreate: String = {
-    init()
+    _init()
     ormConf.dialect.createTable(this)
   }
   def sqlDrop: String = {
-    init()
+    _init()
     ormConf.dialect.dropTable(this)
   }
 }
@@ -399,11 +402,11 @@ trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
   def isReadOnly: Boolean = true
   def objectName: String = "VIEW " + qualifiedName
   def sqlDrop: String = {
-    init()
+    _init()
     ormConf.dialect.dropView(this)
   }
   def sqlCreate: String = {
-    init()
+    _init()
     ormConf.dialect.createView(this)
   }
   def query: Select[_]
