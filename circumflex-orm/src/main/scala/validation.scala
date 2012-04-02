@@ -2,6 +2,7 @@ package ru.circumflex
 package orm
 
 import core._
+import java.util.regex.Pattern
 
 class RecordValidator[PK, R <: Record[PK, R]] {
 
@@ -39,17 +40,27 @@ class RecordValidator[PK, R <: Record[PK, R]] {
     else None
   }
 
-  def pattern(f: R => TextField[R], regex: String, key: String = "pattern"): this.type = add { r =>
+  def pattern(f: R => TextField[R],
+              regex: Pattern,
+              key: String = "pattern"): this.type = add { r =>
     val field = f(r)
     if (field.isEmpty)
       None
-    else if (!field().matches(regex))
-      Some(new Msg(field.uuid + "." + key, "regex" -> regex,
-        "value" -> field(),
-        "record" -> r,
-        "field" -> field))
-    else None
+    else {
+      val m = regex.matcher(field())
+      if (!m.matches())
+        Some(new Msg(field.uuid + "." + key, "regex" -> regex,
+          "value" -> field(),
+          "record" -> r,
+          "field" -> field))
+      else None
+    }
   }
+
+  def pattern(f: R => TextField[R],
+              regex: String,
+              key: String = "pattern"): this.type =
+    pattern(f, Pattern.compile(regex), key)
 
   def unique[T](f: R => Field[T, R], key: String = "unique"): this.type = add { r =>
     val field = f(r)
@@ -60,7 +71,8 @@ class RecordValidator[PK, R <: Record[PK, R]] {
     }
   }
 
-  def uniqueAll(f: R => Seq[Field[_, R]], key: String = "unique"): this.type = add { r =>
+  def uniqueAll(f: R => Seq[Field[_, R]],
+                key: String = "unique"): this.type = add { r =>
     val fields = f(r)
     val crit = r.relation.criteria
     fields.foreach {
@@ -69,7 +81,7 @@ class RecordValidator[PK, R <: Record[PK, R]] {
     }
     crit.unique() match {
       case Some(a: R) if (r.isTransient || a != r) =>
-         Some(new Msg(r.getClass.getName + "." + key, "record" -> r))
+        Some(new Msg(r.getClass.getName + "." + key, "record" -> r))
       case _ => None
     }
   }
