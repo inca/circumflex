@@ -173,7 +173,7 @@ trait Relation[PK, R <: Record[PK, R]]
 
   private def processHolder(vh: ValueHolder[_, R], m: Method) {
     vh match {
-      case f: Field[_, R] =>
+      case f: Field[_, R] if (!this._fields.contains(f)) =>
         this._fields ++= List(f)
         if (f.isUnique) this.UNIQUE(f)
         this._methodsMap += (f -> m)
