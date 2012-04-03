@@ -37,7 +37,8 @@ The relation should also inherit the structure of corresponding record so that
 it could be used to compose predicates and other expressions in a DSL-style.
 */
 trait Relation[PK, R <: Record[PK, R]]
-    extends Record[PK, R] with SchemaObject { this: R =>
+    extends Record[PK, R]
+    with SchemaObject { this: R =>
 
   protected var _initialized = false
 
@@ -151,9 +152,9 @@ trait Relation[PK, R <: Record[PK, R]]
 
   private def findMembers(cl: Class[_]) {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
-    cl.getDeclaredFields
-        .flatMap(f => try Some(cl.getMethod(f.getName)) catch { case e: Exception => None })
-        .foreach(processMember(_))
+    cl.getDeclaredFields.flatMap { f =>
+      try { Some(cl.getMethod(f.getName)) } catch { case e: Exception => None }
+    }.foreach(processMember(_))
   }
 
   private def processMember(m: Method) {
