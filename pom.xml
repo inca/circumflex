@@ -25,6 +25,7 @@
     <module>circumflex-maven-plugin</module>
     <module>circumflex-ftl</module>
     <module>circumflex-archetype</module>
+    <module>circumflex-diff</module>
   </modules>
 
   <properties>
