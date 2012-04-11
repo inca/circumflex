@@ -5,15 +5,15 @@ import collection.JavaConversions._
 import collection.mutable.{Buffer, ListBuffer}
 
 
-trait DiffAlgorithm {
-  def diff(original: Seq[_],revised: Seq[_]): Patch
+trait DiffAlgorithm[T] {
+  def diff(original: Seq[T],revised: Seq[T]): Patch[T]
 }
 
-class Patch {
-  private val deltas = ListBuffer[Delta]()
+class Patch[T] {
+  private val deltas = ListBuffer[Delta[T]]()
 
-  def applyTo(target: Seq[_]): Buffer[_] = {
-    val res = ListBuffer[Any]()
+  def applyTo(target: Seq[T]): Buffer[T] = {
+    val res = ListBuffer[T]()
     val it = getDeltas.toList.listIterator(deltas.size)
     while (it.hasPrevious) {
       val delta = it.previous()
@@ -22,8 +22,8 @@ class Patch {
     res
   }
 
-  def restore(target: Seq[_]) = {
-    val res = ListBuffer[Any]()
+  def restore(target: Seq[T]) = {
+    val res = ListBuffer[T]()
     val it = getDeltas.toList.listIterator(deltas.size)
     while (it.hasPrevious) {
       val delta = it.previous()
@@ -32,7 +32,7 @@ class Patch {
     res
   }
 
-  def addDelta(delta: Delta) {
+  def addDelta(delta: Delta[T]) {
     deltas += delta
   }
 

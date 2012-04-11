@@ -1,23 +1,25 @@
 package ru.circumflex
 package diff
 
-trait Equalizer {
-  def equals(original: Any, revised: Any): Boolean
+import collection.mutable.ListBuffer
+
+trait Equalizer[T] {
+  def equals(original: T, revised: T): Boolean
 }
 
-class MyersDiff extends DiffAlgorithm {
-  private object DEFAULT_EQUALIZER extends Equalizer {
-    def equals(original: Any, revised: Any) = original.equals(revised)
+class MyersDiff[T] extends DiffAlgorithm[T] {
+  private object DEFAULT_EQUALIZER extends Equalizer[T] {
+    def equals(original: T, revised: T) = original.equals(revised)
   }
 
-  protected var _equalizer: Equalizer = DEFAULT_EQUALIZER
+  protected var _equalizer: Equalizer[T] = DEFAULT_EQUALIZER
 
-  def this(equalizer: Equalizer) {
+  def this(equalizer: Equalizer[T]) {
     this()
     _equalizer = equalizer
   }
 
-  def diff(original: Seq[_], revised: Seq[_]): Patch = {
+  def diff(original: Seq[T], revised: Seq[T]): Patch[T] = {
     try {
       val path = buildPath(original, revised)
       return buildRevision(path, original, revised)
@@ -28,7 +30,7 @@ class MyersDiff extends DiffAlgorithm {
     new Patch
   }
 
-  def buildPath(original: Seq[_], revised: Seq[_]): PathNode = {
+  def buildPath(original: Seq[T], revised: Seq[T]): PathNode = {
     val N = original.length
     val M = revised.length
     val MAX = M + N + 1
@@ -75,10 +77,10 @@ class MyersDiff extends DiffAlgorithm {
     throw new DifferentiationFailedException("Could not find a diff path")
   }
 
-  @inline private def equals(orig: Any, rev: Any): Boolean = _equalizer.equals(orig, rev)
+  @inline private def equals(orig: T, rev: T): Boolean = _equalizer.equals(orig, rev)
 
-  def buildRevision(path: PathNode, original: Seq[_], revised: Seq[_]) = {
-    val patch = new Patch
+  def buildRevision(path: PathNode, original: Seq[T], revised: Seq[T]) = {
+    val patch = new Patch[T]
     var pathOpt: Option[PathNode] = Some(path)
     if (path.isSnake) {
       pathOpt = path.prev
@@ -94,14 +96,14 @@ class MyersDiff extends DiffAlgorithm {
       path = path.prev.get
       var ianchor = path.i
       var janchor = path.j
-      val orig = new Chunk(ianchor, copyOfRange(original, ianchor, i))
-      val rev = new Chunk(janchor, copyOfRange(revised, janchor, j))
-      val delta: Delta =
+      val orig = new Chunk[T](ianchor, copyOfRange(original, ianchor, i))
+      val rev = new Chunk[T](janchor, copyOfRange(revised, janchor, j))
+      val delta: Delta[T] =
         if (orig.size == 0 && rev.size != 0)
-          new InsertDelta(orig, rev)
+          new InsertDelta[T](orig, rev)
         else if (orig.size >  0 && rev.size == 0)
-          new DeleteDelta(orig, rev)
-        else new ChangeDelta(orig, rev)
+          new DeleteDelta[T](orig, rev)
+        else new ChangeDelta[T](orig, rev)
 
       patch.addDelta(delta)
       if (path.isSnake) pathOpt = path.prev
@@ -109,13 +111,14 @@ class MyersDiff extends DiffAlgorithm {
     patch
   }
 
-  def copyOfRange(original: Seq[Any],
-                     from: Int, to: Int): Seq[Any] = {
+  def copyOfRange(original: Seq[T],
+                     from: Int, to: Int): Seq[T] = {
+    val buffer = ListBuffer[T]()
     val newLength = to - from;
     if (newLength < 0)
       throw new IllegalArgumentException(from + " > " + to)
-    var copy = new Array[Any](math.min(original.length - from, newLength))
-    System.arraycopy(original.toArray, from, copy, 0, copy.length)
-    copy
+    val len = math.min(original.length - from, newLength)
+    buffer ++= original.drop(from).take(len)
+    buffer.toSeq
   }
 }

@@ -3,10 +3,10 @@ package diff
 
 import collection.mutable.ListBuffer
 
-class Chunk(private val _pos: Int = 0) {
-  private val _elems = ListBuffer[Any]()
+class Chunk[T](private val _pos: Int = 0) {
+  private val _elems = ListBuffer[T]()
 
-  def this(position: Int, elements: Seq[_]) = {
+  def this(position: Int, elements: Seq[T]) = {
     this(position)
     _elems.append(elements: _ *)
   }
@@ -14,15 +14,15 @@ class Chunk(private val _pos: Int = 0) {
   def position = _pos
 
   def elements = _elems
-  def setElements(elements: Seq[Any]) {
+  def setElements(elements: Seq[T]) {
     _elems.clear()
-    _elems.append(elements)
+    _elems.append(elements: _ *)
   }
 
   def size = _elems.size
   def last = position + size - 1
 
-  def verify(target: Seq[_]) = {
+  def verify(target: Seq[T]) {
     if (last > target.size) {
       throw new PatchFailedException("Incorrect Chunk: the position of chunk > target size")
     }
