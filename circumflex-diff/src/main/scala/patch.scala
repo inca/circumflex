@@ -4,16 +4,11 @@ package diff
 import collection.JavaConversions._
 import collection.mutable.{Buffer, ListBuffer}
 
-
-trait DiffAlgorithm[T] {
-  def diff(original: Seq[T],revised: Seq[T]): Patch[T]
-}
-
 class Patch[T] {
-  private val deltas = ListBuffer[Delta[T]]()
+  private val deltas = new ListBuffer[Delta[T]]
 
   def applyTo(target: Seq[T]): Buffer[T] = {
-    val res = ListBuffer[T]()
+    val res = new ListBuffer[T]
     val it = getDeltas.toList.listIterator(deltas.size)
     while (it.hasPrevious) {
       val delta = it.previous()
@@ -23,7 +18,7 @@ class Patch[T] {
   }
 
   def restore(target: Seq[T]) = {
-    val res = ListBuffer[T]()
+    val res = new ListBuffer[T]
     val it = getDeltas.toList.listIterator(deltas.size)
     while (it.hasPrevious) {
       val delta = it.previous()
@@ -37,7 +32,12 @@ class Patch[T] {
   }
 
   def getDeltas = {
-    deltas.sorted(DeltaComparator)
+    deltas.sortWith { case (a, b) =>
+      if (a.original.position >= b.original.position)
+        false
+      else
+        true
+    }
   }
 
 }

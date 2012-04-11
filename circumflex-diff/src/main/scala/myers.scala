@@ -3,31 +3,15 @@ package diff
 
 import collection.mutable.ListBuffer
 
-trait Equalizer[T] {
-  def equals(original: T, revised: T): Boolean
-}
+class MyersDiff[T] {
 
-class MyersDiff[T] extends DiffAlgorithm[T] {
-  private object DEFAULT_EQUALIZER extends Equalizer[T] {
-    def equals(original: T, revised: T) = original.equals(revised)
-  }
-
-  protected var _equalizer: Equalizer[T] = DEFAULT_EQUALIZER
-
-  def this(equalizer: Equalizer[T]) {
-    this()
-    _equalizer = equalizer
-  }
-
-  def diff(original: Seq[T], revised: Seq[T]): Patch[T] = {
-    try {
-      val path = buildPath(original, revised)
-      return buildRevision(path, original, revised)
-    } catch {
-      case e: Exception =>
-        DIFF_LOG.error(e.printStackTrace())
-    }
-    new Patch
+  def diff(original: Seq[T], revised: Seq[T]): Patch[T] = try {
+    val path = buildPath(original, revised)
+    buildRevision(path, original, revised)
+  } catch {
+    case e: Exception =>
+      DIFF_LOG.error("error", e)
+      throw e
   }
 
   def buildPath(original: Seq[T], revised: Seq[T]): PathNode = {
@@ -58,7 +42,7 @@ class MyersDiff[T] extends DiffAlgorithm[T] {
         var j = i - k
         var node: PathNode = new DiffNode(i, j, prev)
 
-        while (i < N && j < M && equals(original(i), revised(j))) {
+        while (i < N && j < M && (original(i) == revised(j))) {
           i += 1
           j += 1
         }
@@ -76,8 +60,6 @@ class MyersDiff[T] extends DiffAlgorithm[T] {
     // According to Myers, this cannot happen
     throw new DifferentiationFailedException("Could not find a diff path")
   }
-
-  @inline private def equals(orig: T, rev: T): Boolean = _equalizer.equals(orig, rev)
 
   def buildRevision(path: PathNode, original: Seq[T], revised: Seq[T]) = {
     val patch = new Patch[T]
@@ -106,14 +88,21 @@ class MyersDiff[T] extends DiffAlgorithm[T] {
         else new ChangeDelta[T](orig, rev)
 
       patch.addDelta(delta)
-      if (path.isSnake) pathOpt = path.prev
+      if (path.isSnake) pathOpt = {
+        // now it is equal time
+        val orig = new Chunk[T](path.prev.get.i, copyOfRange(original, path.prev.get.i, path.i))
+        val rev = new Chunk[T](path.prev.get.j, copyOfRange(revised, path.prev.get.j, path.j))
+        val delta = new EqualDelta[T](orig, rev)
+        patch.addDelta(delta)
+        path.prev
+      }
     }
     patch
   }
 
   def copyOfRange(original: Seq[T],
-                     from: Int, to: Int): Seq[T] = {
-    val buffer = ListBuffer[T]()
+                  from: Int, to: Int): Seq[T] = {
+    val buffer = new ListBuffer[T]
     val newLength = to - from;
     if (newLength < 0)
       throw new IllegalArgumentException(from + " > " + to)

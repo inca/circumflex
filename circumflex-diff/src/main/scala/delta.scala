@@ -5,27 +5,9 @@ import collection.mutable.Buffer
 
 abstract class Delta[T](var original: Chunk[T], var revised: Chunk[T]) {
 
-  protected abstract class Kind
-  object CHANGE extends Kind
-  object DELETE extends Kind
-  object INSERT extends Kind
-
   def verify(target: Seq[T])
   def applyTo(target: Buffer[T])
   def restore(target: Buffer[T])
-  def kind: Kind
-}
-
-object DeltaComparator extends Ordering[Delta[_]] {
-  def compare(a: Delta[_], b: Delta[_]): Int = {
-    val posA = a.original.position
-    val posB = b.original.position
-    if (posA > posB)
-      return 1
-    else if (posA < posB)
-      return -1
-    0
-  }
 }
 
 class ChangeDelta[T](original: Chunk[T], revised: Chunk[T])
@@ -57,7 +39,6 @@ class ChangeDelta[T](original: Chunk[T], revised: Chunk[T])
         original.elements.mkString(", ") + " to " + revised.elements.mkString(", ") + "]";
   }
 
-  def kind = CHANGE
 }
 
 class DeleteDelta[T](original: Chunk[T], revised: Chunk[T])
@@ -81,7 +62,6 @@ class DeleteDelta[T](original: Chunk[T], revised: Chunk[T])
         original.elements.mkString(", ") + "]";
   }
 
-  def kind = DELETE
 }
 
 class InsertDelta[T](original: Chunk[T], revised: Chunk[T])
@@ -104,6 +84,18 @@ class InsertDelta[T](original: Chunk[T], revised: Chunk[T])
   override def toString = {
     "[InsertDelta, position: " + original.position + ", elements: " + revised.elements.mkString(", ") + "]";
   }
+}
 
-  def kind = INSERT
+class EqualDelta[T](original: Chunk[T], revised: Chunk[T])
+    extends Delta(original, revised) {
+
+  def verify(target: Seq[T]) {
+    original.verify(target)
+  }
+  def applyTo(target: Buffer[T]) {}
+  def restore(target: Buffer[T]) {}
+
+  override def toString = {
+      "[EqualDelta, position: " + original.position + ", elements: " + original.elements.mkString(", ") + "]";
+    }
 }
