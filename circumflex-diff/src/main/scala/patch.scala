@@ -32,12 +32,7 @@ class Patch[T] {
   }
 
   def getDeltas = {
-    deltas.sortWith { case (a, b) =>
-      if (a.original.position >= b.original.position)
-        false
-      else
-        true
-    }
+    deltas.reverse
   }
 
 }

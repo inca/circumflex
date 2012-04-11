@@ -62,9 +62,18 @@ class MyersDiff[T] {
   }
 
   def buildRevision(path: PathNode, original: Seq[T], revised: Seq[T]) = {
+
+    def addEqualDelta(p: Patch[T], path: PathNode) {
+      val orig = new Chunk[T](path.prev.get.i, copyOfRange(original, path.prev.get.i, path.i))
+      val rev = new Chunk[T](path.prev.get.j, copyOfRange(revised, path.prev.get.j, path.j))
+      val delta = new EqualDelta[T](orig, rev)
+      p.addDelta(delta)
+    }
+
     val patch = new Patch[T]
     var pathOpt: Option[PathNode] = Some(path)
     if (path.isSnake) {
+      addEqualDelta(patch, path)
       pathOpt = path.prev
     }
     while (!pathOpt.isEmpty
@@ -89,11 +98,7 @@ class MyersDiff[T] {
 
       patch.addDelta(delta)
       if (path.isSnake) pathOpt = {
-        // now it is equal time
-        val orig = new Chunk[T](path.prev.get.i, copyOfRange(original, path.prev.get.i, path.i))
-        val rev = new Chunk[T](path.prev.get.j, copyOfRange(revised, path.prev.get.j, path.j))
-        val delta = new EqualDelta[T](orig, rev)
-        patch.addDelta(delta)
+        addEqualDelta(patch, path)
         path.prev
       }
     }
