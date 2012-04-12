@@ -71,13 +71,30 @@ trait NoLock[T <: Cached] extends Cache[T] {
   override protected def _sync[A](actions: => A) = actions
 }
 
-class CacheCell[A <: Cached](initializer: => A) {
+class CacheCell[A](initializer: => A) {
   protected var _value: A = _
+  protected var _valid: Boolean = false
+
+  def reinit() {
+    _value = initializer
+    _valid = true
+  }
+
+  def invalidate() {
+    _valid = false
+  }
+
+  def isValid = _value match {
+    case null => false
+    case v: Cached => _valid && v.isValid
+    case _ => _valid
+  }
+
   def get: A = {
-    if (_value == null || !_value.isValid)
+    if (!isValid)
       synchronized {
-        if (_value == null || !_value.isValid)
-          _value = initializer
+        if (!isValid)
+          reinit()
       }
     _value
   }
