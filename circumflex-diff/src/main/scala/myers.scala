@@ -5,7 +5,7 @@ import collection.mutable.ListBuffer
 
 class MyersDiff[T] {
 
-  def diff(original: Seq[T], revised: Seq[T]): Patch[T] = try {
+  def diff(original: Seq[T], revised: Seq[T]): Difference[T] = try {
     val path = buildPath(original, revised)
     buildRevision(path, original, revised)
   } catch {
@@ -63,17 +63,13 @@ class MyersDiff[T] {
 
   def buildRevision(path: PathNode, original: Seq[T], revised: Seq[T]) = {
 
-    def addEqualDelta(p: Patch[T], path: PathNode) {
-      val orig = new Chunk[T](path.prev.get.i, copyOfRange(original, path.prev.get.i, path.i))
-      val rev = new Chunk[T](path.prev.get.j, copyOfRange(revised, path.prev.get.j, path.j))
-      val delta = new EqualDelta[T](orig, rev)
-      p.addDelta(delta)
-    }
+    val chunks = new ListBuffer[Chunk[T]]
 
-    val patch = new Patch[T]
     var pathOpt: Option[PathNode] = Some(path)
     if (path.isSnake) {
-      addEqualDelta(patch, path)
+      val c: Chunk[T] = new EqualChunk[T](copyOfRange(original, path.prev.get.i, path.i),
+        copyOfRange(revised, path.prev.get.j, path.j))
+      chunks += c
       pathOpt = path.prev
     }
     while (!pathOpt.isEmpty
@@ -85,24 +81,24 @@ class MyersDiff[T] {
       var i = path.i
       var j = path.j
       path = path.prev.get
-      var ianchor = path.i
-      var janchor = path.j
-      val orig = new Chunk[T](ianchor, copyOfRange(original, ianchor, i))
-      val rev = new Chunk[T](janchor, copyOfRange(revised, janchor, j))
-      val delta: Delta[T] =
-        if (orig.size == 0 && rev.size != 0)
-          new InsertDelta[T](orig, rev)
-        else if (orig.size >  0 && rev.size == 0)
-          new DeleteDelta[T](orig, rev)
-        else new ChangeDelta[T](orig, rev)
 
-      patch.addDelta(delta)
+      val origSeq = copyOfRange(original, path.i, i)
+      val revSeq = copyOfRange(revised, path.j, j)
+      val c: Chunk[T] =
+        if (origSeq.size == 0 && revSeq.size != 0)
+          new InsertChunk[T](origSeq, revSeq)
+        else if (origSeq.size > 0 && revSeq.size == 0)
+          new DeleteChunk[T](origSeq, revSeq)
+        else new ChangeChunk[T](origSeq, revSeq)
+      chunks += c
       if (path.isSnake) pathOpt = {
-        addEqualDelta(patch, path)
+        val c: Chunk[T] = new EqualChunk[T](copyOfRange(original, path.prev.get.i, path.i),
+          copyOfRange(revised, path.prev.get.j, path.j))
+        chunks += c
         path.prev
       }
     }
-    patch
+    new Difference[T](chunks.reverse)
   }
 
   def copyOfRange(original: Seq[T],

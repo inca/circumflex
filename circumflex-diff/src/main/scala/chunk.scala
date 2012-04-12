@@ -1,20 +1,33 @@
 package ru.circumflex
 package diff
 
-class Chunk[T](val position: Int, val elements: Seq[T]) {
+class Chunk[T](val original: Seq[T], val revised: Seq[T])
 
-  def size = elements.size
+class InsertChunk[T](original: Seq[T], revised: Seq[T])
+    extends Chunk(original, revised) {
 
-  def verify(target: Seq[T]) {
-    if (position + size - 1 > target.size) {
-      throw new PatchFailedException("Incorrect Chunk: the position of chunk > target size")
-    }
-    var i = 0
-    while (i < size)
-      if (!(target(position + i) == elements(i)))
-        throw new PatchFailedException("Incorrect Chunk: the chunk content doesn't match the target")
-  }
-
-  override def toString = "[position: " + position + ", size: " + size + ", elements: " + elements.mkString(", ") + "]"
-
+  override def toString = "[InsertChunk, elements: " +
+      revised.mkString(", ") + "]";
 }
+
+class DeleteChunk[T](original: Seq[T], revised: Seq[T])
+    extends Chunk(original, revised) {
+
+  override def toString = "[DeleteChunk, elements: " +
+      original.mkString(", ") + "]";
+}
+
+class ChangeChunk[T](original: Seq[T], revised: Seq[T])
+    extends Chunk(original, revised) {
+
+  override def toString = "[ChangeChunk, elements: " +
+      original.mkString(", ") + " to " + revised.mkString(", ") + "]";
+}
+
+class EqualChunk[T](original: Seq[T], revised: Seq[T])
+    extends Chunk(original, revised) {
+  override def toString = "[EqualChunk, elements: " +
+      original.mkString(", ") + "]";
+}
+
+class Difference[T](val chunks: Seq[Chunk[T]])
