@@ -6,6 +6,7 @@ import java.io.{StringWriter, Writer}
 import java.lang.StringBuilder
 import java.util.regex.Pattern
 import collection.immutable.HashSet
+import java.util.Random
 
 object const {
   val newLine = Pattern.compile("\r\n|\n|\r")
@@ -42,12 +43,38 @@ trait MarkevenConf {
   def resolveLink(id: String): Option[LinkDef]
   def resolveMedia(id: String): Option[LinkDef]
   def resolveFragment(id: String): Option[FragmentDef]
+  def scrambler = cx.instantiate[TextScrambler](
+    "markeven.scrambler", EmptyTextScrambler)
 }
 
 object EmptyMarkevenConf extends MarkevenConf {
   def resolveLink(id: String) = None
   def resolveMedia(id: String) = None
   def resolveFragment(id: String) = None
+}
+
+// Scrambler
+
+class TextScrambler(val alphabet: String,
+                    val percentage: Int) {
+
+  def wrap(char: Char): String = "<span class=\"scr\">" + char + "</span>"
+
+  val threshold: Double = {
+    if (percentage < 0) 0d
+    else if (percentage > 50) .5d
+    else percentage / 100d
+  }
+  protected val rnd = new Random
+
+  def getSpan: String = {
+    if (rnd.nextDouble > threshold) ""
+    else wrap(alphabet.charAt(rnd.nextInt(alphabet.size)))
+  }
+}
+
+object EmptyTextScrambler extends TextScrambler("", 0) {
+  override def getSpan = ""
 }
 
 // Processor

@@ -39,6 +39,7 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
   /*! Generic characters are spit to the output "as is". */
   def flushGeneric(walk: Walker) {
     out.write(walk.current)
+    out.write(conf.scrambler.getSpan)
     walk.skip()
   }
 
