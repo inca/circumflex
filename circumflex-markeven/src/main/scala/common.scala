@@ -45,6 +45,7 @@ trait MarkevenConf {
   def resolveFragment(id: String): Option[FragmentDef]
   def scrambler = cx.instantiate[TextScrambler](
     "markeven.scrambler", EmptyTextScrambler)
+  def sourceIndex = cx.getBoolean("markeven.sourceIndex").getOrElse(false)
 }
 
 object EmptyMarkevenConf extends MarkevenConf {
@@ -151,10 +152,11 @@ class LinkDef(_url: String,
 
 // Block selector
 
-class Selector(val id: String = "",
+class Selector(val conf: MarkevenConf,
+               val id: String = "",
                val classes: Seq[String] = Nil) {
 
-  def writeAttrs(w: Writer) {
+  def writeAttrs(w: Writer, idx: => Int) {
     if (id != "") {
       w.write(" id=\"")
       w.write(id)
@@ -165,12 +167,11 @@ class Selector(val id: String = "",
       w.write(classes.mkString(" "))
       w.write("\"")
     }
-  }
-
-  def toAttrs = {
-    val w = new StringWriter
-    writeAttrs(w)
-    w.toString
+    if (conf.sourceIndex) {
+      w.write(" data-source-index=\"")
+      w.write(idx)
+      w.write("\"")
+    }
   }
 
   override def toString = {

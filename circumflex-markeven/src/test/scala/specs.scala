@@ -116,6 +116,10 @@ object MarkevenSpec extends Specification {
       w.atSpaces(4) must beTrue
       w.atSpaces(5) must beFalse
     }
+    "report absolute index" in {
+      val walker = new SubSeqWalker(pangram, 4, 19)
+      walker.getAbsoluteIndex(4) must_== 8
+    }
   }
 
   "MultiSeqWalker" should {
@@ -152,6 +156,11 @@ object MarkevenSpec extends Specification {
       val m2 = m1.exclude(10, 35)
       m2.toString must_== "The quick dog."
     }
+    "report absolute index" in {
+      val walker = new MultiSeqWalker(Seq(w1, w2, w3, w4))
+      walker.getAbsoluteIndex(29) must_== 10
+      walker.getAbsoluteIndex(10) must_== 16
+    }
   }
 
   "LinkDef" should {
@@ -166,8 +175,7 @@ object MarkevenSpec extends Specification {
 
   "Selector" should {
     "render attributes string" in {
-      val sel = new Selector("renaming", Seq("warning", "centered"))
-      sel.toAttrs must_== " id=\"renaming\" class=\"warning centered\""
+      val sel = new Selector(testConf, "renaming", Seq("warning", "centered"))
       sel.toString must_== "{#renaming.warning.centered}"
     }
   }

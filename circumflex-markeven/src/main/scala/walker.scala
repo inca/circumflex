@@ -16,6 +16,13 @@ trait Walker extends CharSequence {
         getClass.getSimpleName + " " + rangeStr + " does not contain index " + index)
   }
 
+  def getAbsolutePosition: Int = getAbsoluteIndex(position)
+
+  def getAbsoluteIndex(relative: Int): Int = {
+    checkIndex(relative)
+    relative
+  }
+
   def checkRange(startIdx: Int, endIdx: Int) {
     if (startIdx > endIdx)
       throw new IllegalStateException("Start index cannot be greater than end index.")
@@ -206,6 +213,11 @@ class SubSeqWalker(val input: CharSequence, s: Int, val e: Int)
   def this(input: CharSequence, s: Int) = this(input, s, input.length)
   def this(input: CharSequence) = this(input, 0)
 
+  override def getAbsoluteIndex(relative: Int) = {
+    checkIndex(relative)
+    start + relative
+  }
+
   // Char sequence
 
   val start = if (s < 0) 0 else s
@@ -224,6 +236,21 @@ class SubSeqWalker(val input: CharSequence, s: Int, val e: Int)
 
 class MultiSeqWalker(val regions: Seq[CharSequence]) extends Walker {
   val length = regions.map(_.length).sum
+
+  override def getAbsoluteIndex(relative: Int) = {
+    checkIndex(relative)
+    var i = 0
+    var idx = relative
+    while (idx >= regions(i).length) {
+      idx -= regions(i).length
+      i += 1
+    }
+    regions(i) match {
+      case w: Walker => w.getAbsoluteIndex(idx)
+      case _ => idx
+    }
+  }
+
   def charAt(index: Int) = {
     checkIndex(index)
     var i = 0
@@ -234,6 +261,7 @@ class MultiSeqWalker(val regions: Seq[CharSequence]) extends Walker {
     }
     regions(i).charAt(idx)
   }
+
   def subSequence(startIdx: Int, endIdx: Int): CharSequence = {
     checkRange(startIdx, endIdx)
     if (startIdx == endIdx) return ""
@@ -261,5 +289,6 @@ class MultiSeqWalker(val regions: Seq[CharSequence]) extends Walker {
     if (buffer.size == 1) buffer(0)
     else new MultiSeqWalker(buffer)
   }
+
   override def toString = regions.mkString("")
 }

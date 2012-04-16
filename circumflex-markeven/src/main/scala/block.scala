@@ -12,7 +12,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
 
   val inline = new InlineProcessor(out, conf)
 
-  var selector = new Selector()
+  var selector = new Selector(conf)
   var blockIndent = 0
 
   def run(walk: Walker) {
@@ -70,7 +70,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
   /*! Selector expression is stripped from each block, if it exists. This may
   result in new walker instantiation.*/
   def stripSelector(walk: Walker): Walker = {
-    selector = new Selector()
+    selector = new Selector(conf)
     val startIdx = walk.position
     while (walk.hasCurrent && !walk.atNewLine) {
       if (walk.at("{")) {
@@ -81,7 +81,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
             if (m.group(2) != null) {
               classes ++= m.group(2).split("\\.").filter(_ != "")
             }
-            selector = new Selector(id, classes)
+            selector = new Selector(conf, id, classes)
             walk.startFrom(startIdx)
             return walk.exclude(m.start, m.end)
           case _ =>
@@ -123,7 +123,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
   def processUl(walk: Walker) {
     assert(walk.at("* "))
     out.write("<ul")
-    selector.writeAttrs(out)
+    selector.writeAttrs(out, walk.getAbsolutePosition)
     out.write(">")
     // determining the bounds of each li
     // skip the marker, must point to the start of first li
@@ -184,7 +184,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
   def processOl(walk: Walker) {
     assert(walk.at("1. "))
     out.write("<ol")
-    selector.writeAttrs(out)
+    selector.writeAttrs(out, walk.getAbsolutePosition)
     out.write(">")
     // determining the bounds of each li
     // skip the marker, must point to the start of the first li
@@ -214,7 +214,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
 
   def processLi(walk: Walker) {
     out.write("<li")
-    selector.writeAttrs(out)
+    selector.writeAttrs(out, walk.getAbsolutePosition)
     out.write(">")
     // determine, whether the content is inline or block
     val b = walk.lookahead { w =>
@@ -247,7 +247,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
         val h = stripSelector(new SubSeqWalker(walk, startIdx, walk.position))
         out.write("<h")
         out.write(level.toString)
-        selector.writeAttrs(out)
+        selector.writeAttrs(out, walk.getAbsoluteIndex(oldPos))
         out.write(">")
         inline.process(h)
         out.write("</h")
@@ -278,7 +278,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
     assert(walk.at("---"))
     if (walk.atMatch(const.hr)) {
       out.write("<hr")
-      selector.writeAttrs(out)
+      selector.writeAttrs(out, walk.getAbsolutePosition)
       out.write("/>")
     } else if (walk.atMatch(const.table)) {
       processTable(walk)
@@ -288,7 +288,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
   def processTable(walk: Walker) {
     assert(walk.at("---"))
     out.write("<table")
-    selector.writeAttrs(out)
+    selector.writeAttrs(out, walk.getAbsolutePosition)
     // scan for width attribute by walking the first sequence of `---`
     var widthAttr = ""
     while (walk.at("-")) walk.skip()
@@ -461,20 +461,22 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
 
   def tryCodeBlock(walk: Walker): Boolean = {
     if (walk.at("```")) {
+      val oldPos = walk.position
       walk.skip(3)
       val startIdx = walk.position
       scrollToMarker(walk, "```")
       val b = stripSelector(new SubSeqWalker(walk, startIdx, walk.position))
+      out.write("<pre")
+      selector.writeAttrs(out, walk.getAbsoluteIndex(oldPos))
+      out.write("><code>")
       processCodeBlock(b)
+      out.write("</code></pre>")
       walk.skip(3).skipBlankLines()
       true
     } else false
   }
 
   def processCodeBlock(walk: Walker) {
-    out.write("<pre")
-    selector.writeAttrs(out)
-    out.write("><code>")
     // process line by line, removing the indent of the first line
     walk.skipBlankLines()
     countBlockIndent(walk)
@@ -491,17 +493,17 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
         startIdx = walk.position
       } else walk.skip()
     }
-    out.write("</code></pre>")
   }
 
   def tryDiv(walk: Walker): Boolean = {
     if (walk.at("~~~")) {
+      val oldPos = walk.position
       walk.skip(3)
       val startIdx = walk.position
       scrollToMarker(walk, "~~~")
       val b = stripSelector(new SubSeqWalker(walk, startIdx, walk.position))
       out.write("<div")
-      selector.writeAttrs(out)
+      selector.writeAttrs(out, walk.getAbsoluteIndex(oldPos))
       out.write(">")
       while (b.hasCurrent) block(b)
       out.write("</div>")
@@ -522,7 +524,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
 
   def processParagraph(walk: Walker) {
     out.write("<p")
-    selector.writeAttrs(out)
+    selector.writeAttrs(out, walk.getAbsolutePosition)
     out.write(">")
     inline.process(walk)
     out.write("</p>")
