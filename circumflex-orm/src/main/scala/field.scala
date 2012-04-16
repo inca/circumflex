@@ -14,11 +14,11 @@ and provides methods for constructing column definitions for enclosing
 tables. It also contains the `REFERENCES` method which is used to create
 associations and various methods for composing simple predicates.
 */
-class Field[T, R <: Record[_, R]](
-        val name: String,
-        val record: R,
-        val sqlType: String)
-    extends ValueHolder[T, R] with SQLable {
+class Field[T, R <: Record[_, R]](val name: String,
+                                  val record: R,
+                                  val sqlType: String)
+    extends ValueHolder[T, R]
+    with SQLable {
 
   def uuid = record.getClass.getName + "." + name
 
@@ -158,10 +158,10 @@ class LongField[R <: Record[_, R]](name: String, record: R)
 }
 
 class DoubleField[R <: Record[_, R]](
-      name: String,
-      record: R,
-      val precision: Int = -1,
-      val scale: Int = 0)
+                                        name: String,
+                                        record: R,
+                                        val precision: Int = -1,
+                                        val scale: Int = 0)
     extends XmlSerializable[Double, R](
       name, record, ormConf.dialect.numericType(precision, scale)) {
   override def read(rs: ResultSet, alias: String): Option[Double] = {
@@ -174,11 +174,11 @@ class DoubleField[R <: Record[_, R]](
 }
 
 class NumericField[R <: Record[_, R]](
-      name: String,
-      record: R,
-      val precision: Int = -1,
-      val scale: Int = 0,
-      val roundingMode: RoundingMode.RoundingMode = RoundingMode.HALF_EVEN)
+                                         name: String,
+                                         record: R,
+                                         val precision: Int = -1,
+                                         val scale: Int = 0,
+                                         val roundingMode: RoundingMode.RoundingMode = RoundingMode.HALF_EVEN)
     extends XmlSerializable[BigDecimal, R](
       name, record, ormConf.dialect.numericType(precision, scale)) {
   def fromString(str: String): Option[BigDecimal] =

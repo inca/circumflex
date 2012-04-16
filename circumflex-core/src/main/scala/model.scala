@@ -24,7 +24,7 @@ attributes (like name, identifier, etc.), **but not their internal value**.
 Implementations should provide sensible `canEqual`, `equal` and `hashCode`
 methods, but internal value should not be taken into consideration.
 */
-trait Container[T] extends Equals {
+trait Container[T] {
   protected var _value: Option[T] = None
 
   /*!## Setters

@@ -71,7 +71,11 @@ trait SchemaObject {
 Value holder is an atomic data-carrier unit of a record. It carries methods for
 identifying and manipulating data fields inside persistent records.
 */
-trait ValueHolder[T, R <: Record[_, R]] extends Container[T] with Wrapper[Option[T]] {
+trait ValueHolder[T, R <: Record[_, R]]
+    extends Container[T]
+    with Wrapper[Option[T]]
+    with Equals {
+
   def name: String
   def record: R
   def item = value
@@ -130,17 +134,20 @@ trait ValueHolder[T, R <: Record[_, R]] extends Container[T] with Wrapper[Option
   Finally, `toString` returns the qualified name of relation which it
   belongs to followed by a dot and the field name.
   */
+  def canEqual(that: Any): Boolean = that match {
+    case that: ValueHolder[_, _] => this.record.canEqual(that.record)
+    case _ => false
+  }
+
   override def equals(that: Any): Boolean = that match {
     case that: ValueHolder[_, _] => this.canEqual(that) &&
         this.name == that.name
     case _ => false
   }
+
   override lazy val hashCode: Int =  record.relation.qualifiedName.hashCode * 31 +
       name.hashCode
-  def canEqual(that: Any): Boolean = that match {
-    case that: ValueHolder[_, _] => this.record.canEqual(that.record)
-    case _ => false
-  }
+
   override def toString: String = record.relation.qualifiedName + "." + name
 
   /*! The `placeholder` method returns an expression which is used to mark a parameter
