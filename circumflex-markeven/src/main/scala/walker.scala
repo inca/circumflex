@@ -215,7 +215,11 @@ class SubSeqWalker(val input: CharSequence, s: Int, val e: Int)
 
   override def getAbsoluteIndex(relative: Int) = {
     checkIndex(relative)
-    start + relative
+    val idx = start + relative
+    input match {
+      case w: Walker => w.getAbsoluteIndex(idx)
+      case _ => idx
+    }
   }
 
   // Char sequence

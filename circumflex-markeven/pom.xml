@@ -25,6 +25,15 @@
     </dependency>
   </dependencies>
 
+  <profiles>
+    <profile>
+      <id>test</id>
+      <properties>
+        <markeven.includeSourceIndex>true</markeven.includeSourceIndex>
+      </properties>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
       <plugin>

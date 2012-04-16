@@ -45,7 +45,7 @@ trait MarkevenConf {
   def resolveFragment(id: String): Option[FragmentDef]
   def scrambler = cx.instantiate[TextScrambler](
     "markeven.scrambler", EmptyTextScrambler)
-  def sourceIndex = cx.getBoolean("markeven.sourceIndex").getOrElse(false)
+  def includeSourceIndex = cx.getBoolean("markeven.includeSourceIndex").getOrElse(false)
 }
 
 object EmptyMarkevenConf extends MarkevenConf {
@@ -156,7 +156,7 @@ class Selector(val conf: MarkevenConf,
                val id: String = "",
                val classes: Seq[String] = Nil) {
 
-  def writeAttrs(w: Writer, idx: => Int) {
+  def writeAttrs(w: Writer, idx: Int) {
     if (id != "") {
       w.write(" id=\"")
       w.write(id)
@@ -167,9 +167,9 @@ class Selector(val conf: MarkevenConf,
       w.write(classes.mkString(" "))
       w.write("\"")
     }
-    if (conf.sourceIndex) {
+    if (conf.includeSourceIndex) {
       w.write(" data-source-index=\"")
-      w.write(idx)
+      w.write(idx.toString)
       w.write("\"")
     }
   }
