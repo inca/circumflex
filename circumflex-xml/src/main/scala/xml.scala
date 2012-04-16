@@ -140,27 +140,31 @@ trait Holder {
     XML_LOG.trace("Saving " + getClass.getSimpleName + " instance to stream.")
    IOUtils.write("<?xml version=\"1.0\"?>\n" + toXml, out, "UTF-8")
   }
-
-  def canEqual(that: Any): Boolean = that match {
-    case h: Holder =>
-      h.getClass == this.getClass && h.parent == this.parent
-    case _ => false
-  }
-  override def equals(that: Any): Boolean = that match {
-    case h: Holder =>
-      h.canEqual(this) && h.elemName == this.elemName
-    case _ => false
-  }
-  override def hashCode: Int = parent.hashCode * 31 + elemName.hashCode
 }
 
 class AttrHolder(val elemName: String) extends Holder with Container[String] {
   addSetter(s => escapeHtml(s))
+
   def writeXml(indent: Int): String = value.map(s => " " + elemName + "=\"" + s + "\"").getOrElse("")
+
   def readXml(it: TagIterator): this.type = {
     it.attr(elemName).map(a => set(a))
     this
   }
+
+  def canEqual(that: Any) = that match {
+    case attr: AttrHolder => attr.elemName == this.elemName
+    case _ => false
+  }
+
+  override def equals(that: Any) = that match {
+    case attr: AttrHolder =>
+      this.canEqual(attr) && attr.value == this.value
+    case _ => false
+  }
+
+  override def hashCode = elemName.hashCode * 31 + value.hashCode
+
   override def toString = value.getOrElse("")
 }
 
@@ -201,6 +205,20 @@ trait TextHolder extends ElemHolder with Container[String] {
   def writeXml(indent: Int): String = ("  " * indent) + "<" + elemName +
       writeAttrs(indent) + "><![CDATA[" +
       value.getOrElse("") + "]]></" + elemName + ">"
+
+  def canEqual(that: Any) = that match {
+    case text: TextHolder => text.elemName == this.elemName
+    case _ => false
+  }
+
+  override def equals(that: Any) = that match {
+    case text: TextHolder =>
+      this.canEqual(text) && text.value == this.value
+    case _ => false
+  }
+
+  override def hashCode = elemName.hashCode * 31 + value.hashCode
+
   override def toString = value.getOrElse("")
 }
 
