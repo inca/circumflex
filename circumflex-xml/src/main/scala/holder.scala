@@ -5,6 +5,7 @@ import core._, cache._
 import java.lang.reflect.Modifier
 import org.apache.commons.io.{IOUtils, FileUtils}
 import java.io._
+import collection.mutable.ListBuffer
 
 trait Holder {
 
@@ -154,29 +155,35 @@ trait TextHolder
 }
 
 trait ListHolder[T <: ElemHolder]
-    extends ValHolder[Seq[T]]
-    with ElemHolder {
+    extends ElemHolder
+    with Seq[T] {
 
-  def children: Seq[T] = getOrElse(Nil)
+  protected val _children = new ListBuffer[T]
 
-  def addChild(child: T): this.type = {
+  def length = _children.size
+
+  def apply(idx: Int) = _children.apply(idx)
+
+  def iterator = _children.iterator
+
+  def add(child: T): this.type = {
     child.parent = Some(this)
-    set(getOrElse(Nil) ++ List(child))
+    _children += child
     this
   }
 
-  def readChild: String => T
+  def read: String => T
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
-      set(Nil)
+      _children.clear()
       findAttrs.foreach(a => a.readXml(it))
       it.takeWhile(_ != EndTag(elemName)) foreach {
         case t: StartTag =>
           try {
-            val child = readChild(t.name)
+            val child = read(t.name)
             child.readXml(it)
-            addChild(child)
+            add(child)
           } catch {
             case e: MatchError =>
               XML_LOG.warn("Unexpected element <" + t.toString + ">. " +
@@ -190,7 +197,7 @@ trait ListHolder[T <: ElemHolder]
 
   def writeXml(indent: Int): String = {
     var result = ("  " * indent) + "<" + elemName + writeAttrs(indent)
-    val children = getOrElse(Nil)
+    val children = _children.toSeq
     if (children.size == 0) result += "/>"
     else result += ">\n" + children.map(_.writeXml(indent + 1)).mkString("\n") +
         "\n" + ("  " * indent) + "</" + elemName + ">"
@@ -198,7 +205,7 @@ trait ListHolder[T <: ElemHolder]
   }
 
   def delete(child: T) {
-    set(children.filter(_ != child))
+    _children -= child
   }
 
 }
