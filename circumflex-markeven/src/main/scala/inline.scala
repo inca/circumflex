@@ -33,13 +33,13 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
     if (tryMedia(walk)) return
     if (tryLink(walk)) return
     // Now generic characters
+    out.write(conf.scrambler.getSpan)
     flushGeneric(walk)
   }
 
   /*! Generic characters are spit to the output "as is". */
   def flushGeneric(walk: Walker) {
     out.write(walk.current)
-    out.write(conf.scrambler.getSpan)
     walk.skip()
   }
 

@@ -160,18 +160,23 @@ trait ListHolder[T <: ElemHolder]
     this
   }
 
-  def readChild(it: TagIterator): Option[T]
+  def readChild: String => T
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
       set(Nil)
       findAttrs.foreach(a => a.readXml(it))
       it.takeWhile(_ != EndTag(elemName)) foreach {
-        case t: StartTag => readChild(it) map {
-          c =>
-            c.readXml(it)
-            addChild(c)
-        }
+        case t: StartTag =>
+          try {
+            val child = readChild(t.name)
+            child.readXml(it)
+            addChild(child)
+          } catch {
+            case e: MatchError =>
+              XML_LOG.warn("Unexpected element <" + t.toString + ">. " +
+                  "Please check `readChild` or XML input.")
+          }
         case _ =>
       }
     }
