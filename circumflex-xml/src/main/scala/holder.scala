@@ -25,39 +25,44 @@ trait Holder {
 
   def readXml(it: TagIterator): this.type
 
-  def loadFrom(file: File) {
+  def loadFrom(file: File): this.type = {
     xml.parse(file) { it =>
       XML_LOG.trace("Loading " + getClass.getSimpleName + " instance from " + file.getCanonicalPath)
       it.next()
       readXml(it)
     }
+    this
   }
 
-  def loadFrom(is: InputStream) {
+  def loadFrom(is: InputStream): this.type = {
     xml.parseStream(is) { it =>
       XML_LOG.trace("Loading " + getClass.getSimpleName + " instance from stream.")
       it.next()
       readXml(it)
     }
+    this
   }
 
-  def loadString(string: String) {
+  def loadString(string: String): this.type = {
     xml.parseString(string) { it =>
       XML_LOG.trace("Loading " + getClass.getSimpleName + " instance from string.")
       it.next()
       readXml(it)
     }
+    this
   }
 
-  def saveTo(file: File) {
+  def saveTo(file: File): this.type = {
     XML_LOG.trace("Saving " + getClass.getSimpleName +
         " instance to " + file.getCanonicalPath)
     FileUtils.writeStringToFile(file, "<?xml version=\"1.0\"?>\n" + toXml, "UTF-8")
+    this
   }
 
-  def saveTo(out: OutputStream) {
+  def saveTo(out: OutputStream): this.type = {
     XML_LOG.trace("Saving " + getClass.getSimpleName + " instance to stream.")
     IOUtils.write("<?xml version=\"1.0\"?>\n" + toXml, out, "UTF-8")
+    this
   }
 
 }
