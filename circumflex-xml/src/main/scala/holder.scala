@@ -155,16 +155,11 @@ trait TextHolder
 }
 
 trait ListHolder[T <: ElemHolder]
-    extends ElemHolder
-    with Seq[T] {
+    extends ElemHolder {
 
   protected val _children = new ListBuffer[T]
 
-  def length = _children.size
-
-  def apply(idx: Int) = _children.apply(idx)
-
-  def iterator = _children.iterator
+  def children = _children.toSeq
 
   def add(child: T): this.type = {
     child.parent = Some(this)
@@ -197,7 +192,7 @@ trait ListHolder[T <: ElemHolder]
 
   def writeXml(indent: Int): String = {
     var result = ("  " * indent) + "<" + elemName + writeAttrs(indent)
-    val children = _children.toSeq
+    val chldrn = children
     if (children.size == 0) result += "/>"
     else result += ">\n" + children.map(_.writeXml(indent + 1)).mkString("\n") +
         "\n" + ("  " * indent) + "</" + elemName + ">"
