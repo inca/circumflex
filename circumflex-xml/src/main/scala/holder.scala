@@ -167,6 +167,17 @@ trait ListHolder[T <: ElemHolder]
     this
   }
 
+  def set(children: Seq[T]): this.type = {
+    _children.clear()
+    _children ++= children
+    this
+  }
+
+  def clear(): this.type = {
+    _children.clear()
+    this
+  }
+
   def read: String => T
 
   def readXml(it: TagIterator): this.type = {
