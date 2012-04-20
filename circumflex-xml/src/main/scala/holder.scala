@@ -157,24 +157,11 @@ trait TextHolder
 trait ListHolder[T <: ElemHolder]
     extends ElemHolder {
 
-  protected val _children = new ListBuffer[T]
-
-  def children = _children.toSeq
+  val children = new ListBuffer[T]
 
   def add(child: T): this.type = {
     child.parent = Some(this)
-    _children += child
-    this
-  }
-
-  def set(children: Seq[T]): this.type = {
-    _children.clear()
-    _children ++= children
-    this
-  }
-
-  def clear(): this.type = {
-    _children.clear()
+    children += child
     this
   }
 
@@ -182,7 +169,7 @@ trait ListHolder[T <: ElemHolder]
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
-      _children.clear()
+      children.clear()
       findAttrs.foreach(a => a.readXml(it))
       it.takeWhile(_ != EndTag(elemName)) foreach {
         case t: StartTag =>
@@ -211,7 +198,7 @@ trait ListHolder[T <: ElemHolder]
   }
 
   def delete(child: T) {
-    _children -= child
+    children -= child
   }
 
 }
