@@ -159,10 +159,14 @@ trait ListHolder[T <: ElemHolder]
 
   val children = new ListBuffer[T]
 
-  def add(child: T): this.type = {
+  def add(child: T) {
     child.parent = Some(this)
     children += child
-    this
+  }
+
+  def setChildren(children: Seq[T]) {
+    this.children.clear()
+    this.children ++= children
   }
 
   def read: String => T
