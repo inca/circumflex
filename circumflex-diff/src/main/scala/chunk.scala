@@ -30,7 +30,7 @@ class EqualChunk[T](original: Seq[T], revised: Seq[T])
       original.mkString(", ") + "]";
 }
 
-class Difference[T](val chunks: Seq[Chunk[T]]) extends Seq[T] {
+class Difference[T](val chunks: Seq[Chunk[T]]) extends Seq[Chunk[T]] {
   def length = chunks.size
   def apply(idx: Int) = chunks(idx)
   def iterator = chunks.iterator
