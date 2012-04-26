@@ -8,7 +8,7 @@ import java.lang.String
 import core._
 import scala.collection.Map
 import scala.xml._
-import java.lang.reflect.{InvocationTargetException, Modifier, Field, Method}
+import java.lang.reflect.{Modifier, Field, Method}
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any): TemplateModel = obj match {
@@ -81,19 +81,8 @@ class ScalaMethodWrapper(val target: Any,
                          val methodName: String,
                          val wrapper: ObjectWrapper)
     extends TemplateMethodModel {
-  def exec(arguments: java.util.List[_]) = {
-    val args = arguments.toArray.map {
-      case wrap: ScalaBaseWrapper => wrap.unpack
-      case obj => obj
-    }
-    val result = try {
-      MethodUtils.invokeMethod(target, methodName, args)
-    } catch {
-      case e: InvocationTargetException if (e.getCause != null) =>
-        throw e.getCause
-    }
-    wrapper.wrap(result)
-  }
+  def exec(arguments: java.util.List[_]) =
+    wrapper.wrap(MethodUtils.invokeMethod(target, methodName, arguments.toArray))
 }
 
 class ScalaXmlWrapper(val node: NodeSeq, val wrapper: ObjectWrapper)
@@ -188,9 +177,4 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper)
   def isEmpty = false
 
   def getAsString = obj.toString
-
-  def unpack: Any = obj match {
-    case wrap: ScalaBaseWrapper => wrap.unpack
-    case _ => obj
-  }
 }
