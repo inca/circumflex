@@ -100,9 +100,9 @@ package object orm {
   // Predicates DSL
 
   def AND(predicates: Predicate*) =
-    new AggregatePredicateHelper(predicates.head).AND(predicates.tail: _*)
+    new AggregatePredicate(ormConf.dialect.AND, predicates.toSeq)
   def OR(predicates: Predicate*) =
-    new AggregatePredicateHelper(predicates.head).OR(predicates.tail: _*)
+    new AggregatePredicate(ormConf.dialect.OR, predicates.toSeq)
   def NOT(predicate: Predicate) =
     new SimpleExpression(ormConf.dialect.not(predicate.toSql), predicate.parameters)
 
