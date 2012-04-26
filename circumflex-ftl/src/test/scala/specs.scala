@@ -51,17 +51,6 @@ object CircumflexFtlSpec extends Specification {
       'map := map
       "Maps" must beFine
     }
-    "provide limited support of Scala XML" in {
-      'root := <root>
-        <child>
-          <one id="0">1</one>
-            <two id="1"/>
-          <three id="2">Three</three>
-        </child>
-          <child/>
-      </root>
-      "XML" must beFine
-    }
     "handle arrays" in {
       'arr := Array("one", "two", "three")
       "Arrays" must beFine

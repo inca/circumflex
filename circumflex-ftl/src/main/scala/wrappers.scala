@@ -7,12 +7,11 @@ import org.apache.commons.beanutils.MethodUtils
 import java.lang.String
 import core._
 import scala.collection.Map
-import scala.xml._
-import java.lang.reflect.{Modifier, Field, Method}
+import java.lang.reflect.{InvocationTargetException, Modifier, Field, Method}
 
 class ScalaObjectWrapper extends ObjectWrapper {
   override def wrap(obj: Any): TemplateModel = obj match {
-  // Basic types
+    // Basic types
     case null => null
     case option: Option[Any] => option match {
       case Some(o) => wrap(o)
@@ -22,7 +21,6 @@ class ScalaObjectWrapper extends ObjectWrapper {
     // Circumflex model types
     case wrapper: Wrapper[_] => wrap(wrapper.item)
     // Scala base types
-    case xml: NodeSeq => new ScalaXmlWrapper(xml, this)
     case seq: Seq[Any] => new ScalaSeqWrapper(seq, this)
     case array: Array[Any] => new ScalaArrayWrapper(array, this)
     case map: Map[Any, Any] => new ScalaMapWrapper(map, this)
@@ -31,7 +29,8 @@ class ScalaObjectWrapper extends ObjectWrapper {
     case str: String => new SimpleScalar(str)
     case date: Date => new ScalaDateWrapper(date, this)
     case num: Number => new SimpleNumber(num)
-    case bool: Boolean => if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
+    case bool: Boolean =>
+      if (bool) TemplateBooleanModel.TRUE else TemplateBooleanModel.FALSE
     // Everything else
     case o => new ScalaBaseWrapper(o, this)
   }
@@ -81,55 +80,16 @@ class ScalaMethodWrapper(val target: Any,
                          val methodName: String,
                          val wrapper: ObjectWrapper)
     extends TemplateMethodModel {
-  def exec(arguments: java.util.List[_]) =
-    wrapper.wrap(MethodUtils.invokeMethod(target, methodName, arguments.toArray))
-}
-
-class ScalaXmlWrapper(val node: NodeSeq, val wrapper: ObjectWrapper)
-    extends TemplateNodeModel
-    with TemplateHashModel
-    with TemplateSequenceModel
-    with TemplateScalarModel {
-  // as node
-  def children: Seq[Node] = node match {
-    case node: Elem => node.child.flatMap {
-      case e: Elem => Some(e)
-      case a: Attribute => Some(a)
-      case t: Text => if (t.text.trim == "") None else Some(t)
-      case _ => None
+  def exec(arguments: java.util.List[_]) = {
+    val args = arguments.toArray.asInstanceOf[Array[Object]]
+    val result = try{
+      MethodUtils.invokeMethod(target, methodName, args)
+    } catch {
+      case e: InvocationTargetException if (e.getCause != null) =>
+        throw e.getCause
     }
-    case _ => Nil
+    wrapper.wrap(result)
   }
-  def getNodeNamespace: String = node match {
-    case e: Elem => e.namespace
-    case _ => ""
-  }
-  def getNodeType: String = node match {
-    case e: Elem => "element"
-    case t: Text => "text"
-    case a: Attribute => "attribute"
-    case _ => null
-  }
-  def getNodeName: String = node match {
-    case e: Elem => e.label
-    case _ => null
-  }
-  def getChildNodes: TemplateSequenceModel = new ScalaSeqWrapper[Node](children, wrapper)
-  // due to immutability of Scala XML API, nodes are unaware of their parents.
-  def getParentNode: TemplateNodeModel = new ScalaXmlWrapper(null, wrapper)
-  // as hash
-  def isEmpty: Boolean = node.size == 0
-  def get(key: String): TemplateModel = {
-    val children = node \ key
-    if (children.size == 0) wrapper.wrap(None)
-    if (children.size == 1) wrapper.wrap(children(0))
-    else wrapper.wrap(children)
-  }
-  // as sequence
-  def size: Int = node.size
-  def get(index: Int): TemplateModel = new ScalaXmlWrapper(node(index), wrapper)
-  // as scalar
-  def getAsString: String = node.text
 }
 
 class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper)
