@@ -282,7 +282,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
       out.write("/>")
     } else if (walk.atMatch(const.table)) {
       processTable(walk)
-    } else processParagraph(walk)
+    } else processParagraph(walk, walk.getAbsolutePosition)
   }
 
   def processTable(walk: Walker) {
@@ -518,13 +518,13 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
       val startIdx = walk.position
       scrollToTerm(walk)
       val p = stripSelector(new SubSeqWalker(walk, startIdx, walk.position))
-      processParagraph(p)
+      processParagraph(p, startIdx)
     }
   }
 
-  def processParagraph(walk: Walker) {
+  def processParagraph(walk: Walker, startIdx: Int) {
     out.write("<p")
-    selector.writeAttrs(out, walk.getAbsolutePosition)
+    selector.writeAttrs(out, startIdx)
     out.write(">")
     inline.process(walk)
     out.write("</p>")
