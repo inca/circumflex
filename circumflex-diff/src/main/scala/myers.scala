@@ -91,11 +91,13 @@ class MyersDiff[T] {
           new DeleteChunk[T](origSeq, revSeq)
         else new ChangeChunk[T](origSeq, revSeq)
       chunks += c
-      if (path.isSnake) pathOpt = {
+      if (path.isSnake) {
         val c: Chunk[T] = new EqualChunk[T](copyOfRange(original, path.prev.get.i, path.i),
           copyOfRange(revised, path.prev.get.j, path.j))
         chunks += c
-        path.prev
+        pathOpt = path.prev
+      } else {
+        pathOpt = Some(path)
       }
     }
     new Difference[T](chunks.reverse)
