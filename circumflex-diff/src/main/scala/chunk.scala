@@ -1,31 +1,34 @@
 package ru.circumflex
 package diff
 
-class Chunk[T](val original: Seq[T], val revised: Seq[T])
+sealed trait Chunk[T]{
+  def original: Seq[T]
+  def revised: Seq[T]
+}
 
-class InsertChunk[T](original: Seq[T], revised: Seq[T])
-    extends Chunk(original, revised) {
+class InsertChunk[T](val original: Seq[T], val revised: Seq[T])
+    extends Chunk[T] {
 
   override def toString = "[InsertChunk, elements: " +
       revised.mkString(", ") + "]";
 }
 
-class DeleteChunk[T](original: Seq[T], revised: Seq[T])
-    extends Chunk(original, revised) {
+class DeleteChunk[T](val original: Seq[T], val revised: Seq[T])
+    extends Chunk[T] {
 
   override def toString = "[DeleteChunk, elements: " +
       original.mkString(", ") + "]";
 }
 
-class ChangeChunk[T](original: Seq[T], revised: Seq[T])
-    extends Chunk(original, revised) {
+class ChangeChunk[T](val original: Seq[T], val revised: Seq[T])
+    extends Chunk[T] {
 
   override def toString = "[ChangeChunk, elements: " +
       original.mkString(", ") + " to " + revised.mkString(", ") + "]";
 }
 
-class EqualChunk[T](original: Seq[T], revised: Seq[T])
-    extends Chunk(original, revised) {
+class EqualChunk[T](val original: Seq[T], val revised: Seq[T])
+    extends Chunk[T] {
   override def toString = "[EqualChunk, elements: " +
       original.mkString(", ") + "]";
 }
