@@ -117,7 +117,7 @@ package object web {
   match result contain a parameter with specified name, then the parameter is
   resolved from request parameters.
   */
-  object param extends Map[String, String] {
+  object param extends Map[String, String] with KeyValueCoercion {
     def +=(kv: (String, String)): this.type = this
     def -=(key: String): this.type = this
     def iterator: Iterator[(String, String)] = ctx.iterator.flatMap(p => p._2 match {

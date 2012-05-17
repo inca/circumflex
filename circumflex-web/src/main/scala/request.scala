@@ -204,7 +204,7 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   Request parameters can be accessed via the `params` object.
   */
-  object params extends Map[String, String] {
+  object params extends Map[String, String] with KeyValueCoercion {
     def +=(kv: (String, String)): this.type = this
     def -=(key: String): this.type = this
     def iterator: Iterator[(String, String)] = raw.getParameterNames
