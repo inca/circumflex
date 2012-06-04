@@ -38,8 +38,22 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
 
   /*! Generic characters are spit to the output "as is". */
   def flushGeneric(walk: Walker) {
-    out.write(walk.current)
+    val char = walk.current
+    if (!(conf.stripInvalidXmlChars && isInvalidXmlChar(char)))
+      out.write(char)
     walk.skip()
+  }
+
+  def isInvalidXmlChar(char: Char): Boolean = {
+    val code = char.toInt
+    (code >= 0x1 && code <= 0x8) ||
+        (code >= 0xB && code <= 0xC) ||
+        (code >= 0xE && code <= 0x1F) ||
+        (code >= 0x7F && code <= 0x84) ||
+        (code >= 0x86 && code <= 0x9F) ||
+        (code >= 0xFDD0 && code <= 0xFDDF) ||
+        (code % 0x10000 == 0xFFFE) ||
+        (code % 0x10000 == 0xFFFF)
   }
 
   /*! Certain chars, usually markers, can be backslash-escaped.

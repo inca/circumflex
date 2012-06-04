@@ -42,6 +42,10 @@ trait MarkevenConf {
   def resolveLink(id: String): Option[LinkDef]
   def resolveMedia(id: String): Option[LinkDef]
   def resolveFragment(id: String): Option[FragmentDef]
+  val stripInvalidXmlChars =
+    cx.get("markeven.stripInvalidXmlChars")
+        .map(_.toString.toBoolean)
+        .getOrElse(true)
 }
 
 object EmptyMarkevenConf extends MarkevenConf {
