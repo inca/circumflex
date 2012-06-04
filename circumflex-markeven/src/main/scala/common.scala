@@ -43,9 +43,14 @@ trait MarkevenConf {
   def resolveLink(id: String): Option[LinkDef]
   def resolveMedia(id: String): Option[LinkDef]
   def resolveFragment(id: String): Option[FragmentDef]
-  def scrambler = cx.instantiate[TextScrambler](
+  val scrambler = cx.instantiate[TextScrambler](
     "markeven.scrambler", EmptyTextScrambler)
-  def includeSourceIndex = cx.getBoolean("markeven.includeSourceIndex").getOrElse(false)
+  val includeSourceIndex =
+    cx.getBoolean("markeven.includeSourceIndex")
+        .getOrElse(false)
+  val stripInvalidXmlChars =
+    cx.getBoolean("markeven.stripInvalidXmlChars")
+        .getOrElse(true)
 }
 
 object EmptyMarkevenConf extends MarkevenConf {
