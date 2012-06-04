@@ -215,7 +215,7 @@
           <executions>
             <execution>
               <id>sources</id>
-              <phase>verify</phase>
+              <phase>package</phase>
               <goals>
                 <goal>jar-no-fork</goal>
               </goals>
