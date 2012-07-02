@@ -12,6 +12,7 @@ public abstract class AbstractConfigureMojo extends AbstractCircumflexMojo {
   public void execute() throws MojoExecutionException {
     try {
       Properties props = collectProps();
+      props.setProperty("application.classpath", getApplicationClasspathString());
       getLog().info("Writing Circumflex configuration to " + targetFile());
       FileOutputStream out = new FileOutputStream(targetFile());
       try {
