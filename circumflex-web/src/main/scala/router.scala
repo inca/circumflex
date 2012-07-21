@@ -140,9 +140,9 @@ class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
   }
 }
 
-class FilterRoute extends RoutingContext[Unit] {
+class FilterRoute extends RoutingContext[Any] {
   def matches = true
-  protected def dispatch(block: => Unit) {
+  protected def dispatch(block: => Any) {
     block
   }
 }
