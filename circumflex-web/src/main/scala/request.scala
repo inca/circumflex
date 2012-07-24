@@ -234,6 +234,11 @@ class HttpRequest(val raw: HttpServletRequest) {
   will return empty values without implicitly creating a session.
   */
   object session extends Map[String, Any] with KeyValueCoercion {
+    def id: Option[String] = {
+      val s = raw.getSession(false)
+      if (s == null) None
+      else Some(s.getId)
+    }
     def +=(kv: (String, Any)): this.type = {
       raw.getSession(true).setAttribute(kv._1, kv._2)
       this
