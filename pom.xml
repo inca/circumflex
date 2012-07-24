@@ -29,7 +29,7 @@
   </modules>
 
   <properties>
-    <scala.version>2.9.2-RC2</scala.version>
+    <scala.version>2.9.2</scala.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
