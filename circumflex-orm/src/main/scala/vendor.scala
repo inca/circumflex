@@ -32,6 +32,12 @@ class H2Dialect extends Dialect {
 class PostgreSQLDialect extends Dialect {
   override def driverClass = "org.postgresql.Driver"
   override def timestampType = "TIMESTAMPTZ"
+
+  override def parameterizedIn(ex: String, params: Iterable[String]) = {
+    if (params.size == 0) "FALSE"
+    else ex + " IN (" + params.mkString(", ") + ")"
+  }
+
 }
 
 class MySQLDialect extends Dialect {
