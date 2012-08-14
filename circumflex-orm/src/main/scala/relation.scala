@@ -440,7 +440,13 @@ trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
     c
   }
 
-  afterInsert(r => cache.put(r.PRIMARY_KEY().toString, r))
-  afterUpdate(r => cache.put(r.PRIMARY_KEY().toString, r))
+  afterInsert { r =>
+    cache.evict(r.PRIMARY_KEY().toString)
+    cache.put(r.PRIMARY_KEY().toString, r)
+  }
+  afterUpdate { r =>
+    cache.evict(r.PRIMARY_KEY().toString)
+    cache.put(r.PRIMARY_KEY().toString, r)
+  }
   afterDelete(r => cache.evict(r.PRIMARY_KEY().toString))
 }
