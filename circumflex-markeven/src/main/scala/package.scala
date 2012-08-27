@@ -17,6 +17,8 @@ package object markeven {
 
   val conf = cx.instantiate[MarkevenConf]("markeven.conf", EmptyMarkevenConf)
 
+  val sanitizer = cx.instantiate[Sanitizer]("markeven.sanitizer", DefaultSanitizer)
+
   def toHtml(input: String): String = {
     val w = new StringWriter
     new BlockProcessor(w, conf).process(input)
