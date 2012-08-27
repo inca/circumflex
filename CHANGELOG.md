@@ -1,5 +1,9 @@
 # Circumflex Change Log
 
+## 2.4
+
+* Markeven now features Sanitizer and Renderer.
+
 ## 2.3
 
 * Compiled against Scala 2.9.2-RC2.
