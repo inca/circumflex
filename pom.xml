@@ -26,6 +26,7 @@
     <module>circumflex-ftl</module>
     <module>circumflex-archetype</module>
     <module>circumflex-diff</module>
+    <module>circumflex-mail</module>
   </modules>
 
   <properties>

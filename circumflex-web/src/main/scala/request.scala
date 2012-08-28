@@ -1,11 +1,11 @@
-
 package ru.circumflex
 package web
+
 import scala.collection.Iterator
 import scala.collection.JavaConversions._
 import scala.xml._
 import core._
-import javax.servlet.http.{HttpServletRequest}
+import javax.servlet.http.HttpServletRequest
 import java.security.Principal
 import java.util.{Locale, Date}
 import javax.servlet.ServletInputStream
@@ -61,7 +61,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   lazy val method = params.get("_method") match {
     case Some(m) =>
       // store original method in context
-      ctx.update("cx.originalMethod", raw.getMethod.toLowerCase)
+      ctx.update("cx.web.originalMethod", raw.getMethod.toLowerCase)
       m.trim.toLowerCase
     case _ => raw.getMethod.toLowerCase
   }

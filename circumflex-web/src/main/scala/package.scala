@@ -7,6 +7,7 @@ import javax.activation.MimetypesFileTypeMap
 import java.io._
 import org.apache.commons.io.IOUtils
 import collection.mutable.Map
+import java.util.Date
 
 /*!# The `web` Package
 
@@ -136,26 +137,46 @@ package object web {
   HTTP responses:
 
     * `send` writes specified `text` to response buffer and, if specified,
-    sets `statusCode`;
+      sets `statusCode`;
+
     * `sendError` sends an error to the client using specified `statusCode` and
-    `message`;
+      `message`;
+
     * `sendRedirect` sends `302 MOVED TEMPORARILY` to the client using specified
-    `url` and optional `flashes`;
+      `url` and optional `flashes`;
+
     * `sendFile` sends specified `file` to the client; if `filename` is provided,
-    `Content-Disposition: attachment` is also added to the response with specified
-    `filename`;
+      `Content-Disposition: attachment` is also added to the response with specified
+      `filename`;
+
+    * `sendJson` sends specified `json` string to the client with Content-Type
+      `application/json`; designed to be used either with `json` or `jsonp` data type
+      of JQuery `ajax` calls;
+
     * `xSendFile` delegates filesending to the web server; refer to documentation
-    of your web server to understand how it works;
+      of your web server to understand how it works;
+
     * `sendStream` accepts a function, which uses `OutputStream` to send binary
-    data;
+      data;
+
     * `sendChars` accepts a function, which uses `Writer` to send character data;
+
     * `forward` delegates further request processing to another component located
-    at specified `url` and immediately flushes the response at the end; note that
-    if you want to forward the request to another Circumflex route, you must make
-    sure that `CircumflexFilter` is mapped with `<dispatcher>FORWARD</dispatcher>`
-    in `web.xml`;
-    * `pass()` sends request and response down the filter chain and then immediately
-    flushes response.
+      at specified `url` and immediately flushes the response at the end; note that
+      if you want to forward the request to another Circumflex route, you must make
+      sure that `CircumflexFilter` is mapped with `<dispatcher>FORWARD</dispatcher>`
+      in `web.xml`;
+
+    * `pass` sends request and response down the filter chain and then immediately
+      flushes response.
+
+    * `serveLastModified` immediately sends `304 NOT MODIFIED` if two following
+      conditions are met:
+
+      * the client specified the `If-Modified-Since` header;
+      * the date specified by the client is greater then specified `date` parameter.
+
+      Otherwise, this method just sets the `Last-Modified` header and continues.
 
   All helpers by convention throw `ResponseSentMarker` which is caught by
   `CircumflexFilter` to indicate that the response have been processed
@@ -166,12 +187,15 @@ package object web {
       response.statusCode(statusCode)
     response.body(r => r.getWriter.write(text)).flush()
   }
+
   def sendError(statusCode: Int, message: String = "No message available."): Nothing =
     response.body(r => r.sendError(statusCode, message)).flush()
+
   def sendRedirect(url: String, flashes: (String, Any)*): Nothing = {
     flashes.foreach(kv => flash(kv._1) = kv._2)
     response.body(r => r.sendRedirect(url)).flush()
   }
+
   def sendFile(file: File, filename: String = ""): Nothing = {
     // if filename is provided, add `Content-Disposition` header
     if (filename != "") response.attachment(filename)
@@ -188,6 +212,18 @@ package object web {
       }
     } flush()
   }
+
+  def sendJson(json: String): Nothing  = {
+    val callback = param("callback")
+    if (callback != "") {
+      response.contentType("application/javascript")
+      send(callback + "(" + json + ")")
+    } else {
+      response.contentType("application/json")
+      send(json)
+    }
+  }
+
   def xSendFile(file: File, filename: String = ""): Nothing = {
     // if filename is provided, add `Content-Disposition` header
     if (filename != "") response.attachment(filename)
@@ -195,17 +231,29 @@ package object web {
     response.headers(xsf.name) = xsf.value(file)
     send()
   }
+
   def sendStream(streamFunc: OutputStream => Unit): Nothing =
     response.body(r => streamFunc(r.getOutputStream)).flush()
+
   def sendChars(writerFunc: Writer => Unit): Nothing =
     response.body(r => writerFunc(r.getWriter)).flush()
+
   def forward(url: String): Nothing = {
     request.forward(url)
     response.flush()
   }
+
   def pass(): Nothing = {
     filterChain.doFilter(request.raw, response.raw)
     response.flush()
+  }
+
+  def serveLastModified(lastModified: Date) {
+    request.headers.getAsDate("If-Modified-Since").map { d =>
+      if ((d.getTime / 1000) >= (lastModified.getTime / 1000))
+        send(statusCode = 304)
+    }
+    response.headers += ("Last-Modified" -> lastModified)
   }
 
   /*!## The `matchers` Helper
