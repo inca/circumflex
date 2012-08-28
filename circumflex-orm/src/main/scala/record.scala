@@ -55,6 +55,8 @@ abstract class Record[PK, R <: Record[PK, R]]
 
   /*!## Persistence & Validation
 
+  The `evict` method removes the record from cache.
+
   The `refresh` method is used to synchronize an already persisted record with its state in backend.
   It evicts the record from cache and performs SQL `SELECT` using primary key-based predicate.
 
@@ -69,6 +71,16 @@ abstract class Record[PK, R <: Record[PK, R]]
   to use different strategy mix in one of the `Generator` traits or simply override the `persist`
   method.
   */
+
+  def evict(): this.type = {
+    if (!isTransient) {
+      val key = PRIMARY_KEY().toString
+      relation.cache.evict(key)
+      CACHE_LOG.debug("Evicting " + relation.qualifiedName + " #" + key)
+    }
+    this
+  }
+
   def refresh(): this.type = if (isTransient)
     throw new ORMException("Could not refresh transient record.")
   else {
