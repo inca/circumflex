@@ -2,32 +2,35 @@ package ru.circumflex
 package freemarker
 
 import core._
-import org.specs.runner.JUnit4
-import org.specs.Specification
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.StringUtils
-import org.specs.matcher.Matcher
 import java.io.File
 import collection.mutable.HashMap
+import org.scalatest._
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import matchers.{MatchResult, MustMatchers, Matcher}
 
-class SpecsTest extends JUnit4(CircumflexFtlSpec)
+@RunWith(classOf[JUnitRunner])
+class CircumflexFtlSpec
+  extends FreeSpec
+  with MustMatchers {
 
-object CircumflexFtlSpec extends Specification {
 
   val beFine = new Matcher[String] {
-    def apply(name: => String) = {
+    def apply(name: String) = {
       val text = ftl2string("/" + name + ".ftl").trim
       val out = FileUtils.readFileToString(
         new File(this.getClass.getResource("/" + name + ".out").toURI), "UTF-8").trim
       val diffIndex = StringUtils.indexOfDifference(text, out)
       val diff = StringUtils.difference(text, out)
-      (diffIndex == -1,
+      MatchResult(diffIndex == -1,
           "\"" + name + "\" is fine",
           "\"" + name + "\" fails at " + diffIndex + ": " + StringUtils.abbreviate(diff, 32))
     }
   }
 
-  "Circumflex FTL" should {
+  "Circumflex FTL" - {
     "handle simple objects" in {
       object simpleObject {
         val name = "Joe"

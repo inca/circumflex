@@ -1,7 +1,10 @@
 package ru.circumflex
 package orm
 
-import org.specs.Specification
+import org.scalatest._
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.matchers.MustMatchers
 
 object FooDB extends ORMConfiguration {
   def name = "foo"
@@ -17,23 +20,26 @@ object BarDB extends ORMConfiguration {
   override lazy val password = ""
 }
 
-object MultiDataSourceSpec extends Specification {
+@RunWith(classOf[JUnitRunner])
+class MultiDataSourceSpec
+  extends FreeSpec
+  with MustMatchers
+  with BeforeAndAfterAll
+  with BeforeAndAfterEach {
 
-  doBeforeSpec {
+  override def beforeAll() {
     usingAll(FooDB, BarDB) { conf =>
       new DDLUnit(Country).CREATE()
     }
   }
 
-  new SpecContext {
-    beforeExample {
-      usingAll(FooDB, BarDB) { conf =>
-        DELETE(Country).execute()
-      }
+  override def beforeEach() {
+    usingAll(FooDB, BarDB) { conf =>
+      DELETE(Country).execute()
     }
   }
 
-  "Multiple data sources" should {
+  "Multiple data sources" - {
     "handle different queries" in {
       // Create two different records in two different databases (same table names for simplicity)
       using(FooDB) {
@@ -50,12 +56,12 @@ object MultiDataSourceSpec extends Specification {
       }
       // Query each database to ensure that they contain only one of them
       using(FooDB) {
-        Country.get("ch").isEmpty mustBe false
-        Country.get("fr").isEmpty mustBe true
+        Country.get("ch").isEmpty must equal (false)
+        Country.get("fr").isEmpty must equal (true)
       }
       using(BarDB) {
-        Country.get("ch").isEmpty mustBe true
-        Country.get("fr").isEmpty mustBe false
+        Country.get("ch").isEmpty must equal (true)
+        Country.get("fr").isEmpty must equal (false)
       }
     }
     "allow transfering records between data sources" in {
@@ -75,7 +81,7 @@ object MultiDataSourceSpec extends Specification {
       }
       // Make sure that the record exists in BAR
       using(BarDB) {
-        Country.get("ch").isEmpty mustBe false
+        Country.get("ch").isEmpty must equal (false)
       }
     }
   }
