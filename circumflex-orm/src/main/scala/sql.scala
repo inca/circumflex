@@ -154,6 +154,7 @@ class DefinitionHelper[R <: Record[_, R]](name: String, record: R) {
   def TIMESTAMP = new TimestampField(name, record)
   def XML(root: String = name) = new XmlField(name, record, root)
   def BINARY = new BinaryField(name, record)
+  def HTML = new HtmlField[R](name, record)
 
   def INDEX(expression: String) = new Index(name, record.relation, expression)
 }

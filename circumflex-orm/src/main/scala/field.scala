@@ -201,9 +201,18 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
   def LIKE(value: String) = new SimpleExpression(ormConf.dialect.LIKE(aliasedName, placeholder), List(value))
   def LIKE(col: ColumnExpression[String, _]) =
     new SimpleExpression(ormConf.dialect.LIKE(aliasedName, col.toSql), Nil)
+
   def ILIKE(value: String) = new SimpleExpression(ormConf.dialect.ILIKE(aliasedName, placeholder), List(value))
   def ILIKE(col: ColumnExpression[String, _]) =
     new SimpleExpression(ormConf.dialect.ILIKE(aliasedName, col.toSql), Nil)
+
+  def LLIKE(expr: String): Predicate =
+    new SimpleExpression("LOWER(" + aliasedName + ") LIKE ?", List(expr.toLowerCase))
+}
+
+class HtmlField[R <: Record[_, R]](_name: String, _record: R)
+    extends TextField(_name, _record, ormConf.dialect.textType) {
+  addSetter(s => core.escapeHtml(s.trim))
 }
 
 class BooleanField[R <: Record[_, R]](name: String, record: R)
