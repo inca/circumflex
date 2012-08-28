@@ -49,7 +49,8 @@ object MarkevenSpec extends Specification {
     "avoid reporting chars and sequences out of range" in {
       val walker = new SubSeqWalker(pangram, 4, 19)
       walker.subSequence(12, 16) must throwA[IndexOutOfBoundsException]
-      walker.charAt(15) must throwA[IndexOutOfBoundsException]
+      walker.charAt(15)
+      walker.charAt(16) must throwA[IndexOutOfBoundsException]
     }
     "work nested" in {
       val walker = new SubSeqWalker(pangram, 4, 19).subSequence(6, 11)

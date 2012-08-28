@@ -11,7 +11,7 @@ trait Walker extends CharSequence {
   def rangeStr = "[" + 0 + "," + length + ")"
 
   def checkIndex(index: Int) {
-    if (index < 0 || index >= length)
+    if (index < 0 || index > length)
       throw new IndexOutOfBoundsException(
         getClass.getSimpleName + " " + rangeStr + " does not contain index " + index)
   }
@@ -26,7 +26,7 @@ trait Walker extends CharSequence {
   def checkRange(startIdx: Int, endIdx: Int) {
     if (startIdx > endIdx)
       throw new IllegalStateException("Start index cannot be greater than end index.")
-    if (startIdx < 0 || startIdx >= length)
+    if (startIdx < 0 || startIdx > length)
       throw new IndexOutOfBoundsException(
         getClass.getSimpleName + " " + rangeStr + " does not contain index " + startIdx)
     if (endIdx < 0 || endIdx > length)
