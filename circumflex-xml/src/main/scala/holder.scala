@@ -173,9 +173,10 @@ trait ListHolder[T <: ElemHolder]
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
+      val tag = it.current
       children.clear()
       findAttrs.foreach(a => a.readXml(it))
-      it.takeWhile(_ != EndTag(elemName)) foreach {
+      it.takeWhile(_ != EndTag(tag.name)) foreach {
         case t: StartTag =>
           try {
             val child = read(t.name)
