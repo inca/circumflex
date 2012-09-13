@@ -312,9 +312,9 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
           val m = w.toString.trim
           val left = m.startsWith(":")
           val right = m.endsWith(":")
-          if (left && right) " align=\"center\""
-          else if (left) " align=\"left\""
-          else if (right) " align=\"right\""
+          if (left && right) " style=\"text-align:center\""
+          else if (left) " style=\"text-align:left\""
+          else if (right) " style=\"text-align:right\""
           else ""
         }
         walk.startFrom(m.end)
@@ -322,7 +322,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
     }
     if (hasHead) {
       out.write("<thead>")
-      writeRow("th", cells, Nil)
+      writeRow("th", cells, alignAttrs)
       out.write("</thead>")
     }
     // now write body
