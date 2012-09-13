@@ -3,27 +3,32 @@
 #set( $symbol_escape = '\' )
 package ${package}
 
+
 import ru.circumflex._, core._, web._
 
-import org.specs.runner.JUnit4
-import org.specs.Specification
+import org.scalatest._
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.matchers.MustMatchers
 
-class SpecsTest extends JUnit4(MySpec)
+@RunWith(classOf[JUnitRunner])
+object MySpec
+  extends FreeSpec
+  with BeforeAndAfter
+  with MustMatchers {
 
-object MySpec extends Specification {
-
-  doBeforeSpec {
+  before {
     cx("cx.router") = classOf[Main]
     MockApp.start()
   }
 
-  doAfterSpec {
+  after {
     MockApp.stop()
   }
 
-  "My application" should {
+  "My application" - {
     "test itself" in {
-      MockApp.get("/test").execute().content must_== "I'm fine, thanks!"
+      MockApp.get("/test").execute().content must equal ("I'm fine, thanks!")
     }
   }
 }
