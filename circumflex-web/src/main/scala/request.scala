@@ -14,7 +14,6 @@ import org.apache.commons.fileupload._
 import org.apache.commons.fileupload.disk._
 import org.apache.commons.fileupload.servlet._
 import java.io.{File, BufferedReader}
-import java.net.URLDecoder
 import java.lang.String
 import java.util.{Enumeration => JEnumeration}
 import collection.mutable.Map
@@ -66,7 +65,7 @@ class HttpRequest(val raw: HttpServletRequest) {
     case _ => raw.getMethod.toLowerCase
   }
   lazy val originalUri = {
-    var u = URLDecoder.decode(raw.getRequestURI, "UTF-8")
+    var u = decodeURI(raw.getRequestURI)
     val sid = ";jsessionid=" + sessionId
     val i = u.indexOf(sid)
     if (i != -1 && i == u.length - sid.length)    // endsWith
@@ -75,8 +74,8 @@ class HttpRequest(val raw: HttpServletRequest) {
   }
   def uri = ctx.getAs[String]("cx.web.uri").getOrElse(originalUri)
   lazy val queryString = if (raw.getQueryString == null) "" else
-    URLDecoder.decode(raw.getQueryString, "UTF-8")
-  lazy val url = URLDecoder.decode(raw.getRequestURL.toString, "UTF-8")
+    decodeURI(raw.getQueryString)
+  lazy val url = decodeURI(raw.getRequestURL.toString)
 
   // implicitly set request encoding to UTF-8
   raw.setCharacterEncoding("UTF-8")
