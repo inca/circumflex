@@ -86,7 +86,7 @@ package object core {
 
   def encodeURI(s: String) = encodeURIComponent(s)
       .replaceAll("%3B", ";")
-      .replaceAll("%2C", ",")
+      .replaceAll("%2F", "/")
       .replaceAll("%3F", "?")
       .replaceAll("%3A", ":")
       .replaceAll("%40", "@")
@@ -94,7 +94,7 @@ package object core {
       .replaceAll("%3D", "=")
       .replaceAll("%2B", "+")
       .replaceAll("%24", "$")
-      .replaceAll("%25", "%")
+      .replaceAll("%2C", ",")
 
   def encodeURIComponent(s: String) = {
     URLEncoder.encode(s, "UTF-8")
@@ -107,7 +107,7 @@ package object core {
   }
 
   def decodeURI(s: String) = {
-    val escaped = s.replaceAll("%(3B|2C|3F|3A|40|26|3D|2B|24)", "%25$1")
+    val escaped = s.replaceAll("%(3B|2F|3F|3A|40|26|3D|2B|24|2C)", "%25$1")
     decodeURIComponent(escaped)
   }
 
