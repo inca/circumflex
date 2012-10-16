@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException
 import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import java.io._
-import java.net.URLDecoder
 import util.control.ControlThrowable
 import core._
 
@@ -67,7 +66,7 @@ class CircumflexFilter extends Filter {
         return true
       }
       val relativeUri = uri.substring(contextPath.length)
-      val decodedUri = URLDecoder.decode(publicUri + relativeUri, "UTF-8")
+      val decodedUri = decodeURI(publicUri + relativeUri)
       val path = filterConfig.getServletContext.getRealPath(decodedUri)
       if (path == null)
         return false

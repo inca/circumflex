@@ -3,6 +3,7 @@ package ru.circumflex
 import java.security.MessageDigest
 import java.util.regex.Pattern
 import java.util.{UUID, Random}
+import java.net.{URLDecoder, URLEncoder}
 
 /*!# The `core` Package
 
@@ -82,6 +83,36 @@ package object core {
       .replaceAll("&quot;", "\"")
       .replaceAll("&amp;", "&")
       .replaceAll("\\r\\n|\\r", "\n")
+
+  def encodeURI(s: String) = encodeURIComponent(s)
+      .replaceAll("%3B", ";")
+      .replaceAll("%2F", "/")
+      .replaceAll("%3F", "?")
+      .replaceAll("%3A", ":")
+      .replaceAll("%40", "@")
+      .replaceAll("%26", "&")
+      .replaceAll("%3D", "=")
+      .replaceAll("%2B", "+")
+      .replaceAll("%24", "$")
+      .replaceAll("%2C", ",")
+
+  def encodeURIComponent(s: String) = {
+    URLEncoder.encode(s, "UTF-8")
+        .replaceAll("\\+", "%20")
+        .replaceAll("%21", "!")
+        .replaceAll("%27", "'")
+        .replaceAll("%28", "(")
+        .replaceAll("%29", ")")
+        .replaceAll("%7E", "~")
+  }
+
+  def decodeURI(s: String) = {
+    val escaped = s.replaceAll("%(3B|2F|3F|3A|40|26|3D|2B|24|2C)", "%25$1")
+    decodeURIComponent(escaped)
+  }
+
+  def decodeURIComponent(s: String) =
+    URLDecoder.decode(s, "UTF-8")
 
   // JSON validator
 
