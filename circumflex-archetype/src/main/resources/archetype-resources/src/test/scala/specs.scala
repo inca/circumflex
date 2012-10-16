@@ -12,7 +12,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.MustMatchers
 
 @RunWith(classOf[JUnitRunner])
-object MySpec
+class MySpec
   extends FreeSpec
   with BeforeAndAfter
   with MustMatchers {
