@@ -166,7 +166,7 @@ class Dialect {
 
   def createSchema(schema: Schema) = "CREATE SCHEMA " + schema.name
 
-  def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name + " CASCADE"
+  def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name
 
   def createTable[PK, R <: Record[PK, R]](table: Table[PK, R]) =
     "CREATE TABLE " + table.qualifiedName + " (" +
