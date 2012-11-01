@@ -122,8 +122,25 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
 
   def flushHtmlTag(walk: Walker) {
     if (tryAmp(walk)) return
+    if (tryLinkAttr(walk)) return
     flushGeneric(walk)
   }
+
+  def tryLinkAttr(walk: Walker): Boolean =
+    walk.at(const.refLink) match {
+      case Some(m) =>
+        val id = m.group(1)
+        conf.resolveLink(id).orElse(conf.resolveMedia(id)) match {
+          case Some(ld) =>
+            out.write(ld.url)
+            walk.skip(m.group(0).length)
+            true
+          case _ =>
+            false
+        }
+      case _ =>
+        false
+    }
 
   def flushPlain(walk: Walker) {
     if (tryAmp(walk)) return
