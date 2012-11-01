@@ -467,11 +467,22 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
       val p = stripSelector(new SubSeqWalker(walk, startIdx, walk.position))
       p.atMatch(const.fragmentBlock)
           .flatMap(m => conf.resolveFragment(m.group(1)))
-          .map { frag =>
+          .map { fragDef =>
         out.write("<div")
         selector.writeAttrs(out, startIdx)
         out.write(">")
-        inline.flushFragment(frag)
+        fragDef.mode match {
+          case ProcessingMode.PLAIN => // like triple code span
+            val w = new SubSeqWalker(fragDef.body)
+            while (w.hasCurrent)
+              inline.flushPlain(w)
+          case ProcessingMode.CODE => // like regular code span
+            val w = new SubSeqWalker(fragDef.body)
+            while (w.hasCurrent)
+              inline.flushCode(w)
+          case _ => // like regular blocks
+            run(new SubSeqWalker(fragDef.body))
+        }
         out.write("</div>")
         true
       } getOrElse {
