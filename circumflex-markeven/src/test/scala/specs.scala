@@ -7,34 +7,12 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.MustMatchers
 import java.io.StringWriter
 
-
 @RunWith(classOf[JUnitRunner])
 class MarkevenSpec
   extends FreeSpec
   with MustMatchers {
 
   val pangram = "The quick brown fox jumps over the lazy dog."
-
-  val testConf = new MarkevenConf {
-    def resolveMedia(id: String) = id match {
-      case "acorn" => Some(
-        new LinkDef("http://eduarea.com/img/acorn.png", "EduArea Acorn Logo"))
-      case _ => None
-    }
-
-    def resolveLink(id: String) = id match {
-      case "ea" => Some(new LinkDef("http://eduarea.com", "EduArea & Friends"))
-      case "cx" => Some(new LinkDef("http://circumflex.ru"))
-      case _ => None
-    }
-
-    def resolveFragment(id: String) = id match {
-      case "normal" => Some(new FragmentDef("normal *text* -- <em>process</em> it"))
-      case "code" => Some(new FragmentDef("code, <em>a & b</em>", ProcessingMode.CODE))
-      case "plain" => Some(new FragmentDef("plain, <em>a & b</em>", ProcessingMode.PLAIN))
-      case _ => None
-    }
-  }
 
   "SubSeqWalker" - {
     "report range" in {
@@ -258,13 +236,13 @@ class MarkevenSpec
       input = "In text: {{code}}\nIn code: `{{code}}`"
       w = new StringWriter
       new InlineProcessor(w, testConf).process(input)
-      w.toString must equal ("In text: code, &lt;em&gt;a &amp; b&lt;/em&gt;\n" +
-          "In code: <code>code, &lt;em&gt;a &amp; b&lt;/em&gt;</code>")
+      w.toString must equal ("In text: *code*, &lt;em&gt;a &amp; b&lt;/em&gt;\n" +
+          "In code: <code>*code*, &lt;em&gt;a &amp; b&lt;/em&gt;</code>")
       input = "In text: {{plain}}\nIn code: `{{plain}}`"
       w = new StringWriter
       new InlineProcessor(w, testConf).process(input)
-      w.toString must equal ("In text: plain, <em>a &amp; b</em>\n" +
-          "In code: <code>plain, <em>a &amp; b</em></code>")
+      w.toString must equal ("In text: *plain*, <em>a &amp; b</em>\n" +
+          "In code: <code>*plain*, <em>a &amp; b</em></code>")
     }
     "process inline links" in {
       var input = "Simple [_inline_ link](/url)."

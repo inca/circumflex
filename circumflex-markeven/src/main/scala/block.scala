@@ -33,6 +33,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
   def block(walk: Walker) {
     walk.skipBlankLines()
     countBlockIndent(walk)
+    if (tryFragmentBlock(walk)) return
     if (tryCodeBlock(walk)) return
     if (tryDiv(walk)) return
     if (tryHtml(walk)) return
@@ -276,11 +277,11 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
 
   def processHrTable(walk: Walker) {
     assert(walk.at("---"))
-    if (walk.atMatch(const.hr)) {
+    if (!walk.atMatch(const.hr).isEmpty) {
       out.write("<hr")
       selector.writeAttrs(out, walk.getAbsolutePosition)
       out.write("/>")
-    } else if (walk.atMatch(const.table)) {
+    } else if (!walk.atMatch(const.table).isEmpty) {
       processTable(walk)
     } else processParagraph(walk, walk.getAbsolutePosition)
   }
@@ -376,7 +377,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
     }
     // flush the last cell, if it's not empty
     val w = new SubSeqWalker(walk, i, walk.position)
-    if (!w.atMatch(const.empty))
+    if (w.atMatch(const.empty).isEmpty)
       buffer += w
     // move the walker to the next line
     walk.skipNewLine()
@@ -458,6 +459,26 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
       else walk.skip()
     }
   }
+
+  def tryFragmentBlock(walk: Walker): Boolean =
+    if (walk.at("{{{")) {
+      val startIdx = walk.position
+      scrollToTerm(walk)
+      val p = stripSelector(new SubSeqWalker(walk, startIdx, walk.position))
+      p.atMatch(const.fragmentBlock)
+          .flatMap(m => conf.resolveFragment(m.group(1)))
+          .map { frag =>
+        out.write("<div")
+        selector.writeAttrs(out, startIdx)
+        out.write(">")
+        inline.flushFragment(frag)
+        out.write("</div>")
+        true
+      } getOrElse {
+        walk.startFrom(startIdx)
+        false
+      }
+    } else false
 
   def tryCodeBlock(walk: Walker): Boolean = {
     if (walk.at("```")) {

@@ -120,10 +120,11 @@ trait Walker extends CharSequence {
     else None
   }
 
-  def atMatch(pattern: Pattern): Boolean = {
+  def atMatch(pattern: Pattern): Option[Matcher] = {
     val m = pattern.matcher(this)
     m.region(position, length)
-    m.matches
+    if (m.matches) Some(m)
+    else None
   }
 
   // New lines

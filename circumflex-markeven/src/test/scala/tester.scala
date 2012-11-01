@@ -22,7 +22,7 @@ class MarkevenTester extends JFrame {
     def process(e: DocumentEvent) {
       val r = time {
         val w = new StringWriter
-        val processor = new BlockProcessor(w)
+        val processor = new BlockProcessor(w, testConf)
         processor.process(src.getText)
         w.toString
       }

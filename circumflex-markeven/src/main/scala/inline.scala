@@ -262,7 +262,7 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
 
   /*! Fragments go in a pair of double braces like `{{id}}`. They are resolved
   using Renderer's configuration and processed like regular inlines. */
-  def tryFragment(walk: Walker): Boolean = {
+  def tryFragment(walk: Walker): Boolean =
     if (walk.at("{{")) {
       walk.at(const.fragment) match {
         case Some(m) =>
@@ -280,7 +280,6 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
       }
       true
     } else false
-  }
 
   def flushFragment(fragDef: FragmentDef) {
     fragDef.mode match {
