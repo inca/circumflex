@@ -54,7 +54,6 @@
       </country>
     </Capital>
   </deployment>
-
   <deployment id="test4"
               prefix="ru.circumflex.orm">
     <Developer login="joe"/>
@@ -66,5 +65,33 @@
     <Membership name="nuke'em" login="bob"/>
     <Membership name="heal'em" login="bob"/>
     <Membership name="heal'em" login="greg"/>
+  </deployment>
+  <deployment id="test5"
+              prefix="ru.circumflex.orm">
+    <Person name="Bob">
+      <devices>
+        <Device/>
+        <Device/>
+        <Device/>
+      </devices>
+      <comments>
+        <Comment/>
+        <Comment/>
+      </comments>
+      <documents>
+        <Document/>
+      </documents>
+    </Person>
+    <Person name="Alice">
+      <devices>
+        <Device/>
+      </devices>
+      <documents>
+        <Document/>
+        <Document/>
+        <Document/>
+        <Document/>
+      </documents>
+    </Person>
   </deployment>
 </deployments>

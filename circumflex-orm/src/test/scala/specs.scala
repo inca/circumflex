@@ -9,19 +9,30 @@ import scala.xml._
 import core._
 
 object Sample {
-  def createSchema() = new DDLUnit(Country, City, Capital, Developer, Project, Membership).CREATE()
+
+  def createSchema() = new DDLUnit(
+    Country, City, Capital,
+    Developer, Project, Membership,
+    Person, Device, Comment, Document)
+      .CREATE()
+
   def loadData() {
     Deployment.readAll(XML.load(getClass.getResourceAsStream("/test.cxd.xml")))
         .foreach(_.process())
   }
-  def dropSchema = new DDLUnit(Country, City, Capital, Developer, Project, Membership).DROP()
+
+  def dropSchema = new DDLUnit(
+    Country, City, Capital,
+    Developer, Project, Membership,
+    Person, Device, Comment, Document)
+      .DROP()
 }
 
 @RunWith(classOf[JUnitRunner])
 class BasicSpec
-  extends FreeSpec
-  with MustMatchers
-  with BeforeAndAfter {
+    extends FreeSpec
+    with MustMatchers
+    with BeforeAndAfter {
 
   val ci = City AS "ci"
   val co = Country AS "co"
@@ -210,6 +221,19 @@ class BasicSpec
       SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list().size must equal (3)
       ROLLBACK()
       SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list().size must equal (0)
+    }
+  }
+
+  "Inverse associations" - {
+    "with same foreign column name" in {
+      val bob = Person.get("Bob").get
+      bob.devices.get.size must equal (3)
+      bob.comments.get.size must equal (2)
+      bob.documents.get.size must equal (1)
+      val alice = Person.get("Alice").get
+      alice.devices.get.size must equal (1)
+      alice.comments.get.size must equal (0)
+      alice.documents.get.size must equal (4)
     }
   }
 

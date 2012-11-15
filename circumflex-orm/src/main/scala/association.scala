@@ -28,7 +28,9 @@ class Association[K, C <: Record[_, C], P <: Record[K, P]] (val field: Field[K, 
 
   // Caching
 
-  def cacheName = parentRelation.qualifiedName + ":" + field.name
+  def cacheName = parentRelation.qualifiedName + ":" +
+      record.relation.qualifiedName + ":" +
+      field.name
 
   def inverseCache: Cache[InverseSeq[C]] = tx.cache.forAssociation(this)
 
