@@ -6,7 +6,9 @@ import collection.mutable.HashMap
 import java.io.{Writer, StringWriter}
 
 class Renderer(var conf: MarkevenConf) {
+
   def toHtml(cs: CharSequence): String = finalize(processBlocks(cs))
+
   def toInlineHtml(cs: CharSequence): String = finalize(processInlines(cs))
 
   def blockProcessor(out: Writer): BlockProcessor =
@@ -28,18 +30,24 @@ class Renderer(var conf: MarkevenConf) {
   // bypassing whitelist sanitizer.
   // Unstashing is NOT recursive.
 
+  def stashStorage = ctx.getAs[HashMap[String, String]]("markeven.stash")
+      .getOrElse {
+    val h = new HashMap[String, String]
+    ctx += "markeven.stash" -> h
+    h
+  }
+
   def stash(chars: String): String = {
     val key = "{[[{" + randomString(20) + "}]]}"
-    _stash += key -> chars
+    stashStorage += key -> chars
     key
   }
 
-  protected val _stash = new HashMap[String, String]
-
   def unstashAll(output: String): String = {
+    val hash = stashStorage
     var result = output
-    _stash.keys.foreach { k =>
-      val v = _stash(k)
+    hash.keys.foreach { k =>
+      val v = hash(k)
       result = result.replace(k, v)
     }
     result
