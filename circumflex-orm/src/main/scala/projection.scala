@@ -157,12 +157,14 @@ class PairProjection[T1, T2] (_1: Projection[T1], _2: Projection[T2])
     Some((_1.read(rs), _2.read(rs)))
 }
 
-class AliasMapProjection(val subProjections: Seq[Projection[_]])
-    extends CompositeProjection[Map[String, Any]] {
-  def read(rs: ResultSet): Option[Map[String, Any]] = {
-    val pairs = subProjections.flatMap { p =>
-      p.read(rs).map(v => p.alias -> v).asInstanceOf[Option[(String, Any)]]
-    }
-    Some(Map[String, Any](pairs: _*))
+class RowProjection(val subProjections: Seq[Projection[_]])
+    extends CompositeProjection[RowResult] {
+
+  def read(rs: ResultSet): Option[RowResult] = {
+    val rr = new RowResult
+    subProjections.foreach(p =>
+      p.read(rs).map(v => rr.data += p.alias -> v))
+    Some(rr)
   }
+
 }

@@ -2,6 +2,8 @@ package ru.circumflex
 package orm
 
 import core._
+import collection.mutable.HashMap
+import java.util.Date
 
 /*!# SQLable & Expression
 
@@ -201,4 +203,30 @@ class ColumnExpression[T, R <: Record[_, R]](column: ValueHolder[T, R])
     extends Expression {
   def parameters = Nil
   val toSql = column.aliasedName
+}
+
+/*! `RowResult` is returned from SELECT queries with arbitrary projections.
+It contains methods with some heuristics (with tiny overhead)
+which help you retrieve Scala-typed results as you would expect
+from corresponding projection type.*/
+class RowResult {
+
+  val data = new HashMap[String, Any]
+
+  def get[T](name: String) = data.get(name).asInstanceOf[Option[T]]
+
+  def getString(name: String) = data.get(name).map(_.toString)
+
+  def getDouble(name: String) = data.get(name).map(_.toString.toDouble)
+
+  def getInt(name: String) = getDouble(name).map(_.toInt)
+
+  def getLong(name: String) = getDouble(name).map(_.toLong)
+
+  def getBigDecimal(name: String) = data.get(name).map(o => BigDecimal(o.toString))
+
+  def getDate(name: String) = data.get(name).asInstanceOf[Option[Date]]
+
+  def getBoolean(name: String) = data.get(name).asInstanceOf[Option[Boolean]]
+
 }

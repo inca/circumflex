@@ -168,8 +168,9 @@ trait SearchQuery extends Query {
     add(prepareExpr(expression, params: _*))
 }
 
-class Select[T](projection: Projection[T]) extends SQLQuery[T](projection)
-with SearchQuery {
+class Select[T](projection: Projection[T])
+    extends SQLQuery[T](projection)
+    with SearchQuery {
 
   // Commons
   protected var _distinct: Boolean = false

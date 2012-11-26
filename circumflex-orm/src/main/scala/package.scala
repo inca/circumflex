@@ -151,7 +151,7 @@ package object orm {
 
   def SELECT[T](p1: Projection[T], p2: Projection[_], pn: Projection[_]*) = {
     val projections = List(p1, p2) ++ pn
-    new Select(new AliasMapProjection(projections))
+    new Select(new RowProjection(projections))
   }
   def SELECT[T](projection: Projection[T]): Select[T] = new Select(projection)
   def INSERT_INTO[PK, R <: Record[PK, R]](relation: Relation[PK, R]) =
