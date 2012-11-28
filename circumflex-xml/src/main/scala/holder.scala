@@ -210,7 +210,9 @@ trait ListHolder[T <: ElemHolder]
 
 trait StructHolder extends ElemHolder {
 
-  def findElems: Seq[ElemHolder] = findHolders(classOf[ElemHolder])
+  def findElems: Seq[ElemHolder] =
+    findHolders(classOf[ElemHolder])
+        .filter(_ != null)
 
   def text(n: String): TextHolder = new TextHolder {
     def elemName = n
