@@ -6,13 +6,13 @@
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-orm</artifactId>
   <packaging>jar</packaging>
-  <version>2.4-SNAPSHOT</version>
+  <version>2.5-SNAPSHOT</version>
   <name>Circumflex ORM Framework</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>2.4-SNAPSHOT</version>
+    <version>2.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -27,12 +27,12 @@
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-core</artifactId>
-      <version>2.4-SNAPSHOT</version>
+      <version>2.5-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-cache</artifactId>
-      <version>2.4-SNAPSHOT</version>
+      <version>2.5-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>c3p0</groupId>
