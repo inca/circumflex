@@ -5,13 +5,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>ru.circumflex</groupId>
   <artifactId>circumflex-mail</artifactId>
-  <version>2.4-SNAPSHOT</version>
+  <version>2.4</version>
   <name>Circumflex Mail Helper</name>
 
   <parent>
     <groupId>ru.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>2.4-SNAPSHOT</version>
+    <version>2.4</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -19,7 +19,7 @@
     <dependency>
       <groupId>ru.circumflex</groupId>
       <artifactId>circumflex-ftl</artifactId>
-      <version>2.4-SNAPSHOT</version>
+      <version>2.4</version>
     </dependency>
     <dependency>
       <groupId>javax.mail</groupId>

@@ -11,7 +11,7 @@
   <name>Simple Circumflex Application</name>
 
   <properties>
-    <cx.version>2.4-SNAPSHOT</cx.version>
+    <cx.version>2.4</cx.version>
     <cx.port>8180</cx.port>
     <cx.router>${package}.Main</cx.router>
   </properties>
