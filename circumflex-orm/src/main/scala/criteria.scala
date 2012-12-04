@@ -40,15 +40,22 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     }
   }
 
-  protected def replaceLeft(join: JoinNode[PK, R, _, _],
-                            node: RelationNode[PK, R]): RelationNode[PK, R] =
+  protected def replaceLeft
+  (
+      join: JoinNode[PK, R, _, _],
+      node: RelationNode[PK, R]): RelationNode[PK, R] =
     join.left match {
-      case j: JoinNode[PK, R, _, _] => replaceLeft(j, node)
+      case j: JoinNode[PK, R, _, _] =>
+        replaceLeft(j, node)
+        join
       case r: RelationNode[PK, R] => join.replaceLeft(node)
     }
 
-  protected def updateRootTree[PKN, N <: Record[PKN, N]](
-                                                            node: RelationNode[PKN, N], association: Association[_, _, _]): RelationNode[PKN, N] =
+  protected def updateRootTree[PKN, N <: Record[PKN, N]]
+  (
+      node: RelationNode[PKN, N],
+      association: Association[_, _, _]
+      ): RelationNode[PKN, N] =
     node match {
       // we don't actually care about types here, since type annotations are eliminated by erasure
       case j: JoinNode[PKN, N, PKN, N] =>
@@ -63,30 +70,39 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         } else node
     }
 
-  protected def preparePf[PKN, N <: Record[PKN, N]](
-                                                       relation: Relation[PKN, N], association: Association[_, _, _]): RelationNode[PKN, N] = {
+  protected def preparePf[PKN, N <: Record[PKN, N]]
+  (
+      relation: Relation[PKN, N],
+      association: Association[_, _, _]): RelationNode[PKN, N] = {
     val node = relation.AS("pf_" + nextCounter)
     _projections ++= List(node.*)
     _prefetchSeq ++= List[Association[_, _, _]](association)
     node
   }
 
-  protected def updateJoinTree[PKN, N <: Record[PKN, N]](
-                                                            node: RelationNode[PKN, N], tree: RelationNode[PK, R]): RelationNode[PK, R] =
+  protected def updateJoinTree[PKN, N <: Record[PKN, N]]
+  (
+      node: RelationNode[PKN, N],
+      tree: RelationNode[PK, R]): RelationNode[PK, R] =
     tree match {
       // outra vez, types are not really important here
       case j: JoinNode[PK, R, PK, R] => try {   // try the left side
         j.replaceLeft(updateJoinTree(node, j.left))
-        j.replaceRight(updateJoinTree(node, j.right))
       } catch {
         case e: Exception =>                    // try the right side
           j.replaceRight(updateJoinTree(node, j.right))
       }
-      case rel: RelationNode[PK, R] => rel.JOIN(node)
+      case rel: RelationNode[PK, R] =>
+        val join = rel.JOIN(node)
+        if (join.isUndefined)
+          throw new ORMException("Could not automatically add join with " + node)
+        join
     }
 
-  protected def processTupleTree[PKN, N <: Record[PKN, N]](
-                                                              tuple: Array[_], tree: RelationNode[PKN, N]) {
+  protected def processTupleTree[PKN, N <: Record[PKN, N]]
+  (
+      tuple: Array[_],
+      tree: RelationNode[PKN, N]) {
     tree match {
       case j: OneToManyJoin[PKN, N, PKN, N] =>
         val pNode = j.left

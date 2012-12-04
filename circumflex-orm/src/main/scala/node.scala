@@ -1,8 +1,6 @@
 package ru.circumflex
 package orm
 
-import java.lang.String
-
 /*!# Relation Nodes
 
 The `RelationNode` is essentially a wrapper around relation which provides
@@ -49,12 +47,17 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
   def findAssociation[T, F <: Record[T, F]](node: RelationNode[T, F]): Option[Association[T, R, F]] =
     this.relation.findAssociation(node.relation)
 
-  def JOIN[T, J <: Record[T, J]](node: RelationNode[T, J],
-                                 on: Expression,
-                                 joinType: JoinType): JoinNode[PK, R, T, J] =
+  def JOIN[T, J <: Record[T, J]]
+  (
+      node: RelationNode[T, J],
+      on: Expression,
+      joinType: JoinType): JoinNode[PK, R, T, J] =
     new JoinNode(this, node, joinType).ON(on)
-  def JOIN[T, J <: Record[T, J]](node: RelationNode[T, J],
-                                 joinType: JoinType = LEFT): JoinNode[PK, R, T, J] =
+
+  def JOIN[T, J <: Record[T, J]]
+  (
+      node: RelationNode[T, J],
+      joinType: JoinType = LEFT): JoinNode[PK, R, T, J] =
     findAssociation(node) match {
       case Some(a: Association[T, R, J]) =>  // many-to-one join
         new ManyToOneJoin[PK, R, T, J](this, node, a, joinType)
@@ -62,15 +65,19 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
         case Some(a: Association[PK, J, R]) =>  // one-to-many join
           new OneToManyJoin[PK, R, T, J](this, node, a, joinType)
         case _ =>
-          new JoinNode(this, node, joinType).ON(EmptyPredicate)
+          new JoinNode(this, node, joinType)
       }
     }
+
   def INNER_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
     JOIN(node, INNER)
+
   def LEFT_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
     JOIN(node, LEFT)
+
   def RIGHT_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
     JOIN(node, RIGHT)
+
   def FULL_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
     JOIN(node, FULL)
 
@@ -161,8 +168,8 @@ class ProxyNode[PK, R <: Record[PK, R]](var node: RelationNode[PK, R])
   override def toSql = node.toSql
 
   override def clone(): this.type = {
-    val newNode = super.clone().asInstanceOf[this.type]
-    val n = node.clone().asInstanceOf[RelationNode[PK, R]]
+    val newNode = super.clone()
+    val n = node.clone()
     newNode.node = n
     newNode
   }
@@ -183,7 +190,8 @@ This way you can compose arbitrary complex query plans. The join condition
 (the `ON` subclause) can be either inferred from associations or specified
 manually using the `ON` method.
 */
-class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
+class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
+(
     protected var _left: RelationNode[PKL, L],
     protected var _right: RelationNode[PKR, R],
     protected var _joinType: JoinType) extends ProxyNode[PKL, L](_left) {
@@ -213,6 +221,8 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
     this
   }
 
+  def isUndefined = onClause == EmptyPredicate
+
   override def toSql = ormConf.dialect.join(this)
 
   override def clone(): this.type = super.clone()
@@ -223,24 +233,33 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
 
 }
 
-class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
+class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
+(
     childNode: RelationNode[PKL, L],
     parentNode: RelationNode[PKR, R],
     val association: Association[PKR, L, R],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](childNode, parentNode, joinType) {
+
   override def onClause =
     if (_on == EmptyPredicate)
       association.joinPredicate(childNode.alias, parentNode.alias)
     else _on
+
+  override def isUndefined = false
+
 }
 
-class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]](
+class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
+(
     parentNode: RelationNode[PKL, L],
     childNode: RelationNode[PKR, R],
     val association: Association[PKL, R, L],
     joinType: JoinType) extends JoinNode[PKL, L, PKR, R](parentNode, childNode, joinType) {
+
   override def onClause =
     if (_on == EmptyPredicate)
       association.joinPredicate(childNode.alias, parentNode.alias)
     else _on
+
+  override def isUndefined = false
 }

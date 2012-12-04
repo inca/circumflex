@@ -26,7 +26,7 @@ trait Query extends SQLable with Expression with Cloneable {
   protected var _executionTime = 0l
   def executionTime = _executionTime
 
-  protected var _aliasCounter = 0;
+  protected var _aliasCounter = 0
 
   protected def nextAlias: String = {
     _aliasCounter += 1
@@ -36,7 +36,7 @@ trait Query extends SQLable with Expression with Cloneable {
   // Named parameters
 
   def setParams(st: PreparedStatement, index: Int): Int = {
-    var paramsCounter = index;
+    var paramsCounter = index
     parameters.foreach(p => {
       ormConf.typeConverter.write(st, convertNamedParam(p), paramsCounter)
       paramsCounter += 1
@@ -76,11 +76,13 @@ determined by specified `projections`).
 */
 abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
+  def isUndefinedQueryPlan = false
+
   // Projections
 
   def projections: Seq[Projection[_]] = List(projection)
 
-  protected def ensureProjectionAlias[T](projection: Projection[T]) {
+  protected def ensureProjectionAlias[P](projection: Projection[P]) {
     projection match {
       case p: AtomicProjection[_] if (p.alias == "this") => p.AS(nextAlias)
       case p: CompositeProjection[_] =>
@@ -94,6 +96,8 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
   // Query execution
 
   def resultSet[A](actions: ResultSet => A): A = {
+    if (isUndefinedQueryPlan)
+      ORM_LOG.warn("Warning! Query plan has ambiguous joins. Please recheck the FROM clause.")
     val result = time {
       tx.execute(toSql, { st =>
         setParams(st, 1)
@@ -205,6 +209,11 @@ class Select[T](projection: Projection[T])
     this._relations = nodes.toList
     fromClause.foreach(ensureNodeAlias(_))
     this
+  }
+
+  override def isUndefinedQueryPlan = _relations.exists {
+    case j: JoinNode[_, _, _, _] => j.isUndefined
+    case _ => false
   }
 
   protected def ensureNodeAlias(node: RelationNode[_, _]): RelationNode[_, _] =
