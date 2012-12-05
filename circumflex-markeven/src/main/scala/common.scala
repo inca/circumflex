@@ -55,6 +55,7 @@ trait MarkevenConf {
 
   val _autoAssignIdsPrefix =
     cx.getString("markeven.autoAssignIdsPrefix")
+        .getOrElse("")
   def autoAssignIdsPrefix = _autoAssignIdsPrefix
 
   val _stripInvalidXmlChars =
