@@ -49,6 +49,9 @@ trait MarkevenConf {
   val includeSourceIndex =
     cx.getBoolean("markeven.includeSourceIndex")
         .getOrElse(false)
+  val autoAssignIds =
+    cx.getBoolean("markeven.autoAssignIds")
+        .getOrElse(false)
   val stripInvalidXmlChars =
     cx.getBoolean("markeven.stripInvalidXmlChars")
         .getOrElse(true)
@@ -159,8 +162,18 @@ class LinkDef(_url: String,
 // Block selector
 
 class Selector(val conf: MarkevenConf,
-               val id: String = "",
-               val classes: Seq[String] = Nil) {
+               var id: String = "",
+               var classes: Seq[String] = Nil) {
+
+  def nextIdCounter(): Int = {
+    val result = ctx.getAs[Int]("markeven.processor.idCounter").getOrElse(0)
+    ctx.update("markeven.processor.idCounter", result + 1)
+    result
+  }
+
+  if (id == "" && conf.autoAssignIds) {
+    id = "me-block-" + nextIdCounter()
+  }
 
   def writeAttrs(w: Writer, idx: Int) {
     if (id != "") {
