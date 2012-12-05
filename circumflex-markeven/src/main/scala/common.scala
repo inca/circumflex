@@ -44,17 +44,23 @@ trait MarkevenConf {
   def resolveLink(id: String): Option[LinkDef]
   def resolveMedia(id: String): Option[LinkDef]
   def resolveFragment(id: String): Option[FragmentDef]
+
   val scrambler = cx.instantiate[TextScrambler](
     "markeven.scrambler", EmptyTextScrambler)
-  val includeSourceIndex =
+
+  val _includeSourceIndex =
     cx.getBoolean("markeven.includeSourceIndex")
         .getOrElse(false)
-  val autoAssignIdsPrefix =
+  def includeSourceIndex = _includeSourceIndex
+
+  val _autoAssignIdsPrefix =
     cx.getString("markeven.autoAssignIdsPrefix")
-        .getOrElse("")
-  val stripInvalidXmlChars =
+  def autoAssignIdsPrefix = _autoAssignIdsPrefix
+
+  val _stripInvalidXmlChars =
     cx.getBoolean("markeven.stripInvalidXmlChars")
         .getOrElse(true)
+  def stripInvalidXmlChars = _stripInvalidXmlChars
 }
 
 object EmptyMarkevenConf extends MarkevenConf {
@@ -172,7 +178,7 @@ class Selector(val conf: MarkevenConf,
   }
 
   if (id == "" && conf.autoAssignIdsPrefix != "") {
-    id = conf.autoAssignIdsPrefix() + "-" + nextIdCounter()
+    id = conf.autoAssignIdsPrefix + "-" + nextIdCounter()
   }
 
   def writeAttrs(w: Writer, idx: Int) {
