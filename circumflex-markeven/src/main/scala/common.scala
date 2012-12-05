@@ -49,9 +49,9 @@ trait MarkevenConf {
   val includeSourceIndex =
     cx.getBoolean("markeven.includeSourceIndex")
         .getOrElse(false)
-  val autoAssignIds =
-    cx.getBoolean("markeven.autoAssignIds")
-        .getOrElse(false)
+  val autoAssignIdsPrefix =
+    cx.getString("markeven.autoAssignIdsPrefix")
+        .getOrElse("")
   val stripInvalidXmlChars =
     cx.getBoolean("markeven.stripInvalidXmlChars")
         .getOrElse(true)
@@ -171,8 +171,8 @@ class Selector(val conf: MarkevenConf,
     result
   }
 
-  if (id == "" && conf.autoAssignIds) {
-    id = "me-block-" + nextIdCounter()
+  if (id == "" && conf.autoAssignIdsPrefix != "") {
+    id = conf.autoAssignIdsPrefix() + "-" + nextIdCounter()
   }
 
   def writeAttrs(w: Writer, idx: Int) {
