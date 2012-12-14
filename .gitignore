@@ -9,5 +9,4 @@ target
 nohup.out
 *.db
 .idea/
-circumflex-orm/lib
 

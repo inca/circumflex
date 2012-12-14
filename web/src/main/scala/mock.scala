@@ -14,9 +14,9 @@ import collection.mutable.ListBuffer
 
 Circumflex Web Framework lets you test your web application using the `MockApp`.
 
-Refer to our test sources at [`circumflex-web/src/test/scala`][tests] to see it in action.
+Refer to our test sources at [`web/src/test/scala`][tests] to see it in action.
 
-   [tests]: http://github.com/inca/circumflex/tree/master/circumflex-web/src/test/scala/
+   [tests]: http://github.com/inca/circumflex/tree/master/web/src/test/scala/
 */
 trait MockServer extends StandaloneServer {
   def baseUrl = "http://localhost:" + port

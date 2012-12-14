@@ -74,8 +74,8 @@ class CircumflexWebSpec
   before {
     cx("cx.router") = classOf[MockRouter]
     var rootPath = System.getProperty("user.dir")
-    if (!rootPath.endsWith("circumflex-web")) {
-      rootPath += (File.separator + "circumflex-web")
+    if (!rootPath.endsWith("web")) {
+      rootPath += (File.separator + "web")
     }
     cx("cx.webappRoot") = (rootPath + File.separatorChar + "src/test/webapp")
     MockApp.start()

@@ -15,18 +15,18 @@
   <url>http://circumflex.ru</url>
 
   <modules>
-    <module>circumflex-core</module>
-    <module>circumflex-cache</module>
-    <module>circumflex-xml</module>
-    <module>circumflex-web</module>
-    <module>circumflex-orm</module>
-    <module>circumflex-markeven</module>
-    <module>circumflex-docco</module>
-    <module>circumflex-maven-plugin</module>
-    <module>circumflex-ftl</module>
-    <module>circumflex-archetype</module>
-    <module>circumflex-diff</module>
-    <module>circumflex-mail</module>
+    <module>core</module>
+    <module>cache</module>
+    <module>xml</module>
+    <module>web</module>
+    <module>orm</module>
+    <module>markeven</module>
+    <module>docco</module>
+    <module>maven-plugin</module>
+    <module>ftl</module>
+    <module>archetype</module>
+    <module>diff</module>
+    <module>mail</module>
   </modules>
 
   <properties>

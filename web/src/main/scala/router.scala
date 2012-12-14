@@ -21,7 +21,7 @@ to the client (unless `onNoMatch` method is overriden in `CircumflexFilter`).
 Inside an attached block you can access `MatchResult` object produced by enclosing route.
 Match results are stored in `Context`, you can look them up by name.
 
-Take a look at our test sources at [`circumflex-web/src/test/scala`][tests] to see routers
+Take a look at our test sources at [`web/src/test/scala`][tests] to see routers
 in action.
 */
 class Router {

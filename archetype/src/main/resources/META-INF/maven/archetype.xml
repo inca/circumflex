@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <archetype>
-  <id>circumflex-simple</id>
+  <id>circumflex-webapp-archetype</id>
   <resources>
     <resource>src/main/resources/Messages.properties</resource>
     <resource>src/main/resources/cx.properties</resource>

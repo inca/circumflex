@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<archetype-descriptor name="circumflex-simple">
+<archetype-descriptor name="circumflex-webapp-archetype">
   <fileSets>
     <fileSet filtered="true" encoding="UTF-8">
       <directory>src/main/webapp</directory>
