@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package web
 import javax.servlet.http.HttpServletResponse
 import collection.mutable.{ListBuffer, HashMap}
@@ -103,7 +103,7 @@ class HttpResponse(val raw: HttpServletResponse) {
   Circumflex Web Framework lets you access response headers via the `headers` object.
   */
   object headers extends HashMap[String, Any] {
-    update("X-Powered-By", "Circumflex 2.6")
+    update("X-Powered-By", "Circumflex 3.0")
   }
 
   /*!## Cookies

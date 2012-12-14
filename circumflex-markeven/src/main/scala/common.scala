@@ -1,7 +1,7 @@
-package ru.circumflex
+package pro.savant.circumflex
 package markeven
 
-import ru.circumflex._, core._
+import pro.savant.circumflex._, core._
 import java.io.{StringWriter, Writer}
 import java.lang.StringBuilder
 import java.util.regex.Pattern

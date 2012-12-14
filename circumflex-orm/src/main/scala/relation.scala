@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package orm
 
 import core._, cache._

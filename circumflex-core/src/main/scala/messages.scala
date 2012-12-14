@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package core
 
 import collection.{Iterator, Map}
@@ -21,7 +21,7 @@ delegating resolving, messages grouping, parameters interpolation and formatting
 
   [java-i18n]: http://java.sun.com/javase/technologies/core/basic/intl
 
-The usage is pretty simple: you use the `msg` method of package object `ru.circumflex.core`
+The usage is pretty simple: you use the `msg` method of package object `pro.savant.circumflex.core`
 which returns an implementation of `MessageResolver` used to retrieve messages. This instance
 is also referred to as _global messages resolver_. By default, the `PropertyFileResolver`
 is used. You can set `cx.messages` configuration parameter to use your own
@@ -57,7 +57,7 @@ corresponding value).
 
 You can use `ResourceBundleMessageResolver` to resolve messages from Java `ResourceBundle`s.
 
-The default implementation (the `msg` method in package `ru.circumflex.core`)
+The default implementation (the `msg` method in package `pro.savant.circumflex.core`)
 uses property files with base name `Messages` to lookup messages. You can override
 the default implementation by setting `cx.messages` configuration parameter. Unlike Java
 `ResourceBundle` it effectively caches property files and allows hot editing (cache is

@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package markeven
 
 import org.jsoup._, safety._, parser._

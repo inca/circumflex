@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 
 import core._
 import javax.servlet.{FilterChain, FilterConfig}
@@ -16,17 +16,17 @@ the basis of routing DSL of Circumflex Web Framework.
 
 You should import this package to use Circumflex Web Framework in your application:
 
-    import ru.circumflex.web._
+    import pro.savant.circumflex.web._
 
 If you don't wish to import all helpers into your global scope, then import this
 package under an alias:
 
-    import ru.circumflex.{web => cx}    // import under alias "cx"
+    import pro.savant.circumflex.{web => cx}    // import under alias "cx"
     cx.request                          // access members
 */
 package object web {
 
-  val WEB_LOG = new Logger("ru.circumflex.web")
+  val WEB_LOG = new Logger("pro.savant.circumflex.web")
 
   /*!# Heplers
 
@@ -43,7 +43,7 @@ package object web {
 
   /*!## The `headers` Helper
 
-  The `headers` object of package `ru.circumflex.web` lets you access request
+  The `headers` object of package `pro.savant.circumflex.web` lets you access request
   headers and set response headers (i.e. mix functionality of `request.headers`
   and `response.headers`).
   */
@@ -62,7 +62,7 @@ package object web {
 
   /*!## The `cookies` Helper
 
-  The `cookies` object of package `ru.circumflex.web` lets you access request
+  The `cookies` object of package `pro.savant.circumflex.web` lets you access request
   cookies and set response cookies (i.e. mix functionality of `request.cookies`
   and `response.cookies`).
   */
@@ -112,7 +112,7 @@ package object web {
 
   /*!## The `param` Helper
 
-  The `param` object of package `ru.circumflex.web` is a convenient helper to
+  The `param` object of package `pro.savant.circumflex.web` is a convenient helper to
   retrieve the parameters of current match or current request. The parameters
   are first resolved from `MatchResult` objects found in context. If no
   match result contain a parameter with specified name, then the parameter is
@@ -261,7 +261,7 @@ package object web {
   The `matchers` helper contains shortcuts for various matchers (for example, by known HTTP headers).
   You should import this object if you want to use it:
 
-      import ru.circumflex.web.{matchers => m}
+      import pro.savant.circumflex.web.{matchers => m}
 
       get("/").and(m.ACCEPT(":mime")) = "You are accepting " + param("mime")
   */

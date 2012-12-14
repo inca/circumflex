@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 
 import core._, web._
 import java.io._
@@ -13,11 +13,11 @@ configuration parameter to provide your own implementation of FreeMarker `Config
 
 You should import this package to use Circumflex FreeMarker Helper in your application:
 
-    import ru.circumflex.freemarker._
+    import pro.savant.circumflex.freemarker._
  */
 package object freemarker {
 
-  val FTL_LOG = new Logger("ru.circumflex.ftl")
+  val FTL_LOG = new Logger("pro.savant.circumflex.ftl")
 
   val ftlConfig: Configuration = cx.instantiate[Configuration](
     "ftl.configuration", new DefaultConfiguration)

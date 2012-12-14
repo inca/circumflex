@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 
 import core._
 import java.io.StringWriter

@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package orm
 
 import core._
@@ -94,7 +94,7 @@ trait ValueHolder[T, R <: Record[_, R]]
           .addSetter(_.toLowerCase)
           .addSetter(_.replaceAll("/","."))
 
-      pkg := "  ru/circumflex/ORM  "  // "ru.circumflex.orm" will be assigned
+      pkg := "  ru/circumflex/ORM  "  // "pro.savant.circumflex.orm" will be assigned
 
   ## Accessing & Setting Values
 

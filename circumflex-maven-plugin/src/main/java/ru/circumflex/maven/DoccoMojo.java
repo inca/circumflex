@@ -1,9 +1,9 @@
-package ru.circumflex.maven;
+package pro.savant.circumflex.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import ru.circumflex.docco.DoccoBatch;
-import ru.circumflex.core.Circumflex;
+import pro.savant.circumflex.docco.DoccoBatch;
+import pro.savant.circumflex.core.Circumflex;
 import java.util.Properties;
 
 /**

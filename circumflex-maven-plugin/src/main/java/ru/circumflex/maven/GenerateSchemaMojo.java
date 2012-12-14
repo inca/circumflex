@@ -1,10 +1,10 @@
-package ru.circumflex.maven;
+package pro.savant.circumflex.maven;
 
 import org.apache.commons.io.FilenameUtils;
-import ru.circumflex.core.Msg;
-import ru.circumflex.orm.DDLUnit;
-import ru.circumflex.orm.SchemaObject;
-import ru.circumflex.orm.DeploymentHelper;
+import pro.savant.circumflex.core.Msg;
+import pro.savant.circumflex.orm.DDLUnit;
+import pro.savant.circumflex.orm.SchemaObject;
+import pro.savant.circumflex.orm.DeploymentHelper;
 import org.apache.maven.plugin.MojoExecutionException;
 import java.io.File;
 import java.lang.reflect.Field;

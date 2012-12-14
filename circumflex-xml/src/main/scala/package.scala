@@ -1,7 +1,7 @@
-package ru.circumflex
+package pro.savant.circumflex
 
-import ru.circumflex.core._
+import pro.savant.circumflex.core._
 
 package object xml {
-  val XML_LOG = new Logger("ru.circumflex.xml")
+  val XML_LOG = new Logger("pro.savant.circumflex.xml")
 }

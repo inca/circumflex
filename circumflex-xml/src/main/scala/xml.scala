@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package xml
 
 import java.io._

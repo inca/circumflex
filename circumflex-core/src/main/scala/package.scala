@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 
 import java.security.MessageDigest
 import java.util.regex.Pattern
@@ -10,11 +10,11 @@ import java.net.{URLDecoder, URLEncoder}
 Package `core` contains different shortcuts, utilities and implicits.
 You should import this package if you intend to use Circumflex API:
 
-    import ru.circumflex.core._
+    import pro.savant.circumflex.core._
 */
 package object core {
 
-  val CX_LOG = new Logger("ru.circumflex.core")
+  val CX_LOG = new Logger("pro.savant.circumflex.core")
 
   /*! Common Circumflex helpers imported into the namespace are:
 

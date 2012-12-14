@@ -11,25 +11,25 @@
   <name>Simple Circumflex Application</name>
 
   <properties>
-    <cx.version>2.6-SNAPSHOT</cx.version>
+    <cx.version>3.0-SNAPSHOT</cx.version>
     <cx.port>8180</cx.port>
     <cx.router>${package}.Main</cx.router>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-core</artifactId>
+      <groupId>pro.savant.circumflex</groupId>
+      <artifactId>core</artifactId>
       <version>${cx.version}</version>
     </dependency>
     <dependency>
-      <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-web</artifactId>
+      <groupId>pro.savant.circumflex</groupId>
+      <artifactId>web</artifactId>
       <version>${cx.version}</version>
     </dependency>
     <dependency>
-      <groupId>ru.circumflex</groupId>
-      <artifactId>circumflex-ftl</artifactId>
+      <groupId>pro.savant.circumflex</groupId>
+      <artifactId>ftl</artifactId>
       <version>${cx.version}</version>
     </dependency>
     <dependency>
@@ -106,7 +106,7 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>ru.circumflex</groupId>
+        <groupId>pro.savant.circumflex</groupId>
         <artifactId>maven-cx-plugin</artifactId>
         <version>${cx.version}</version>
         <executions>

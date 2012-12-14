@@ -1,4 +1,4 @@
-package ru.circumflex.maven;
+package pro.savant.circumflex.maven;
 
 import java.io.File;
 

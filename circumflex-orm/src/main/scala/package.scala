@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 
 import core._
 import collection.mutable.Stack
@@ -11,11 +11,11 @@ the basis of DSL of Circumflex ORM.
 
 You should import this package to use Circumflex ORM in your application:
 
-    import ru.circumflex.orm._
+    import pro.savant.circumflex.orm._
 */
 package object orm {
 
-  val ORM_LOG = new Logger("ru.circumflex.orm")
+  val ORM_LOG = new Logger("pro.savant.circumflex.orm")
 
   lazy val DEFAULT_ORM_CONF = cx.instantiate[ORMConfiguration](
     "orm.configuration", new SimpleORMConfiguration(""))

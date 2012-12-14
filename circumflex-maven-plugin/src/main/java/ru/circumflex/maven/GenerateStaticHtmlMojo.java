@@ -1,8 +1,8 @@
-package ru.circumflex.maven;
+package pro.savant.circumflex.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import java.io.File;
-import ru.circumflex.freemarker.*;
+import pro.savant.circumflex.freemarker.*;
 
 /**
  * @goal static-html

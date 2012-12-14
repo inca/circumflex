@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package core
 
 import collection.mutable.{ListBuffer, HashMap}
@@ -10,7 +10,7 @@ context variables) within one logical scope.
 
 Such logical scope could be anything: database transaction, HTTP request, user
 session within GUI form, etc. Within this scope you can obtain current context by
-calling `Context.get` method (or using `ctx` method of package `ru.circumflex.core`).
+calling `Context.get` method (or using `ctx` method of package `pro.savant.circumflex.core`).
 
 Most Circumflex components depend on context and, therefore, can only be run
 inside context-aware code. Application is responsible for maintaining context
@@ -105,7 +105,7 @@ Following syntaxes are available for setting context variables:
     'key := value                                                               {.scala}
 
 The implicit conversions from `Symbol` into `ContextVarHelper` are available in the
-`ru.circumflex.core` package.
+`pro.savant.circumflex.core` package.
 */
 class ContextVarHelper(val sym: Symbol) {
   def :=(value: Any) {

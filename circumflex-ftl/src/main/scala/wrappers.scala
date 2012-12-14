@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package freemarker
 
 import _root_.freemarker.template._

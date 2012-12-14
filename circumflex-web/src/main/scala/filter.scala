@@ -1,4 +1,4 @@
-package ru.circumflex
+package pro.savant.circumflex
 package web
 
 import java.lang.reflect.InvocationTargetException
@@ -19,7 +19,7 @@ To setup your web application place following snippet into your `WEB-INF/web.xml
 
     <filter>
       <filter-name>Circumflex Filter</filter-name>
-      <filter-class>ru.circumflex.web.CircumflexFilter</filter-class>
+      <filter-class>pro.savant.circumflex.web.CircumflexFilter</filter-class>
     </filter>
 
     <filter-mapping>
@@ -34,12 +34,12 @@ serve error pages with Circumflex; beware of infinite loops, however).
 
 The filter configuration is saved into the `cx.filterConfig` configuration parameter and
 is available throughout your configuration via the `filterConfig` method of the
-`ru.circumflex.web` package.
+`pro.savant.circumflex.web` package.
 */
 class CircumflexFilter extends Filter {
 
   def init(filterConfig: FilterConfig) {
-    WEB_LOG.info("Circumflex 2.6")
+    WEB_LOG.info("Circumflex 3.0")
     cx("cx.filterConfig") = filterConfig
   }
 
