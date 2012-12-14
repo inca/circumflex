@@ -16,17 +16,17 @@
 
   <modules>
     <module>core</module>
+    <module>diff</module>
     <module>cache</module>
     <module>xml</module>
     <module>web</module>
     <module>orm</module>
+    <module>mail</module>
     <module>markeven</module>
+    <module>ftl</module>
     <module>docco</module>
     <module>maven-plugin</module>
-    <module>ftl</module>
     <module>archetype</module>
-    <module>diff</module>
-    <module>mail</module>
   </modules>
 
   <properties>
