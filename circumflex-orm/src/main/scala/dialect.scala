@@ -113,6 +113,10 @@ class Dialect {
   def asc = "ASC"
   def desc = "DESC"
 
+  /*!## Common functions */
+  def NOW = "NOW()"
+  def RANDOM = "RANDOM()"
+
   /*!## Param placeholders */
 
   def placeholder = "?"

@@ -59,10 +59,12 @@ class RecordValidator[PK, R <: Record[PK, R]] {
 
   def unique[T](f: R => Field[T, R], key: String = "unique"): this.type = add { r =>
     val field = f(r)
-    r.relation.criteria.add(field EQ field()).unique() match {
-      case Some(a) if (r.isTransient || a != r) =>
-        Some(new Msg(field.uuid + "." + key, "record" -> r, "field" -> field))
-      case _ => None
+    field.value.flatMap { v =>
+      r.relation.criteria.add(field EQ v).unique() match {
+        case Some(a) if (r.isTransient || a != r) =>
+          Some(new Msg(field.uuid + "." + key, "record" -> r, "field" -> field))
+        case _ => None
+      }
     }
   }
 

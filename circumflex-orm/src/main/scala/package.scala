@@ -161,4 +161,8 @@ package object orm {
   def DELETE[PK, R <: Record[PK, R]](node: RelationNode[PK, R]) =
     new Delete(node)
 
+  // Common functions
+  def NOW = new SimpleExpression(ormConf.dialect.NOW, Nil)
+  def RANDOM = new SimpleExpression(ormConf.dialect.RANDOM, Nil)
+
 }

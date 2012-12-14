@@ -43,6 +43,8 @@ object Expression {
       new SimpleExpression(expression.toSql, expression.parameters)
   implicit def toProjection[T](expression: Expression): Projection[T] =
     new ExpressionProjection[T](expression.toSql)
+  implicit def toOrder(expression: Expression): Order =
+    new Order(expression.toSql, expression.parameters)
 }
 
 /*!# Schema Object
