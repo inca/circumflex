@@ -27,6 +27,8 @@ class H2Dialect extends Dialect {
     result
   }
   override def dropSchema(schema: Schema) = "DROP SCHEMA " + schema.name
+
+  override def RANDOM = "RAND()"
 }
 
 class PostgreSQLDialect extends Dialect {
@@ -79,6 +81,8 @@ class MySQLDialect extends Dialect {
     if (dml.whereClause != EmptyPredicate) result += " WHERE " + dml.whereClause.toSql
     result
   }
+
+  override def RANDOM = "RAND()"
 }
 
 class OracleDialect extends Dialect {
@@ -118,6 +122,8 @@ class OracleDialect extends Dialect {
   override def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
     throw new UnsupportedOperationException("This operation is unsupported in Oracle dialect.")
 
+  override def NOW = "CURRENT_TIMESTAMP"
+  override def RANDOM = "DBMS_RANDOM.VALUE"
 }
 
 class DB2Dialect extends Dialect {
@@ -166,6 +172,9 @@ class DB2Dialect extends Dialect {
     result
   }
 
+  /*!## Common functions */
+  override def NOW = "CURRENT TIMESTAMP"
+  override def RANDOM = "RAND()"
 }
 
 class MSSQLDialect extends Dialect {
@@ -207,4 +216,8 @@ class MSSQLDialect extends Dialect {
   override def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
     new Select(expr[PK]("@@IDENTITY"))
 
+
+  /*!## Common functions */
+  override def NOW = "CURRENT_TIMESTAMP"
+  override def RANDOM = "RAND()"
 }
