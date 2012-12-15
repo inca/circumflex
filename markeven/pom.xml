@@ -4,7 +4,7 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>pro.savant.circumflex</groupId>
-  <artifactId>markeven</artifactId>
+  <artifactId>circumflex-markeven</artifactId>
   <packaging>jar</packaging>
   <version>3.0-SNAPSHOT</version>
   <name>Circumflex Markeven</name>
@@ -12,7 +12,7 @@
 
   <parent>
     <groupId>pro.savant.circumflex</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>circumflex-parent</artifactId>
     <version>3.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
@@ -20,7 +20,7 @@
   <dependencies>
     <dependency>
       <groupId>pro.savant.circumflex</groupId>
-      <artifactId>core</artifactId>
+      <artifactId>circumflex-core</artifactId>
       <version>3.0-SNAPSHOT</version>
     </dependency>
     <dependency>

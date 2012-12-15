@@ -4,13 +4,13 @@
                              http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>pro.savant.circumflex</groupId>
-  <artifactId>mail</artifactId>
+  <artifactId>circumflex-mail</artifactId>
   <version>3.0-SNAPSHOT</version>
   <name>Circumflex Mail Helper</name>
 
   <parent>
     <groupId>pro.savant.circumflex</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>circumflex-parent</artifactId>
     <version>3.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
@@ -18,12 +18,12 @@
   <dependencies>
     <dependency>
       <groupId>pro.savant.circumflex</groupId>
-      <artifactId>ftl</artifactId>
+      <artifactId>circumflex-ftl</artifactId>
       <version>3.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>javax.mail</groupId>
-      <artifactId>mail</artifactId>
+      <artifactId>circumflex-mail</artifactId>
       <version>1.4.5</version>
     </dependency>
   </dependencies>

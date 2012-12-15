@@ -19,17 +19,17 @@
   <dependencies>
     <dependency>
       <groupId>pro.savant.circumflex</groupId>
-      <artifactId>core</artifactId>
+      <artifactId>circumflex-core</artifactId>
       <version>${cx.version}</version>
     </dependency>
     <dependency>
       <groupId>pro.savant.circumflex</groupId>
-      <artifactId>web</artifactId>
+      <artifactId>circumflex-web</artifactId>
       <version>${cx.version}</version>
     </dependency>
     <dependency>
       <groupId>pro.savant.circumflex</groupId>
-      <artifactId>ftl</artifactId>
+      <artifactId>circumflex-ftl</artifactId>
       <version>${cx.version}</version>
     </dependency>
     <dependency>
