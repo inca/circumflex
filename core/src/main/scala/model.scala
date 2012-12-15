@@ -3,16 +3,15 @@ package core
 
 /*!# Data model support
 
-To make Circumflex components independent from various view technologies
-we introduce some basic interfaces here. Different components implement
-these interfaces while view technologies should provide proper support
-for them.
+Circumflex introduces two parameterized wrapper clases
+— `Wrapper` and `Container` — to keep certain components
+weakly coupled with each other.
 */
 trait Wrapper[T] {
   def item: T
 }
 
-/*!# Containers
+/*!## Container
 
 Containers are generic data-carrier units. They wrap mutable variable
 with common functionality like setters, accessors, mutators and metadata.
@@ -27,7 +26,7 @@ methods, but internal value should not be taken into consideration.
 trait Container[T] {
   protected var _value: Option[T] = None
 
-  /*!## Setters
+  /*!### Setters
 
   Setters provide a handy mechanism for preprocessing values before
   setting them. They are functions `T => T` which are applied one-by-one
@@ -40,7 +39,7 @@ trait Container[T] {
     this
   }
 
-  /*!## Accessing & Setting Values
+  /*!### Accessing & Setting Values
 
   Values are stored internally as `Option[T]`. `None` stands both for
   uninitialized and `null` values.
@@ -61,7 +60,7 @@ trait Container[T] {
   def setNull(): this.type = set(None)
   def :=(v: T) = set(v)
 
-  /*!## Methods from `Option`
+  /*!### Methods from `Option`
 
   Since `ValueHolder` is just a wrapper around `Option`, we provide
   some methods to work with your values in functional style

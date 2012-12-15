@@ -11,65 +11,63 @@ import org.apache.commons.io.FilenameUtils
 
 /*!# Messages API
 
-Messages API offers you a convenient way to internationalize your application.
+Messages API offers you a convenient way to internationalize your applications.
 
 Generally, all strings which should be presented to user are stored in
-separate `.properties`-files as suggested by [Java Internationalization][java-i18n].
+separate `.properties`-files as suggested by
+[Java Internationalization](http://java.sun.com/javase/technologies/core/basic/intl).
 
 Circumflex Messages API goes beyond this simple approach and offers
-delegating resolving, messages grouping, parameters interpolation and formatting.
+delegating resolving, messages grouping, parameters interpolation, formatting and
+hot-reloading.
 
-  [java-i18n]: http://java.sun.com/javase/technologies/core/basic/intl
+## Usage
 
-The usage is pretty simple: you use the `msg` method of package object `pro.savant.circumflex.core`
-which returns an implementation of `MessageResolver` used to retrieve messages. This instance
-is also referred to as _global messages resolver_. By default, the `PropertyFileResolver`
-is used. You can set `cx.messages` configuration parameter to use your own
-`MessageResolver` implementation as global resolver.
+The `msg` method of package object `pro.savant.circumflex.core` returns
+an implementation of `MessageResolver`, which is used to retrieve messages.
+This instance is also referred to as _global messages resolver_.
 
-The `resolve` method is responsible for resolving a message by `key`.
-
-Circumflex Messages API features very robust ranged resolving. The message is searched
-using the range of keys, from the most specific to the most general ones: if the message
-is not resolved with given key, then the key is truncated from the left side to
-the first dot (`.`) and the message is searched again. For example, if you are looking
-for a message with the key `com.myapp.model.Account.name.empty` (possibly while performing
-domain model validation), then following keys will be used to lookup an appropriate
-message (until first success):
-
-    com.myapp.model.Account.name.empty
-    myapp.model.Account.name.empty
-    model.Account.name.empty
-    Account.name.empty
-    name.empty
-    empty
-
-You can use the methods of Scala `Map` to retrieve messages from resolver.
+You can use the methods of Scala `Map` to retrieve string messages from resolver.
 Default implementation also reports missing messages into Circumflex debug log.
 
-The locale is taken from `cx.locale` context variable (see `Context` for more details).
+### Locale
+
+The locale is taken from `cx.locale` context variable
+(see [[/core/src/main/scala/context.scala]]).
 If no such variable found in the context, then the platform's default locale is used.
 
-Messages can also be formatted. We support both classic `MessageFormat` style
-(you know, with `{0}`s in text and varargs) and parameters interpolation (key-value pairs
-are passed as arguments to `fmt` method, each `{key}` in message is replaced by
-corresponding value).
+### Formatting
 
-You can use `ResourceBundleMessageResolver` to resolve messages from Java `ResourceBundle`s.
+Messages can also be formatted using one of the following methods:
 
-The default implementation (the `msg` method in package `pro.savant.circumflex.core`)
-uses property files with base name `Messages` to lookup messages. You can override
-the default implementation by setting `cx.messages` configuration parameter. Unlike Java
-`ResourceBundle` it effectively caches property files and allows hot editing (cache is
-based on last modified dates).
+ * `format` — classic `MessageFormat` style with index-based placeholders in text
+   and varargs (e.g. `{0}` for first argument);
+ * `fmt` — parameters interpolation style (key-value pairs are passed
+   as arguments, each `{key}` in message is replaced by corresponding value).
 
-You can set `cx.messages.root` to point to different directory (for example, to your webapp
-root) and `cx.messages.name` to change the default base name of property files.
+### Ranged resolution
 
-If you need to search messages in different sources, you can use
-`DelegatingMessageResolver`: it tries to resolve a message using specified
-`resolvers` list, the first successively resolved message is returned.
+Circumflex Messages API features very robust technique called _ranged resolution_.
+
+The message is searched using the range of keys, from the most specific
+to the most general one: if the message is not resolved with given key,
+then the key is truncated from the left side to the first dot (`.`)
+and the message is searched again. For example, if you are looking
+for a message with the key `com.myapp.model.Account.name.empty`
+(possibly while performing domain model validation),
+then following keys will be used to lookup an appropriate
+message (until first success):
+
+```
+com.myapp.model.Account.name.empty
+myapp.model.Account.name.empty
+model.Account.name.empty
+Account.name.empty
+name.empty
+empty
+```
 */
+
 trait MessageResolver extends Map[String, String] {
   protected var _lastModified = new Date()
   def lastModified = _lastModified
@@ -99,10 +97,41 @@ trait MessageResolver extends Map[String, String] {
     params.foldLeft(getOrElse(key, key)) { (result, p) =>
       result.replaceAll("\\{" + p._1 + "\\}", p._2.toString)
     }
+
   def format(key: String, params: AnyRef*): String =
     MessageFormat.format(getOrElse(key, key), params: _*)
 }
 
+/*! ## Resolver implementations
+
+### ResourceBundleResolver and PropertyFileResolver
+
+You can use `ResourceBundleMessageResolver` to resolve messages
+from Java `ResourceBundle` with specified `bundleName`.
+
+By default, the `PropertyFileResolver` is used.
+You can set `cx.messages` configuration parameter to use your own
+`MessageResolver` implementation as a global resolver.
+It uses property files with base name `Messages` to lookup messages.
+Unlike Java `ResourceBundle` it effectively caches property files and
+allows hot editing (cache is based on last modified dates).
+
+You can set `cx.messages.root` to point to different directory
+(for example, to your webapp root) and `cx.messages.name` to change
+the default base name of property files.
+
+### DelegatingMessageResolver
+
+If you need to search messages in different sources, you can use
+`DelegatingMessageResolver`: it tries to resolve a message using specified
+`resolvers` list, the first successively resolved message is returned.
+
+### Custom implementations
+
+Custom `MessageResolver` implementations are only required to implement
+the `resolve` method, which is responsible for acquiring a message
+by specified `key` from some storage.
+*/
 class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
   protected def bundle = ResourceBundle.getBundle(bundleName)
   def iterator: Iterator[(String, String)] = bundle.getKeys
@@ -212,6 +241,14 @@ class PropertyFileResolver extends MessageResolver {
 
 }
 
+/*! ## Msg
+
+The `Msg` class is a tiny helper which wraps a `key` and arbitrary number
+of parameters. Its `toString` method uses global resolver to obtain
+a localized message by specified key and format it using specified parameters.
+
+This class is actively used with validation in certain Circumflex components.
+*/
 case class Msg(key: String, params: (String, Any)*) {
   def param(key: String): Option[Any] = params.find(_._1 == key).map(_._2)
   def hasParam(key: String): Boolean = !params.find(_._1 == key).isEmpty

@@ -7,18 +7,21 @@ import java.util.Date
 /*!# Key-value coercion
 
 Trait `KeyValueCoercion` mixed into any key-value generic storage
-(like `Map[String, Any]`) brings a whole bunch
-of methods for quick coercion the Any-typed value to specific type.
+(like `Map[String, Any]`) brings a bunch of methods for coercing
+`Any`-typed values to common types.
 
 The methods are:
 
   * `getX(key): Option[X]`, where `X` is one of following types:
     `String`, `Int`, `Long`, `Short`, `Byte`, `Double`, `Float`,
     `BigDecimal`, `Boolean`;
+
   * `getDate(key, pattern): Option[Date]` attempts to parse a date with
     `SimpleDateFormat` and specified `pattern`;
+
   * `getTimestamp(key): Option[Date]` attempts to parse a timestamp with
     RFC 822 time zone (using pattern `yyyy-MM-dd HH:mm:ss Z`).
+
   * `instantiate[C](key, default: C)` creates an instance of the class
     specified by the retrieved value, or return specified `default` (by-name).
     The class _must_ have a zero-argument constructor.
@@ -67,7 +70,7 @@ trait KeyValueCoercion {
   def getBoolean(key: String): Option[Boolean] =
     safeGet(key) { _.toString.toBoolean }
 
-  def getDate(key: String, pattern: String): Option[Date] =
+  def getDate(key: String, pattern: String = "yyyy-MM-dd"): Option[Date] =
     safeGet(key) { v =>
       val fmt = new SimpleDateFormat(pattern)
       fmt.parse(v.toString)
@@ -76,55 +79,33 @@ trait KeyValueCoercion {
   def getTimestamp(key: String): Option[Date] =
     getDate(key, "yyyy-MM-dd HH:mm:ss Z")
 
-  /*!## Dependency Injection
+  /*!## Instantiation facility
 
-The `instantiate` method is used by Circumflex as dead-simple dependency
-injection mechanism.
+The `instantiate` method attempts to create an instance of class, which
+is resolved from the storage by specified `key`. In other words, if your storage
+contains following key-value record:
 
-Consider the following example.
-
-``` {.scala}
-// Interface
-trait Configurable {
-  def doWork()
-}
-
-// Default implementation
-class DefaultConfigurable extends Configurable {
-  def doWork() {
-    println("I'm finished!")
-  }
-}
-
-// Global definition
-object conf {
-  val configurable = cx.instantiate[Configurable](
-      "myapp.configurable", new DefaultConfigurable)
-}
-
-// Usage in application
-conf.configurable.doWork()
+```
+myKey=com.myapp.MyClass
 ```
 
-Now if you use the above application as a library and need to alter the behavior
-of `DefaultConfigurable`, all you have to do is to implement `Configurable` and
-specify the class name in `myapp.configurable` configuration parameter.
+then calling `storage.instantiate("myKey")` will return new instance of
+class `com.myapp.MyClass`.
+
+This instantiation facility is used in Circumflex components
+as a dead-simple dependency injection mechanism.
+
+### Singletons
+
+Instantiation works great with Scala singletons (objects) as long
+as fully qualified class name includes the dollar sign `$` at the end:
 
 ``` {.scala}
-// Custom implementation
-class CustomConfigurable extends Configurable {
-  def doWork() {
-    println("I am way better!")
-  }
-}
+package com.myapp
 
-// cx.properties
-myapp.configurable=com.myapp.impl.CustomConfigurable
+object MySingleton // class name is com.myapp.MySingleton$
 ```
-
-This mechanism is used by Circumflex in places, which are designed to be
-configurable.
-  */
+*/
 
   def instantiate[C](name: String): C = instantiate(name,
     throw new CircumflexException("Could not instantiate '" + name + "'. " +

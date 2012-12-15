@@ -10,7 +10,9 @@ import java.net.{URLDecoder, URLEncoder}
 Package `core` contains different shortcuts, utilities and implicits.
 You should import this package if you intend to use Circumflex API:
 
-    import pro.savant.circumflex.core._
+``` {.scala}
+import pro.savant.circumflex.core._
+````
 */
 package object core {
 

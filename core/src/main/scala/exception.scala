@@ -11,6 +11,7 @@ class CircumflexException(msg: String, cause: Throwable = null)
   def this(cause: Throwable) = this(null, cause)
 }
 
+/* Validation exceptions provide a handy way to collect localizable messages. */
 class ValidationException(val errors: Seq[Msg])
     extends CircumflexException("Validation failed: " + errors) {
   def this(msg: Msg) = this(List(msg))
