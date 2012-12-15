@@ -16,6 +16,7 @@ import pro.savant.circumflex.core._
 */
 package object core {
 
+  /*! The logger name for Circumflex Core is `pro.savant.circumflex.core`.*/
   val CX_LOG = new Logger("pro.savant.circumflex.core")
 
   /*! Common Circumflex helpers imported into the namespace are:
@@ -24,12 +25,10 @@ package object core {
   * `ctx` for accessing the context -- special key-value storage attached
     to currently executing thread;
   * `msg` for accessing localized messages defined in `Messages.properties` (by default);
-  * `transaction` for executing a block of code in new context.
   */
   val cx = Circumflex
   def ctx = Context.get()
   lazy val msg = cx.instantiate[MessageResolver]("cx.messages", new PropertyFileResolver)
-  def transaction[A](block: => A): A = Context.executeInNew(ctx => block)
 
   /*! Circumflex Core package also includes helpers for various common tasks like
   random generation of UUIDs and alphanumeric strings, converting between camelCase and

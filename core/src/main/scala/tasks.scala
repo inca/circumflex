@@ -4,6 +4,18 @@ package core
 import java.util.concurrent.LinkedBlockingQueue
 import collection.mutable.ListBuffer
 
+/*!# Tasks API
+
+Task managers provide quick-and-dirty way to execute arbitrary code
+in background.`TaskManager` is essentially a blocking queue
+of parameterless functions, which are executed in a separate
+(background) thread.
+
+Unlike futures, task managers provide no way to join the thread
+and wait for the execution. There is also no way to obtain result,
+nor process the exceptions (they are just logged into `CX_LOG`).
+
+*/
 trait TaskManager {
   protected val _queue = new LinkedBlockingQueue[() => Unit]
 

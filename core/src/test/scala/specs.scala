@@ -74,10 +74,6 @@ class CircumflexCoreSpecs
       inits must equal (3)
       destroys must equal (3)
     }
-    "be configurable" in {
-      cx("cx.context") = classOf[CustomContext]
-      ctx.isInstanceOf[CustomContext] must equal (true)
-    }
     "provide DSL for setting and getting context variables" in {
       'test := "preved"
       ctx.get("test") must equal (Some("preved"))
