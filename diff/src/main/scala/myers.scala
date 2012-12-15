@@ -3,6 +3,23 @@ package diff
 
 import collection.mutable.ListBuffer
 
+/*! # Myers diff algorithm
+
+`MyersDiff` computes the difference between two collections of arbitrary
+typed elements. Elements are tested for equality using their `equals` method.
+
+The result is reported as a collection of `Chunk`s
+(see [[/diff/src/main/scala/chunk.scala]]).
+
+## Usage
+
+``` {.scala}
+val a = Seq("a", "b", "c")
+val b = Seq("b", "d", "c")
+
+new MyersDiff[String].diff(a, b)
+```
+*/
 class MyersDiff[T] {
 
   def diff(original: Seq[T], revised: Seq[T]): Difference[T] = try {
@@ -10,7 +27,7 @@ class MyersDiff[T] {
     buildRevision(path, original, revised)
   } catch {
     case e: Exception =>
-      DIFF_LOG.error("error", e)
+      DIFF_LOG.error("Diff failed.", e)
       throw e
   }
 
@@ -58,7 +75,7 @@ class MyersDiff[T] {
       diagonal(middle + d - 1) = null
     }
     // According to Myers, this cannot happen
-    throw new DifferentiationFailedException("Could not find a diff path")
+    throw new DiffFailedException("Could not find a diff path")
   }
 
   def buildRevision(path: PathNode, original: Seq[T], revised: Seq[T]) = {
@@ -78,8 +95,8 @@ class MyersDiff[T] {
       var path = pathOpt.get
       if (path.isSnake)
         throw new IllegalStateException("bad diffpath: found snake when looking for diff")
-      var i = path.i
-      var j = path.j
+      val i = path.i
+      val j = path.j
       path = path.prev.get
 
       val origSeq = copyOfRange(original, path.i, i)
@@ -106,7 +123,7 @@ class MyersDiff[T] {
   def copyOfRange(original: Seq[T],
                   from: Int, to: Int): Seq[T] = {
     val buffer = new ListBuffer[T]
-    val newLength = to - from;
+    val newLength = to - from
     if (newLength < 0)
       throw new IllegalArgumentException(from + " > " + to)
     val len = math.min(original.length - from, newLength)

@@ -5,9 +5,9 @@ import java.util.regex.Pattern
 import java.util.{UUID, Random}
 import java.net.{URLDecoder, URLEncoder}
 
-/*!# The `core` Package
+/*!# The `core` package
 
-Package `core` contains different shortcuts, utilities and implicits.
+Package object `core` contains different shortcuts, utilities and implicits.
 You should import this package if you intend to use Circumflex API:
 
 ``` {.scala}
@@ -16,7 +16,6 @@ import pro.savant.circumflex.core._
 */
 package object core {
 
-  /*! The logger name for Circumflex Core is `pro.savant.circumflex.core`.*/
   val CX_LOG = new Logger("pro.savant.circumflex.core")
 
   /*! Common Circumflex helpers imported into the namespace are:

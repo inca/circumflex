@@ -1,6 +1,24 @@
 package pro.savant.circumflex
 package diff
 
+/*! # Chunks
+
+Diff results are reported as a sequence of chunks. Each chunk defines
+a correspondence between two sequences: `original` and `revised`.
+
+`Chunk` is a sealed trait with only four implementations:
+
+  * `InsertChunk` designates that elements have been added
+    (the `original` sequence is empty);
+
+  * `DeleteChunk` designates that elements have been removed
+    (the `revised` sequence is empty);
+
+  * `ChangeChunk` designates that elements have been changed;
+
+  * `EqualChunk` designates that elements have not been changed
+    (the two sequences are equal).
+*/
 sealed trait Chunk[T]{
   def original: Seq[T]
   def revised: Seq[T]

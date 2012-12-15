@@ -5,7 +5,7 @@ abstract class PathNode(val i: Int,
                val j: Int,
                val prev: Option[PathNode]) {
 
-  def isSnake: Boolean;
+  def isSnake: Boolean
   def isBootstrap = i < 0 || j < 0
 
   def previousSnake: Option[PathNode] = {
@@ -17,7 +17,7 @@ abstract class PathNode(val i: Int,
   }
 
   override def toString = {
-    var sb = new StringBuffer("[")
+    val sb = new StringBuffer("[")
     var node: Option[PathNode] = Some(this)
     while (!node.isEmpty) {
       sb.append("(")

@@ -4,6 +4,11 @@ package cache
 import java.util.Date
 import collection.{Map, Set}
 
+/*! # Caching primitive
+
+Classes listed here can be used to cache primitive values
+(for example, the count of rows from specific query).
+*/
 trait CachedPrimitive[T] extends Cached {
   def expired = false
   def value: T
