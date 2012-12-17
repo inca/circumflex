@@ -10,14 +10,20 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest._
 
 class MockRouter extends Router {
+
   get("/") = "preved"
+
   post("/") = "preved from POST"
+
   get("/decode me") = "preved"
+
   get("/regex/(.*)".r) = "matched " + uri(1)
+
   put("/") = "this is a put route"
 
-  get("/error") = error(503)
-  get("/redirect") = redirect("/")
+  get("/error") = sendError(503)
+
+  get("/redirect") = sendRedirect("/")
 
   sub("/sub") = new SubMockRouter
 
@@ -37,19 +43,25 @@ class SubMockRouter extends Router {
 }
 
 class MatchingMockRouter extends Router {
+
   get("/uri/:name.:ext") = uri("name") + "->" + uri("ext")
+
   get("/uri/:name") = "preved, " + uri("name")
+
   get("/uri/*/one/:two/+.:three") = uri(1) + uri("two") + uri(3) + uri("three")
 
   get("/param").and(HOST(":host")) = "host is " + param("host")
 
   get("/composite").and(ACCEPT("text/:format")).and(REFERER("localhost")) =
       "3 conditions met (" + param("format") + ")"
+
   get("/composite").and(ACCEPT("text/:format")) =
       "2 conditions met (" + param("format") + ")"
+
   get("/composite") = "1 condition met"
 
   get("/multiparam") = request.params.list("test").mkString(",")
+
   get("/multiparam/:test/:test") = param.list("test").mkString(",")
 
   get("/complex/:name")
@@ -62,7 +74,8 @@ class MatchingMockRouter extends Router {
     true
   }) = "You can't be there."
 
-  get("/complex/:name") = "You failed to pass complex route using '" + param("name") + "'."
+  get("/complex/:name") = "You failed to pass complex route using '" +
+      param("name") + "'."
 }
 
 @RunWith(classOf[JUnitRunner])
