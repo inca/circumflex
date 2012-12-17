@@ -10,20 +10,21 @@ import http.client.{methods => m}
 import collection.JavaConversions._
 import collection.mutable.ListBuffer
 
-/*!# Testing your application
+/*!# Testing applications
 
 Circumflex Web Framework lets you test your web application using the `MockApp`.
 
-Refer to our test sources at [`web/src/test/scala`][tests] to see it in action.
-
-   [tests]: http://github.com/inca/circumflex/tree/master/web/src/test/scala/
+Refer to our [test sources][/web/src/test/scala/specs.scala] to see it in action.
 */
 trait MockServer extends StandaloneServer {
+
   def baseUrl = "http://localhost:" + port
+
   def conversate[A](c: MockConversation => A): A = {
     val conv = new MockConversation(this)
     c(conv)
   }
+
   def get(uri: String) = conversate(_.get(uri))
   def post(uri: String) = conversate(_.post(uri))
   def put(uri: String) = conversate(_.put(uri))
@@ -35,8 +36,11 @@ trait MockServer extends StandaloneServer {
 object MockApp extends MockServer
 
 class MockConversation(val server: MockServer) {
+
   val baseUrl = server.baseUrl
+
   val client = new DefaultHttpClient()
+
   def get(uri: String) = new MockRequest(this, new m.HttpGet(baseUrl + uri))
   def post(uri: String) = new MockRequest(this, new m.HttpPost(baseUrl + uri))
   def put(uri: String) = new MockRequest(this, new m.HttpPut(baseUrl + uri))
@@ -48,16 +52,19 @@ class MockConversation(val server: MockServer) {
 
 class MockRequest(val conv: MockConversation, val req: m.HttpRequestBase) {
   val params = new ListBuffer[(String, String)]
+
   def setHeader(name: String, value: String): this.type = {
     req.setHeader(name, value)
     this
   }
+
   def setParam(name: String, value: String): this.type = {
     params += name -> value
     this
   }
+
   def execute() = {
-    // apply params if applicable
+    // Dpply params if applicable
     req match {
       case req: m.HttpEntityEnclosingRequestBase =>
         val pairs = params.map(p => new BasicNameValuePair(p._1, p._2)).toList
@@ -67,6 +74,7 @@ class MockRequest(val conv: MockConversation, val req: m.HttpRequestBase) {
     }
     new MockResponse(conv, conv.client.execute(req))
   }
+
   override def toString = req.getRequestLine.toString
 }
 

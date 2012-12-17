@@ -20,7 +20,8 @@ case class HttpCookie(var name: String,
                       var comment: String = null,
                       var secure: Boolean = false,
                       var maxAge: Int = -1) {
-/*! You can convert `HttpCookie` back to `javax.servlet.Cookie` using `convert` method. */
+
+  /*! You can convert `HttpCookie` back to `javax.servlet.Cookie` using `convert` method. */
   def convert(): Cookie = {
     val c = new Cookie(name, value)
     if (domain != null) c.setDomain(domain)
@@ -30,13 +31,17 @@ case class HttpCookie(var name: String,
     c.setMaxAge(maxAge)
     c
   }
+
   override def toString = name + " = " + value
+
 }
 
 /*! Depending on your application needs you can obtain an instance of `HttpCookie` by
 supplying `javax.servlet.Cookie` as an argument to `apply` method of `HttpCookie` singleton:
 
-    HttpCookie(rawCookie)
+```
+HttpCookie(rawCookie)
+```
 */
 object HttpCookie {
   def apply(cookie: Cookie): HttpCookie =

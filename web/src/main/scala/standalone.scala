@@ -1,5 +1,6 @@
 package pro.savant.circumflex
 package web
+
 import core._
 import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.server.Server
@@ -7,15 +8,10 @@ import java.net.{InetAddress, InetSocketAddress}
 
 /*!# Standalone Server
 
-Circumflex Web Framework ships `StandaloneServer` which uses Jetty under the curtains.
-It can be used to start server manually (e.g. via Scala console). Usage is simple: use
-`start` method to bring standalone server up and `stop` method to shut the server down.
-Initialization are not synchronized, so if you intend dynamic start-stop functionality,
-consider external synchronization.
+Circumflex Web Framework ships `StandaloneServer` which uses Jetty
+under the curtains.
 
-The best practice for setting up the standalone server is to provide a singleton object:
-
-    object MyServer extends StandaloneServer
+It is primarily used for testing by `MockApp` object.
 
 Following configuration parameters are required to get standalone server
 up and running:
@@ -28,26 +24,29 @@ up and running:
 Jetty's `WebAppContext` is used as default requests handler: it provides sensible defaults
 for almost every web application startup (it reads configuration from `web.xml` and all other
 Jetty-specific descriptors). You can override the server with your own implementation using
-the `cx.jetty.server` configuration property (the normal instantiation facility is employed
-in this case):
+the `cx.jetty.server` configuration property.
 
 Refer to Jetty documentation for more information.
 */
 class StandaloneServer {
+
   val listenAddress: InetAddress = cx.get("cx.listenAddress") match {
     case Some(a: InetAddress) => a
     case Some(s: String) => InetAddress.getByName(s)
     case _ => InetAddress.getByName("0.0.0.0")
   }
+
   val port: Int = cx.get("cx.port") match {
     case Some(p: Int) => p
     case Some(s: String) => try { s.toInt } catch { case e: Exception => 8180 }
     case _ => 8180
   }
+
   val webappRoot: String = cx.get("cx.webappRoot") match {
     case Some(s: String) => s
     case _ => "src/main/webapp"
   }
+
   val contextPath: String = cx.get("cx.contextPath") match {
     case Some(s: String) => s
     case _ => "/"
@@ -72,6 +71,7 @@ class StandaloneServer {
   def start() {
     server.start()
   }
+
   def stop() {
     server.stop()
   }

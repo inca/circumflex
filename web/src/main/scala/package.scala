@@ -9,132 +9,51 @@ import org.apache.commons.io.IOUtils
 import collection.mutable.Map
 import java.util.Date
 
-/*!# The `web` Package
+/*!# The `web` package
 
-Package `web` contains different shortcuts, utilities and helpers --
+Package object `web` contains different shortcuts, utilities and helpers --
 the basis of routing DSL of Circumflex Web Framework.
 
 You should import this package to use Circumflex Web Framework in your application:
 
-    import pro.savant.circumflex.web._
+``` {.scala}
+import pro.savant.circumflex.web._
+```
 
-If you don't wish to import all helpers into your global scope, then import this
+If you don't wish to import all helpers into global scope, then import this
 package under an alias:
 
-    import pro.savant.circumflex.{web => cx}    // import under alias "cx"
-    cx.request                          // access members
+``` {.scala}
+import pro.savant.circumflex.{web => cx} // import under alias "cx"
+cx.request                               // access members
+```
 */
 package object web {
 
   val WEB_LOG = new Logger("pro.savant.circumflex.web")
 
-  /*!# Heplers
+  /*!## Accessing web context
 
-  Helpers are tiny methods and structures which provide common functionality
-  for web applications like accessing current request, response, session, headers, cookies
-  and other stuff.
-   */
-  def request = ctx("cx.request").asInstanceOf[HttpRequest]
-  def response = ctx("cx.response").asInstanceOf[HttpResponse]
-  def filterChain = ctx("cx.filterChain").asInstanceOf[FilterChain]
-  def filterConfig = cx("cx.filterConfig").asInstanceOf[FilterConfig]
-  def servletContext = filterConfig.getServletContext
+  Methods `request`, `response`, `session`, `filterChain`, `filterConfig`
+  and `servletContext` can be used anywhere inside web application to
+  obtain corresponding web context objects.
+  */
+  def request = ctx.getAs[HttpRequest]("cx.request").get
+
+  def response = ctx.getAs[HttpResponse]("cx.response").get
+
   def session = request.session
 
-  /*!## The `headers` Helper
+  def filterChain = ctx.getAs[FilterChain]("cx.filterChain").get
 
-  The `headers` object of package `pro.savant.circumflex.web` lets you access request
-  headers and set response headers (i.e. mix functionality of `request.headers`
-  and `response.headers`).
-  */
-  object headers extends Map[String, String] {
-    def +=(kv: (String, String)): this.type = {
-      response.headers + kv
-      this
-    }
-    def -=(key: String): this.type = {
-      response.headers - key
-      this
-    }
-    def iterator: Iterator[(String, String)] = request.headers.iterator
-    def get(key: String): Option[String] = request.headers.get(key)
-  }
+  def filterConfig = cx.getAs[FilterConfig]("cx.filterConfig").get
 
-  /*!## The `cookies` Helper
+  def servletContext = filterConfig.getServletContext
 
-  The `cookies` object of package `pro.savant.circumflex.web` lets you access request
-  cookies and set response cookies (i.e. mix functionality of `request.cookies`
-  and `response.cookies`).
-  */
-  object cookies extends Map[String, HttpCookie] {
-    def +=(kv: (String, HttpCookie)): this.type = {
-      response.cookies += kv._2.asInstanceOf[HttpCookie]
-      this
-    }
-    def -=(key: String): this.type = {
-      response.cookies.find(_.name == key).map(c => response.cookies -= c)
-      this
-    }
-    def iterator: Iterator[(String, HttpCookie)] =
-      request.cookies.iterator.map(c => (c.name -> c))
-    def get(key: String): Option[HttpCookie] =
-      request.cookies.find(c => c.name == key)
-  }
+  /*!## Sending responses
 
-  /*!## The `flash` Helper
-
-  The `flash` object provides a way to pass temporary objects between requests.
-  Flash variables are stored in session until first access.
-  */
-  object flash extends Map[String, Any] with KeyValueCoercion {
-    val SESSION_KEY = "cx.flash"
-    protected def flashMap = session
-        .getOrElse(SESSION_KEY, Map[String, Any]())
-        .asInstanceOf[Map[String, Any]]
-    def +=(kv: (String, Any)): this.type = {
-      session(SESSION_KEY) = flashMap + (kv)
-      this
-    }
-    def -=(key: String): this.type = {
-      session(SESSION_KEY) = flashMap - key
-      this
-    }
-    def iterator: Iterator[(String, Any)] = flashMap.iterator
-    def get(key: String): Option[Any] = {
-      val m = flashMap
-      flashMap.get(key) map { v =>
-        session(SESSION_KEY) = m - key
-        v
-      }
-    }
-    override def contains(key: String): Boolean = flashMap.contains(key)
-  }
-
-  /*!## The `param` Helper
-
-  The `param` object of package `pro.savant.circumflex.web` is a convenient helper to
-  retrieve the parameters of current match or current request. The parameters
-  are first resolved from `MatchResult` objects found in context. If no
-  match result contain a parameter with specified name, then the parameter is
-  resolved from request parameters.
-  */
-  object param extends Map[String, String] with KeyValueCoercion {
-    def +=(kv: (String, String)): this.type = this
-    def -=(key: String): this.type = this
-    def iterator: Iterator[(String, String)] = ctx.iterator.flatMap(p => p._2 match {
-      case m: MatchResult => m.params.iterator
-      case s: String => Seq(p._1 -> s).iterator
-      case _ => Iterator.empty
-    }) ++ request.params.iterator
-    def get(key: String): Option[String] = iterator.find(_._1 == key).map(_._2)
-    override def default(key: String): String = ""
-    def list(key: String): Seq[String] = iterator.filter(_._1 == key).map(_._2).toList
-  }
-
-  /*!## Response Helpers
-
-  Circumflex Web Framework provides following helpers for sending standard
-  HTTP responses:
+  Circumflex Web Framework provides following methods for immediately aborting
+  normal control flow and sending the response from any place of your application:
 
     * `send` writes specified `text` to response buffer and, if specified,
       sets `statusCode`;
@@ -256,14 +175,18 @@ package object web {
     response.headers += ("Last-Modified" -> lastModified)
   }
 
-  /*!## The `matchers` Helper
+  /*!## Headers matching helpers
 
-  The `matchers` helper contains shortcuts for various matchers (for example, by known HTTP headers).
+  The `matchers` helper contains shortcuts for various matchers
+  (for example, by known HTTP headers).
+
   You should import this object if you want to use it:
 
-      import pro.savant.circumflex.web.{matchers => m}
+  ``` {.scala
+  import pro.savant.circumflex.web.{matchers => m}
 
-      get("/").and(m.ACCEPT(":mime")) = "You are accepting " + param("mime")
+  get("/").and(m.ACCEPT(":mime")) = "You are accepting " + param("mime")
+  ```
   */
   object matchers {
     val ACCEPT = new HeaderMatcherHelper("Accept")

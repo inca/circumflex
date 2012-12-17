@@ -74,6 +74,7 @@ class CircumflexWebSpec
   before {
     cx("cx.router") = classOf[MockRouter]
     var rootPath = System.getProperty("user.dir")
+    // Hack to get around different Maven execution locations
     if (!rootPath.endsWith("web")) {
       rootPath += (File.separator + "web")
     }

@@ -12,20 +12,22 @@ import core._
 
 `CircumflexFilter` is an entry point of your web application. It handles
 context lifecycle (initializes context before the request is processed and
-finalizes context after the response is sent), serves [static files](#static)
+finalizes context after the response is sent), serves static files
 and executes main request router.
 
 To setup your web application place following snippet into your `WEB-INF/web.xml`:
 
-    <filter>
-      <filter-name>Circumflex Filter</filter-name>
-      <filter-class>pro.savant.circumflex.web.CircumflexFilter</filter-class>
-    </filter>
+``` {.xml}
+<filter>
+  <filter-name>Circumflex Filter</filter-name>
+  <filter-class>pro.savant.circumflex.web.CircumflexFilter</filter-class>
+</filter>
 
-    <filter-mapping>
-      <filter-name>Circumflex Filter</filter-name>
-      <url-pattern>*</url-pattern>
-    </filter-mapping>
+<filter-mapping>
+  <filter-name>Circumflex Filter</filter-name>
+  <url-pattern>*</url-pattern>
+</filter-mapping>
+```
 
 You can also include `<dispatcher>REQUEST</dispatcher>`, `<dispatcher>FORWARD</dispatcher>`,
 `<dispatcher>INCLUDE</dispatcher>` and `<dispatcher>ERROR</dispatcher>` under `filter-mapping`
@@ -45,7 +47,7 @@ class CircumflexFilter extends Filter {
 
   def destroy() {}
 
-  /*!## Serving static  {#static}
+  /*!## Serving static
 
   Static files are images, stylesheets, javascripts and all other application assets
   which do not require special processing and can be served to clients "as is".
@@ -84,17 +86,26 @@ class CircumflexFilter extends Filter {
   The lifecycle of `CircumflexFilter` involves following actions:
 
   1. try to serve static context and immediately exit on success;
+
   2. initialize `Context` and fill it with following variables:
 
     * `cx.request` will hold current `HttpRequest`;
+
     * `cx.response` will hold current `HttpResponse`;
+
     * `cx.filterChain` will hold current `FilterChain`;
+
+    * `cx.locale` will hold current request locale as obtained from
+      raw HTTP request;
+
     * other variables from `prepareContext`;
 
   3. the main router is instantiated (it's class should be specified via the
   `cx.router` configuration parameter;
+
   4. depending on the result of router's execution, either the response or
   the error is flushed to the client;
+
   5. the `Context` is destroyed.
 
   */
@@ -153,8 +164,6 @@ class CircumflexFilter extends Filter {
     'param := param
     'request := request
     'session := session
-    'cookies := cookies
-    'headers := headers
     'flash := flash
     'cfg := cx
     'msg := msg

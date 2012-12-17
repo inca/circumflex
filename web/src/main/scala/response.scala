@@ -56,22 +56,26 @@ class HttpResponse(val raw: HttpServletResponse) {
     raw.setBufferSize(bs)
     this
   }
+
   def contentType = raw.getContentType
   def contentType(ct: String): this.type = {
     raw.setContentType(ct)
     this
   }
+
   def encoding = raw.getCharacterEncoding
   def encoding(e: String): this.type = {
     raw.setCharacterEncoding(e)
     this
   }
+
   protected var _statusCode: Int = -1
   def statusCode = _statusCode
   def statusCode(sc: Int): this.type = {
     _statusCode = sc
     this
   }
+
   protected var _contentLength: Int = -1   // -1 means that container's default will be used
   def contentLength = _contentLength
   def contentLength(cl: Int): this.type = {

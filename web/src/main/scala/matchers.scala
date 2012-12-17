@@ -2,8 +2,6 @@ package pro.savant.circumflex
 package web
 
 import util.matching.Regex
-import scala.collection.immutable.Map
-import collection.Iterator
 
 /*!# Matchers
 
@@ -23,26 +21,26 @@ strings captured by `Matcher`. The special name `splat` is assigned to parameter
 unknown name (`+`, `*` or any group, if you use regular expressions).
 */
 class MatchResult(val name: String,
-                  val params: (String, String)*) extends Map[String, String] {
-  def +[B1 >: String](kv: (String, B1)): Map[String, B1] = this
-  def -(key: String): Map[String, String] = this
-  def iterator: Iterator[(String, String)] = params.iterator
+                  val params: (String, String)*) {
 
   def get(index: Int): Option[String] =
     if (params.indices.contains(index)) Some(params(index)._2)
     else None
+
   def get(name: String): Option[String] = params.find(_._1 == name) match {
     case Some(param: Pair[String, String]) => Some(param._2)
     case _ => None
   }
 
   def apply(): String = apply(0)
+
   def apply(index: Int): String = get(index).getOrElse("")
+
+  def apply(name: String): String = get(name).getOrElse("")
 
   def splat: Seq[String] = params.filter(_._1 == "splat").map(_._2).toSeq
 
-  override def default(key: String): String = ""
-  override def toString() = apply(0)
+  override def toString = apply(0)
 }
 
 /*!## Matcher
@@ -58,13 +56,17 @@ When using String expressions, following processing occurs:
 
   * the characters `.`, `(` and `)` are escaped so that they are not mistreated by
   regex engine;
+
   * the named parameters like ":param" are recognized within the expression; they
   are transformed into greedy regex groups `([^/?&#.]+)` which match any
   characters except `/`, `?`, `?`, `&`, `#` and `.`;
+
   * all occurrences of the `*` character are replaced with reluctant groups `(.*?)`
   which match zero or more characters;
+
   * all occurrences of the `+` character are replaced with reluctant groups `(.+?)`
   which match one or more characters;
+
   * `?` remains the same and indicates that the preceding character is optional
   for matching (for example, `get("/files/?")` matches both `/files` and `/files/`
   requests).
@@ -83,6 +85,7 @@ class Matcher(val name: String,
     this(name, value, null, Nil)
     processPattern(pattern)
   }
+
   protected def processPattern(pattern: String) {
     this.groupNames = List("splat")    // for `group(0)`
     this.regex = (""":\w+|[\*+.()]""".r.replaceAllIn(pattern, m => m.group(0) match {
@@ -96,6 +99,7 @@ class Matcher(val name: String,
         "([^/?#]+)"
     })).r
   }
+
   def groupName(index: Int): String=
     if (groupNames.indices.contains(index)) groupNames(index)
     else "splat"
@@ -130,15 +134,20 @@ class UriMatcher(regex: Regex, groupNames: Seq[String] = Nil)
 /*! `HeaderMatcher` is used to match the requests by contents of their headers. */
 class HeaderMatcher(name: String, regex: Regex, groupNames: Seq[String] = Nil)
     extends Matcher(name, request.headers.getOrElse(name,""), regex, Nil) {
+
   def this(name: String, pattern: String) = {
     this(name, null, Nil)
     processPattern(pattern)
   }
+
 }
 
 /*! `HeaderMatcherHelper` provides DSL for matching requests by headers. See `matchers` object
 in package `pro.savant.circumflex.web` for more information. */
 class HeaderMatcherHelper(name: String) {
+
   def apply(regex: Regex) = new HeaderMatcher(name, regex, Nil)
+
   def apply(pattern: String) = new HeaderMatcher(name, pattern)
+
 }
