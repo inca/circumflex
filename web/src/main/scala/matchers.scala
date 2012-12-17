@@ -27,10 +27,7 @@ class MatchResult(val name: String,
     if (params.indices.contains(index)) Some(params(index)._2)
     else None
 
-  def get(name: String): Option[String] = params.find(_._1 == name) match {
-    case Some(param: Pair[String, String]) => Some(param._2)
-    case _ => None
-  }
+  def get(name: String): Option[String] = params.find(_._1 == name).map(_._2)
 
   def apply(): String = apply(0)
 

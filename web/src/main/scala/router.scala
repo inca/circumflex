@@ -30,6 +30,7 @@ class Router {
 
   implicit def string2response(str: String): RouteResponse =
     new RouteResponse(str)
+
   implicit def xml2response(xml: Node): RouteResponse = {
     response.contentType("application/xml")
     new RouteResponse("<?xml version=\"1.0\"?>\n" + xml.toString)
@@ -40,6 +41,7 @@ class Router {
 
   implicit def string2uriMatcher(str: String): UriMatcher =
     new UriMatcher(prefix + str)
+
   implicit def regex2uriMatcher(regex: Regex): UriMatcher =
     new UriMatcher(new Regex(prefix + regex.toString))
 
@@ -54,14 +56,16 @@ class Router {
   val options = new Route("options")
   val any = new Route("*")
 
-  // Filter
+  /*! ## Filtering requests
+
+  The `filter` route performs URI-based matching just like all other routes,
+  executes the attached block on successful match and continues router execution.
+
+  Unlike endpoint-routes, the `filter` route accepts any kind of block and is
+  not required to yield the response.
+  */
   val filter = new FilterRoute
 
-  // Shortcuts
-  def error(statusCode: Int = 400, message: String = "No message available."): Nothing =
-    sendError(statusCode, message)
-  def redirect(url: String, flashes: (String, Any)*): Nothing =
-    sendRedirect(url, flashes: _*)
   def uri: MatchResult = ctx.get("uri") match {
     case Some(m: MatchResult) => m
     case None => new MatchResult("uri", "splat" -> request.uri)
@@ -97,43 +101,65 @@ class Router {
       class UsersRouter extends Router {
 
         sub("/users") = {
+
           get("/?") = "list all users"
+
           sub("/:userId") = User.get(param("userId")) match {
             case Some(u: User) =>
+
               // continue matching with prefix "/users/:userId"
               get("/profile") = "Profile of user #" + u.id()
+
               get("/accounts") = "Accounts of user #" + u.id()
               // ...
             case _ => sendError(404)
           }
+
         }
       }
   */
   val sub = new SubRoute
 }
 
+/*! ## Routing internals
+
+All routes are organized internally with `RoutingContext` which
+accepts the contravariant type parameter which specifies the type of block
+it accepts.
+*/
 trait RoutingContext[-T] {
+
   def matches: Boolean
+
   protected def dispatch(block: => T)
+
   def and: RoutingContext[T] = if (matches) this else NopRoute
+
   def apply(matcher: Matcher): RoutingContext[T] = matcher.apply match {
     case Some(matchResults) if matches =>
       matchResults.foreach(m => ctx.update(m.name, m))
       this
     case _ => NopRoute
   }
+
   def apply(condition: => Boolean): RoutingContext[T] =
     if (matches && condition) this else NopRoute
+
   def update(matcher: Matcher, block: => T) {
     apply(matcher).dispatch(block)
   }
+
   def update(condition: => Boolean, block: => T) {
     apply(condition).dispatch(block)
   }
 }
 
-class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
-  val matches = matchingMethods.contains("*") || matchingMethods.contains(request.method)
+class Route(matchingMethods: String*)
+    extends RoutingContext[RouteResponse] {
+
+  val matches = matchingMethods.contains("*") ||
+      matchingMethods.contains(request.method)
+
   protected def dispatch(block: => RouteResponse) {
     val response = block.body
     send(response)
@@ -141,14 +167,18 @@ class Route(matchingMethods: String*) extends RoutingContext[RouteResponse] {
 }
 
 class FilterRoute extends RoutingContext[Any] {
+
   def matches = true
+
   protected def dispatch(block: => Any) {
     block
   }
 }
 
 class RewriteRoute extends RoutingContext[String] {
+
   def matches = true
+
   protected def dispatch(block: => String) {
     val newUri = block
     ctx.update("cx.web.uri", newUri)
@@ -156,6 +186,7 @@ class RewriteRoute extends RoutingContext[String] {
 }
 
 class SubRoute extends RoutingContext[Any] {
+
   override def apply(matcher: Matcher) = matcher.matchPrefix match {
     case Some((p, matchResults)) if matches =>
       request.setPrefix(p)
@@ -163,7 +194,9 @@ class SubRoute extends RoutingContext[Any] {
       this
     case _ => NopRoute
   }
+
   def matches = true
+
   protected def dispatch(block: => Any) {
     block
     sendError(404)
@@ -171,7 +204,9 @@ class SubRoute extends RoutingContext[Any] {
 }
 
 object NopRoute extends RoutingContext[Any] {
+
   protected def dispatch(block: => Any) {}
+
   def matches = false
 }
 

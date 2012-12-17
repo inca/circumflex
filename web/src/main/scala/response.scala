@@ -1,5 +1,6 @@
 package pro.savant.circumflex
 package web
+
 import javax.servlet.http.HttpServletResponse
 import collection.mutable.{ListBuffer, HashMap}
 import java.lang.String
@@ -44,11 +45,15 @@ class HttpResponse(val raw: HttpServletResponse) {
   /*!## Response Basics
 
     * `bufferSize` returns or sets the size of response buffer;
+
     * `contentType` returns or sets the MIME type of the response, the default one is
-    `text/html` (we are web framework after all!);
+      `text/html` (we are web framework after all!);
+
     * `encoding` returns or sets the name of the character encoding used in response body,
-    as mentioned above, we implicitly set this to `UTF-8`;
+      as mentioned above, we implicitly set this to `UTF-8`;
+
     * `statusCode` returns or sets the status code of the response.
+
     * `contentLength` returns or sets the `Content-Length` header of the response.
   */
   def bufferSize = raw.getBufferSize
@@ -91,6 +96,7 @@ class HttpResponse(val raw: HttpServletResponse) {
 
   The body of the response is set by supplying a function which works with `HttpServletResponse`
   passed inside that function.
+
   The function is invoked inside the `flush` method when response is completely ready
   to be sent -- this is done to avoid `IllegalStateException`s when working with response.
   */
@@ -122,12 +128,13 @@ class HttpResponse(val raw: HttpServletResponse) {
 
     * set `Content-Disposition` header to `attachment` with specified `filename`
     using the `attachment` method;
+
     * set `Pragma: no-cache`, `Cache-Control: no-store` and `Expires: 0` to disable
     client-side cache using `noCache` method.
   */
   def attachment(filename: String): this.type = {
-    headers("Content-Disposition") =
-        "attachment; filename=\"" + new String(filename.getBytes("UTF-8"), "ISO-8859-1") + "\""
+    headers("Content-Disposition") = "attachment; filename=\"" +
+        new String(filename.getBytes("UTF-8"), "ISO-8859-1") + "\""
     this
   }
 
