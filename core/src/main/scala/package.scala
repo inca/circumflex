@@ -1,9 +1,7 @@
 package pro.savant.circumflex
 
 import java.security.MessageDigest
-import java.util.regex.Pattern
 import java.util.{UUID, Random}
-import java.net.{URLDecoder, URLEncoder}
 
 /*!# The `core` package
 
@@ -32,7 +30,7 @@ package object core {
   /*! Circumflex Core package also includes helpers for various common tasks like
   random generation of UUIDs and alphanumeric strings, converting between camelCase and
   underscore_delimited identifiers, measuring execution time, computing popular digests
-  (SHA256, MD5), (un)escaping HTML markup, validating JSON input, etc.
+  (SHA256, MD5), etc.
   */
 
   protected val _rnd = new Random
@@ -65,61 +63,6 @@ package object core {
   }
   def md5(text: String) = digest("md5", text)
   def sha256(text: String) = digest("sha-256", text)
-
-  // Common escaping
-
-  val ampEscape = Pattern.compile("&(?!(?:[a-zA-Z]+|(?:#[0-9]+|#[xX][0-9a-fA-F]+));)")
-
-  def escapeHtml(s: String) = ampEscape.matcher(s)
-      .replaceAll("&amp;")
-      .replaceAll(">", "&gt;")
-      .replaceAll("<", "&lt;")
-      .replaceAll("\"", "&quot;")
-      .replaceAll("\\r\\n|\\r", "\n")
-
-  def unescapeHtml(s: String) = s
-      .replaceAll("&gt;", ">")
-      .replaceAll("&lt;", "<")
-      .replaceAll("&quot;", "\"")
-      .replaceAll("&amp;", "&")
-      .replaceAll("\\r\\n|\\r", "\n")
-
-  def encodeURI(s: String) = encodeURIComponent(s)
-      .replaceAll("%3B", ";")
-      .replaceAll("%2F", "/")
-      .replaceAll("%3F", "?")
-      .replaceAll("%3A", ":")
-      .replaceAll("%40", "@")
-      .replaceAll("%26", "&")
-      .replaceAll("%3D", "=")
-      .replaceAll("%2B", "+")
-      .replaceAll("%24", "$")
-      .replaceAll("%2C", ",")
-
-  def encodeURIComponent(s: String) = {
-    URLEncoder.encode(s, "UTF-8")
-        .replaceAll("\\+", "%20")
-        .replaceAll("%21", "!")
-        .replaceAll("%27", "'")
-        .replaceAll("%28", "(")
-        .replaceAll("%29", ")")
-        .replaceAll("%7E", "~")
-  }
-
-  def decodeURI(s: String) = {
-    val escaped = s.replaceAll("%(3B|2F|3F|3A|40|26|3D|2B|24|2C)", "%25$1")
-    decodeURIComponent(escaped)
-  }
-
-  def decodeURIComponent(s: String) =
-    URLDecoder.decode(s, "UTF-8")
-
-  // JSON validator
-
-  def validateJSON(s: String): Boolean =
-    !Pattern.compile("[^,:{}\\[\\]0-9.\\-+Eaeflnr-u \\n\\r\\t]")
-        .matcher(s.replaceAll("\"(\\\\.|[^\"\\\\])*\"", ""))
-        .find
 
   // Pimping Symbols
 

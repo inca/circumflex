@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier
 import org.apache.commons.io.{IOUtils, FileUtils}
 import java.io._
 import collection.mutable.ListBuffer
+import org.apache.commons.lang3.StringEscapeUtils
 
 /*! # XML mapping API
 
@@ -41,6 +42,8 @@ trait Holder {
   var parent: Option[ElemHolder] = None
 
   def accept(it: TagIterator): Boolean = it.current.name == elemName
+
+  def escapeXml(text: String) = StringEscapeUtils.escapeXml(text)
 
   def toXml: String = writeXml(0)
 
@@ -130,7 +133,7 @@ trait ValHolder[T]
 class AttrHolder(val elemName: String)
     extends ValHolder[String] {
 
-  addSetter(s => escapeHtml(s))
+  addSetter(s => escapeXml(s))
 
   def writeXml(indent: Int): String = value.map(s =>
     " " + elemName + "=\"" + s + "\"").getOrElse("")
@@ -192,7 +195,7 @@ trait TextHolder
     extends ValHolder[String]
     with ElemHolder {
 
-  addSetter(s => escapeHtml(s))
+  addSetter(s => escapeXml(s))
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {

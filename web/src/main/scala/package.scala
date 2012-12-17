@@ -2,12 +2,13 @@ package pro.savant.circumflex
 
 import core._
 import javax.servlet.{FilterChain, FilterConfig}
-import collection.Iterator
 import javax.activation.MimetypesFileTypeMap
 import java.io._
 import org.apache.commons.io.IOUtils
-import collection.mutable.Map
 import java.util.Date
+import java.util.regex.Pattern
+import java.net.{URLDecoder, URLEncoder}
+import org.apache.commons.lang3.StringEscapeUtils
 
 /*!# The `web` package
 
@@ -220,5 +221,64 @@ package object web {
     val VIA = new HeaderMatcherHelper("Via")
     val WARNING = new HeaderMatcherHelper("Warning")
   }
+
+  /*! ## Utilities
+
+  A couple of utility methods are imported along with the `web` pacakge object.
+  These method include `encodeURI`, `encodeURIComponent`, `decodeURI`
+  and `decodeURIComponent` (like in Javascript), escaping and unescaping
+  for HTML, JS and JSON input, JSON validation, etc.
+  */
+
+  // Escaping
+
+  def escapeHtml(text: String) = StringEscapeUtils.escapeHtml4(text)
+  def unescapeHtml(text: String) = StringEscapeUtils.unescapeHtml4(text)
+
+  def escapeJs(text: String) = StringEscapeUtils.escapeEcmaScript(text)
+  def unescapeJs(text: String) = StringEscapeUtils.unescapeEcmaScript(text)
+
+  def escapeXml(text: String) = StringEscapeUtils.escapeXml(text)
+  def unescapeXml(text: String) = StringEscapeUtils.unescapeXml(text)
+
+  // ECMA-like encode/decode
+
+  def encodeURI(s: String) = encodeURIComponent(s)
+      .replaceAll("%3B", ";")
+      .replaceAll("%2F", "/")
+      .replaceAll("%3F", "?")
+      .replaceAll("%3A", ":")
+      .replaceAll("%40", "@")
+      .replaceAll("%26", "&")
+      .replaceAll("%3D", "=")
+      .replaceAll("%2B", "+")
+      .replaceAll("%24", "$")
+      .replaceAll("%2C", ",")
+
+  def encodeURIComponent(s: String) = {
+    URLEncoder.encode(s, "UTF-8")
+        .replaceAll("\\+", "%20")
+        .replaceAll("%21", "!")
+        .replaceAll("%27", "'")
+        .replaceAll("%28", "(")
+        .replaceAll("%29", ")")
+        .replaceAll("%7E", "~")
+  }
+
+  def decodeURI(s: String) = {
+    val escaped = s.replaceAll("%(3B|2F|3F|3A|40|26|3D|2B|24|2C)", "%25$1")
+    decodeURIComponent(escaped)
+  }
+
+  def decodeURIComponent(s: String) =
+    URLDecoder.decode(s, "UTF-8")
+
+  // JSON validator
+
+  protected val jsonRegex =
+    Pattern.compile("[^,:{}\\[\\]0-9.\\-+Eaeflnr-u \\n\\r\\t]")
+
+  def validateJSON(s: String): Boolean =
+    !jsonRegex.matcher(s.replaceAll("\"(\\\\.|[^\"\\\\])*\"", "")).find
 
 }
