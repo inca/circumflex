@@ -38,18 +38,33 @@ package object web {
   Methods `request`, `response`, `session`, `filterChain`, `filterConfig`
   and `servletContext` can be used anywhere inside web application to
   obtain corresponding web context objects.
+
+  Each of these methods also have their `xxxOption` counterpart which
+  can be used to work in different non-web contexts.
   */
-  def request = ctx.getAs[HttpRequest]("cx.request").get
+  def requestOption = ctx.getAs[HttpRequest]("cx.request")
+  def request = requestOption.get
 
-  def response = ctx.getAs[HttpResponse]("cx.response").get
+  def responseOption = ctx.getAs[HttpResponse]("cx.response")
+  def response = responseOption.get
 
-  def session = request.session
+  def sessionOption = requestOption.map(_.session)
+  def session = sessionOption.get
 
-  def filterChain = ctx.getAs[FilterChain]("cx.filterChain").get
+  def filterChainOption = ctx.getAs[FilterChain]("cx.filterChain")
+  def filterChain = filterChainOption.get
 
-  def filterConfig = cx.getAs[FilterConfig]("cx.filterConfig").get
+  def filterConfigOption = cx.getAs[FilterConfig]("cx.filterConfig")
+  def filterConfig = filterConfigOption.get
 
   def servletContext = filterConfig.getServletContext
+
+  /*!## Auth configuration
+
+  The `auth` method returns the `Auth` implementation configured through
+  the `cx.auth` configuration parameter (see [[/web/src/main/scala/auth.scala]]).
+  */
+  lazy val auth = cx.instantiate[Auth[_]]("cx.auth", NoAuth)
 
   /*!## Sending responses
 

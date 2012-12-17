@@ -18,17 +18,18 @@ object flash extends Map[String, Any] with KeyValueCoercion {
 
   val SESSION_KEY = "cx.flash"
 
-  protected def flashMap = session
-      .getOrElse(SESSION_KEY, Map[String, Any]())
+  protected def flashMap = sessionOption
+      .flatMap(_.get(SESSION_KEY))
+      .getOrElse(Map[String, Any]())
       .asInstanceOf[Map[String, Any]]
 
   def +=(kv: (String, Any)): this.type = {
-    session(SESSION_KEY) = flashMap + (kv)
+    sessionOption.map(_.update(SESSION_KEY, flashMap + kv))
     this
   }
 
   def -=(key: String): this.type = {
-    session(SESSION_KEY) = flashMap - key
+    sessionOption.map(_.update(SESSION_KEY, flashMap - key))
     this
   }
 
