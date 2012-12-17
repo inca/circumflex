@@ -7,6 +7,33 @@ import org.apache.commons.io.{IOUtils, FileUtils}
 import java.io._
 import collection.mutable.ListBuffer
 
+/*! # XML mapping API
+
+The `Holder` trait is the root of XML mapping components.
+
+It contains:
+
+  * _serialization_ methods exporting component into XML representation:
+
+    * `toXml` returns an XML string;
+    * `saveTo` writes XML to specified `File` or `OutputStream`;
+
+  * _deserialization_ methods for reading component from its XML representation:
+
+    * `loadString` reads from specified XML string;
+    * `loadFrom` reads specified XML `File` or `InputStream`;
+
+  * mapping methods to provide component with specific information on how to
+    serialize and deserialize data:
+
+    * `elemName` must be implemented to return the name of the element
+      (or attribute);
+
+    * `accept` probes specified `TagIterator` to determine whether its
+      current tag can be used to parse this component;
+
+    * `readXml` and `writeXml` methods, implemented in `ElemHolder` and `AttrHolder`.
+*/
 trait Holder {
 
   def elemName: String
@@ -68,6 +95,15 @@ trait Holder {
 
 }
 
+/*! ## Mapping text
+
+Text variables can be mapped to XML using either attributes or
+CDATA text elements.
+
+Both of them implement the `Container[String]` trait
+(see [[/core/src/main/scala/model.scala]]) and, therefore,
+encapsulate mutable `Option[String]`.
+*/
 trait ValHolder[T]
     extends Holder
     with Container[T]
@@ -90,6 +126,7 @@ trait ValHolder[T]
   override def toString = value.map(_.toString).getOrElse("")
 }
 
+
 class AttrHolder(val elemName: String)
     extends ValHolder[String] {
 
@@ -104,6 +141,22 @@ class AttrHolder(val elemName: String)
   }
 }
 
+/*! ## Mapping XML elements
+
+There are three types of XML elements available for mapping:
+
+  * _structural elements_ for general-purpose objects
+    which can contain attributes and other elements;
+
+  * _text CDATA elements_ for storing text values and, optionally,
+    attributes;
+
+  * _list elements_ parameterized with another element type for storing
+    collections of another elements.
+
+All element holders must implement `elemName` and provide the `attr` method
+to create an attribute definition.
+*/
 trait ElemHolder extends Holder {
 
   def findHolders[H <: Holder](holderClass: Class[H]): Seq[H] =
@@ -154,6 +207,157 @@ trait TextHolder
       value.getOrElse("") + "]]></" + elemName + ">"
 }
 
+/*! The `StructHolder` defines additional method `text` to create
+a text element definition.
+
+Try this example:
+
+``` {.scala}
+class Book extends StructHolder {
+
+  def elemName = "book"
+
+  val isbn = attr("isbn")
+
+  val title = text("title")
+
+  val author = text("author")
+
+}
+
+// Deserialization
+
+val book = new Book().loadString("""
+<book isbn="978-2-070-61275-8">
+  <title><![CDATA[Le Petit Prince]]></title>
+  <author><![CDATA[Antoine de Saint-Exupéry]]></author>
+</book>
+""")
+
+// Sertialization
+
+book.toXml
+```
+*/
+trait StructHolder extends ElemHolder {
+
+  def findElems: Seq[ElemHolder] =
+    findHolders(classOf[ElemHolder])
+        .filter(_ != null)
+
+  def text(n: String): TextHolder = new TextHolder {
+    def elemName = n
+  }
+
+  def writeXml(indent: Int): String = {
+    var result = ("  " * indent) + "<" + elemName + writeAttrs(indent)
+    val children = findElems
+    if (children.size == 0) result += "/>"
+    else result += ">\n" + children.map(_.writeXml(indent + 1)).mkString("\n") +
+        "\n" + ("  " * indent) + "</" + elemName + ">"
+    result
+  }
+
+  def readXml(it: TagIterator): this.type = {
+    if (accept(it)) {
+      findAttrs.foreach(a => a.readXml(it))
+      val elems = findElems
+      it.takeWhile(_ != EndTag(elemName)) foreach {
+        case StartTag(n) =>
+          elems.find(_.elemName == n).map(_.readXml(Some(this), it))
+        case _ => // should only occur if XML contains redundant tags
+      }
+    }
+    this
+  }
+
+}
+
+/*! The `ListHolder[T]` trait defines an abstract method `read` which
+is used to create instances of `T` at parse time. It should be implemented
+with the function `String => T` which maps tag names to new `T` instances.
+
+Use `children` and `setChildren` to access the collection of elements
+encapsulated by `ListHolder`.
+
+You can create robust type hierarchies combining `ListHolder`
+together with `StructHolder`.
+
+Try following example:
+
+``` {.scala}
+trait Shape extends ElemHolder
+
+class Circle extends Shape with StructHolder {
+  def elemName = "circle"
+}
+
+class Rectangle extends Shape with StructHolder {
+  def elemName = "rectangle"
+}
+
+class CompoundShape extends Shape with ListHolder[Shape] {
+  def elemName = "composition"
+
+  def read = {
+    case "circle" => new Circle
+    case "rectangle" => new Rectangle
+    case "composition" => new CompoundShape
+  }
+}
+
+// Deserialization
+
+val myShape = new CompoundShape().loadString("""
+<composition>
+  <circle/>
+  <circle/>
+  <rectangle/>
+  <composition>
+    <rectangle/>
+    <composition>
+      <circle/>
+      <circle/>
+    </composition>
+  </composition>
+</composition>
+""")
+
+// Serialization
+
+myShape.toXml
+
+// Traverse all elements (depth-first)
+
+def printShape(shape: Shape, indent: Int) {
+  val i = "\t" * indent
+  shape match {
+    case comp: CompoundShape =>
+      println(i + "composition:")
+      comp.children.foreach(c => printShape(c, indent + 1))
+    case _ =>
+      println(i + shape.elemName)
+  }
+}
+
+printShape(myShape, 0)
+```
+
+The example output should be:
+
+```
+composition:
+	circle
+	circle
+	rectangle
+	composition:
+		rectangle
+		composition:
+			circle
+			circle
+```
+
+*/
 trait ListHolder[T <: ElemHolder]
     extends ElemHolder {
 
@@ -195,7 +399,6 @@ trait ListHolder[T <: ElemHolder]
 
   def writeXml(indent: Int): String = {
     var result = ("  " * indent) + "<" + elemName + writeAttrs(indent)
-    val chldrn = children
     if (children.size == 0) result += "/>"
     else result += ">\n" + children.map(_.writeXml(indent + 1)).mkString("\n") +
         "\n" + ("  " * indent) + "</" + elemName + ">"
@@ -208,40 +411,41 @@ trait ListHolder[T <: ElemHolder]
 
 }
 
-trait StructHolder extends ElemHolder {
+/*! ## Working with XML files
 
-  def findElems: Seq[ElemHolder] =
-    findHolders(classOf[ElemHolder])
-        .filter(_ != null)
+The `XmlFile` trait provides convenient way to read and write XML files.
 
-  def text(n: String): TextHolder = new TextHolder {
-    def elemName = n
-  }
+It is usually convenient to work with XML-based configurations using
+`CacheCell`s, just like we do in following example:
 
-  def writeXml(indent: Int): String = {
-    var result = ("  " * indent) + "<" + elemName + writeAttrs(indent)
-    val children = findElems
-    if (children.size == 0) result += "/>"
-    else result += ">\n" + children.map(_.writeXml(indent + 1)).mkString("\n") +
-        "\n" + ("  " * indent) + "</" + elemName + ">"
-    result
-  }
+``` {.scala}
+class MyConf extends StructHolder with XmlFile {
 
-  def readXml(it: TagIterator): this.type = {
-    if (accept(it)) {
-      findAttrs.foreach(a => a.readXml(it))
-      val elems = findElems
-      it.takeWhile(_ != EndTag(elemName)) foreach {
-        case StartTag(n) =>
-          elems.find(_.elemName == n).map(_.readXml(Some(this), it))
-        case _ => // should only occur if XML contains redundant tags
-      }
-    }
-    this
+  def elemName = "myconf"
+
+  def descriptorFile = new File("/path/to/conf.xml")
+
+  val setting1 = attr("setting1")
+  val setting2 = attr("setting2")
+
+  object misc extends ListHolder[MiscSetting] {
+    ...
   }
 
 }
 
+package object myapp {
+
+  val _conf = new CacheCell[MyConf](new MyConf().load())
+  def conf = _conf.get
+
+}
+
+This way every time the `conf` method is used, the `/path/to/conf.xml` file
+is checked for modifications using its last modified date, making configuration
+hot-reloadable without any additional efforts.
+```
+*/
 trait XmlFile extends ElemHolder with Cached {
 
   def descriptorFile: File
@@ -259,16 +463,6 @@ trait XmlFile extends ElemHolder with Cached {
     reclaim()
     loadFrom(descriptorFile)
     this
-  }
-
-}
-
-trait XmlSingleton extends XmlFile {
-
-  invalidate()
-
-  def touch() {
-    if (!isValid) load()
   }
 
 }

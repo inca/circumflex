@@ -5,8 +5,11 @@ import java.io._
 import javax.xml.stream._
 import collection.Iterator
 
-// Homegrown minimalistic XML (de)serialization library
+/*! # XML parsing utils
 
+These tiny utils are based on StAX parser from JDK and are used internally
+by XML mapping API (see [[/xml/src/main/scala/holder.scala]]).
+*/
 object xml extends XMLStreamConstants {
 
   val xmlif: XMLInputFactory = {
