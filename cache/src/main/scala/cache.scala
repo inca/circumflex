@@ -174,15 +174,15 @@ trait NoLock[T <: Cached] extends Cache[T] {
     store(key, value)
   }
 
-  def evict(key: String) {
+  override def evict(key: String) {
     delete(key)
   }
 
-  def invalidate() {
+  override def invalidate() {
     clear()
   }
 
-  def evictByPrefix(prefix: String) {
+  override def evictByPrefix(prefix: String) {
     keys.foreach { k =>
       if (k.startsWith(prefix))
         delete(k)

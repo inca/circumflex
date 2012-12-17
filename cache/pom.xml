@@ -7,8 +7,10 @@
   <artifactId>circumflex-cache</artifactId>
   <packaging>jar</packaging>
   <version>3.0-SNAPSHOT</version>
-  <name>Circumflex Cache</name>
-  <description>Circumflex Simple Caching Framework</description>
+  <name>Circumflex Cache API</name>
+  <description>
+    Simple API for dealing with caches and cache data.
+  </description>
 
   <parent>
     <groupId>pro.savant.circumflex</groupId>

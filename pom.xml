@@ -21,9 +21,9 @@
     <module>xml</module>
     <module>web</module>
     <module>orm</module>
-    <module>mail</module>
     <module>markeven</module>
     <module>ftl</module>
+    <module>mail</module>
     <module>docco</module>
     <module>maven-plugin</module>
     <module>archetype</module>
