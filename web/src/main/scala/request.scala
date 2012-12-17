@@ -6,7 +6,6 @@ import scala.collection.JavaConversions._
 import scala.xml._
 import core._
 import javax.servlet.http.HttpServletRequest
-import java.security.Principal
 import java.util.{Locale, Date}
 import javax.servlet.ServletInputStream
 import org.apache.commons.io.IOUtils
@@ -37,14 +36,23 @@ class HttpRequest(val raw: HttpServletRequest) {
   General request information can be accessed using following methods:
 
     * `protocol` returns the name and version of the protocol the request uses (e.g. `HTTP/1.1`);
+
     * `method` returns the name of HTTP method with which the request was made, it's value is
     overriden by request paremeter `_method` to provide a workaround for browsers;
+
     * `scheme` returns the name of the scheme used to make this request (e.g. "http", "https"
     or "ftp");
-    * `uri` returns the request URI without query string;
+
+    * `uri` returns the request URI without query string (this URI can be modified by
+      certain routes, use `originalUri` to access unmodified original URI);
+
     * `queryString` returns the query string that is contained in the request URL after the path;
+
     * `url` reconstructs an URL the client used to make the request;
+
     * `isSecure` returns `true` if the request was made using a secure channel, such as HTTPS.
+
+    * `isXHR` returns true if this request is XMLHttpRequest
 
   The result of `uri`, `url` and `queryString` is decoded into UTF-8 string using `URLDecoder`.
 
@@ -55,8 +63,13 @@ class HttpRequest(val raw: HttpServletRequest) {
   saved in context under the `cx.originalMethod` key.
   */
   def protocol = raw.getProtocol
+
   def scheme = raw.getScheme
+
   def isSecure = raw.isSecure
+
+  def isXHR: Boolean = headers.getOrElse("X-Requested-With", "") == "XMLHttpRequest"
+
   lazy val method = params.get("_method") match {
     case Some(m) =>
       // store original method in context
@@ -64,6 +77,7 @@ class HttpRequest(val raw: HttpServletRequest) {
       m.trim.toLowerCase
     case _ => raw.getMethod.toLowerCase
   }
+
   lazy val originalUri = {
     var u = decodeURI(raw.getRequestURI)
     val sid = ";jsessionid=" + sessionId
@@ -72,48 +86,73 @@ class HttpRequest(val raw: HttpServletRequest) {
       u = u.substring(0, i)
     u
   }
+
   def uri = ctx.getAs[String]("cx.web.uri").getOrElse(originalUri)
+
   lazy val queryString = if (raw.getQueryString == null) "" else
     decodeURI(raw.getQueryString)
+
   lazy val url = decodeURI(raw.getRequestURL.toString)
 
-  // implicitly set request encoding to UTF-8
+  // Implicitly set request encoding to UTF-8
   raw.setCharacterEncoding("UTF-8")
 
-  // prefixes for URI matching
+  /*! ## Prefixes
 
-  def prefix = raw.getContextPath + ctx.getAs[String]("cx.web.uriPrefix").getOrElse("")
+  When inside subroutes the `prefix` method returns the portion of initial URI
+  that is stripped by all subroutes in the way.
+
+  E.g. in following router:
+
+  ``` {.scala}
+  sub("/user") = {
+
+    sub("/:id") = {
+
+      get("/profile") = "Prefix is " + request.prefix
+
+    }
+
+  }
+  ```
+
+  for URL `/user/1/profile` the output will be:
+
+  ```
+  Prefix is /user/1
+  ```
+
+  Accordingly, `setPrefix` updates current prefix with specified value and
+  `resetPrefix` clears out the prefix.
+
+  */
+  def prefix = raw.getContextPath +
+      ctx.getAs[String]("cx.web.uriPrefix").getOrElse("")
+
   def setPrefix(newPrefix: String) {
     ctx.update("cx.web.uriPrefix", newPrefix)
   }
+
   def resetPrefix() {
     ctx -= "cx.web.uriPrefix"
   }
 
-  /*!## Client & Server Information
+  /*!## Server information
 
   Following methods provide information about the server:
 
-    * `serverHost` returns the host name of the server for which this request was originated;
+    * `serverHost` returns the host name of the server for which this request
+      was originated;
+
     * `serverPort` returns the port number to which the request was sent;
-    * `localIp` returns the Internet Protocol address of the interface on which the request was
-    received;
-    * `localHost` returns the host name of the IP interface on which the request was received;
+
+    * `localIp` returns the Internet Protocol address of the interface on which
+      the request was received;
+
+    * `localHost` returns the host name of the IP interface on which
+      the request was received;
+
     * `localPort` returns the IP port on which the request was received.
-
-  Following methods can be used to retrieve basic information about the client:
-
-    * `remoteIp` returns the Internet Protocol address of the client (or last proxy) that sent
-    the request;
-    * `remoteHost` returns the host name of the client (or last proxy) that sent the request;
-    * `remoteLogin` returns the login of the user making the request wrapped in `Some`, if the
-    user has been authenticated (via container-managed security), or `None` if the user has
-    not been authenticated;
-    * `sessionId` returns session identifier specified by the client;
-    * `userPrincipal` returns `java.security.Principal` for requests authenticated with
-    container-managed security mechanisms;
-    * `isUserInRole` indicates whether authenticated principal has specified `role` inside
-    container-managed security system.
   */
   def serverHost: String = raw.getServerName
   def serverPort: Int = raw.getServerPort
@@ -121,32 +160,44 @@ class HttpRequest(val raw: HttpServletRequest) {
   def localHost: String = raw.getLocalName
   def localPort: Int = raw.getLocalPort
 
+  /*! ## Client information
+
+  Following methods can be used to retrieve basic information about the client:
+
+    * `remoteIp` returns the Internet Protocol address of the client
+      (or last proxy) that sent the request;
+
+    * `remoteHost` returns the host name of the client (or last proxy)
+      that sent the request;
+
+    * `sessionId` returns session identifier specified by the client;
+  */
   def remoteIp: String = raw.getRemoteAddr
   def remoteHost: String = raw.getRemoteHost
-  def remoteLogin: Option[String] = any2option(raw.getRemoteUser)
   def sessionId = raw.getRequestedSessionId
-
-  def userPrincipal: Option[Principal] = any2option(raw.getUserPrincipal)
-  def isUserInRole(role: String): Boolean = raw.isUserInRole(role)
 
   /*!## Locale
 
-  A list of preferred locales is specified by the value of the `Accept-Language` header of
-  the request. You can access this list and the most preferred locale (with maximum relative quality
-  factor) using `locales` and `locale` fields.
+  A list of preferred locales is specified by the value of the `Accept-Language`
+  header of the request. You can access this list and the most preferred locale
+  (with maximum relative quality factor) using `locales` and `locale` fields.
   */
   def locale: Locale = raw.getLocale
 
-  lazy val locales: Seq[Locale] = raw.getLocales.asInstanceOf[JEnumeration[Locale]].toSeq
+  lazy val locales: Seq[Locale] = raw.getLocales
+      .asInstanceOf[JEnumeration[Locale]]
+      .toSeq
 
   /*!## Cookies
 
-  The `cookies` field provides access to request cookies. You can use rich functionality
-  of Scala collections to work with cookies:
+  The `cookies` field provides access to request cookies. You can use rich
+  functionality of Scala collections to work with cookies:
 
-      request.cookies.find(_.name == "my.cookie")
-      request.cookies.filter(_.secure)
-      request.cookies.groupBy(_.maxAge)
+  ``` {.scala}
+  request.cookies.find(_.name == "my.cookie")
+  request.cookies.filter(_.secure)
+  request.cookies.groupBy(_.name)
+  ```
   */
   lazy val cookies: Seq[HttpCookie] = {
     val cs = raw.getCookies
@@ -160,71 +211,68 @@ class HttpRequest(val raw: HttpServletRequest) {
   Circumflex Web Framework lets you access request headers via the `headers` object.
   */
   object headers extends Map[String, String] {
+
     def +=(kv: (String, String)): this.type = this
+
     def -=(key: String): this.type = this
+
     def iterator: Iterator[(String, String)] = raw.getHeaderNames
             .asInstanceOf[JEnumeration[String]]
             .map(k => (k -> raw.getHeader(k)))
+
     def get(key: String): Option[String] = any2option(raw.getHeader(key))
+
     def getAsMillis(key: String): Option[Long] = {
       val m = raw.getDateHeader(key)
       if (m == -1) None else Some(m)
     }
+
     def getAsInt(key: String): Option[Long] = {
       val m = raw.getIntHeader(key)
       if (m == -1) None else Some(m)
     }
+
     def getAsDate(key: String): Option[Date] = getAsMillis(key).map(new Date(_))
-  }
 
-  /*!## Attributes
-
-  Request attributes presented by Servlet API are typically used to pass information
-  between a servlet and the servlet container or between collaborating servlets.
-
-  Circumflex Web Framework lets you access request attributes via the `attrs` object.
-  */
-  object attrs extends Map[String, Any] with KeyValueCoercion {
-    def +=(kv: (String, Any)): this.type = {
-      raw.setAttribute(kv._1, kv._2)
-      this
-    }
-    def -=(key: String): this.type = {
-      raw.removeAttribute(key)
-      this
-    }
-    def iterator: Iterator[(String, Any)] = raw.getAttributeNames
-            .asInstanceOf[JEnumeration[String]]
-            .map(k => (k -> raw.getAttribute(k)))
-    def get(key: String): Option[Any] = any2option(raw.getAttribute(key))
   }
 
   /*!## Parameters
 
   Request parameters can be accessed via the `params` object.
+
+  Unlike the `params` object of `pro.savant.circumflex.web` package,
+  this object does not report match results -- only request parameters
+  as specified in query string, form fields, etc.
   */
   object params extends Map[String, String] with KeyValueCoercion {
+
     def +=(kv: (String, String)): this.type = this
+
     def -=(key: String): this.type = this
+
     def iterator: Iterator[(String, String)] = raw.getParameterNames
             .asInstanceOf[JEnumeration[String]]
             .flatMap(k => list(k).iterator.map(v => (k -> v)))
+
     def get(key: String): Option[String] = any2option(raw.getParameter(key))
+
+    /*! Use the `list` method to retrieve multi-value parameters.*/
     def list(key: String): Seq[String] = {
       val values = raw.getParameterValues(key)
       if (values == null) Nil
       else values.toList
     }
+
   }
 
   /*!## Session
 
-  Session is a convenient in-memory storage presented by Servlet API which allows web
-  applications to maintain state of their clients.
+  Session is a convenient in-memory storage presented by Servlet API which allows
+  web applications to maintain state of their clients.
 
   A special identifier, session ID, is generated once the session is initiated.
-  Clients then, to identify themselves within application, send session ID as a cookie
-  with every request.
+  Clients then, to identify themselves within application, send session ID
+  as a cookie with every request.
 
   Circumflex Web Framework lets you access session attributes via the `session` object.
 
@@ -233,20 +281,24 @@ class HttpRequest(val raw: HttpServletRequest) {
   will return empty values without implicitly creating a session.
   */
   object session extends Map[String, Any] with KeyValueCoercion {
+
     def id: Option[String] = {
       val s = raw.getSession(false)
       if (s == null) None
       else Some(s.getId)
     }
+
     def +=(kv: (String, Any)): this.type = {
       raw.getSession(true).setAttribute(kv._1, kv._2)
       this
     }
+
     def -=(key: String): this.type = {
       val s = raw.getSession(false)
       if (s != null) s.removeAttribute(key)
       this
     }
+
     def iterator: Iterator[(String, Any)] = {
       val s = raw.getSession(false)
       if (s != null)
@@ -255,11 +307,13 @@ class HttpRequest(val raw: HttpServletRequest) {
                 .map(k => (k -> s.getAttribute(k)))
       else Iterator.empty
     }
+
     def get(key: String): Option[Any] = {
       val s = raw.getSession(false)
       if (s != null) any2option(s.getAttribute(key))
       else None
     }
+
     def invalidate(): this.type = {
       val s = raw.getSession(false)
       if (s != null) s.invalidate()
@@ -269,39 +323,53 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   /*!## Body
 
-  Circumflex Web Framework lets you access the body of the request via `body` object. Following
-  methods can be used to work with request body:
+  Circumflex Web Framework lets you access the body of the request via `body`
+  object. Following methods can be used to work with request body:
 
-    * `isXHR` returns true if this request is XMLHttpRequest;
-    * `encoding` returns or sets the name of the character encoding used in the body of the
-    request (as mentioned above, we implicitly set it to `UTF-8`);
-    * `isMultipart` returns `true` if the request has `multipart/form-data` content and is
-    suitable for [multipart operations](#multipart);
+    * `encoding` returns or sets the name of the character encoding used
+      in the body of the request (as mentioned above, we implicitly set it to `UTF-8`);
+
+    * `isMultipart` returns `true` if the request has `multipart/form-data`
+      content and is suitable for multipart operations;
+
     * `length` returns the length, in bytes, of the request body;
+
     * `contentType` returns the MIME type of the body of the request;
+
     * `reader` opens `java.io.BufferedReader` to read the request body;
+
     * `stream` opens `javax.servlet.ServletInputStream` to read the request body;
-    * `asXml` attempts to read the request body as XML element, an exception is thrown if parse
-    fails;
+
+    * `asXml` attempts to read the request body as XML element, an exception
+      is thrown if parse fails;
+
     * `asString` reads request body into `String` using request `encoding`.
 
-  Note that due to limitations of Servlet API, you can only access one of `reader`, `stream`,
-  `xml` or `toString` methods (and only once). An `IllegalStateException` is thrown if you
-  access more than one of these methods.
+  Note that due to the limitations of Servlet API, you can only access one of
+  `reader`, `stream`, `xml` or `toString` methods (and only once).
+  An `IllegalStateException` is thrown if you access more than one
+  of these methods.
   */
   object body {
 
-    def isXHR: Boolean = headers.getOrElse("X-Requested-With", "") == "XMLHttpRequest"
     def isMultipart: Boolean = ServletFileUpload.isMultipartContent(raw)
+
     def encoding: String = raw.getCharacterEncoding
+
     def encoding_=(enc: String) {
       raw.setCharacterEncoding(enc)
     }
+
     def length: Int = raw.getContentLength
+
     def contentType: String = raw.getContentType
+
     def reader: BufferedReader = raw.getReader
+
     def stream: ServletInputStream = raw.getInputStream
+
     lazy val asXml: Elem = XML.load(stream)
+
     lazy val asString = IOUtils.toString(stream, encoding)
 
     /*!## Multipart Requests & File Uploading {#multipart}
@@ -364,6 +432,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   def forward(uri: String) {
     raw.getRequestDispatcher(uri).forward(raw, response.raw)
   }
+
   def include(uri: String) {
     raw.getRequestDispatcher(uri).include(raw, response.raw)
   }
