@@ -28,7 +28,7 @@ object param extends Map[String, String] with KeyValueCoercion {
     case m: MatchResult => m.params.iterator
     case s: String => Seq(p._1 -> s).iterator
     case _ => Iterator.empty
-  }) ++ request.params.iterator
+  }) ++ requestOption.toSeq.flatMap(_.params).iterator
 
   def get(key: String): Option[String] = iterator.find(_._1 == key).map(_._2)
 

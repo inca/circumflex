@@ -12,18 +12,13 @@ session-based and context-based request authentication, cookie-based
 The `Principal` marker trait should be implemented in your application
 by the `User` class (or whatever abstraction you use for authentication).
 */
-
 trait Principal
 
 /*! The `Auth` trait maintains basic authentication management logic.
 
-In order to use authentication in your application you should:
-
-  * implement this trait specifying the `Principal` implementation
-    (e.g. `User`) as type parameter;
-
-  * set the `cx.auth` configuration parameter to fully-qualified class
-    name of your `Auth` implementation.
+In order to use authentication in your application you should implement
+this trait specifying the `Principal` implementation (e.g. `User`)
+as type parameter.
 */
 trait Auth[U <: Principal] {
 
@@ -41,7 +36,7 @@ trait Auth[U <: Principal] {
   HTTP 403 Access Denied, but you can override this method to implement
   custom authentication error processing logic.
   */
-  def authError(message: String): Nothing = sendError(404, message)
+  def authError(message: String): Nothing = sendError(403, message)
 
   /*! The `principalOption` method resolves current principal by first looking up
   the context and then falling back to session lookup.
@@ -58,7 +53,7 @@ trait Auth[U <: Principal] {
 
   It should only be used in contexts where authentication is mandatory. */
   def principal = principalOption.getOrElse(
-    authError("No context authentication available."))
+    authError("No authentication information available."))
 }
 
 /*! ## The `NoAuth` stub

@@ -57,14 +57,30 @@ package object web {
   def filterConfigOption = cx.getAs[FilterConfig]("cx.filterConfig")
   def filterConfig = filterConfigOption.get
 
-  def servletContext = filterConfig.getServletContext
+  def servletContextOption = filterConfigOption.map(_.getServletContext)
+  def servletContext = servletContextOption.get
 
-  /*!## Auth configuration
+  /*! Additional methods allow you to access (and override via context)
+  following information:
 
-  The `auth` method returns the `Auth` implementation configured through
-  the `cx.auth` configuration parameter (see [[/web/src/main/scala/auth.scala]]).
-  */
-  lazy val auth = cx.instantiate[Auth[_]]("cx.auth", NoAuth)
+    * `scheme` as determined from the `request.scheme` (can be overridden
+      be setting `cx.scheme` context variable);
+
+    * `host` as determined from the `Host` request header (can be overridden
+      by setting `cx.host` context variable);
+
+    * `origin` -- a shortcut which combines scheme and host.
+   */
+
+  def scheme = ctx.getString("cx.scheme")
+      .orElse(requestOption.map(_.scheme))
+      .getOrElse("http")
+
+  def host = ctx.getString("cx.host")
+      .orElse(requestOption.map(_.serverHost))
+      .getOrElse("localhost")
+
+  def origin = scheme + "://" + host
 
   /*!## Sending responses
 
