@@ -2,6 +2,7 @@ package pro.savant.circumflex
 package core
 
 import collection.mutable.{ListBuffer, Builder}
+import collection.generic.CanBuildFrom
 import collection.SeqLike
 
 /*! # Slices API
@@ -14,10 +15,38 @@ Slice has all the methods you would expect in `Seq[V]` which generally return
 new slice with modified view of underlying sequence.
 */
 
+object Slice {
+
+  @inline implicit def canBuildFrom[K, V, B] =
+    new CanBuildFrom[Slice[K, V], B, Slice[K, B]] {
+
+      def apply(from: Slice[K, V]) = new Builder[B, Slice[K, B]] {
+
+        val buffer = new ListBuffer[B]
+
+        def +=(elem: B) = {
+          buffer += elem
+          this
+        }
+
+        def clear() {
+          buffer.clear()
+        }
+
+        def result() = new Slice[K, B](from.key, buffer.toSeq)
+      }
+
+      def apply() = throw new UnsupportedOperationException(
+        "Cannot build slice from scratch.")
+    }
+
+}
+
 class Slice[K, +V](val key: K, val elems: Seq[V])
-  extends SeqLike[V, Slice[K, V]] {
+    extends SeqLike[V, Slice[K, V]] { self =>
 
   protected[this] def newBuilder = new Builder[V, Slice[K, V]] {
+
     val buffer = new ListBuffer[V]
 
     def +=(elem: V) = {
@@ -29,7 +58,8 @@ class Slice[K, +V](val key: K, val elems: Seq[V])
       buffer.clear()
     }
 
-    def result() = new Slice[K, V](key, buffer.toSeq)
+    def result() = new Slice[K, V](self.key, buffer.toSeq)
+
   }
 
   def seq = elems
