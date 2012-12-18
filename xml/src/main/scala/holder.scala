@@ -45,6 +45,8 @@ trait Holder {
 
   def escapeXml(text: String) = StringEscapeUtils.escapeXml(text)
 
+  def unescapeXml(text: String) = StringEscapeUtils.unescapeXml(text)
+
   def toXml: String = writeXml(0)
 
   def writeXml(indent: Int): String
@@ -133,13 +135,11 @@ trait ValHolder[T]
 class AttrHolder(val elemName: String)
     extends ValHolder[String] {
 
-  addSetter(s => escapeXml(s))
-
   def writeXml(indent: Int): String = value.map(s =>
-    " " + elemName + "=\"" + s + "\"").getOrElse("")
+    " " + elemName + "=\"" + escapeXml(s) + "\"").getOrElse("")
 
   def readXml(it: TagIterator): this.type = {
-    it.attr(elemName).map(a => set(a))
+    it.attr(elemName).map(a => set(unescapeXml(a)))
     this
   }
 }
@@ -195,19 +195,17 @@ trait TextHolder
     extends ValHolder[String]
     with ElemHolder {
 
-  addSetter(s => escapeXml(s))
-
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
       findAttrs.foreach(a => a.readXml(it))
-      set(it.text)
+      set(unescapeXml(it.text))
     }
     this
   }
 
   def writeXml(indent: Int): String = ("  " * indent) + "<" + elemName +
       writeAttrs(indent) + "><![CDATA[" +
-      value.getOrElse("") + "]]></" + elemName + ">"
+      escapeXml(value.getOrElse("")) + "]]></" + elemName + ">"
 }
 
 /*! The `StructHolder` defines additional method `text` to create
