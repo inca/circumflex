@@ -20,7 +20,7 @@
     <module>cache</module>
     <module>xml</module>
     <module>web</module>
-    <module>auth</module>
+    <module>security</module>
     <module>orm</module>
     <module>markeven</module>
     <module>ftl</module>

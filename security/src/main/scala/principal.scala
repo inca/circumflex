@@ -1,5 +1,5 @@
 package pro.savant.circumflex
-package auth
+package security
 
 import core._
 
