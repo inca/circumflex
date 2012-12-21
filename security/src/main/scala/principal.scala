@@ -11,7 +11,7 @@ by the `User` class (or whatever abstraction you use for authentication).
 Typically you would use an ORM library to provide methods for storing and
 retrieving users, but your application may choose different technology
 for managing authentication data. The `Principal` trait in this sense is
-agnosting to storage technology. However, the authentication architecture
+agnostic to storage technology. However, the authentication architecture
 provided by Circumflex
 */
 trait Principal {
