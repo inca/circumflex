@@ -71,7 +71,8 @@ package object core {
   text for use inside HTML inputs, where all occurrences of &, <, >, ", '
   must be replaced with their entity reference escapes.
 
-  These methods are idempotent:
+  These methods are idempotent, so they can be safely used with `addSetter`
+  (see [[core/src/main/scala/model.scala]]):
 
   ``` {.scala}
   wrapHtml(wrapHtml(...(wrapHtml(input)) == wrapHtml(input)

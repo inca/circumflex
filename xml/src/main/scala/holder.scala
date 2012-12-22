@@ -6,7 +6,6 @@ import java.lang.reflect.Modifier
 import org.apache.commons.io.{IOUtils, FileUtils}
 import java.io._
 import collection.mutable.ListBuffer
-import org.apache.commons.lang3.StringEscapeUtils
 
 /*! # XML mapping API
 
@@ -42,10 +41,6 @@ trait Holder {
   var parent: Option[ElemHolder] = None
 
   def accept(it: TagIterator): Boolean = it.current.name == elemName
-
-  def escapeXml(text: String) = StringEscapeUtils.escapeXml(text)
-
-  def unescapeXml(text: String) = StringEscapeUtils.unescapeXml(text)
 
   def toXml: String = writeXml(0)
 
@@ -109,19 +104,21 @@ Both of them implement the `Container[String]` trait
 (see [[/core/src/main/scala/model.scala]]) and, therefore,
 encapsulate mutable `Option[String]`.
 */
-trait ValHolder[T]
+trait StringHolder
     extends Holder
-    with Container[T]
+    with Container[String]
     with Equals {
 
+  addSetter(wrapHtml(_))
+
   def canEqual(that: Any) = that match {
-    case holder: ValHolder[T] =>
+    case holder: StringHolder =>
       holder.elemName == this.elemName && holder.parent == this.parent
     case _ => false
   }
 
   override def equals(that: Any) = that match {
-    case holder: ValHolder[T] =>
+    case holder: StringHolder =>
       this.canEqual(holder) && holder.value == this.value
     case _ => false
   }
@@ -133,13 +130,13 @@ trait ValHolder[T]
 
 
 class AttrHolder(val elemName: String)
-    extends ValHolder[String] {
+    extends StringHolder {
 
   def writeXml(indent: Int): String = value.map(s =>
-    " " + elemName + "=\"" + escapeXml(s) + "\"").getOrElse("")
+    " " + elemName + "=\"" + s + "\"").getOrElse("")
 
   def readXml(it: TagIterator): this.type = {
-    it.attr(elemName).map(a => set(unescapeXml(a)))
+    it.attr(elemName).map(a => set(a))
     this
   }
 }
@@ -192,20 +189,20 @@ trait ElemHolder extends Holder {
 }
 
 trait TextHolder
-    extends ValHolder[String]
+    extends StringHolder
     with ElemHolder {
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
       findAttrs.foreach(a => a.readXml(it))
-      set(unescapeXml(it.text))
+      set(it.text)
     }
     this
   }
 
   def writeXml(indent: Int): String = ("  " * indent) + "<" + elemName +
       writeAttrs(indent) + "><![CDATA[" +
-      escapeXml(value.getOrElse("")) + "]]></" + elemName + ">"
+      value.getOrElse("") + "]]></" + elemName + ">"
 }
 
 /*! The `StructHolder` defines additional method `text` to create
