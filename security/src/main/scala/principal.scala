@@ -48,6 +48,11 @@ trait Principal {
 
   def purgeSessions(locationId: String)
 
+  /*! The `secret` method should return a string containing the secret information
+  (e.g. SHA256 of user password) which could be used to check the authenticity of
+  the principal. */
+  def secret: String
+
 }
 
 /*! ## Stubs
@@ -65,6 +70,8 @@ class DummyPrincipal extends Principal {
   def registerSession(locationId: String) {}
 
   def purgeSessions(locationId: String) {}
+
+  def secret = ""
 
 }
 
