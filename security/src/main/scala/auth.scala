@@ -23,6 +23,19 @@ trait Auth[U <: Principal] {
   */
   def authError(message: String): Nothing = sendError(403, message)
 
+/*! The `returnLocationOption` returns an URL for redirecting the user
+    after successful authentication. The URL is resolved from request parameter,
+    falling back to the `Referer` header.*/
+  def returnLocationOption = param.get("returnTo")
+    .orElse(request.headers.get("Referer"))
+    .filter(!_.startsWith(secureUrlPrefix + "/auth"))
+
+  /*! The `returnLocation` also falls back to the `defaultReturnLocation` as
+  specified in this configuration. */
+  def returnLocation = returnLocationOption.getOrElse(defaultReturnLocation)
+
+  def defaultReturnLocation: String
+
   /*! The `lookup` method is used to find a `Principal` designated by type parameter
   `U` by provided unique identifier (see [[auth/src/main/scala/principal.scala]]).
    */
@@ -89,6 +102,10 @@ trait Auth[U <: Principal] {
   (and probably checked before). */
   def principal = principalOption.getOrElse(
     authError("No authentication information available."))
+
+  /*! The `isEmpty` method returns true if no authentication is
+  associated with current context. */
+  def isEmpty = principalOption.isEmpty
 
   /*! ## Setting authentication */
 
@@ -296,7 +313,7 @@ trait Auth[U <: Principal] {
 
      These hops include:
 
-     * `https://secure.myapp.com/auth/sso_return?to=http://myapp.com/` will
+     * `https://secure.myapp.com/auth/sso_return?returnTo=http://myapp.com/` will
        append security parameters to the original URL (`http://myapp.com`)
        and redirect the user there;
      * `http://myapp.com?sso=<security_parameters>` — the parameters are validated
@@ -368,7 +385,13 @@ trait Auth[U <: Principal] {
     }
   }
 
-
+  /*! The `getSsoJsResponse` will return a Javascript redirect code
+  to `<secureBase>/auth/sso-return`. This step is described in SSO architecture.*/
+  def getSsoJsResponse: String = principalOption.map { u =>
+    val pf = secureUrlPrefix + "/auth/sso-return?returnTo="
+    "window.location.replace(\"" + escapeJs(pf) +
+        "\" + encodeURIComponent(window.location.href));"
+  }.getOrElse("")
 
 }
 
@@ -384,4 +407,6 @@ object NoAuth extends Auth[DummyPrincipal] {
   def lookup(principalId: String) = None
 
   def secureDomain = "localhost"
+
+  def defaultReturnLocation = "http://localhost/"
 }
