@@ -24,7 +24,7 @@ initialization and finalization inside `CircumflexFilter` (see [[web/src/main/sc
 Circumflex context is based on `KeyValueCoercion`
 (see [[/core/src/main/scala/kvc.scala]]).
 
-# Context Lifecycle
+## Context Lifecycle
 
 In order to maintain context scope an application should
 properly initialize and destroy contexts.
@@ -108,12 +108,12 @@ object Context {
 
 }
 
-/*!# Context DSL
+/*!## Context DSL
 
 Circumflex enables you to use Scala `Symbol` to access
 and set context variables in a DSL fashion.
 
-Following syntaxes is used for setting context variables:
+Following syntax is used for setting context variables:
 
 ``` {.scala}
 'key := value

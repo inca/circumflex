@@ -2,6 +2,7 @@ package pro.savant.circumflex
 
 import java.security.MessageDigest
 import java.util.{UUID, Random}
+import java.util.regex.Pattern
 
 /*!# The `core` package
 
@@ -64,8 +65,48 @@ package object core {
   def md5(text: String) = digest("md5", text)
   def sha256(text: String) = digest("sha-256", text)
 
-  // Pimping Symbols
+  private val _ampEscape = Pattern.compile("&(?!(?:[a-zA-Z]+|(?:#[0-9]+|#[xX][0-9a-fA-F]+));)")
 
+  /*! The `wrapHtml` and `unwrapHtml` are special helpers for converting
+  text for use inside HTML inputs, where all occurrences of &, <, >, ", '
+  must be replaced with their entity reference escapes.
+
+  These methods are idempotent:
+
+  ``` {.scala}
+  wrapHtml(wrapHtml(...(wrapHtml(input)) == wrapHtml(input)
+  unwrapHtml(unwrapHtml(...(unwrapHtml(input)) == unwrapHtml(input)
+  ```
+
+  These methods should be used with any case of persisting text input for web
+  (e.g. into records in ORM, attributes and text elements in XML, etc.)
+  */
+  def wrapHtml(s: String) = _ampEscape.matcher(s)
+      .replaceAll("&amp;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("<", "&lt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("\'", "&apos;")
+      .replaceAll("\\r\\n|\\r", "\n")
+
+  def unwrapHtml(s: String) = s
+      .replaceAll("&gt;", ">")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&quot;", "\"")
+      .replaceAll("&apos;", "\'")
+      .replaceAll("&amp;", "&")
+      .replaceAll("\\r\\n|\\r", "\n")
+
+
+  /*! ## Context DSL
+
+  If you import package object `core` you can use special syntax for
+  working with context:
+
+  ``` {.scala}
+  'variable := value
+  ```
+  */
   @inline implicit def symbol2contextVarHelper(sym: Symbol): ContextVarHelper =
     new ContextVarHelper(sym)
 
