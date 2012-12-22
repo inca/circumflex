@@ -147,6 +147,11 @@ package object web {
     response.body(r => r.sendRedirect(url)).flush()
   }
 
+  def sendJsRedirect(url: String): Nothing = {
+    response.contentType("application/javascript")
+    send("window.location.replace(\"" + escapeJs(url) + "\");")
+  }
+
   def sendFile(file: File, filename: String = ""): Nothing = {
     // if filename is provided, add `Content-Disposition` header
     if (filename != "") response.attachment(filename)

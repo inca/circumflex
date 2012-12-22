@@ -41,8 +41,8 @@ trait Auth[U <: Principal] {
   which will host authentication-related routes and cookies
   (e.g. `secure.myapp.com`).
 
-  The separate domain is required by SSO architecture
-  (see [[security/src/main/scala/sso.scala]]).
+  The separate domain is required by the [SSO architecture](#sso)
+  of Circumflex Security.
   */
   def secureDomain: String
 
@@ -54,6 +54,11 @@ trait Auth[U <: Principal] {
 
   /*! The `isSecure` method returns `true` if `secureScheme` is `https`. */
   def isSecure = secureScheme == "https"
+
+  /*! The `secureUrlPrefix` method just concatenates `secureScheme`
+  and `secureDomain` to form secure URL prefix.
+  */
+  def secureUrlPrefix = secureScheme + "://" + secureDomain
 
   /*! ## Sessions and locations
 
@@ -69,13 +74,9 @@ trait Auth[U <: Principal] {
 
   /*! ## Retrieving authenticated principal */
 
-  /*! The `principalOption` method resolves current principal by first looking up
-  the context and then falling back to session lookup.
+  /*! The `principalOption` method resolves current principal from the context.
    */
-  def principalOption: Option[U] = ctx.getAs[U](KEY)
-      .orElse(sessionOption.flatMap(
-    _.getString(KEY).flatMap(id => lookup(id))))
-      .filter(_ != anonymous)
+  def principalOption: Option[U] = ctx.getAs[U](KEY).filter(_ != anonymous)
 
   /*! The `principalOrAnonymous`, as the name implies, performs the lookup and
   returns the anonymous identity as returned by `anonymous` in the case of failure.*/
@@ -104,6 +105,35 @@ trait Auth[U <: Principal] {
     else ctx += KEY -> principal
   }
 
+  /*! The `setSessionAuth` associates specified `principal` with
+  current session and registers this session with specified `locationId`. */
+  def setSessionAuth(principal: U, locationId: String) {
+    sessionOption.map { sess =>
+      sess += KEY -> principal
+      sess += "cx.auth.location" -> locationId
+      principal.registerSession(locationId)
+    }
+  }
+
+  /*! The `doSessionAuth` tries to authenticate current context using
+  the session. */
+  def doSessionAuth() {
+    sessionOption.map { sess =>
+      try {
+        val id = sess.getString(KEY).get
+        val principal = lookup(id).get
+        val lid = locationId.get
+        if (!principal.checkSession(lid))
+          throw new IllegalStateException
+        set(principal)
+      } catch {
+        case e: Exception =>
+          locationId.map(lid => principalOption.map(_.purgeSessions(lid)))
+          sess.invalidate()
+      }
+    }
+  }
+
   /*! The `login` method establishes the authentication for current user session
   across all application domains (if you use SSO) and, optionally, sets the
   "remember-me" cookie.
@@ -118,9 +148,7 @@ trait Auth[U <: Principal] {
     }
     // Log the principal in with new locationId
     val loc = randomString(8)
-    session += KEY -> principal
-    session += "cx.auth.location" -> loc
-    principal.registerSession(loc)
+    setSessionAuth(principal, loc)
     if (rememberMe)
       setRememberMeCookie()
     else dropRememberMeCookie()
@@ -226,6 +254,120 @@ trait Auth[U <: Principal] {
       }
     }
   }
+
+  /*! ## Single Sign-On (SSO)  {#sso}
+
+  Single Sign-On is a combined technique which enables your application to pass
+  authentication data between different domains.
+
+  SSO requires both client and server logic to overcome the limitations of current
+  HTTP specs which do not allow cookies from one domain to be passed to another
+  (due to obvious security implications).
+
+  ### Architecture
+
+  Here's a brief description of SSO architecture introduced by Circumflex Security:
+
+  1. Let's assume that your application runs on `myapp.com` and provides
+     different services to authenticated users
+     on two more domains: `myservice1.com` and `myservice2.com`.
+
+  2. Let's assume that user Alice is trying to access `myapp.com` the first time.
+     Her session at `myapp.com` does not contain authentication information, so
+     she the anonymous page is displayed to her.
+
+  3. Then Alice logs into `myapp.com`. The login is implemented on the different
+     domain `secure.myapp.com` with SSL enabled to prevent all sorts of
+     man-in-the-middle attacks.
+
+  4. The authentication information of Alice now becomes associated with
+     the session at `secure.myapp.com`.
+
+  5. When Alice is returned back to `myapp.com`, however, her authentication
+     will not be recognized by `myapp.com`, because she still has the old session.
+
+     This is when the client side of SSO begins its work. The anonymous page
+     served to Alice will include a small javascript from
+     `https://secure.myapp.com/auth/sso.js`. As you can see, the script is
+     served from the secure domain where the authentication data exists.
+
+  6. The SSO script forces the browser to go through a series of redirect hops
+     in order to pass authentication from the secure domain to `myapp.com`.
+
+     These hops include:
+
+     * `https://secure.myapp.com/auth/sso_return?to=http://myapp.com/` will
+       append security parameters to the original URL (`http://myapp.com`)
+       and redirect the user there;
+     * `http://myapp.com?sso=<security_parameters>` — the parameters are validated
+       for authenticity at `myapp.com` and session authentication is established
+       on that domain; the user is redirected to the original URL once again
+       with all security parameters stripped.
+
+  7. Two other domains `myservice1.com` and `myservice2.com` behave in exactly
+     same way.
+
+  */
+
+  /*! ## SSO API
+
+  SSO relies on passing security information from domain to domain using
+  HTTP redirects and SHA-256 digests.
+
+  The `createSsoUrl` is used to append security parameters of specified `principal`
+  to the specified `url`.
+
+  When the user accesses this URL the security parameters will be used
+  to establish his session authentication on that domain.
+
+  The `timeout` parameter specifies the validity period of this URL.
+  */
+  def createSsoUrl(principal: U, url: String, timeout: Long = 60000l) = {
+    val nonce = randomString(8)
+    val deadline = System.currentTimeMillis + timeout
+    val lid = locationId.getOrElse(randomString(8))
+    val token = sha256(mkToken(principal, nonce) +
+        ":" + deadline.toString + ":" + lid)
+    var result = url
+    val i = url.indexOf("?")
+    if (i == -1)
+      result += "?"
+    else result += "&"
+    result + "sso=token&sso_nonce=" + nonce +
+        "&sso_deadline=" + deadline +
+        "&sso_location=" + lid +
+        "&sso_principal=" + principal.uniqueId +
+        "&sso_token=" + token
+  }
+
+  /*! The `trySsoLogin` method scans current request for SSO security parameters
+  and tries to authenticate current session by looking up supplied principal
+  and checking his authenticity. */
+  def trySsoLogin() {
+    if (param("sso") == "token") {
+      val id = param("sso_principal")
+      lookup(id).map { principal =>
+        val token = param("sso_token")
+        val nonce = param("sso_nonce")
+        val lid = param("sso_location")
+        val deadline = parse.longOption(param("sso_deadline")).getOrElse(0l)
+        val correctToken = sha256(mkToken(principal, nonce) +
+            ":" + deadline.toString + ":" + lid)
+        if (correctToken == token && System.currentTimeMillis <= deadline) {
+          setSessionAuth(principal, lid)
+        }
+      }
+    }
+    // Drop SSO params from query string
+    if (param.contains("sso")) {
+      var uri = web.origin + request.originalUri
+      val qs = request.queryString.replaceAll("&?sso[^=]*=[^&]*", "")
+      if (qs != "")
+        uri += "?" + qs
+      sendRedirect(encodeURI(uri))
+    }
+  }
+
 
 
 }
