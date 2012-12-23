@@ -4,9 +4,19 @@ package markeven
 import core._
 import java.io.{StringWriter, Writer}
 
+/*!# Inline processor
+
+The `InlineProcessor` class represents the inline-level Unit of Work.
+
+It accepts two parameters:
+
+  * `out` is the `Writer` to which the output markup is rendered;
+  * `conf` is the `MarkevenConf` instance.
+*/
 class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf)
     extends Processor {
 
+  /* The `run` method is an entry point of `InlineProcessor`. */
   def run(walk: Walker) {
     while (walk.hasCurrent)
       inline(walk)
@@ -278,7 +288,7 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
     })
 
   /*! Fragments go in a pair of double braces like `{{id}}`. They are resolved
-  using Renderer's configuration and processed like regular inlines. */
+  using renderer's configuration and processed like regular inlines. */
   def tryFragment(walk: Walker): Boolean =
     if (walk.at("{{")) {
       walk.at(const.fragment) match {
@@ -314,7 +324,7 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
   }
 
   /*! Two styles of links and media are supported: inline like `[text](url)` and
-  referencial like `[text][id]`. The latter ones are resolved using Renderer's
+  referencial like `[text][id]`. The latter ones are resolved using renderer's
   configuration. */
   def tryLink(walk: Walker): Boolean = {
     if (walk.at("[")) {
@@ -336,7 +346,7 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
       walk.skip()
       resolveLinkDef(walk, true) match {
         case Some((alt, linkDef)) =>
-          linkDef.writeMedia(out, escapeHtml(alt))
+          linkDef.writeMedia(out, wrapHtml(alt))
         case _ =>
           out.write("![")
           walk.skip()

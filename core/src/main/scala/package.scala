@@ -65,7 +65,7 @@ package object core {
   def md5(text: String) = digest("md5", text)
   def sha256(text: String) = digest("sha-256", text)
 
-  private val _ampEscape = Pattern.compile("&(?!(?:[a-zA-Z]+|(?:#[0-9]+|#[xX][0-9a-fA-F]+));)")
+  val ampEscape = Pattern.compile("&(?!(?:[a-zA-Z]+|(?:#[0-9]+|#[xX][0-9a-fA-F]+));)")
 
   /*! The `wrapHtml` and `unwrapHtml` are special helpers for converting
   text for use inside HTML inputs, where all occurrences of &, <, >, ", '
@@ -82,7 +82,7 @@ package object core {
   These methods should be used with any case of persisting text input for web
   (e.g. into records in ORM, attributes and text elements in XML, etc.)
   */
-  def wrapHtml(s: String) = _ampEscape.matcher(s)
+  def wrapHtml(s: String) = ampEscape.matcher(s)
       .replaceAll("&amp;")
       .replaceAll(">", "&gt;")
       .replaceAll("<", "&lt;")

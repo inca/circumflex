@@ -125,7 +125,7 @@ class LinkDef(_url: String,
               _title: String = "") {
 
   val url = ampEscape.matcher(_url).replaceAll("&amp;")
-  val title = escapeHtml(_title)
+  val title = wrapHtml(_title)
 
   def writeLink(w: Writer, text: String) {
     w.write("<a href=\"")

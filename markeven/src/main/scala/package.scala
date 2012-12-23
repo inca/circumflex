@@ -1,28 +1,27 @@
 package pro.savant.circumflex
 
 import core._
-import java.io.StringWriter
 
-/*!# The `markeven` Package
+/*!# The `markeven` package
 
-Package `markeven` contains the default `MarkevenConf`, which you can set via
-`markeven.conf` configuration property and a shortcut method `toHtml`, which
-you can use to render markup in a quick-and-dirty fashion:
+Package object `markeven` contains the default `MarkevenRenderer` instance,
+which you can configure via `markeven.renderer` configuration parameter,
+the default sanitizer configured via the `markeven.sanitizer` parameter
+and a shortcut method `toHtml`, which you can use to render markup
+in a quick-and-dirty fashion:
 
-```
-val html = markeven.toHtml("# This is some text in Markeven")
+``` {.scala}
+markeven.toHtml("# Hello")  // The result is <h1>Hello</h1>
 ```
 */
 package object markeven {
 
-  val conf = cx.instantiate[MarkevenConf]("markeven.conf", EmptyMarkevenConf)
+  val DEFAULT_RENDERER = cx.instantiate[MarkevenRenderer](
+    "markeven.renderer", DefaultMarkevenRenderer)
 
-  val sanitizer = cx.instantiate[Sanitizer]("markeven.sanitizer", DefaultSanitizer)
+  val DEFAULT_SANITIZER = cx.instantiate[Sanitizer](
+    "markeven.sanitizer", DefaultSanitizer)
 
-  def toHtml(input: String): String = {
-    val w = new StringWriter
-    new BlockProcessor(w, conf).process(input)
-    w.toString
-  }
+  def toHtml(input: CharSequence) = DEFAULT_RENDERER.toHtml(input)
 
 }

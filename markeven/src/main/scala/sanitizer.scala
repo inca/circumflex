@@ -4,8 +4,15 @@ package markeven
 import org.jsoup._, safety._, parser._
 import nodes.{Entities, Document}
 
-// HTML sanitizer
+/*! # Sanitizing HTML output
 
+Circumflex Markeven uses [Jsoup](http://jsoup.org) to perform HTML sanitizing
+(stripping unsafe output).
+
+The default sanitizer is configured by setting the `markeven.sanitizer`
+configuration property. It is used with all `MarkevenRenderer` instances, but
+can be overridden in concrete implementations.
+*/
 trait Sanitizer {
   def sanitize(html: String): String
   def stripText(html: String): String

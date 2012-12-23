@@ -6,6 +6,12 @@ import collection.mutable.ListBuffer
 
 /*!# Block processor
 
+The `BlockProcessor` class represents the block-level Unit of Work.
+
+It accepts two parameters:
+
+  * `out` is the `Writer` to which the output markup is rendered;
+  * `conf` is the `MarkevenConf` instance.
 */
 class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf)
     extends Processor {
@@ -15,6 +21,7 @@ class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf
   var selector = new Selector(conf)
   var blockIndent = 0
 
+  /* The `run` method is an entry point of `BlockProcessor`. */
   def run(walk: Walker) {
     while (walk.hasCurrent)
       block(walk)

@@ -5,7 +5,28 @@ import pro.savant.circumflex._, core._
 import collection.mutable.HashMap
 import java.io.{Writer, StringWriter}
 
-class Renderer(var conf: MarkevenConf) {
+/*! # Markeven Renderer
+
+The `MarkevenRenderer` class is the high-level abstraction over `BlockProcessor`
+and `InlineProcessor`, which can be shared across different rendering tasks
+and threads.
+
+In other words, `MarkevenRenderer` can be used to convert multiple texts to HTML
+with the same `MarkevenConf`.
+
+The typical usage is very simple:
+
+``` {.scala}
+// Define renderer in configuration or package object
+val renderer = new MarkevenRenderer(myConf)
+
+// Render Markeven text
+renderer.toHtml("# Hello")    // Returns <h1>Hello</h1>
+```
+*/
+class MarkevenRenderer(var conf: MarkevenConf) {
+
+  def sanitizer: Sanitizer = DEFAULT_SANITIZER
 
   def toHtml(cs: CharSequence): String = finalize(processBlocks(cs))
 
@@ -58,3 +79,9 @@ class Renderer(var conf: MarkevenConf) {
   def finalize(output: String): String =
     unstashAll(sanitizer.sanitize(output))
 }
+
+/*! The default renderer uses `EmptyMarkevenConf` which does not resolve any
+links, media and fragments. This default implementation is used with method
+`markeven.toHtml` (see [[markeven/src/main/scala/package.scala]]) and can
+be overridden by setting the `markeven.renderer` configuration parameter. */
+object DefaultMarkevenRenderer extends MarkevenRenderer(EmptyMarkevenConf)
