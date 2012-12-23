@@ -17,6 +17,11 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
 
   'auth := auth
 
+  // Memorize the `returnTo` across requests
+  param.get("returnTo").map { loc =>
+    flash.update("cx.auth.returnTo", loc)
+  }
+
   // Try to authenticate the request from session
   auth.doSessionAuth()
 
@@ -52,7 +57,24 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
       else sendRedirect(auth.createSsoUrl(auth.principal, location))
     }
 
-    // TODO implement `/sso-check` along with `requireAuth`
+    /*! This route appends the security parameters to the location specified
+     in the `to` request parameter, if the user is authenticated, and redirects
+     him back. Unlike `sso-return`, the user is redirected to the `loginUrl`
+     of the `auth` if no authentication exist.
+    */
+    get("/auth/sso-check") = {
+      val location = auth.returnLocation
+      if (auth.isEmpty)
+        sendRedirect(appendParam(auth.loginUrl, "returnTo", location))
+      else sendRedirect(auth.createSsoUrl(auth.principal, location))
+    }
+
+    get("/auth/sso-check.js") = {
+      val location = auth.returnLocation
+      if (auth.isEmpty)
+        sendJsRedirect(appendParam(auth.loginUrl, "returnTo", location))
+      else sendJsRedirect(auth.createSsoUrl(auth.principal, location))
+    }
 
   }
 

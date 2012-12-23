@@ -21,14 +21,16 @@ trait Auth[U <: Principal] {
   HTTP 403 Access Denied, but you can override this method to implement
   custom authentication error processing logic.
   */
-  def authError(message: String): Nothing = sendError(403, message)
+  def authError(message: String): Nothing = sendError(401, message)
 
-/*! The `returnLocationOption` returns an URL for redirecting the user
-    after successful authentication. The URL is resolved from request parameter,
-    falling back to the `Referer` header.*/
+  /*! The `returnLocationOption` returns an URL for redirecting the user
+after successful authentication. The URL is resolved from request parameter,
+falling back to the flash parameter `cx.auth.returnTo` and finally
+to the `Referer` header.*/
   def returnLocationOption = param.get("returnTo")
-    .orElse(request.headers.get("Referer"))
-    .filter(!_.startsWith(secureUrlPrefix + "/auth"))
+      .orElse(flash.getString("cx.auth.returnTo"))
+      .orElse(request.headers.get("Referer"))
+      .filter(!_.startsWith(secureOrigin + "/auth"))
 
   /*! The `returnLocation` also falls back to the `defaultReturnLocation` as
   specified in this configuration. */
@@ -68,10 +70,10 @@ trait Auth[U <: Principal] {
   /*! The `isSecure` method returns `true` if `secureScheme` is `https`. */
   def isSecure = secureScheme == "https"
 
-  /*! The `secureUrlPrefix` method just concatenates `secureScheme`
+  /*! The `secureOrigin` method just concatenates `secureScheme`
   and `secureDomain` to form secure URL prefix.
   */
-  def secureUrlPrefix = secureScheme + "://" + secureDomain
+  def secureOrigin = secureScheme + "://" + secureDomain
 
   /*! ## Sessions and locations
 
@@ -101,7 +103,7 @@ trait Auth[U <: Principal] {
   It should only be used in contexts where authentication is mandatory
   (and probably checked before). */
   def principal = principalOption.getOrElse(
-    authError("No authentication information available."))
+    authError("Authentication is required to access this resource."))
 
   /*! The `isEmpty` method returns true if no authentication is
   associated with current context. */
@@ -186,6 +188,40 @@ trait Auth[U <: Principal] {
     sessionOption.map(_.invalidate())
     dropRememberMeCookie()
   }
+
+  /*! ## Requiring authentication
+
+  Routes which can only be accessed by authenticated users should be guarded
+  by calling the `require()` method.
+
+  It exists quietly if the context is authenticated. Otherwise it redirects
+  user to `/auth/sso-check` at the secure domain to obtain authentication
+  information with SSO.
+
+  You can change the redirection location (and behavior) by overriding
+  the `redirectUnauthenticated` method.
+  */
+  def require() {
+    if (!isEmpty) return
+    if (request.method == "get") {
+      var url = origin + request.originalUri
+      if (request.queryString != "")
+        url += "?" + encodeURI(request.queryString)
+      redirectUnauthenticated(url)
+    } else authError("Authentication is required to access this resource.")
+  }
+
+  protected def redirectUnauthenticated(originalUrl: String): Nothing =
+    sendRedirect(secureOrigin + "/auth/sso-check?returnTo=" +
+        encodeURIComponent(originalUrl))
+
+  /*! The `loginUrl` should return full URL of the login form of your application.
+   Unauthenticated users will be redirected there if no authentication information
+   is returned from SSO. The `returnTo` parameter will point to the original
+   URL from which the `require()` method was invoked. Use `returnLocation` to
+   redirect the user there after successful login.
+   */
+  def loginUrl: String
 
   /*! ## Security tokens
 
@@ -345,16 +381,12 @@ trait Auth[U <: Principal] {
     val lid = locationId.getOrElse(randomString(8))
     val token = sha256(mkToken(principal, nonce) +
         ":" + deadline.toString + ":" + lid)
-    var result = url
-    val i = url.indexOf("?")
-    if (i == -1)
-      result += "?"
-    else result += "&"
-    result + "sso=token&sso_nonce=" + nonce +
-        "&sso_deadline=" + deadline +
-        "&sso_location=" + lid +
-        "&sso_principal=" + principal.uniqueId +
-        "&sso_token=" + token
+    appendParams(url, "sso" -> "token",
+      "sso_nonce" -> nonce,
+      "sso_deadline" -> deadline.toString,
+      "sso_location" -> lid,
+      "sso_principal" -> principal.uniqueId,
+      "sso_token" -> token)
   }
 
   /*! The `trySsoLogin` method scans current request for SSO security parameters
@@ -378,17 +410,17 @@ trait Auth[U <: Principal] {
     // Drop SSO params from query string
     if (param.contains("sso")) {
       var uri = web.origin + request.originalUri
-      val qs = request.queryString.replaceAll("&?sso[^=]*=[^&]*", "")
+      val qs = encodeURI(request.queryString.replaceAll("&?sso[^=]*=[^&]*", ""))
       if (qs != "")
         uri += "?" + qs
-      sendRedirect(encodeURI(uri))
+      sendRedirect(uri)
     }
   }
 
   /*! The `getSsoJsResponse` will return a Javascript redirect code
   to `<secureBase>/auth/sso-return`. This step is described in SSO architecture.*/
   def getSsoJsResponse: String = principalOption.map { u =>
-    val pf = secureUrlPrefix + "/auth/sso-return?returnTo="
+    val pf = secureOrigin + "/auth/sso-return?returnTo="
     "window.location.replace(\"" + escapeJs(pf) +
         "\" + encodeURIComponent(window.location.href));"
   }.getOrElse("")
@@ -409,4 +441,6 @@ object NoAuth extends Auth[DummyPrincipal] {
   def secureDomain = "localhost"
 
   def defaultReturnLocation = "http://localhost/"
+
+  def loginUrl = secureOrigin + "/auth/login"
 }

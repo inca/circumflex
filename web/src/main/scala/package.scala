@@ -317,4 +317,21 @@ package object web {
   def validateJSON(s: String): Boolean =
     !jsonRegex.matcher(s.replaceAll("\"(\\\\.|[^\"\\\\])*\"", "")).find
 
+  // Appending URL parameters
+
+  def appendParam(url: String, name: String, value: String): String = {
+    var result = url
+    if (result.indexOf("?") == -1)
+      result += "?"
+    else result += "&"
+    result + encodeURIComponent(name) + "=" + encodeURIComponent(value)
+  }
+
+  def appendParams(url: String, params: (String, String)*): String =
+    if (params.size == 0) url
+    else {
+      val p = params.head
+      appendParams(appendParam(url, p._1, p._2), params.tail: _*)
+    }
+
 }
