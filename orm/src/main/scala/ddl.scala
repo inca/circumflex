@@ -3,12 +3,8 @@ package orm
 
 import core._
 import java.io.File
-import java.lang.IllegalStateException
-import org.apache.commons.io.FileUtils
-import collection.JavaConversions._
 import java.lang.reflect.Modifier
 import java.net.URL
-import util.control.ControlThrowable
 
 /*!# Exporting Database Schema
 
@@ -236,12 +232,8 @@ object DDLUnit {
     case _ => List(new File("target/classes"), new File("target/test-classes"))
   }
 
-  def instantiateObject(className: Class[_]): Option[SchemaObject] =
+  def instantiateObject(c: Class[_]): Option[SchemaObject] =
     try {
-      // Ensure that anonymous objects are not processed separately.
-      if (className.matches("[^\\$]+(?:\\$$)?"))
-        throw new CircumflexException with ControlThrowable
-      val c = cx.classLoader.loadClass(className)
       var so: SchemaObject = null
       // Try to treat it as a singleton
       try {
@@ -250,7 +242,7 @@ object DDLUnit {
           so = module.get(null).asInstanceOf[SchemaObject]
       } catch {
         case e: NoSuchFieldException =>
-          // Try to instantiate it as a POJO.
+          // Try to instantiate it as a POJO
           if (isSchemaObjectType(c))
             so = c.newInstance.asInstanceOf[SchemaObject]
       }
@@ -263,33 +255,15 @@ object DDLUnit {
         None
     }
 
-  def fromClasspath(pkgPrefix: String = ""): DDLUnit = {
-    val loader = this.getClass.getClassLoader
+  def fromClasspath(urls: Iterable[URL],
+                    pkgPrefix: String = ""): DDLUnit = {
     val ddl = new DDLUnit()
-    for (dir <- outputDirs) {
-      try {
-        // Resolve directories and paths
-        val pkgPath = pkgPrefix.replaceAll("\\.", "/")
-        val outUrl = dir.toURI.toURL
-        val pkgUrl = loader.getResource(pkgPath)
-        val classDir = new File(outUrl.getFile, pkgPath)
-        ORM_LOG.debug("Looking for schema objects in " + classDir.getAbsolutePath)
-        // Make sure that requisite paths exist
-        if (pkgUrl == null)
-          throw new IllegalStateException("Could not resolve package '" + pkgPath + "'")
-        if (!classDir.isDirectory)
-          throw new IllegalStateException("Class directory " + classDir.getAbsolutePath + " does not exist.")
-        // Iterate class files
-        val files = FileUtils.listFiles(classDir, Array("class"), true).asInstanceOf[java.util.Collection[File]]
-        for (file <- collectionAsScalaIterable(files)) {
-          val relPath = file.getCanonicalPath.substring(dir.getCanonicalPath.length + 1)
-          val className = relPath.substring(0, relPath.length - ".class".length).replaceAll(File.separator, ".")
-
-        }
-      } catch {
-        case e: Exception => ORM_LOG.warn(e.getMessage)
-      }
-    }
+    val objects = urls
+        .toSeq
+        .flatMap(url => cx.searchClasses(url, _.startsWith(pkgPrefix)))
+        .distinct
+        .flatMap(cl => instantiateObject(cl))
+    ddl.add(objects: _*)
     ORM_LOG.debug("Lookup complete, " + ddl.objectsCount + " objects found.")
     ddl
   }

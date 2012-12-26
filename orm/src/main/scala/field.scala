@@ -3,7 +3,6 @@ package orm
 
 import core._
 import java.util.Date
-import xml._
 import java.sql.ResultSet
 import scala.math.BigDecimal._
 
@@ -212,7 +211,7 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
 
 class HtmlField[R <: Record[_, R]](_name: String, _record: R)
     extends TextField(_name, _record, ormConf.dialect.textType) {
-  addSetter(s => core.escapeHtml(s.trim))
+  addSetter(s => core.wrapHtml(s.trim))
 }
 
 class BooleanField[R <: Record[_, R]](name: String, record: R)
@@ -257,15 +256,6 @@ class TimeField[R <: Record[_, R]](name: String, record: R)
     try Some(new Date(java.sql.Time.valueOf(str).getTime)) catch { case e: Exception => None }
   override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Time(v.getTime).toString).getOrElse("")
-}
-
-class XmlField[R <: Record[_, R]](name: String, record: R, val root: String)
-    extends XmlSerializable[Elem, R](name, record, ormConf.dialect.xmlType) {
-  def fromString(str: String): Option[Elem] = Some(XML.loadString(
-    "<" + root + ">" + str + "</" + root +">"))
-  override def read(rs: ResultSet, alias: String) =
-    any2option(rs.getString(alias)).map(x => XML.loadString(x))
-  override def placeholder = ormConf.dialect.xmlPlaceholder
 }
 
 class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],

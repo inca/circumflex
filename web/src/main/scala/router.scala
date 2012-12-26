@@ -1,6 +1,7 @@
 package pro.savant.circumflex
 package web
 
+import core._
 import util.matching.Regex
 import scala.xml.Node
 

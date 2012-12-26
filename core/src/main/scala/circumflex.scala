@@ -3,7 +3,7 @@ package core
 
 import collection.mutable.{ListBuffer, HashMap}
 import java.util.{MissingResourceException, ResourceBundle}
-import java.net.{URI, URL}
+import java.net.URL
 import java.io.File
 import java.util.jar.JarFile
 
@@ -120,7 +120,6 @@ object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
           safeLoadClass(className).map(cl => buffer += cl)
       }
     }
-    new URI()
     buffer.toSeq
   }
 
