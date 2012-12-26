@@ -54,7 +54,7 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
       val location = auth.returnLocation
       if (auth.isEmpty)
         sendRedirect(location)
-      else sendRedirect(auth.createSsoUrl(auth.principal, location))
+      else sendRedirect(auth.createSsoUrl(location))
     }
 
     /*! This route appends the security parameters to the location specified
@@ -66,14 +66,14 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
       val location = auth.returnLocation
       if (auth.isEmpty)
         sendRedirect(appendParam(auth.loginUrl, "returnTo", location))
-      else sendRedirect(auth.createSsoUrl(auth.principal, location))
+      else sendRedirect(auth.createSsoUrl(location))
     }
 
     get("/auth/sso-check.js") = {
       val location = auth.returnLocation
       if (auth.isEmpty)
         sendJsRedirect(appendParam(auth.loginUrl, "returnTo", location))
-      else sendJsRedirect(auth.createSsoUrl(auth.principal, location))
+      else sendJsRedirect(auth.createSsoUrl(location))
     }
 
   }

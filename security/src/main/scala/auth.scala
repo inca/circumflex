@@ -166,6 +166,7 @@ to the `Referer` header.*/
       dropRememberMeCookie()
     }
     // Log the principal in with new locationId
+    set(principal)
     val loc = randomString(8)
     setSessionAuth(principal, loc)
     if (rememberMe)
@@ -375,7 +376,9 @@ to the `Referer` header.*/
 
   The `timeout` parameter specifies the validity period of this URL.
   */
-  def createSsoUrl(principal: U, url: String, timeout: Long = 60000l) = {
+  def createSsoUrl(url: String,
+                   principal: U = this.principal,
+                   timeout: Long = 60000l) = {
     val nonce = randomString(8)
     val deadline = System.currentTimeMillis + timeout
     val lid = locationId.getOrElse(randomString(8))
