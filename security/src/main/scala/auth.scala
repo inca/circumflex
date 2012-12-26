@@ -128,7 +128,7 @@ to the `Referer` header.*/
   current session and registers this session with specified `locationId`. */
   def setSessionAuth(principal: U, locationId: String) {
     sessionOption.map { sess =>
-      sess += KEY -> principal
+      sess += KEY -> principal.uniqueId
       sess += "cx.auth.location" -> locationId
       principal.registerSession(locationId)
     }

@@ -133,7 +133,7 @@ object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
     }
 
   def isTopLevelClassFile(filename: String) =
-    filename.endsWith(".class") && filename.matches("[^\\$]+(?:\\$$)?")
+    filename.matches("[^\\$]+\\$?\\.class$")
 
   def getClassName(filename: String) =
     filename.substring(0, filename.length - 6)
