@@ -1,5 +1,6 @@
 package pro.savant.circumflex
 package web
+
 import org.apache._
 import http.client.entity.UrlEncodedFormEntity
 import http.Header

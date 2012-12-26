@@ -262,7 +262,7 @@ trait StructHolder extends ElemHolder {
       val elems = findElems
       it.takeWhile(_ != EndTag(elemName)) foreach {
         case StartTag(n) =>
-          elems.find(_.elemName == n).map(_.readXml(Some(this), it))
+          elems.find(_.accept(it)).map(_.readXml(Some(this), it))
         case _ => // should only occur if XML contains redundant tags
       }
     }

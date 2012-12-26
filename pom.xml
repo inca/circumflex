@@ -31,7 +31,7 @@
   </modules>
 
   <properties>
-    <scala.version>2.9.2</scala.version>
+    <scala.version>2.10.0</scala.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -62,13 +62,13 @@
     <!-- Testing -->
     <dependency>
       <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_2.9.2</artifactId>
+      <artifactId>scalatest_2.10.0</artifactId>
       <version>1.8</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.10</version>
+      <version>4.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>

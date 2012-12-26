@@ -13,7 +13,8 @@ It accepts two parameters:
   * `out` is the `Writer` to which the output markup is rendered;
   * `conf` is the `MarkevenConf` instance.
 */
-class BlockProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf)
+class BlockProcessor(val out: Writer,
+                     val conf: MarkevenConf = EmptyMarkevenConf)
     extends Processor {
 
   val inline = new InlineProcessor(out, conf)
