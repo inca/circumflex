@@ -10,6 +10,7 @@ import scala.collection.Map
 import java.lang.reflect.{InvocationTargetException, Modifier, Field, Method}
 
 class ScalaObjectWrapper extends ObjectWrapper {
+
   override def wrap(obj: Any): TemplateModel = obj match {
     // Basic types
     case null => null
@@ -23,7 +24,7 @@ class ScalaObjectWrapper extends ObjectWrapper {
     // Scala base types
     case seq: Seq[Any] => new ScalaSeqWrapper(seq, this)
     case array: Array[Any] => new ScalaArrayWrapper(array, this)
-    case map: Map[Any, Any] => new ScalaMapWrapper(map, this)
+    case map: Map[_, _] => new ScalaMapWrapper(map.asInstanceOf[Map[Any, Any]], this)
     case it: Iterable[Any] => new ScalaIterableWrapper(it, this)
     case it: Iterator[Any] => new ScalaIteratorWrapper(it, this)
     case str: String => new SimpleScalar(str)
@@ -34,52 +35,75 @@ class ScalaObjectWrapper extends ObjectWrapper {
     // Everything else
     case o => new ScalaBaseWrapper(o, this)
   }
+
 }
 
 class ScalaDateWrapper(val date: Date, wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(date, wrapper) with TemplateDateModel {
+
   def getDateType = TemplateDateModel.UNKNOWN
+
   def getAsDate = date
+
 }
 
 class ScalaSeqWrapper[T](val seq: Seq[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(seq, wrapper) with TemplateSequenceModel {
+
   def get(index: Int) = wrapper.wrap(seq(index))
+
   def size = seq.size
+
 }
 
 class ScalaArrayWrapper[T](val array: Array[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(array, wrapper) with TemplateSequenceModel {
+
   def get(index: Int) = wrapper.wrap(array(index))
+
   def size = array.length
+
 }
 
 class ScalaMapWrapper(val map: Map[Any, Any], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(map, wrapper) with TemplateHashModelEx {
+
   override def get(key: String) = wrapper.wrap(
     map.get(key).orElse(Some(super.get(key))))
+
   override def isEmpty = map.isEmpty
+
   def values = new ScalaIterableWrapper(map.values, wrapper)
+
   val keys = new ScalaIterableWrapper(map.keys, wrapper)
+
   def size = map.size
+
 }
 
 class ScalaIterableWrapper[T](val it: Iterable[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(it, wrapper) with TemplateCollectionModel {
+
   def iterator = new ScalaIteratorWrapper(it.iterator, wrapper)
+
 }
 
 class ScalaIteratorWrapper[T](val it: Iterator[T], wrapper: ObjectWrapper)
     extends ScalaBaseWrapper(it, wrapper) with TemplateModelIterator with TemplateCollectionModel {
+
   def next = wrapper.wrap(it.next())
+
   def hasNext = it.hasNext
+
   def iterator = this
+
 }
 
 class ScalaMethodWrapper(val target: Any,
                          val methodName: String,
                          val wrapper: ObjectWrapper)
     extends TemplateMethodModel {
+
   def exec(arguments: java.util.List[_]) = {
     val args = arguments.toArray.asInstanceOf[Array[Object]]
     val result = try{
@@ -90,6 +114,7 @@ class ScalaMethodWrapper(val target: Any,
     }
     wrapper.wrap(result)
   }
+
 }
 
 class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper)

@@ -191,10 +191,10 @@ This way you can compose arbitrary complex query plans. The join condition
 manually using the `ON` method.
 */
 class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
-(
-    protected var _left: RelationNode[PKL, L],
-    protected var _right: RelationNode[PKR, R],
-    protected var _joinType: JoinType) extends ProxyNode[PKL, L](_left) {
+(protected var _left: RelationNode[PKL, L],
+ protected var _right: RelationNode[PKR, R],
+ protected var _joinType: JoinType)
+    extends ProxyNode[PKL, L](_left) {
 
   def left = _left
   def right = _right
@@ -234,11 +234,11 @@ class JoinNode[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
 }
 
 class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
-(
-    childNode: RelationNode[PKL, L],
-    parentNode: RelationNode[PKR, R],
-    val association: Association[PKR, L, R],
-    joinType: JoinType) extends JoinNode[PKL, L, PKR, R](childNode, parentNode, joinType) {
+(childNode: RelationNode[PKL, L],
+ parentNode: RelationNode[PKR, R],
+ val association: Association[PKR, L, R],
+ joinType: JoinType)
+    extends JoinNode[PKL, L, PKR, R](childNode, parentNode, joinType) {
 
   override def onClause =
     if (_on == EmptyPredicate)
@@ -250,11 +250,11 @@ class ManyToOneJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
 }
 
 class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
-(
-    parentNode: RelationNode[PKL, L],
-    childNode: RelationNode[PKR, R],
-    val association: Association[PKL, R, L],
-    joinType: JoinType) extends JoinNode[PKL, L, PKR, R](parentNode, childNode, joinType) {
+(parentNode: RelationNode[PKL, L],
+ childNode: RelationNode[PKR, R],
+ val association: Association[PKL, R, L],
+ joinType: JoinType)
+    extends JoinNode[PKL, L, PKR, R](parentNode, childNode, joinType) {
 
   override def onClause =
     if (_on == EmptyPredicate)
@@ -263,3 +263,4 @@ class OneToManyJoin[PKL, L <: Record[PKL, L], PKR, R <: Record[PKR, R]]
 
   override def isUndefined = false
 }
+

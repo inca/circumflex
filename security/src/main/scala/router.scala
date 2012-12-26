@@ -35,7 +35,7 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
 
     You can find this useful for composing URLs for all static resources
     served from the secure domain. */
-    'scheme := auth.secureScheme
+    ctx.update("cx.scheme", auth.secureScheme)
 
     /*! This script will force client to go through series of redirect hops
     to obtain SSO authentication from the secure domain. It should be included

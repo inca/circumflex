@@ -20,9 +20,13 @@ Following classes represent various database schema objects:
 Circumflex ORM also uses some helpers to make DSL-style data definition.
 */
 class Schema(val name: String) extends SchemaObject {
+
   def objectName = "SCHEMA " + name
+
   def sqlCreate = ormConf.dialect.createSchema(this)
+
   def sqlDrop = ormConf.dialect.dropSchema(this)
+
 }
 
 abstract class Constraint(val constraintName: String,
@@ -30,8 +34,11 @@ abstract class Constraint(val constraintName: String,
     extends SchemaObject with SQLable {
 
   def objectName = "CONSTRAINT " + constraintName
+
   def sqlCreate = ormConf.dialect.alterTableAddConstraint(this)
+
   def sqlDrop = ormConf.dialect.alterTableDropConstraint(this)
+
   def toSql = ormConf.dialect.constraintDefinition(this)
 
   def sqlDefinition: String
@@ -43,7 +50,9 @@ class UniqueKey(name: String,
                 relation: Relation[_, _],
                 val columns: Seq[ValueHolder[_, _]])
     extends Constraint(name, relation) {
+
   def sqlDefinition = ormConf.dialect.uniqueKeyDefinition(this)
+
 }
 
 class ForeignKey(name: String,
@@ -74,7 +83,9 @@ class CheckConstraint(name: String,
                       relation: Relation[_, _],
                       val expression: String)
     extends Constraint(name, relation) {
+
   def sqlDefinition = ormConf.dialect.checkConstraintDefinition(this)
+
 }
 
 class Index(val name: String,
@@ -104,8 +115,11 @@ class Index(val name: String,
   }
 
   def objectName = "INDEX " + name
+
   def sqlCreate = ormConf.dialect.createIndex(this)
+
   def sqlDrop = ormConf.dialect.dropIndex(this)
+
 }
 
 class ConstraintHelper(name: String, relation: Relation[_, _]) {
@@ -131,28 +145,45 @@ class ConstraintHelper(name: String, relation: Relation[_, _]) {
     new ForeignKeyHelper(name, relation, localColumns)
 }
 
-class ForeignKeyHelper(name: String, childRelation: Relation[_, _], childColumns: Seq[ValueHolder[_, _]]) {
+class ForeignKeyHelper
+(name: String,
+ childRelation: Relation[_, _],
+ childColumns: Seq[ValueHolder[_, _]]) {
+
   def REFERENCES(parentRelation: Relation[_, _],
                  parentColumns: ValueHolder[_, _]*): ForeignKey =
     new ForeignKey(name, childRelation, childColumns, parentRelation, parentColumns)
+
 }
 
 class DefinitionHelper[R <: Record[_, R]](name: String, record: R) {
+
   def INTEGER = new IntField(name, record)
+
   def BIGINT = new LongField(name, record)
+
   def DOUBLE(precision: Int = -1, scale: Int = 0) =
     new DoubleField(name, record, precision, scale)
+
   def NUMERIC(precision: Int = -1,
               scale: Int = 0,
               roundingMode: BigDecimal.RoundingMode.RoundingMode = BigDecimal.RoundingMode.HALF_EVEN) =
     new NumericField(name, record, precision, scale, roundingMode)
+
   def TEXT = new TextField(name, record, ormConf.dialect.textType)
+
   def VARCHAR(length: Int = -1) = new TextField(name, record, length)
+
   def BOOLEAN = new BooleanField(name, record)
+
   def DATE = new DateField(name, record)
+
   def TIME = new TimeField(name, record)
+
   def TIMESTAMP = new TimestampField(name, record)
+
   def BINARY = new BinaryField(name, record)
+
   def HTML = new HtmlField[R](name, record)
 
   def INDEX(expression: String) = new Index(name, record.relation, expression)
@@ -183,3 +214,4 @@ class Order(val expression: String, val parameters: Seq[Any])
   }
   def toSql = expression + " " + _specificator
 }
+

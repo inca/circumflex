@@ -134,60 +134,72 @@ class Field[T, R <: Record[_, R]](val name: String,
 }
 
 trait AutoIncrementable[T, R <: Record[_, R]] extends Field[T, R] {
+
   protected var _autoIncrement: Boolean = false
+
   def isAutoIncrement: Boolean = _autoIncrement
+
   def AUTO_INCREMENT: this.type = {
     _autoIncrement = true
     this
   }
+
 }
 
 class IntField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Int, R](name, record, ormConf.dialect.integerType)
     with AutoIncrementable[Int, R] {
+
   def fromString(str: String): Option[Int] =
     try Some(str.toInt) catch { case e: Exception => None }
+
 }
 
 class LongField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Long, R](name, record, ormConf.dialect.longType)
     with AutoIncrementable[Long, R]{
+
   def fromString(str: String): Option[Long] =
     try Some(str.toLong) catch { case e: Exception => None }
+
 }
 
-class DoubleField[R <: Record[_, R]](
-                                        name: String,
-                                        record: R,
-                                        val precision: Int = -1,
-                                        val scale: Int = 0)
+class DoubleField[R <: Record[_, R]](name: String,
+                                     record: R,
+                                     val precision: Int = -1,
+                                     val scale: Int = 0)
     extends XmlSerializable[Double, R](
       name, record, ormConf.dialect.numericType(precision, scale)) {
+
   override def read(rs: ResultSet, alias: String): Option[Double] = {
     val d = rs.getDouble(alias)
     if (rs.wasNull) None
     else Some(d)
   }
+
   def fromString(str: String): Option[Double] =
     try Some(str.toDouble) catch { case e: Exception => None }
+
 }
 
-class NumericField[R <: Record[_, R]](
-                                         name: String,
-                                         record: R,
-                                         val precision: Int = -1,
-                                         val scale: Int = 0,
-                                         val roundingMode: RoundingMode.RoundingMode = RoundingMode.HALF_EVEN)
+class NumericField[R <: Record[_, R]]
+(name: String, record: R,
+ val precision: Int = -1, val scale: Int = 0,
+ val roundingMode: RoundingMode.RoundingMode = RoundingMode.HALF_EVEN)
     extends XmlSerializable[BigDecimal, R](
       name, record, ormConf.dialect.numericType(precision, scale)) {
+
   def fromString(str: String): Option[BigDecimal] =
     try Some(BigDecimal(str)) catch { case e: Exception => None }
+
   override def read(rs: ResultSet, alias: String): Option[BigDecimal] = {
     val bd = rs.getBigDecimal(alias)
     if (rs.wasNull) None
     else Some(new BigDecimal(bd))
   }
+
   addSetter(v => v.setScale(scale, roundingMode))
+
 }
 
 class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
@@ -197,11 +209,13 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
   def fromString(str: String): Option[String] =
     if (str == "") None else Some(str)
 
-  def LIKE(value: String) = new SimpleExpression(ormConf.dialect.LIKE(aliasedName, placeholder), List(value))
+  def LIKE(value: String) =
+    new SimpleExpression(ormConf.dialect.LIKE(aliasedName, placeholder), List(value))
   def LIKE(col: ColumnExpression[String, _]) =
     new SimpleExpression(ormConf.dialect.LIKE(aliasedName, col.toSql), Nil)
 
-  def ILIKE(value: String) = new SimpleExpression(ormConf.dialect.ILIKE(aliasedName, placeholder), List(value))
+  def ILIKE(value: String) =
+    new SimpleExpression(ormConf.dialect.ILIKE(aliasedName, placeholder), List(value))
   def ILIKE(col: ColumnExpression[String, _]) =
     new SimpleExpression(ormConf.dialect.ILIKE(aliasedName, col.toSql), Nil)
 
@@ -211,49 +225,67 @@ class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
 
 class HtmlField[R <: Record[_, R]](_name: String, _record: R)
     extends TextField(_name, _record, ormConf.dialect.textType) {
+
   addSetter(s => core.wrapHtml(s.trim))
+
 }
 
 class BooleanField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Boolean, R](name, record, ormConf.dialect.booleanType) {
+
   def fromString(str: String): Option[Boolean] =
     try Some(str.toBoolean) catch { case e: Exception => None }
+
 }
 
 object BooleanField {
+
   implicit def toPredicate(f: BooleanField[_]): Predicate =
     new SimpleExpression(f.aliasedName, Nil)
+
 }
 
 class BinaryField[R <: Record[_, R]](name: String, record: R)
     extends Field[Array[Byte], R](name, record, ormConf.dialect.binaryType) {
+
   override def read(rs: ResultSet, alias: String): Option[Array[Byte]] = {
     val o = rs.getBytes(alias)
     if (rs.wasNull) None
     else Some(o)
   }
+
 }
 
 class TimestampField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, ormConf.dialect.timestampType) {
+
   def fromString(str: String): Option[Date] =
-    try Some(new Date(java.sql.Timestamp.valueOf(str).getTime)) catch { case e: Exception => None }
+    try Some(new Date(java.sql.Timestamp.valueOf(str).getTime))
+    catch { case e: Exception => None }
+
   override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Timestamp(v.getTime).toString).getOrElse("")
 }
 
 class DateField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, ormConf.dialect.dateType) {
+
   def fromString(str: String): Option[Date] =
-    try Some(new Date(java.sql.Date.valueOf(str).getTime)) catch { case e: Exception => None }
+    try Some(new Date(java.sql.Date.valueOf(str).getTime))
+    catch { case e: Exception => None }
+
   override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Date(v.getTime).toString).getOrElse("")
+
 }
 
 class TimeField[R <: Record[_, R]](name: String, record: R)
     extends XmlSerializable[Date, R](name, record, ormConf.dialect.timeType) {
+
   def fromString(str: String): Option[Date] =
-    try Some(new Date(java.sql.Time.valueOf(str).getTime)) catch { case e: Exception => None }
+    try Some(new Date(java.sql.Time.valueOf(str).getTime))
+    catch { case e: Exception => None }
+
   override def toString(value: Option[Date]): String =
     value.map(v => new java.sql.Time(v.getTime).toString).getOrElse("")
 }
@@ -294,16 +326,19 @@ class FieldComposition2[T1, T2, R <: Record[_, R]](val _1: Field[T1, R],
     AND(new SimpleExpression(ormConf.dialect.EQ(prefix + _1.name, placeholder), List(value._1)),
       new SimpleExpression(ormConf.dialect.EQ(prefix + _2.name, placeholder), List(value._2)))
   }
+
   override def NE(value: (T1, T2)) = {
     val prefix = _getPrefix
     AND(new SimpleExpression(ormConf.dialect.NE(prefix + _1.name, placeholder), List(value._1)),
       new SimpleExpression(ormConf.dialect.NE(prefix + _2.name, placeholder), List(value._2)))
   }
+
   override def IS_NULL = {
     val prefix = _getPrefix
     AND(new SimpleExpression(ormConf.dialect.IS_NULL(prefix + _1.name), Nil),
       new SimpleExpression(ormConf.dialect.IS_NULL(prefix + _2.name), Nil))
   }
+
   override def IS_NOT_NULL = {
     val prefix = _getPrefix
     AND(new SimpleExpression(ormConf.dialect.IS_NOT_NULL(prefix + _1.name), Nil),

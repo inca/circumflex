@@ -36,9 +36,11 @@ trait ORMConfiguration {
   lazy val url = cx.getString("orm.connection.url")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.url'."))
+
   lazy val username = cx.getString("orm.connection.username")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.username'."))
+
   lazy val password = cx.getString("orm.connection.password")
       .getOrElse(throw new ORMException(
     "Missing mandatory configuration parameter 'orm.connection.password'."))
@@ -74,12 +76,16 @@ trait ORMConfiguration {
 
   lazy val typeConverter: TypeConverter = cx.instantiate[TypeConverter](
     "orm.typeConverter", new TypeConverter)
+
   lazy val transactionManager: TransactionManager = cx.instantiate[TransactionManager](
     "orm.transactionManager", new DefaultTransactionManager)
+
   lazy val defaultSchema: Schema = new Schema(
     cx.get("orm.defaultSchema").map(_.toString).getOrElse("public"))
+
   lazy val statisticsManager: StatisticsManager = cx.instantiate[StatisticsManager](
     "orm.statisticsManager", new StatisticsManager)
+
   lazy val connectionProvider: ConnectionProvider = cx.instantiate[ConnectionProvider](
     "orm.connectionProvider", new SimpleConnectionProvider(driver, url, username, password, isolation))
 
@@ -95,8 +101,11 @@ The `ConnectionProvider` is a simple trait responsible for acquiring JDBC
 connections throughout the application.
 */
 trait ConnectionProvider {
+
   def openConnection(): Connection
+
   def close()
+
 }
 
 /*! Circumflex ORM provides default `ConnectionProvider` implementation.
@@ -125,12 +134,11 @@ It behaves as follows:
    [c3p0]: http://www.mchange.com/projects/c3p0
    [c3p0-cfg]: http://www.mchange.com/projects/c3p0/index.html#configuration_properties
 */
-class SimpleConnectionProvider(
-                                  val driverClass: String,
-                                  val url: String,
-                                  val username: String,
-                                  val password: String,
-                                  val isolation: Int)
+class SimpleConnectionProvider(val driverClass: String,
+                               val url: String,
+                               val username: String,
+                               val password: String,
+                               val isolation: Int)
     extends ConnectionProvider {
 
   protected def createDataSource: DataSource = cx.get("orm.connection.datasource") match {
@@ -152,6 +160,7 @@ class SimpleConnectionProvider(
   }
 
   protected var _ds: DataSource = null
+
   def dataSource: DataSource = {
     if (_ds == null)
       _ds = createDataSource
@@ -177,6 +186,7 @@ The `TypeConverter` trait is used to set JDBC prepared statement values for exec
 If you intend to use custom types, provide your own implementation.
 */
 class TypeConverter {
+
   def write(st: PreparedStatement, parameter: Any, paramIndex: Int) {
     parameter match {
       case None | null => st.setObject(paramIndex, null)
@@ -188,4 +198,5 @@ class TypeConverter {
       case v => st.setObject(paramIndex, v)
     }
   }
+
 }

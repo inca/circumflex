@@ -11,28 +11,38 @@ Predicates are designed to participate in `WHERE` clauses of SQL queries.
 trait Predicate extends Expression
 
 object Predicate {
+
   implicit def toAggregateHelper(predicate: Predicate) =
     new AggregatePredicateHelper(predicate)
+
 }
 
 object EmptyPredicate extends Predicate {
+
   def parameters: scala.Seq[Any] = Nil
+
   def toSql: String = ormConf.dialect.emptyPredicate
+
 }
 
 class SimpleExpression(val expression: String, val parameters: Seq[Any])
     extends Predicate {
+
   def toSql = expression
+
 }
 
 class AggregatePredicate(val operator: String,
                          protected var _predicates: Seq[Predicate])
     extends Predicate {
+
   def parameters = predicates.flatMap(_.parameters)
+
   def add(predicate: Predicate*): this.type = {
     _predicates ++= predicate.toList
     this
   }
+
   def predicates: Seq[Predicate] = _predicates.flatMap {
     case EmptyPredicate => None
     case p: AggregatePredicate if (p.predicates.size == 0) => None
@@ -40,17 +50,20 @@ class AggregatePredicate(val operator: String,
       Some(p.predicates(0))
     case p => Some(p)
   }
+
   def toSql: String = {
     val p = predicates
     if (p.size == 0) EmptyPredicate.toSql
     else "(" + p.map(_.toSql).mkString(" " + operator + " ") + ")"
   }
+
 }
 
 class SubqueryExpression[T](expression: String,
                             val subquery: SQLQuery[T])
     extends SimpleExpression(
-      ormConf.dialect.subquery(expression, subquery), subquery.parameters)
+      ormConf.dialect.subquery(expression, subquery),
+      subquery.parameters)
 
 /*! `SimpleExpressionHelper` is used to compose predicates in a DSL-style.
 `String` expressions are converted to `SimpleExpressionHelper` implicitly.

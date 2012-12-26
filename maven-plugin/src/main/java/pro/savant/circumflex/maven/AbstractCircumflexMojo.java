@@ -1,11 +1,8 @@
 package pro.savant.circumflex.maven;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
-import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.filter.ScopeArtifactFilter;
@@ -15,11 +12,8 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.classworlds.realm.ClassRealm;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -109,7 +103,8 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
     for (Object key : src.keySet()) {
       String value = src.get(key).toString().trim();
       if (skipUnresolved && value.matches(".*\\$\\{.*\\}.*")) {
-        getLog().warn("Property with key " + key + " is unresolved. To include it, set 'skipUnresolved' to false.");
+        getLog().warn("Property with key " + key +
+            " is unresolved. To include it, set 'skipUnresolved' to false.");
       } else dst.put(key, value);
     }
   }

@@ -111,7 +111,7 @@ trait Cache[T <: Cached] {
         retrieve(key) match {
           case Some(e: E) if (e.isValid) => Some(e)
           case _ => default match {
-            case Some(e) =>
+            case Some(e) if (e.isValid) =>
               store(key, e)
               Some(e)
             case _ => None
@@ -167,7 +167,13 @@ trait NoLock[T <: Cached] extends Cache[T] {
   override def getOption[E <: T](key: String, default: => Option[E]): Option[E] =
     retrieve(key) match {
       case Some(e: E) if (e.isValid) => Some(e)
-      case _ =>  None
+      case _ =>
+        default match {
+          case Some(e) if (e.isValid) =>
+            store(key, e)
+            Some(e)
+          case _ => None
+        }
     }
 
   override def put[E <: T](key: String, value: E) {

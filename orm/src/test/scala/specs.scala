@@ -99,7 +99,7 @@ class BasicSpec
       c.validate().get.size must equal (2)
       c.code := "1"
       c.validate().get.size must equal (1)
-      evaluating { c.validate_! } must produce [ValidationException]
+      evaluating { c.validate_!() } must produce [ValidationException]
     }
     "handle decimal types" in {
       new DDLUnit(DecimalRecord).CREATE()

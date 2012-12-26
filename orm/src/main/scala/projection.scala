@@ -55,7 +55,8 @@ trait CompositeProjection[T] extends Projection[T] {
     case _ => false
   }
 
-  private var _hash = 0;
+  private var _hash = 0
+
   override def hashCode: Int = {
     if (_hash == 0)
       for (p <- subProjections)
@@ -131,6 +132,7 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
 
   protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance
+    println("Instantiated new record " + record)
     _fieldProjections.foreach { p =>
       node.relation.getField(record, p.field.asInstanceOf[Field[Any, R]]).set(p.read(rs))
     }

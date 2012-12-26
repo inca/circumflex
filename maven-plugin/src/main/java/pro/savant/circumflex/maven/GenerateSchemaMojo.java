@@ -47,8 +47,8 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
   private DDLUnit ddl = new DDLUnit();
 
   public void execute() throws MojoExecutionException {
-    prepareClassLoader();
     try {
+      prepareClassLoader();
       processSchema();
       processDeployments();
     } catch (Exception e) {
@@ -60,10 +60,12 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
     }
   }
 
-  private void processSchema() {
+  private void processSchema() throws Exception {
+    List<URL> urls = getApplicationClasspath();
     if (packages != null)
       for (String pkg : packages)
-        processPackage(pkg);
+        ddl.addPackage(
+            scala.collection.JavaConversions.asScalaIterable(urls), pkg);
     if (ddl.schemata().size() > 0) {
       if (drop) ddl._drop();
       ddl._create();
@@ -76,46 +78,6 @@ public class GenerateSchemaMojo extends AbstractCircumflexMojo {
       }
     } else {
       getLog().info("No schema objects found to export.");
-    }
-  }
-
-  private void processPackage(String pkg) {
-    String pkgPath = pkg.replaceAll("\\.", "/");
-    try {
-      URL outputDir = new URL("file://" + project.getBuild().getOutputDirectory() + "/");
-      URL pkgUrl = getClass().getClassLoader().getResource(pkgPath);
-      if (pkgUrl != null) {
-        File classDir = new File(outputDir.getFile() + pkgPath);
-        if (!classDir.exists()) return;
-        for (File f : classDir.listFiles()) try {
-          if (f.getName().endsWith(".class")) {
-            String className = pkg + "." +
-                f.getName().substring(0, f.getName().length() - ".class".length());
-            // Let's ensure that anonymous objects are not processed separately.
-            if (!className.matches("[^\\$]+(?:\\$$)?")) continue;
-            Class c = getClass().getClassLoader().loadClass(className);
-            SchemaObject so = null;
-            try {
-              // Try to process it as a singleton.
-              Field module = c.getField("MODULE$");
-              if (isSchemaObjectType(module.getType()))
-                so = (SchemaObject)module.get(null);
-            } catch (NoSuchFieldException e) {
-              // Try to instantiate it as a POJO.
-              if (isSchemaObjectType(c))
-                so = (SchemaObject)c.newInstance();
-            }
-            if (so != null) {   // Found appropriate object.
-              ddl.addObject(so);
-              getLog().debug("Found schema object: " + c.getName());
-            }
-          }
-        } catch (Exception e) {
-          getLog().error("Failed to process a file: " + f.getAbsolutePath(), e);
-        }
-      } else getLog().warn("Omitting non-existent package " + pkgPath);
-    } catch (Exception e) {
-      getLog().warn("Package processing failed: " + pkgPath, e);
     }
   }
 

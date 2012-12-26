@@ -265,62 +265,6 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   }
 
-  /*!## Session
-
-  Session is a convenient in-memory storage presented by Servlet API which allows
-  web applications to maintain state of their clients.
-
-  A special identifier, session ID, is generated once the session is initiated.
-  Clients then, to identify themselves within application, send session ID
-  as a cookie with every request.
-
-  Circumflex Web Framework lets you access session attributes via the `session` object.
-
-  Note that if session was not already created for the request, it will only be created
-  if you attempt to add an attribute into it via `update` or `+` method, all other methods
-  will return empty values without implicitly creating a session.
-  */
-  object session extends Map[String, Any] with KeyValueCoercion {
-
-    def id: Option[String] = {
-      val s = raw.getSession(false)
-      if (s == null) None
-      else Some(s.getId)
-    }
-
-    def +=(kv: (String, Any)): this.type = {
-      raw.getSession(true).setAttribute(kv._1, kv._2)
-      this
-    }
-
-    def -=(key: String): this.type = {
-      val s = raw.getSession(false)
-      if (s != null) s.removeAttribute(key)
-      this
-    }
-
-    def iterator: Iterator[(String, Any)] = {
-      val s = raw.getSession(false)
-      if (s != null)
-        s.getAttributeNames
-                .asInstanceOf[JEnumeration[String]]
-                .map(k => (k -> s.getAttribute(k)))
-      else Iterator.empty
-    }
-
-    def get(key: String): Option[Any] = {
-      val s = raw.getSession(false)
-      if (s != null) any2option(s.getAttribute(key))
-      else None
-    }
-
-    def invalidate(): this.type = {
-      val s = raw.getSession(false)
-      if (s != null) s.invalidate()
-      this
-    }
-  }
-
   /*!## Body
 
   Circumflex Web Framework lets you access the body of the request via `body`
@@ -438,5 +382,63 @@ class HttpRequest(val raw: HttpServletRequest) {
   }
 
   override def toString: String = method + " " + uri + " " + protocol
+
+  /*!## Session
+
+  Session is a convenient in-memory storage presented by Servlet API which allows
+  web applications to maintain state of their clients.
+
+  A special identifier, session ID, is generated once the session is initiated.
+  Clients then, to identify themselves within application, send session ID
+  as a cookie with every request.
+
+  Circumflex Web Framework lets you access session attributes via the `session` object.
+
+  Note that if session was not already created for the request, it will only be created
+  if you attempt to add an attribute into it via `update` or `+` method, all other methods
+  will return empty values without implicitly creating a session.
+  */
+  val session = new Session
+
+  class Session extends Map[String, Any] with KeyValueCoercion {
+
+    def id: Option[String] = {
+      val s = raw.getSession(false)
+      if (s == null) None
+      else Some(s.getId)
+    }
+
+    def +=(kv: (String, Any)): this.type = {
+      raw.getSession(true).setAttribute(kv._1, kv._2)
+      this
+    }
+
+    def -=(key: String): this.type = {
+      val s = raw.getSession(false)
+      if (s != null) s.removeAttribute(key)
+      this
+    }
+
+    def iterator: Iterator[(String, Any)] = {
+      val s = raw.getSession(false)
+      if (s != null)
+        s.getAttributeNames
+            .asInstanceOf[JEnumeration[String]]
+            .map(k => (k -> s.getAttribute(k)))
+      else Iterator.empty
+    }
+
+    def get(key: String): Option[Any] = {
+      val s = raw.getSession(false)
+      if (s != null) any2option(s.getAttribute(key))
+      else None
+    }
+
+    def invalidate(): this.type = {
+      val s = raw.getSession(false)
+      if (s != null) s.invalidate()
+      this
+    }
+  }
 
 }

@@ -80,7 +80,8 @@ class Transaction {
       }
     }
 
-    def forAssociation[K, C <: Record[_, C], P <: Record[K, P]](association: Association[K, C, P]): Cache[InverseSeq[C]] = {
+    def forAssociation[K, C <: Record[_, C], P <: Record[K, P]]
+    (association: Association[K, C, P]): Cache[InverseSeq[C]] = {
       val _key = "ASSOCIATION:" + association.cacheName
       get(_key) match {
         case Some(cache: Cache[InverseSeq[C]]) => cache

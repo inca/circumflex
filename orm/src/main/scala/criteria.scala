@@ -10,13 +10,16 @@ records in one query via _prefetching_.
 Criteria API is designed to operate specifically on `Record` instances. If
 you need different projections, use `Select` instead.
 */
-class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
+class Criteria[PK, R <: Record[PK, R]]
+(val rootNode: RelationNode[PK, R])
     extends SQLable with Cloneable {
 
   protected var _executionTime = 0l
+
   def executionTime = _executionTime
 
   private var _counter = 0
+
   protected def nextCounter(): Int = {
     _counter += 1
     _counter
@@ -41,9 +44,8 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   }
 
   protected def replaceLeft
-  (
-      join: JoinNode[PK, R, _, _],
-      node: RelationNode[PK, R]): RelationNode[PK, R] =
+  (join: JoinNode[PK, R, _, _],
+   node: RelationNode[PK, R]): RelationNode[PK, R] =
     join.left match {
       case j: JoinNode[PK, R, _, _] =>
         replaceLeft(j, node)
@@ -52,12 +54,10 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     }
 
   protected def updateRootTree[PKN, N <: Record[PKN, N]]
-  (
-      node: RelationNode[PKN, N],
-      association: Association[_, _, _]
-      ): RelationNode[PKN, N] =
+  (node: RelationNode[PKN, N],
+   association: Association[_, _, _]): RelationNode[PKN, N] =
     node match {
-      // we don't actually care about types here, since type annotations are eliminated by erasure
+      // We don't actually care about types here, since type annotations are eliminated by erasure
       case j: JoinNode[PKN, N, PKN, N] =>
         j.replaceLeft(updateRootTree(j.left, association))
             .replaceRight(updateRootTree(j.right, association))
@@ -71,9 +71,8 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     }
 
   protected def preparePf[PKN, N <: Record[PKN, N]]
-  (
-      relation: Relation[PKN, N],
-      association: Association[_, _, _]): RelationNode[PKN, N] = {
+  (relation: Relation[PKN, N],
+   association: Association[_, _, _]): RelationNode[PKN, N] = {
     val node = relation.AS("pf_" + nextCounter)
     _projections ++= List(node.*)
     _prefetchSeq ++= List[Association[_, _, _]](association)
@@ -81,9 +80,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
   }
 
   protected def updateJoinTree[PKN, N <: Record[PKN, N]]
-  (
-      node: RelationNode[PKN, N],
-      tree: RelationNode[PK, R]): RelationNode[PK, R] =
+  (node: RelationNode[PKN, N], tree: RelationNode[PK, R]): RelationNode[PK, R] =
     tree match {
       // outra vez, types are not really important here
       case j: JoinNode[PK, R, PK, R] => try {   // try the left side
@@ -100,9 +97,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     }
 
   protected def processTupleTree[PKN, N <: Record[PKN, N]]
-  (
-      tuple: Array[_],
-      tree: RelationNode[PKN, N]) {
+  (tuple: Array[_], tree: RelationNode[PKN, N]) {
     tree match {
       case j: OneToManyJoin[PKN, N, PKN, N] =>
         val pNode = j.left
@@ -131,6 +126,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     _restrictions ++= predicates.toList
     this
   }
+
   def add(expression: String, params: Pair[String, Any]*): Criteria[PK, R] =
     add(prepareExpr(expression, params: _*))
 
@@ -190,7 +186,9 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         .ORDER_BY(_orders: _*)
         .LIMIT(limit)
         .OFFSET(offset)
+
   def mkUpdate(): Update[PK, R] = UPDATE(rootNode).WHERE(predicate)
+
   def mkDelete(): Delete[PK, R] = DELETE(rootNode).WHERE(predicate)
 
   def projections: Seq[Projection[_]] = {
@@ -238,7 +236,7 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
         while (rs.next) {
           q.read(rs) map { tuple =>
             processTupleTree(tuple, _rootTree)
-            val root = tuple(0).asInstanceOf[Option[Any]].get
+            val root = tuple(0).get
             if (root != result)   // Wow, this thingy shouldn't be here, call the police!
               throw new ORMException("Unique result expected, but multiple records found.")
           }
@@ -300,20 +298,30 @@ class Criteria[PK, R <: Record[PK, R]](val rootNode: RelationNode[PK, R])
     result
   }
 
-  def AND(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, ormConf.dialect.AND)
-  def OR(criteria: Criteria[PK, R]): Criteria[PK, R] = merge(criteria, ormConf.dialect.OR)
+  def AND(criteria: Criteria[PK, R]): Criteria[PK, R] =
+    merge(criteria, ormConf.dialect.AND)
+
+  def OR(criteria: Criteria[PK, R]): Criteria[PK, R] =
+    merge(criteria, ormConf.dialect.OR)
 
   /*! Criteria can be merged with inverse associations to create logical scopes. Same
   rules are applied as with criteria merging, except that the criteria object with
   proper restrictions is created from the inverse association implicitly.
   */
-  protected def merge(inverse: InverseAssociation[_, R, _, _], operator: String): Criteria[PK, R] = {
+  protected def merge(inverse: InverseAssociation[_, R, _, _],
+                      operator: String): Criteria[PK, R] = {
     val criteria = new Criteria[PK, R](rootNode)
     aliasStack.push(rootNode.alias)
-    criteria.add(inverse.association.asInstanceOf[Association[_, _, R]] IS inverse.record.asInstanceOf[R])
+    criteria.add(
+      inverse.association.asInstanceOf[Association[_, _, R]]
+          IS inverse.record.asInstanceOf[R])
     merge(criteria, operator)
   }
-  def AND(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, ormConf.dialect.AND)
-  def OR(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] = merge(inverse, ormConf.dialect.OR)
+
+  def AND(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] =
+    merge(inverse, ormConf.dialect.AND)
+
+  def OR(inverse: InverseAssociation[_, R, _, _]): Criteria[PK, R] =
+    merge(inverse, ormConf.dialect.OR)
 
 }

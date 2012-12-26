@@ -218,14 +218,14 @@ class Select[T](projection: Projection[T])
   }
 
   protected def ensureNodeAlias(node: RelationNode[_, _]): RelationNode[_, _] =
-    node match {
-      case j: JoinNode[_, _, _, _] =>
-        ensureNodeAlias(j.left)
-        ensureNodeAlias(j.right)
-        j
-      case n: RelationNode[_, _] if (n.alias == "this") => node.AS(nextAlias)
-      case n => n
-    }
+    if (node.isInstanceOf[JoinNode[_, _, _, _]]) {
+      val j = node.asInstanceOf[JoinNode[_, _, _, _]]
+      ensureNodeAlias(j.left)
+      ensureNodeAlias(j.right)
+      j
+    } else if (node.alias == "this") {
+      node.AS(nextAlias)
+    } else node
 
   // HAVING clause
 
@@ -348,66 +348,90 @@ trait DMLQuery extends Query {
     ormConf.statisticsManager.executeDml(this)
     result._2
   }
+
 }
 
 class NativeDMLQuery(expression: Expression) extends DMLQuery {
+
   def parameters = expression.parameters
+
   def toSql = expression.toSql
+
 }
 
 class Insert[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
                                      val fields: Seq[Field[_, R]])
     extends DMLQuery {
+
   def parameters = fields.map(_.value)
+
   def toSql: String = ormConf.dialect.insert(this)
+
 }
 
 class InsertSelect[PK, R <: Record[PK, R]](val relation: Relation[PK, R],
                                            val query: SQLQuery[_])
     extends DMLQuery {
+
   if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
+
   def parameters = query.parameters
+
   def toSql: String = ormConf.dialect.insertSelect(this)
+
 }
 
 class InsertSelectHelper[PK, R <: Record[PK, R]](val relation: Relation[PK, R]) {
-  def SELECT[T](projection: Projection[T]) = new InsertSelect(relation, new Select(projection))
+
+  def SELECT[T](projection: Projection[T]) =
+    new InsertSelect(relation, new Select(projection))
+
 }
 
 class Delete[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     extends DMLQuery with SearchQuery {
+
   val relation = node.relation
   if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
   def parameters = _where.parameters
+
   def toSql: String = ormConf.dialect.delete(this)
+
 }
 
 class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     extends DMLQuery with SearchQuery {
+
   val relation = node.relation
   if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
   private var _setClause: Seq[(Field[_, R], Option[Any])] = Nil
+
   def setClause = _setClause
+
   def SET[T](field: Field[T, R], value: T): Update[PK, R] = {
     _setClause ++= List(field -> Some(value))
     this
   }
+
   def SET[K, P <: Record[K, P]](association: Association[K, R, P], value: P): Update[PK, R]=
     SET(association.field.asInstanceOf[Field[Any, R]], value.PRIMARY_KEY.value)
+
   def SET_NULL[T](field: Field[T, R]): Update[PK, R] = {
     _setClause ++= List(field -> None)
     this
   }
+
   def SET_NULL[K, P <: Record[K, P]](association: Association[K, R, P]): Update[PK, R] =
     SET_NULL(association.field)
 
   def parameters = _setClause.map(_._2) ++ _where.parameters
-  def toSql: String = ormConf.dialect.update(this)
+
+  def toSql = ormConf.dialect.update(this)
 
 }
 
@@ -438,7 +462,10 @@ And now let's take a look at the manipulation example.
     "UPDATE orm.country c SET c.code = c.code".toDml.execute()
 */
 class NativeQueryHelper(val expr: String) {
+
   def toSql[T](projection: Projection[T]): NativeSQLQuery[T] =
     new NativeSQLQuery[T](projection, prepareExpr(expr))
+
   def toDml: NativeDMLQuery = new NativeDMLQuery(prepareExpr(expr))
+
 }

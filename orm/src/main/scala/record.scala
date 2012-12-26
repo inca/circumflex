@@ -50,7 +50,9 @@ abstract class Record[PK, R <: Record[PK, R]]
   will act a relation for this type of records.
   */
   def PRIMARY_KEY: ValueHolder[PK, R]
+
   def isTransient: Boolean = PRIMARY_KEY.isEmpty
+
   def relation: Relation[PK, R]
 
   /*!## Persistence & Validation
@@ -269,12 +271,17 @@ traits. Following identity generators are supported out-of-box:
   next sequence value which is then used as an identifier for persisting.
 */
 trait Generator[PK, R <: Record[PK, R]] extends Record[PK, R] { this: R =>
+
   override protected def _persist(fields: scala.Seq[Field[_, R]]): Int = persist(fields)
+
   def persist(fields: Seq[Field[_, R]]): Int
+
   override def save_!(): Int = if (isTransient) INSERT_!() else UPDATE_!()
+
 }
 
 trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this: R =>
+
   def persist(fields: scala.Seq[Field[_, R]]): Int = {
     // Make sure that PRIMARY_KEY contains `NULL`
     this.PRIMARY_KEY.setNull()
@@ -283,7 +290,10 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     // Fetch either the whole record or just an identifier.
     val root = relation.AS("root")
     if (relation.isAutoRefresh)
-      SELECT(root.*).FROM(root).WHERE(ormConf.dialect.identityLastIdPredicate(root)).unique() match {
+      SELECT(root.*)
+          .FROM(root)
+          .WHERE(ormConf.dialect.identityLastIdPredicate(root))
+          .unique() match {
         case Some(r: R) => relation.copyFields(r, this)
         case _ => throw new ORMException("Backend didn't return last inserted record. " +
             "Try another identifier generation strategy.")
@@ -295,9 +305,11 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     }
     result
   }
+
 }
 
 trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this: R =>
+
   def persist(fields: scala.Seq[Field[_, R]]): Int = {
     // Poll database for next sequence value
     val root = relation.AS("root")
@@ -318,4 +330,5 @@ trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
           "Try another identifier generation strategy.")
     }
   }
+
 }

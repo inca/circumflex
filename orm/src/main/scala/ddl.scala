@@ -17,14 +17,19 @@ class DDLUnit {
 
   protected var _schemata: Seq[Schema] = Nil
   def schemata = _schemata
+
   protected var _tables: Seq[Table[_, _]] = Nil
   def tables = _tables
+
   protected var _views: Seq[View[_, _]] = Nil
   def views = _views
+
   protected var _constraints: Seq[Constraint] = Nil
   def constraints = _constraints
+
   protected var _preAux: Seq[SchemaObject] = Nil
   def preAux = _preAux
+
   protected var _postAux: Seq[SchemaObject] = Nil
   def postAux = _postAux
 
@@ -195,6 +200,10 @@ class DDLUnit {
       preAux.size +
       postAux.size
 
+  def addPackage(urls: Iterable[URL], pkg: String) {
+    add(DDLUnit.searchObjects(urls, pkg): _*)
+  }
+
   override def toString: String = {
     var result = "Circumflex DDL Unit: "
     if (messages.size == 0) {
@@ -255,15 +264,16 @@ object DDLUnit {
         None
     }
 
-  def fromClasspath(urls: Iterable[URL],
-                    pkgPrefix: String = ""): DDLUnit = {
-    val ddl = new DDLUnit()
-    val objects = urls
-        .toSeq
+  def searchObjects(urls: Iterable[URL],
+                    pkgPrefix: String = ""): Seq[SchemaObject] =
+    urls.toSeq
         .flatMap(url => cx.searchClasses(url, _.startsWith(pkgPrefix)))
         .distinct
         .flatMap(cl => instantiateObject(cl))
-    ddl.add(objects: _*)
+
+  def fromClasspath(urls: Iterable[URL],
+                    pkgPrefix: String = ""): DDLUnit = {
+    val ddl = new DDLUnit(searchObjects(urls, pkgPrefix): _*)
     ORM_LOG.debug("Lookup complete, " + ddl.objectsCount + " objects found.")
     ddl
   }

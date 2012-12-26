@@ -39,12 +39,16 @@ trait Expression extends SQLable {
 }
 
 object Expression {
+
   implicit def toPredicate(expression: Expression): Predicate =
       new SimpleExpression(expression.toSql, expression.parameters)
+
   implicit def toProjection[T](expression: Expression): Projection[T] =
     new ExpressionProjection[T](expression.toSql)
+
   implicit def toOrder(expression: Expression): Order =
     new Order(expression.toSql, expression.parameters)
+
 }
 
 /*!# Schema Object
@@ -81,7 +85,9 @@ trait ValueHolder[T, R <: Record[_, R]]
     with Equals {
 
   def name: String
+
   def record: R
+
   def item = value
 
   /*!## Setters
@@ -179,32 +185,44 @@ trait ValueHolder[T, R <: Record[_, R]]
 
   def EQ(value: T): Predicate =
     new SimpleExpression(ormConf.dialect.EQ(aliasedName, placeholder), List(value))
+
   def EQ(col: ColumnExpression[_, _]): Predicate =
     new SimpleExpression(ormConf.dialect.EQ(aliasedName, col.toSql), Nil)
+
   def NE(value: T): Predicate =
     new SimpleExpression(ormConf.dialect.NE(aliasedName, placeholder), List(value))
+
   def NE(col: ColumnExpression[_, _]): Predicate =
     new SimpleExpression(ormConf.dialect.NE(aliasedName, col.toSql), Nil)
+
   def IS_NULL: Predicate =
     new SimpleExpression(ormConf.dialect.IS_NULL(aliasedName), Nil)
+
   def IS_NOT_NULL: Predicate =
     new SimpleExpression(ormConf.dialect.IS_NOT_NULL(aliasedName), Nil)
 
 }
 
 object ValueHolder {
+
   implicit def toColExpr[T, R <: Record[_, R]](vh: ValueHolder[T, R]): ColumnExpression[T, R] =
     new ColumnExpression(vh)
+
   implicit def toOrder(vh: ValueHolder[_, _]): Order =
     new Order(vh.aliasedName, Nil)
+
   implicit def toProjection[T](vh: ValueHolder[T, _]): Projection[T] =
     new ExpressionProjection[T](vh.aliasedName)
+
 }
 
 class ColumnExpression[T, R <: Record[_, R]](column: ValueHolder[T, R])
     extends Expression {
+
   def parameters = Nil
+
   val toSql = column.aliasedName
+
 }
 
 /*! `RowResult` is returned from SELECT queries with arbitrary projections.

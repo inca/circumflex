@@ -258,14 +258,15 @@ class Dialect {
 
   protected def joinInternal(node: RelationNode[_, _], on: String): String = {
     var result = ""
-    node match {
-      case j: JoinNode[_, _, _, _] =>
-        result += joinInternal(j.left, on) +
-            " " + j.joinType.toSql + " " +
-            joinInternal(j.right, j.sqlOn)
-      case _ =>
-        result += node.toSql
-        if (on != null) result += " " + on
+    if (node.isInstanceOf[JoinNode[_, _, _, _]]) {
+      val jn = node.asInstanceOf[JoinNode[_, _, _, _]]
+      result += joinInternal(jn.left, on) +
+          " " + jn.joinType.toSql + " " +
+          joinInternal(jn.right, jn.sqlOn)
+    } else {
+      result += node.toSql
+      if (on != null)
+        result += " " + on
     }
     result
   }

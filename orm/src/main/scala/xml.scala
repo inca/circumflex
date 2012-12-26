@@ -1,7 +1,7 @@
 package pro.savant.circumflex
 package orm
 
-import xml._
+import scala.xml._
 import java.io.File
 
 /*!# XML (de)serialization
@@ -17,9 +17,12 @@ Every `Field` capable of (de)serializing itself (from)into XML should extend the
 abstract class XmlSerializable[T, R <: Record[_, R]](
     name: String, record: R, sqlType: String)
     extends Field[T, R](name, record, sqlType) {
+
   def fromString(str: String): Option[T]
+
   def toString(value: Option[T]): String =
     value.map(_.toString).getOrElse("")
+
 }
 
 /*! Deployment is a unit of work of XML import tool. It specifies the `prefix` for record
@@ -136,9 +139,10 @@ class Deployment(val id: String,
     crit
   }
 
-  protected def convertValue(field: Field[Any, _], v: String): Option[Any] = field match {
-    case field: XmlSerializable[Any, _] => field.fromString(v)
-    case _ => Some(v)
+  protected def convertValue(field: Field[Any, _], v: String): Option[Any] = {
+    if (field.isInstanceOf[XmlSerializable[_, _]])
+      field.asInstanceOf[XmlSerializable[Any, _]].fromString(v)
+    else Some(v)
   }
 
   override def toString = id match {
@@ -178,7 +182,9 @@ object Deployment {
 }
 
 class DeploymentHelper(f: File) {
+
   def loadData() {
     Deployment.readAll(XML.loadFile(f)).foreach(_.process())
   }
+
 }
