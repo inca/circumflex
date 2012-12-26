@@ -1,8 +1,11 @@
 package pro.savant.circumflex
 package core
 
-import collection.mutable.{HashMap}
-import java.util.{MissingResourceException, ResourceBundle, Locale}
+import collection.mutable.{ListBuffer, HashMap}
+import java.util.{MissingResourceException, ResourceBundle}
+import java.net.{URI, URL}
+import java.io.File
+import java.util.jar.JarFile
 
 /*!# Configuration API
 
@@ -60,4 +63,80 @@ object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
   }
 
   override def stringPrefix = "cx"
+
+  /*! ## ClassPath utils
+
+  The `Circumflex` singleton also includes methods for working with
+  class loaders:
+
+    * `classLoader` returns the context class loader of current thread,
+      which can be overridden using `cx.class.loader` context variable
+      (see [[/core/src/main/scala/context.scala]]);
+
+    * `searchClasses` scans specified `url` for classes with names matching
+      specified `predicate` function (`url` can either be directory or JAR file,
+      classes should be loadable by the class loader returned by the
+      `classLoader` method).
+  */
+
+  def classLoader = ctx.getAs[ClassLoader]("cx.class.loader")
+      .getOrElse(Thread.currentThread.getContextClassLoader)
+
+  def searchClasses(url: URL,
+                    predicate: String => Boolean): Seq[Class[_]] = {
+    val file = new File(url.toURI)
+    if (file.isDirectory)
+      searchClassesDir(file, "", predicate)
+    else if (file.getName.toLowerCase.endsWith(".jar"))
+      searchClassesJar(file, predicate)
+    else Nil
+  }
+
+  def searchClassesDir(file: File,
+                       packagePrefix: String,
+                       predicate: String => Boolean): Seq[Class[_]] =
+    file.listFiles.flatMap { f =>
+      val name = f.getName
+      if (f.isDirectory)
+        searchClassesDir(f, packagePrefix + name + ".", predicate)
+      else if (isTopLevelClassFile(name)) {
+        val className = packagePrefix + getClassName(name)
+        if (predicate(className))
+          safeLoadClass(className)
+        else None
+      } else None
+    }
+
+  def searchClassesJar(file: File,
+                       predicate: String => Boolean): Seq[Class[_]] = {
+    val jar = new JarFile(file)
+    val entries = jar.entries
+    val buffer = new ListBuffer[Class[_]]
+    while (entries.hasMoreElements) {
+      val entry = entries.nextElement()
+      if (isTopLevelClassFile(entry.getName)) {
+        val className = getClassName(entry.getName.replace('/', '.'))
+        if (predicate(className))
+          safeLoadClass(className).map(cl => buffer += cl)
+      }
+    }
+    new URI()
+    buffer.toSeq
+  }
+
+  protected def safeLoadClass(className: String): Option[Class[_]] =
+    try {
+      Some(classLoader.loadClass(className))
+    } catch {
+      case e: Exception =>
+        CX_LOG.warn("Could not load class: " + className)
+        None
+    }
+
+  def isTopLevelClassFile(filename: String) =
+    filename.endsWith(".class") && filename.matches("[^\\$]+(?:\\$$)?")
+
+  def getClassName(filename: String) =
+    filename.substring(0, filename.length - 6)
+
 }

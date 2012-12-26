@@ -7,6 +7,8 @@ import java.lang.IllegalStateException
 import org.apache.commons.io.FileUtils
 import collection.JavaConversions._
 import java.lang.reflect.Modifier
+import java.net.URL
+import util.control.ControlThrowable
 
 /*!# Exporting Database Schema
 
@@ -191,11 +193,11 @@ class DDLUnit {
   }
 
   def objectsCount: Int = schemata.size +
-    tables.size +
-    constraints.size +
-    views.size +
-    preAux.size +
-    postAux.size
+      tables.size +
+      constraints.size +
+      views.size +
+      preAux.size +
+      postAux.size
 
   override def toString: String = {
     var result = "Circumflex DDL Unit: "
@@ -234,6 +236,33 @@ object DDLUnit {
     case _ => List(new File("target/classes"), new File("target/test-classes"))
   }
 
+  def instantiateObject(className: Class[_]): Option[SchemaObject] =
+    try {
+      // Ensure that anonymous objects are not processed separately.
+      if (className.matches("[^\\$]+(?:\\$$)?"))
+        throw new CircumflexException with ControlThrowable
+      val c = cx.classLoader.loadClass(className)
+      var so: SchemaObject = null
+      // Try to treat it as a singleton
+      try {
+        val module = c.getField("MODULE$")
+        if (isSchemaObjectType(module.getType))
+          so = module.get(null).asInstanceOf[SchemaObject]
+      } catch {
+        case e: NoSuchFieldException =>
+          // Try to instantiate it as a POJO.
+          if (isSchemaObjectType(c))
+            so = c.newInstance.asInstanceOf[SchemaObject]
+      }
+      if (so != null)
+        Some(so)
+      else None
+    } catch {
+      case e: Exception =>
+        // Omit non-schema classes silently
+        None
+    }
+
   def fromClasspath(pkgPrefix: String = ""): DDLUnit = {
     val loader = this.getClass.getClassLoader
     val ddl = new DDLUnit()
@@ -255,30 +284,7 @@ object DDLUnit {
         for (file <- collectionAsScalaIterable(files)) {
           val relPath = file.getCanonicalPath.substring(dir.getCanonicalPath.length + 1)
           val className = relPath.substring(0, relPath.length - ".class".length).replaceAll(File.separator, ".")
-          // Ensure that anonymous objects are not processed separately.
-          if (className.matches("[^\\$]+(?:\\$$)?"))
-            try {
-              val c = loader.loadClass(className)
-              var so: SchemaObject = null
-              // try to treat it as a singleton
-              try {
-                val module = c.getField("MODULE$")
-                if (isSchemaObjectType(module.getType))
-                  so = module.get(null).asInstanceOf[SchemaObject]
-              } catch {
-                case e: NoSuchFieldException =>
-                  // Try to instantiate it as a POJO.
-                  if (isSchemaObjectType(c))
-                    so = c.newInstance.asInstanceOf[SchemaObject]
-              }
-              if (so != null) {
-                ddl.addObject(so)
-                ORM_LOG.debug("Found schema object: " + c.getName)
-              }
-            } catch {
-              case e: Exception =>
-              // Omit non-schema classes silently
-            }
+
         }
       } catch {
         case e: Exception => ORM_LOG.warn(e.getMessage)
@@ -290,7 +296,7 @@ object DDLUnit {
 
   protected def isSchemaObjectType(c: Class[_]): Boolean =
     classOf[SchemaObject].isAssignableFrom(c) &&
-      !Modifier.isAbstract(c.getModifiers) &&
-      !Modifier.isInterface(c.getModifiers)
+        !Modifier.isAbstract(c.getModifiers) &&
+        !Modifier.isInterface(c.getModifiers)
 
 }
