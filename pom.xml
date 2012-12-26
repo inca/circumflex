@@ -23,9 +23,9 @@
     <module>security</module>
     <module>markeven</module>
     <module>ftl</module>
-    <module>orm</module>
     <module>mail</module>
     <module>docco</module>
+    <module>orm</module>
     <module>maven-plugin</module>
     <module>archetype</module>
   </modules>

@@ -36,6 +36,14 @@ object MailWorker {
   val maxAttempts: Int = cx.get("mail.queue.maxAttemts")
       .map(_.toString.toInt).getOrElse(3)
 
+  def fromAddress = ctx.getString("mail.from.address")
+      .orElse(cx.getString("mail.from.address"))
+      .getOrElse(throw new CircumflexException("Please configure the `mail.from.address` parameter."))
+
+  def fromTitle = ctx.getString("mail.from.title")
+      .orElse(msg.get("mail.from.title"))
+      .getOrElse("Untitled")
+
   /**
    * Bulk sends specified `messages`, returns failed messages, if any.
    */
@@ -60,9 +68,7 @@ class MailMessage {
   import MailWorker._
 
   val fromAddress = new InternetAddress(
-    cx("mail.from.address").toString,
-    msg.get("mail.from.title").getOrElse("SAVANT.PRO"),
-    "UTF-8")
+    MailWorker.fromAddress, MailWorker.fromTitle, "UTF-8")
 
   val mimeMessage = new MimeMessage(session)
   mimeMessage.setFrom(fromAddress)

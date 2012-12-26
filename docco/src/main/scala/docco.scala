@@ -1,14 +1,14 @@
 package pro.savant.circumflex
 package docco
 
-import core._, freemarker._
+import core._, freemarker._, markeven._
 import java.io._
 import org.apache.commons.io.filefilter.{TrueFileFilter, RegexFileFilter}
-import java.util.{Collection => JCollection}
 import collection.mutable.ListBuffer
 import org.apache.commons.io.{FilenameUtils, IOUtils, FileUtils}
 
-case class Section(private var _doc: String = "", private var _code: String = "") {
+case class DoccoSection(private var _doc: String = "",
+                        private var _code: String = "") {
 
   var committed = false
 
@@ -22,6 +22,7 @@ case class Section(private var _doc: String = "", private var _code: String = ""
     _code += s + "\n"
     this
   }
+
   def code = trimNewLines(_code)
 
   def addDoc(s: String): this.type = {
@@ -29,9 +30,10 @@ case class Section(private var _doc: String = "", private var _code: String = ""
     _md = null
     this
   }
+
   def doc: String = {
     if (_md == null)
-      _md = markeven.toHtml(_doc)
+      _md = Docco.renderer.toHtml(_doc)
     _md
   }
 
@@ -57,24 +59,30 @@ FreeMarker `Configuration` and templates.
  [1]: http://freemarker.org "FreeMarker Templating Engine"
 */
 object Docco {
-  def apply(sourceFile: String, stripScaladoc: Boolean = true,
-    useScaladoc: Boolean = false): Docco = 
-  new Docco(new File(sourceFile), stripScaladoc, useScaladoc)
+
+  def apply(sourceFile: String,
+            stripScaladoc: Boolean = true,
+            useScaladoc: Boolean = false): Docco =
+    new Docco(new File(sourceFile), stripScaladoc, useScaladoc)
+
+  def renderer = ctx.getAs[MarkevenRenderer]("docco.renderer")
+      .getOrElse(DEFAULT_RENDERER)
 }
 
-class Docco(val file: File, val stripScaladoc: Boolean = true,
-    val useScaladoc: Boolean = false) {
+class Docco(val file: File,
+            val stripScaladoc: Boolean = true,
+            val useScaladoc: Boolean = false) {
 
-  val pageTemplate: String = cx.get("docco.pageTemplate")
-      .map(_.toString).getOrElse("/docco-single-page.html.ftl")
+  val pageTemplate: String = cx.get("docco.templates.page")
+      .map(_.toString).getOrElse("/docco/single-page.html.ftl")
   val docSingleLine = "^\\s*/\\*!\\s*(.*?)\\*/".r
   val docBegin = "^(\\s*)/\\*!\\s*(.*)".r
   val docEnd = "(.*?)\\*/\\s*".r
   val scaladocBegin = "^(\\s*)/\\*\\*(.*)".r
 
   val sections = {
-    var result = new ListBuffer[Section]
-    var section = new Section()
+    var result = new ListBuffer[DoccoSection]
+    var section = new DoccoSection()
     val reader = new BufferedReader(new FileReader(file))
     var insideDoc = false
     var insideScaladoc = false
@@ -82,12 +90,12 @@ class Docco(val file: File, val stripScaladoc: Boolean = true,
     def flushSection() {
       if (!section.isEmpty)
         result ++= List(section)
-      section = new Section()
+      section = new DoccoSection()
     }
     def flushSectionIfCommitted(s: String) {
       if (section.committed)
         flushSection()
-        section.addDoc(s)
+      section.addDoc(s)
     }
     try {
       var str = reader.readLine
@@ -137,7 +145,9 @@ class Docco(val file: File, val stripScaladoc: Boolean = true,
   /* Export to HTML */
   def writeHtml(writer: Writer) {
     ftlConfig.getTemplate(pageTemplate)
-        .process(Map[String, Any]("title" -> file.getName, "sections" -> sections), writer)
+        .process(
+      Map("title" -> file.getName, "sections" -> sections),
+      writer)
   }
 
   def writeHtml(file: File) {
@@ -170,38 +180,47 @@ parameter and contains:
   * generated subfolders and documentation;
   * custom resources in `.docco`.
 */
-class DoccoBatch {
+class DoccoBatch { batch =>
+
   // Base path for crawler
   val basePath: File = cx.get("docco.basePath") match {
     case Some(f: File) => f
     case Some(s: String) => new File(s)
     case _ => new File(".")
   }
+
+  // Where should we store results of our work?
   val outputPath = cx.get("docco.outputPath") match {
     case Some(f: File) => f
     case Some(s: String) => new File(s)
     case _ => new File("target/docco")
   }
-  // Where should we store results of our work?
+
   // Templates
-  val pageTemplate: String = cx.get("docco.pageTemplate")
-      .map(_.toString).getOrElse("/docco-batch-page.html.ftl")
-  val indexTemplate: String = cx.get("docco.indexTemplate")
-      .map(_.toString).getOrElse("/docco-index.html.ftl")
+  val pageTemplate: String = cx.get("docco.templates.page")
+      .map(_.toString).getOrElse("/docco/batch-page.html.ftl")
+  val indexTemplate: String = cx.get("docco.templates.index")
+      .map(_.toString).getOrElse("/docco/index.html.ftl")
+
   // Regex to filter sources
   val filenameRegex = cx.get("docco.filenameRegex").map(_.toString)
       .getOrElse(".*\\.scala$")
+
   // Custom resources
   var customResources: List[String] = Nil
+
   // Title for index
   val title: String = cx.get("docco.title").map(_.toString)
       .getOrElse(basePath.getCanonicalFile.getName + " index")
+
   // Should we strip Scaladoc ( `/** .. */` ) or not?
   val stripScaladoc: Boolean = cx.get("docco.stripScaladoc")
       .map(_.toString.toBoolean).getOrElse(true)
+
   // Should we ignore files with no docco?
   val skipEmpty: Boolean = cx.get("docco.skipEmpty")
       .map(_.toString.toBoolean).getOrElse(true)
+
   // Should we use Scaladoc for docco?
   val useScaladoc: Boolean = cx.get("docco.useScaladoc")
       .map(_.toString.toBoolean).getOrElse(false)
@@ -214,25 +233,24 @@ class DoccoBatch {
       // create output directories if they do not already exist
       FileUtils.forceMkdir(customResDir)
       // copy resources
-      customResources.foreach {
-        r =>
-          var f = new File(r)
-          if (f.isDirectory) FileUtils.copyDirectory(f, customResDir)
-          else if (f.isFile) FileUtils.copyFile(f, customResDir)
-          else {
-            // try to load the resource as stream
-            val res = getClass.getResource(r)
-            if (res != null) {
-              val in = res.openStream
-              val out = new FileOutputStream(new File(customResDir, FilenameUtils.getName(r)))
-              try {
-                IOUtils.copy(in, out)
-              } finally {
-                in.close()
-                out.close()
-              }
+      customResources.foreach { r =>
+        val f = new File(r)
+        if (f.isDirectory) FileUtils.copyDirectory(f, customResDir)
+        else if (f.isFile) FileUtils.copyFile(f, customResDir)
+        else {
+          // try to load the resource as stream
+          val res = getClass.getResource(r)
+          if (res != null) {
+            val in = res.openStream
+            val out = new FileOutputStream(new File(customResDir, FilenameUtils.getName(r)))
+            try {
+              IOUtils.copy(in, out)
+            } finally {
+              in.close()
+              out.close()
             }
           }
+        }
       }
     }
   }
@@ -243,13 +261,46 @@ class DoccoBatch {
     val bp = basePath.getCanonicalPath
     val op = outputPath.getCanonicalPath
     val sources = new ListBuffer[File]
-    val srcIt = FileUtils.listFiles(basePath,
+    val srcIt = FileUtils.listFiles(
+      basePath,
       new RegexFileFilter(filenameRegex),
-      TrueFileFilter.INSTANCE).asInstanceOf[JCollection[File]].iterator
+      TrueFileFilter.INSTANCE)
+        .iterator
     while (srcIt.hasNext)
       sources += srcIt.next
-    // generate doccos
+    // Generate doccos
     val doccos = sources.flatMap { f =>
+      // Prepare renderer
+      val conf = new MarkevenConf {
+
+        val delegate = markeven.DEFAULT_RENDERER.conf
+
+        def resolveLink(id: String) = {
+          val f1 = if (id.startsWith("/"))
+            new File(batch.basePath, id)
+          else new File(f, id)
+          if (f1.isFile) {
+            val bp = batch.basePath.getCanonicalPath
+            var rel = f.getCanonicalPath.substring(bp.length + 1)
+            val name = f1.getCanonicalPath.substring(bp.length + 1)
+            var result = name
+            var i = rel.indexOf("/")
+            while (i != -1) {
+              result = "../" + result
+              rel = rel.substring(i + 1)
+              i = rel.indexOf("/")
+            }
+            Some(new LinkDef(result + ".html", name))
+          } else delegate.resolveLink(id)
+        }
+
+        def resolveMedia(id: String) = delegate.resolveMedia(id)
+
+        def resolveFragment(id: String) = delegate.resolveFragment(id)
+
+      }
+      ctx.update("docco.renderer", new MarkevenRenderer(conf))
+      // Now parse file with docco
       val docco = new Docco(f, stripScaladoc, useScaladoc)
       if (!skipEmpty || docco.sections.size > 1) {
         val fp = f.getCanonicalPath
@@ -275,10 +326,14 @@ class DoccoBatch {
       val filenames = p._2.map(f => f.getName.replaceAll("\\.html$", ""))
       (dirName -> filenames)
     }
-    val dirs = indexMap.keys.toList.sortBy(_.toString)
+    val dirs = indexMap.keys.toList.sorted
     val out = new FileWriter(new File(outputPath, "index.html"))
     try {
-      var data = Map[String, Any]("dirs" -> dirs, "index" -> indexMap, "title" -> title)
+      val data = Map(
+        "batch" -> batch,
+        "dirs" -> dirs,
+        "index" -> indexMap,
+        "title" -> title)
       ftlConfig.getTemplate(indexTemplate).process(data, out)
     } finally {
       out.close()
