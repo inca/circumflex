@@ -72,13 +72,12 @@ trait ContextTaskManager extends TaskManager {
   val uuid = randomUUID
   val KEY = "task.mgr." + uuid
 
-  protected def getOps: ListBuffer[() => Unit] = ctx.get(KEY) match {
-    case Some(list: ListBuffer[() => Unit]) => list
-    case _ =>
+  protected def getOps: ListBuffer[() => Unit] =
+    ctx.getAs[ListBuffer[() => Unit]](KEY).getOrElse {
       val list = new ListBuffer[() => Unit]
       ctx.update(KEY, list)
       list
-  }
+    }
 
   override def enqueue(op: () => Unit) {
     getOps += op

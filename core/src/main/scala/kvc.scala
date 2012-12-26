@@ -113,7 +113,7 @@ object MySingleton // class name is com.myapp.MySingleton$
         "fully-qualified name of implementing class."))
 
   def instantiate[C](name: String, default: => C): C = get(name) match {
-    case Some(c: Class[C]) => _instantiate[C](name, c)
+    case Some(c: Class[_]) => _instantiate[C](name, c)
     case Some(s: String) if (s.trim() != "") =>
       _instantiate[C](name, Class.forName(s.trim()))
     case v => default

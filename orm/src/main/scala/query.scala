@@ -211,9 +211,10 @@ class Select[T](projection: Projection[T])
     this
   }
 
-  override def isUndefinedQueryPlan = _relations.exists {
-    case j: JoinNode[_, _, _, _] => j.isUndefined
-    case _ => false
+  override def isUndefinedQueryPlan = _relations.exists { node =>
+    if (node.isInstanceOf[JoinNode[_, _, _, _]])
+      node.asInstanceOf[JoinNode[_, _, _, _]].isUndefined
+    else false
   }
 
   protected def ensureNodeAlias(node: RelationNode[_, _]): RelationNode[_, _] =
