@@ -1,7 +1,6 @@
 package pro.savant.circumflex
 package web
 
-import core._
 import util.matching.Regex
 import scala.xml.Node
 
@@ -66,10 +65,8 @@ class Router {
   */
   val filter = new FilterRoute
 
-  def uri: MatchResult = ctx.get("uri") match {
-    case Some(m: MatchResult) => m
-    case None => new MatchResult("uri", "splat" -> request.uri)
-  }
+  def uri: MatchResult = ctx.getAs[MatchResult]("uri")
+      .getOrElse(new MatchResult("uri", "splat" -> request.uri))
 
   /*!## URI rewriting
 
