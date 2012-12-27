@@ -140,10 +140,10 @@ class DDLUnit {
 
   def _drop() {
     tx.execute({ conn =>
-    // We will commit every successfull statement.
+    // We will commit every successfull statement
       val autoCommit = conn.getAutoCommit
       conn.setAutoCommit(true)
-      // Execute a script.
+      // Execute a script
       dropObjects(postAux)
       dropObjects(views)
       if (ormConf.dialect.supportsDropConstraints)
@@ -152,7 +152,7 @@ class DDLUnit {
       dropObjects(preAux)
       if (ormConf.dialect.supportsSchema)
         dropObjects(schemata)
-      // Restore auto-commit.
+      // Restore auto-commit
       conn.setAutoCommit(autoCommit)
     }, { throw _ })
   }
@@ -165,10 +165,10 @@ class DDLUnit {
 
   def _create() {
     tx.execute({ conn =>
-    // We will commit every successfull statement.
+    // We will commit every successfull statement
       val autoCommit = conn.getAutoCommit
       conn.setAutoCommit(true)
-      // Execute a script.
+      // Execute a script
       if (ormConf.dialect.supportsSchema)
         createObjects(schemata)
       createObjects(preAux)
@@ -176,7 +176,7 @@ class DDLUnit {
       createObjects(constraints)
       createObjects(views)
       createObjects(postAux)
-      // Restore auto-commit.
+      // Restore auto-commit
       conn.setAutoCommit(autoCommit)
     }, { throw _ })
   }

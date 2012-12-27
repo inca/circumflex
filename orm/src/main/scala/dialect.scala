@@ -8,13 +8,11 @@ import java.sql._
 This little thingy does all dirty SQL rendering.
 
 We are orienting the default dialect on the world's most advanced open-source
-database, [PostgreSQL][psql].
+database, [PostgreSQL](http://postgresql.org).
 
 If you feel that some of the statements do not work with your RDBMS vendor,
 trace the exact method and provide it's implementation in your own class.
 After that, set the `orm.dialect` configuration parameter accordingly.
-
-  [psql]: http://postgresql.org
 */
 class Dialect {
 

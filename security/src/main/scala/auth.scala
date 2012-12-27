@@ -161,7 +161,7 @@ to the `Referer` header.*/
   the `secureDomain` method. */
   def login(principal: U, rememberMe: Boolean) {
     principalOption.filter(_.uniqueId != principal.uniqueId).map { u =>
-    // Another principal is logged in. Let's log him off.
+    // Another principal is logged in. Let's log him off
       locationId.map(lid => u.purgeSessions(lid))
       dropRememberMeCookie()
     }

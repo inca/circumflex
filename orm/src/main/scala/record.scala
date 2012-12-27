@@ -14,13 +14,15 @@ Circumflex ORM is all about type safety and domain-specific languages (at a firs
 glance the record definition may seem a little verbose). Here's the sample definition
 of fictional record `Country`:
 
-    class Country extends Record[String, Country] {
-      val code = "code".VARCHAR(2)
-      val name = "name".TEXT
+``` {.scala}
+class Country extends Record[String, Country] {
+  val code = "code".VARCHAR(2)
+  val name = "name".TEXT
 
-      def PRIMARY_KEY = code
-      val relation = Country
-    }
+  def PRIMARY_KEY = code
+  val relation = Country
+}
+```
 
 */
 abstract class Record[PK, R <: Record[PK, R]]
@@ -36,18 +38,21 @@ abstract class Record[PK, R <: Record[PK, R]]
 
   /*!## Record State
 
-  Records in relational theory are distinguished from each other by the value of their
-  _primary key_. You should specify what field hold the primary key of your record
-  by implementing the `PRIMARY_KEY` method.
+  Records in relational theory are distinguished from each other by the value
+  of their _primary key_. You should specify what field hold the primary key
+  of your record by implementing the `PRIMARY_KEY` method.
 
-  The `isTransient` method indicates, whether the record was not persisted into a database
-  yet or it was. The default logic is simple: if the primary key contains `null` then the
-  record is _transient_ (i.e. not persisted), otherwise the record is considered persistent.
+  The `isTransient` method indicates, whether the record was not persisted
+  into a database yet or it was. The default logic is simple: if the primary
+  key contains `null` then the record is _transient_ (i.e. not persisted),
+  otherwise the record is considered persistent.
 
-  The `relation` method points to the relation from which a record came or to which it
-  should go. In general this method should point to the companion object. However, if
-  you do not convey to Circumflex ORM conventions, you may specify another object which
-  will act a relation for this type of records.
+  The `relation` method points to the relation from which a record came or
+  to which it should go.
+
+  In general this method should point to the companion object. However, if
+  you do not convey to Circumflex ORM conventions, you may specify another
+  object which will act a relation for this type of records.
   */
   def PRIMARY_KEY: ValueHolder[PK, R]
 
@@ -55,25 +60,9 @@ abstract class Record[PK, R <: Record[PK, R]]
 
   def relation: Relation[PK, R]
 
-  /*!## Persistence & Validation
+  /*!## Persistence & Validation */
 
-  The `evict` method removes the record from cache.
-
-  The `refresh` method is used to synchronize an already persisted record with its state in backend.
-  It evicts the record from cache and performs SQL `SELECT` using primary key-based predicate.
-
-  The `INSERT_!`, `UPDATE_!` and `DELETE_!` methods are used to insert, update or delete a single
-  record. The `INSERT` and `UPDATE` do the same as their equivalents except that validation
-  is performed before actual execution. The `refresh` method performs select with primary key
-  criteria and updates the fields with retrieved values.
-
-  When inserting new record into database the primary key should be generated. It is done either
-  by polling database, by supplying `NULL` in primary key and then querying last generated identifier
-  or manually by application. The default implementation relies on application-assigned identifiers;
-  to use different strategy mix in one of the `Generator` traits or simply override the `persist`
-  method.
-  */
-
+  /*! The `evict` method removes the record from cache. */
   def evict(): this.type = {
     if (!isTransient) {
       val key = PRIMARY_KEY().toString
@@ -83,6 +72,12 @@ abstract class Record[PK, R <: Record[PK, R]]
     this
   }
 
+  /*! The `refresh` method is used to synchronize an already persisted record
+  with its state in backend.
+
+  It evicts the record from cache and performs SQL `SELECT`
+  using primary key-based predicate.
+  */
   def refresh(): this.type = if (isTransient)
     throw new ORMException("Could not refresh transient record.")
   else {
@@ -94,10 +89,26 @@ abstract class Record[PK, R <: Record[PK, R]]
         relation.copyFields(r, this)
         this
       case _ =>
-        throw new ORMException("Could not refresh a record because it is missing in the backend.")
+        throw new ORMException("Could not refresh a record because " +
+            "it is missing in the backend.")
     }
   }
 
+
+  /* The `INSERT_!`, `UPDATE_!` and `DELETE_!` methods are used
+  to insert, update or delete a single record.
+
+  The `INSERT` and `UPDATE` do the same as their equivalents except that validation
+  is performed before actual execution.
+
+  When inserting new record into database the primary key should be generated.
+  It is done either by polling database, by supplying `NULL` in primary key
+  and then querying last generated identifier or manually by application.
+
+  The default implementation relies on application-assigned identifiers;
+  to use different strategy mix in one of the `Generator` traits or simply
+  override the `_persist` method.
+  */
   def INSERT_!(fields: Field[_, R]*): Int = if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
   else {
@@ -173,14 +184,23 @@ abstract class Record[PK, R <: Record[PK, R]]
     result
   }
 
+  /*! The `validate` method runs record validation and returns a sequence
+  of error messages in case it fails. Its `validate_!` counterpart throws
+  an exception in case of validation failure or just exits silently.
+  */
   def validate(): Option[Seq[Msg]] = {
     val errors = relation.validation.validate(this)
     if (errors.size <= 0) None
     else Some(List(errors: _*))
   }
 
-  def validate_!() = validate().map(errors => throw new ValidationException(errors))
+  def validate_!() {
+    validate().map(errors => throw new ValidationException(errors))
+  }
 
+  /*! The `save` method (and its non-validating counterpart `save_!`)
+  just issue `INSERT` on transient records and `UPDATE` on persistent ones.
+  */
   def save_!(): Int = if (isTransient)
     throw new ORMException("Application-assigned identifier is expected. " +
         "Use one of the generators if you wish identifiers to be generated automatically.")
@@ -259,20 +279,25 @@ abstract class Record[PK, R <: Record[PK, R]]
 
 /*!# Identity Generation Strategies
 
-Different identity generation strategies can be used by mixing in one of the `Generator`
-traits. Following identity generators are supported out-of-box:
+Different identity generation strategies can be used by mixing in one of the
+`Generator` traits. Following identity generators are supported out-of-box:
 
-  * application-assigned identifiers (the default one, no need to mixin traits): application
-  is responsible for generating and assigning identifiers before attempting to persist a record;
-  * `IdentityGenerator` is a database-specific strategy: application should persist a record
-  with `NULL` primary key value, database is responsible for generating an identifier value and
-  for exposing last generated identifier;
-  * `SequenceGenerator` assumes that database supports sequences: the database is polled for
-  next sequence value which is then used as an identifier for persisting.
+  * application-assigned identifiers (the default one, no need to mixin traits):
+    application is responsible for generating and assigning identifiers before
+    attempting to persist a record;
+
+  * `IdentityGenerator` is a database-specific strategy: application should
+    persist a record with `NULL` primary key value, database is responsible
+    for generating an identifier value and for exposing last generated identifier;
+
+  * `SequenceGenerator` assumes that database supports sequences: the database
+    is polled for next sequence value which is then used as an identifier
+    for persisting.
 */
 trait Generator[PK, R <: Record[PK, R]] extends Record[PK, R] { this: R =>
 
-  override protected def _persist(fields: scala.Seq[Field[_, R]]): Int = persist(fields)
+  override protected def _persist(fields: scala.Seq[Field[_, R]]): Int =
+    persist(fields)
 
   def persist(fields: Seq[Field[_, R]]): Int
 
@@ -287,7 +312,7 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
     this.PRIMARY_KEY.setNull()
     // Persist all not-null fields
     val result = new Insert(relation, fields.filter(!_.isEmpty)).execute()
-    // Fetch either the whole record or just an identifier.
+    // Fetch either the whole record or just an identifier
     val root = relation.AS("root")
     if (relation.isAutoRefresh)
       SELECT(root.*)
@@ -295,13 +320,15 @@ trait IdentityGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
           .WHERE(ormConf.dialect.identityLastIdPredicate(root))
           .unique() match {
         case Some(r: R) => relation.copyFields(r, this)
-        case _ => throw new ORMException("Backend didn't return last inserted record. " +
-            "Try another identifier generation strategy.")
+        case _ =>
+          throw new ORMException("Backend didn't return last inserted record. " +
+              "Try another identifier generation strategy.")
       }
     else ormConf.dialect.identityLastIdQuery(root).unique() match {
       case Some(id: PK) => this.PRIMARY_KEY := id
-      case _ => throw new ORMException("Backend didn't return last generated identity. " +
-          "Try another identifier generation strategy.")
+      case _ =>
+        throw new ORMException("Backend didn't return last generated identity. " +
+            "Try another identifier generation strategy.")
     }
     result
   }
@@ -326,8 +353,9 @@ trait SequenceGenerator[PK, R <: Record[PK, R]] extends Generator[PK, R] { this:
         if (relation.isAutoRefresh)
           refresh()
         result
-      case _ => throw new ORMException("Backend didn't return next sequence value. " +
-          "Try another identifier generation strategy.")
+      case _ =>
+        throw new ORMException("Backend didn't return next sequence value. " +
+            "Try another identifier generation strategy.")
     }
   }
 

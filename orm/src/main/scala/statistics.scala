@@ -12,22 +12,34 @@ counters from `java.util.concurrent.atomic` package.
 Following statistical data is available:
 
   * `connectionsOpened` -- the amount of physical JDBC connections opened by
-  `Transaction` objects;
+    `Transaction` objects;
+
   * `connectionsClosed` -- the amount of physical JDBC connections closed by
-  `Transaction` objects;
+    `Transaction` objects;
+
   * `executions` -- the total amount of invokations of the `execute` method of
-  `Transaction` objects
+    `Transaction` objects
+
   * `executionsSucceeded` -- the amount of successful invokations of the
-  `execute` method of `Transaction` objects;
+    `execute` method of `Transaction` objects;
+
   * `executionsFailed` -- the amount of failed invokations of the `execute`
-  method of `Transaction` objects;
+    method of `Transaction` objects;
+
   * `recordCacheHits` -- the amount of records successfully retrieved from cache;
-  * `recordCacheMisses` -- the amount of records retrieved from database and stored
-  in cache;
-  * `inverseCacheHits` -- the amount of inverse associations retrieved from cache;
-  * `inverseCacheMisses` -- the amount of inverse associations retrieved from database
-  and stored in cache;
-  * `heaviestSqlTime` -- the time (in milliseconds) of the heaviest SQL query execution;
+
+  * `recordCacheMisses` -- the amount of records retrieved from database and
+    stored in cache;
+
+  * `inverseCacheHits` -- the amount of inverse associations retrieved
+    from cache;
+
+  * `inverseCacheMisses` -- the amount of inverse associations retrieved
+    from database and stored in cache;
+
+  * `heaviestSqlTime` -- the time (in milliseconds) of the heaviest SQL query
+    execution;
+
   * `heaviestSql` -- the SQL statement of the heaviest data-retrieval query.
 */
 class StatisticsManager {

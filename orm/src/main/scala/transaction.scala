@@ -131,7 +131,9 @@ class Transaction {
       block
     } catch {
       case e: ControlThrowable =>
-        ORM_LOG.trace("Escaped nested transaction via ControlThrowable, ROLLBACK is suppressed.")
+        ORM_LOG.trace(
+          "Escaped nested transaction via ControlThrowable, " +
+              "ROLLBACK is suppressed.")
         throw e
       case e: Exception =>
         getConnection.rollback(sp)

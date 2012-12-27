@@ -53,7 +53,7 @@ class Deployment(val id: String,
     val cl = pickClass(node)
     var r = cl.newInstance.asInstanceOf[R]
     var update = false
-    // Decide, whether a record should be processed, and how exactly.
+    // Decide, whether a record should be processed, and how exactly
     if (node.attributes.next != null) {
       val crit = prepareCriteria(r, node)
       crit.unique() match {
@@ -67,11 +67,12 @@ class Deployment(val id: String,
         case _ =>
       }
     }
-    // If we are still here, let's process the record further.
+    // If we are still here, let's process the record further
     // In first place, we set provided parents
     parentPath.foreach { p =>
       if (r.relation.fields.contains(p._1.field))
-        r.relation.getField(r, p._1.field.asInstanceOf[Field[Any, R]]).set(p._2.PRIMARY_KEY.value)
+        r.relation.getField(r, p._1.field.asInstanceOf[Field[Any, R]])
+            .set(p._2.PRIMARY_KEY.value)
     }
     var foreigns: Seq[Pair[Association[_, _, _], Node]] = Nil
     // Secondly, we set fields provided via attributes
@@ -86,7 +87,7 @@ class Deployment(val id: String,
             val a = m.invoke(r).asInstanceOf[Association[Any, R, R]]
             val newPath = parentPath ++ List(a -> r)
             val parent = if (n.child.size == 0) {
-              val newNode = Elem(null, a.parentRelation.recordClass.getSimpleName, n.attributes, n.scope)
+              val newNode = Elem(null, a.parentRelation.recordClass.getSimpleName, n.attributes, n.scope, true)
               Some(processNode(newNode, newPath))
             } else n.child.find(_.isInstanceOf[Elem]).map(n => processNode(n, newPath))
             r.relation.getField(r, a.field).set(parent.map(_.PRIMARY_KEY.value))

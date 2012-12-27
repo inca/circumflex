@@ -14,8 +14,10 @@ We use some terminology when speaking about associations:
 
   * the `C` type parameter points to the relation which owns this association
   (we refer to it as the _child relation_);
+
   * the `P` type parameter points to the referenced relation (we refer to it as
   the _parent relation_);
+
   * the `K` type parameter is a type of this association field's value, it must
   match the type of parent relation's primary key.
 */
@@ -145,7 +147,8 @@ class InverseOne[K, C <: Record[_, C], P <: Record[K, P]]
     val children = fetch()
     if (children.size <= 0) return None
     if (children.size > 1)
-      throw new ORMException("One-to-one relationship expected, but multiple records found. " +
+      throw new ORMException("One-to-one relationship expected, " +
+          "but multiple records found. " +
           "Add a UNIQUE constraint or stick with InverseMany.")
     Some(children(0))
   }

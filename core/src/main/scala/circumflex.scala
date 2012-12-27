@@ -48,7 +48,7 @@ object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
       None
   }
 
-  // The configuration object is initialized by reading `cx.properties`.
+  // The configuration object is initialized by reading `cx.properties`
   try {
     locateBundle.map { bundle =>
       val keys = bundle.getKeys

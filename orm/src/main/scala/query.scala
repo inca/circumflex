@@ -37,10 +37,10 @@ trait Query extends SQLable with Expression with Cloneable {
 
   def setParams(st: PreparedStatement, index: Int): Int = {
     var paramsCounter = index
-    parameters.foreach(p => {
+    parameters.foreach { p =>
       ormConf.typeConverter.write(st, convertNamedParam(p), paramsCounter)
       paramsCounter += 1
-    })
+    }
     paramsCounter
   }
 
@@ -55,15 +55,13 @@ trait Query extends SQLable with Expression with Cloneable {
 
   protected def convertNamedParam(param: Any): Any = param match {
     case s: Symbol => lookupNamedParam(s.name)
-    case s: String if (s.startsWith(":")) => lookupNamedParam(s)
+    case s: String if (s.startsWith(":")) =>
+      lookupNamedParam(s)
     case _ => param
   }
 
   protected def lookupNamedParam(name: String): Any =
-    _namedParams.get(name.replaceAll("^:", "")) match {
-      case Some(p) => p
-      case _ => name
-    }
+    _namedParams.get(name.replaceAll("^:", "")).getOrElse(name)
 
   override def clone(): this.type = super.clone.asInstanceOf[this.type]
 
@@ -97,7 +95,8 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   def resultSet[A](actions: ResultSet => A): A = {
     if (isUndefinedQueryPlan)
-      ORM_LOG.warn("Warning! Query plan has ambiguous joins. Please recheck the FROM clause.")
+      ORM_LOG.warn("Warning! Query plan contains ambiguous joins. " +
+          "Please recheck the FROM clause.")
     val result = time {
       tx.execute(toSql, { st =>
         setParams(st, 1)
@@ -150,10 +149,12 @@ trait SearchQuery extends Query {
   protected var _where: Predicate = EmptyPredicate
 
   def whereClause = this._where
+
   def WHERE(predicate: Predicate): this.type = {
     this._where = predicate
     this
   }
+
   def WHERE(expression: String, params: Pair[String,Any]*): this.type =
     WHERE(prepareExpr(expression, params: _*))
 
@@ -168,6 +169,7 @@ trait SearchQuery extends Query {
     }
     this
   }
+
   def add(expression: String, params: Pair[String, Any]*): this.type =
     add(prepareExpr(expression, params: _*))
 }
@@ -230,16 +232,19 @@ class Select[T](projection: Projection[T])
   // HAVING clause
 
   def havingClause: Predicate = this._having
+
   def HAVING(predicate: Predicate): Select[T] = {
     this._having = predicate
     this
   }
+
   def HAVING(expression: String, params: Pair[String,Any]*): Select[T] =
     HAVING(prepareExpr(expression, params: _*))
 
   // GROUP BY clause
 
   protected var _groupByClause = ""
+
   def groupByClause = _groupByClause
 
   def GROUP_BY(proj: Projection[_]*): Select[T] = {
@@ -270,8 +275,9 @@ class Select[T](projection: Projection[T])
     else _groupByClause += ", " + expr
   }
 
-  protected def findProjection(projection: Projection[_],
-                               predicate: Projection[_] => Boolean): Option[Projection[_]] =
+  protected def findProjection
+  (projection: Projection[_],
+   predicate: Projection[_] => Boolean): Option[Projection[_]] =
     if (predicate(projection)) Some(projection)
     else projection match {
       case p: CompositeProjection[_] =>
@@ -282,6 +288,7 @@ class Select[T](projection: Projection[T])
   // Set Operations
 
   protected var _setOps: Seq[Pair[SetOperation, SQLQuery[T]]] = Nil
+
   def setOps = _setOps
 
   protected def addSetOp(op: SetOperation, sql: SQLQuery[T]): Select[T] = {
@@ -292,20 +299,26 @@ class Select[T](projection: Projection[T])
 
   def UNION(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_UNION, sql)
+
   def UNION_ALL(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_UNION_ALL, sql)
+
   def EXCEPT(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_EXCEPT, sql)
+
   def EXCEPT_ALL(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_EXCEPT_ALL, sql)
+
   def INTERSECT(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_INTERSECT, sql)
+
   def INTERSECT_ALL(sql: SQLQuery[T]): Select[T] =
     addSetOp(OP_INTERSECT_ALL, sql)
 
   // ORDER BY clause
 
   def orderByClause = _orders
+
   def ORDER_BY(order: Order*): Select[T] = {
     this._orders ++= order.toList
     this
@@ -314,12 +327,14 @@ class Select[T](projection: Projection[T])
   // LIMIT and OFFSET clauses
 
   def limit = this._limit
+
   def LIMIT(value: Int): Select[T] = {
     _limit = value
     this
   }
 
   def offset = this._offset
+
   def OFFSET(value: Int): Select[T] = {
     _offset = value
     this
@@ -447,19 +462,23 @@ with target query type.
 
 Here are some examples. Let's take a look at querying first.
 
-    // first, determine query result type (the SELECT clause):
-    val p = expr[String]("c.name")
-    // second, convert String to Native SQL using specified projection:
-    val q = "SELECT {*} FROM orm.country c where c.code LIKE :code".toSql(p)
-    // now execute the query, using specified parameters
-    q.set("code", "ch").unique.get must_== "Switzerland"
-    // note that named parameters allow reusing queries
-    q.set("code", "ru").unique.get must_== "Russia"
+``` {.scala}
+// First, determine query result type (the SELECT clause):
+val p = expr[String]("c.name")
+// Second, convert String to Native SQL using specified projection:
+val q = "SELECT {*} FROM orm.country c WHERE c.code LIKE :code".toSql(p)
+// Now execute the query, using specified parameters
+q.set("code", "ch").unique.get must_== "Switzerland"
+// Note that named parameters allow reusing queries
+q.set("code", "ru").unique.get must_== "Russia"
+```
 
 And now let's take a look at the manipulation example.
 
-    // It's that easy:
-    "UPDATE orm.country c SET c.code = c.code".toDml.execute()
+``` {.scala}
+// It's that easy:
+"UPDATE orm.country c SET c.code = c.code".toDml.execute()
+```
 */
 class NativeQueryHelper(val expr: String) {
 

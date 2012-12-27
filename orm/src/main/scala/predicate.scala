@@ -123,6 +123,9 @@ class SimpleExpressionHelper(val expr: String) {
 
 /*! `AggregatePredicateHelper` is used to compose predicates using infix notation. */
 class AggregatePredicateHelper(predicate: Predicate) {
+
   def AND(predicates: Predicate*) = orm.AND((Seq(predicate) ++ predicates): _*)
+
   def OR(predicates: Predicate*) = orm.OR((Seq(predicate) ++ predicates): _*)
+
 }

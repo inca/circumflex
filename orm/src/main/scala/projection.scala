@@ -87,9 +87,8 @@ class ExpressionProjection[T](val expression: String)
   override def hashCode = expression.hashCode
 }
 
-class FieldProjection[T, R <: Record[_, R]](
-                                               val node: RelationNode[_, R],
-                                               val field: Field[T, R])
+class FieldProjection[T, R <: Record[_, R]]
+(val node: RelationNode[_, R], val field: Field[T, R])
     extends AtomicProjection[T] {
 
   def expression = ormConf.dialect.qualifyColumn(field, node.alias)
@@ -107,7 +106,8 @@ class FieldProjection[T, R <: Record[_, R]](
   override def hashCode = node.hashCode * 31 + field.name.hashCode
 }
 
-class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
+class RecordProjection[PK, R <: Record[PK, R]]
+(val node: RelationNode[PK, R])
     extends CompositeProjection[R] {
 
   protected val _fieldProjections: Seq[FieldProjection[_, R]] = node
@@ -115,15 +115,19 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
 
   def subProjections = _fieldProjections
 
-  protected def _readCell[T](rs: ResultSet, vh: ValueHolder[T, R]): Option[T] = vh match {
-    case f: Field[T, R] => _fieldProjections.find(_.field == f)
-        .flatMap(_.asInstanceOf[Projection[T]].read(rs))
-    case a: Association[T, R, _] => _readCell(rs, a.field)
-    case p: FieldComposition2[Any, Any, R] => (_readCell(rs, p._1), _readCell(rs, p._2)) match {
-      case (Some(v1), Some(v2)) => Some((v1, v2).asInstanceOf[T])
-      case _ => None
+  protected def _readCell[T](rs: ResultSet, vh: ValueHolder[T, R]): Option[T] =
+    vh match {
+      case f: Field[T, R] =>
+        _fieldProjections.find(_.field == f)
+            .flatMap(_.asInstanceOf[Projection[T]].read(rs))
+      case a: Association[T, R, _] =>
+        _readCell(rs, a.field)
+      case p: FieldComposition2[Any, Any, R] =>
+        (_readCell(rs, p._1), _readCell(rs, p._2)) match {
+          case (Some(v1), Some(v2)) => Some((v1, v2).asInstanceOf[T])
+          case _ => None
+        }
     }
-  }
 
   def read(rs: ResultSet): Option[R] =
     _readCell(rs, node.relation.PRIMARY_KEY).flatMap { id =>
@@ -134,13 +138,16 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
     val record: R = node.relation.recordClass.newInstance
     println("Instantiated new record " + record)
     _fieldProjections.foreach { p =>
-      node.relation.getField(record, p.field.asInstanceOf[Field[Any, R]]).set(p.read(rs))
+      node.relation
+          .getField(record, p.field.asInstanceOf[Field[Any, R]])
+          .set(p.read(rs))
     }
     record
   }
 
   override def equals(obj: Any) = obj match {
-    case p: RecordProjection[_, _] => this.node == p.node
+    case p: RecordProjection[_, _] =>
+      this.node == p.node
     case _ => false
   }
 
@@ -149,12 +156,17 @@ class RecordProjection[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
 
 class UntypedTupleProjection(val subProjections: Projection[_]*)
     extends CompositeProjection[Array[Option[Any]]] {
-  def read(rs: ResultSet): Option[Array[Option[Any]]] = Some(subProjections.map(_.read(rs)).toArray)
+
+  def read(rs: ResultSet): Option[Array[Option[Any]]] =
+    Some(subProjections.map(_.read(rs)).toArray)
+
 }
 
 class PairProjection[T1, T2] (_1: Projection[T1], _2: Projection[T2])
     extends CompositeProjection[(Option[T1], Option[T2])] {
+
   def subProjections = List[Projection[_]](_1, _2)
+
   def read(rs: ResultSet): Option[(Option[T1], Option[T2])] =
     Some((_1.read(rs), _2.read(rs)))
 }
@@ -170,3 +182,4 @@ class RowProjection(val subProjections: Seq[Projection[_]])
   }
 
 }
+

@@ -1,14 +1,13 @@
 package pro.savant.circumflex
 package orm
 
-import java.sql.ResultSet
-
 /*!# Schema objects
 
 Following classes represent various database schema objects:
 
   * `Schema` corresponds to database schema (or catalog), if such objects
-  are supported by database vendor;
+    are supported by database vendor;
+
   * `Constraint` corresponds to one of database constraint types:
 
     * `Unique`,
@@ -94,21 +93,27 @@ class Index(val name: String,
     extends SchemaObject {
 
   protected var _unique: Boolean = false
+
   def isUnique = _unique
+
   def UNIQUE: this.type = {
     this._unique = true
     this
   }
 
   private var _method: String = "btree"
+
   def usingClause = _method
+
   def USING(method: String): this.type = {
     this._method = method
     this
   }
 
   private var _where: Predicate = EmptyPredicate
+
   def whereClause = _where
+
   def WHERE(predicate: Predicate): this.type = {
     this._where = predicate
     this
@@ -123,6 +128,7 @@ class Index(val name: String,
 }
 
 class ConstraintHelper(name: String, relation: Relation[_, _]) {
+
   def UNIQUE(columns: ValueHolder[_, _]*): UniqueKey =
     new UniqueKey(name, relation, columns.toList)
 
@@ -152,7 +158,12 @@ class ForeignKeyHelper
 
   def REFERENCES(parentRelation: Relation[_, _],
                  parentColumns: ValueHolder[_, _]*): ForeignKey =
-    new ForeignKey(name, childRelation, childColumns, parentRelation, parentColumns)
+    new ForeignKey(
+      name,
+      childRelation,
+      childColumns,
+      parentRelation,
+      parentColumns)
 
 }
 
@@ -165,9 +176,11 @@ class DefinitionHelper[R <: Record[_, R]](name: String, record: R) {
   def DOUBLE(precision: Int = -1, scale: Int = 0) =
     new DoubleField(name, record, precision, scale)
 
-  def NUMERIC(precision: Int = -1,
-              scale: Int = 0,
-              roundingMode: BigDecimal.RoundingMode.RoundingMode = BigDecimal.RoundingMode.HALF_EVEN) =
+  def NUMERIC
+  (precision: Int = -1,
+   scale: Int = 0,
+   roundingMode: BigDecimal.RoundingMode.RoundingMode =
+   BigDecimal.RoundingMode.HALF_EVEN) =
     new NumericField(name, record, precision, scale, roundingMode)
 
   def TEXT = new TextField(name, record, ormConf.dialect.textType)
@@ -203,15 +216,20 @@ case class SetOperation(toSql: String) extends SQLable {
 
 class Order(val expression: String, val parameters: Seq[Any])
     extends Expression {
+
   protected var _specificator = ormConf.dialect.asc
+
   def ASC: this.type = {
     this._specificator = ormConf.dialect.asc
     this
   }
+
   def DESC: this.type = {
     this._specificator = ormConf.dialect.desc
     this
   }
+
   def toSql = expression + " " + _specificator
+
 }
 

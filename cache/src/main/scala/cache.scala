@@ -86,7 +86,7 @@ object DataCache extends Cache[Data] {
 DataCache.get("myData", {
   // Some costly initialization code,
   // which only runs in case of cache miss or
-  // if retrieved object is invalid.
+  // if retrieved object is invalid
 })
 ```
 */

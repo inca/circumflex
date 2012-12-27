@@ -7,11 +7,13 @@ import java.util.regex.Pattern
 /*!# The `orm` Package
 
 Package `orm` contains different shortcuts, utilities, helpers and implicits --
-the basis of DSL of Circumflex ORM.
+the basis of Circumflex ORM DSL.
 
 You should import this package to use Circumflex ORM in your application:
 
-    import pro.savant.circumflex.orm._
+``` {.scala}
+import pro.savant.circumflex.orm._
+```
 */
 package object orm {
 
@@ -25,9 +27,11 @@ package object orm {
   }
 
   def tx: Transaction = ormConf.transactionManager.get
+
   def COMMIT() {
     tx.commit()
   }
+
   def ROLLBACK() {
     tx.rollback()
   }
@@ -38,42 +42,64 @@ package object orm {
       block
     }
 
-  def usingAll[A](newConfs: ORMConfiguration*)(block: ORMConfiguration => A): Seq[A] =
+  def usingAll[A]
+  (newConfs: ORMConfiguration*)
+  (block: ORMConfiguration => A): Seq[A] =
     newConfs.map { c => using(c) { block(c) } }
 
   /*! ## Alias Stack
 
   Circumflex ORM offers nice DSL to reference fields of aliased tables:
 
-      val co = Country AS "co"
-      val predicate = co.name EQ "Switzerland"
+  ``` {.scala}
+  val co = Country AS "co"
+  val predicate = co.name EQ "Switzerland"
+  ```
 
-  In this example `RelationNode[Country]` with alias `"co"` is implicitly converted
+  In this example `RelationNode[Country]` with alias `co` is implicitly converted
   into `Country`, its underlying `Relation`, because only that relation owns field
   `name`. However, the information about the alias is lost during this conversion.
   We use `aliasStack` to remember it during conversion so it can be accessed later.
   */
   object aliasStack {
-    protected def _stack: Stack[String] = ctx.get("orm.aliasStack") match {
-      case Some(s: Stack[String]) => s
-      case _ =>
-        val s = Stack[String]()
+
+    protected[orm] def stack: Stack[String] =
+      ctx.getAs[Stack[String]]("orm.aliasStack")
+          .getOrElse {
+        val s = new Stack[String]
         ctx += "orm.aliasStack" -> s
         s
+      }
+
+    protected[orm] def setStack(stack: Stack[String]) {
+      ctx.update("orm.aliasStack", stack)
     }
-    def pop(): Option[String] = if (_stack.size == 0) None else Some(_stack.pop())
+
+    def preserve[A](actions: () => A): A = {
+      val st = stack.clone()
+      val result = actions()
+      setStack(st)
+      result
+    }
+
+    def pop(): Option[String] = if (stack.size == 0) None else Some(stack.pop())
+
     def push(alias: String) {
-      _stack.push(alias)
+      stack.push(alias)
     }
+
   }
 
   // Pimping core libs
 
   implicit def str2expr(str: String): Expression = prepareExpr(str)
+
   implicit def string2exprHelper(expression: String): SimpleExpressionHelper =
     new SimpleExpressionHelper(expression)
+
   implicit def string2nativeHelper(expression: String): NativeQueryHelper =
     new NativeQueryHelper(expression)
+
   implicit def pair2proj[T1, T2](t: (Projection[T1], Projection[T2])) =
     new PairProjection(t._1, t._2)
 

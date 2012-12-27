@@ -26,7 +26,9 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
   Following example gives table `City` an alias `ci` and uses it to construct a
   `Criteria` object.
 
-      (City AS "ci").map(ci => ci.criteria.add(ci.name LIKE "Lausanne")).list
+  ``` {.scala}
+  (City AS "ci").map(ci => ci.criteria.add(ci.name LIKE "Lausanne")).list
+  ```
    */
   def map[T](f: RelationNode[PK, R] => T): T = f(this)
 
@@ -35,29 +37,31 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
    */
   def * = new RecordProjection[PK, R](this)
 
-  /*! Each relation node define which projection it yields. When nodes are joined
-  the resulting node contains projections from both nodes.
+  /*! Each relation node defines which projection it yields.
+  When the nodes are joined the resulting node contains projections
+  from both nodes.
    */
   def projections: Seq[Projection[_]] = List(*)
 
   /*! Creates new `Criteria` instance with this node as its query plan root. */
   def criteria = new Criteria[PK, R](this)
 
-  /*! Relation nodes can be joined to allow restrictions of associated relations. */
-  def findAssociation[T, F <: Record[T, F]](node: RelationNode[T, F]): Option[Association[T, R, F]] =
+
+  def findAssociation[T, F <: Record[T, F]]
+  (node: RelationNode[T, F]): Option[Association[T, R, F]] =
     this.relation.findAssociation(node.relation)
 
+  /*! Relation nodes can be joined to allow building criteria based on
+  associated relations. */
   def JOIN[T, J <: Record[T, J]]
-  (
-      node: RelationNode[T, J],
-      on: Expression,
-      joinType: JoinType): JoinNode[PK, R, T, J] =
+  (node: RelationNode[T, J],
+   on: Expression,
+   joinType: JoinType): JoinNode[PK, R, T, J] =
     new JoinNode(this, node, joinType).ON(on)
 
   def JOIN[T, J <: Record[T, J]]
-  (
-      node: RelationNode[T, J],
-      joinType: JoinType = LEFT): JoinNode[PK, R, T, J] =
+  (node: RelationNode[T, J],
+   joinType: JoinType = LEFT): JoinNode[PK, R, T, J] =
     findAssociation(node) match {
       case Some(a: Association[T, R, J]) =>  // many-to-one join
         new ManyToOneJoin[PK, R, T, J](this, node, a, joinType)
@@ -69,16 +73,20 @@ class RelationNode[PK, R <: Record[PK, R]](val relation: Relation[PK, R])
       }
     }
 
-  def INNER_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
+  def INNER_JOIN[T, J <: Record[T, J]]
+  (node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
     JOIN(node, INNER)
 
-  def LEFT_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
+  def LEFT_JOIN[T, J <: Record[T, J]]
+  (node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
     JOIN(node, LEFT)
 
-  def RIGHT_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
+  def RIGHT_JOIN[T, J <: Record[T, J]]
+  (node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
     JOIN(node, RIGHT)
 
-  def FULL_JOIN[T, J <: Record[T, J]](node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
+  def FULL_JOIN[T, J <: Record[T, J]]
+  (node: RelationNode[T, J]): JoinNode[PK, R, T, J] =
     JOIN(node, FULL)
 
   /*!## Equality & Others
@@ -183,8 +191,10 @@ associated relations. The `JoinNode` class represents a join between two relatio
 We stick to a general convention called _left associativity_: two joined nodes
 with equal left nodes are considered equal:
 
-    (ci JOIN co) == ci
-    (ci JOIN co JOIN ca) == ((ci JOIN co) JOIN ca)
+``` {.scala}
+(ci JOIN co) == ci
+(ci JOIN co JOIN ca) == ((ci JOIN co) JOIN ca)
+```
 
 This way you can compose arbitrary complex query plans. The join condition
 (the `ON` subclause) can be either inferred from associations or specified

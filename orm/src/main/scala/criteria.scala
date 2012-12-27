@@ -64,9 +64,11 @@ class Criteria[PK, R <: Record[PK, R]]
       case node: RelationNode[PKN, N] =>
         val a = association.asInstanceOf[Association[PKN, N, N]]
         if (node.relation == a.field.record.relation) {   // N == C
-          new ManyToOneJoin[PKN, N, PKN, N](node, preparePf(a.parentRelation, a), a, LEFT)
+          new ManyToOneJoin[PKN, N, PKN, N](node,
+            preparePf(a.parentRelation, a), a, LEFT)
         } else if (node.relation == a.parentRelation) {  // N == P
-          new OneToManyJoin[PKN, N, PKN, N](node, preparePf(a.field.record.relation, a), a, LEFT)
+          new OneToManyJoin[PKN, N, PKN, N](node,
+            preparePf(a.field.record.relation, a), a, LEFT)
         } else node
     }
 
@@ -138,7 +140,7 @@ class Criteria[PK, R <: Record[PK, R]]
   def prefetch(association: Association[_, _, _]): Criteria[PK, R] = {
     val a = association.asInstanceOf[Association[PK, R, R]]
     if (!_prefetchSeq.contains(a)) {
-      // The depth-search is used to update query plan if possible.
+      // The depth-search is used to update query plan if possible
       _rootTree = updateRootTree(_rootTree, a)
       // Also process `prefetchSeq` of parent and child relations
       a.parentRelation.prefetchSeq.foreach(prefetch(_))
@@ -227,12 +229,12 @@ class Criteria[PK, R <: Record[PK, R]]
     val q = mkSelect()
     val result = q.resultSet { rs =>
       if (!rs.next) None     // none records found
-      // Okay, let's grab the first one. This would be the result eventually.
+      // Okay, let's grab the first one. This would be the result eventually
       else q.read(rs) map { firstTuple =>
         processTupleTree(firstTuple, _rootTree)
         val result = firstTuple(0).asInstanceOf[Option[R]].get
         // We don't want to screw prefetches up so let's walk till the end,
-        // but make sure that no other root records appear in result set.
+        // but make sure that no other root records appear in result set
         while (rs.next) {
           q.read(rs) map { tuple =>
             processTupleTree(tuple, _rootTree)

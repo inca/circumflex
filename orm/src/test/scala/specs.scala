@@ -168,17 +168,37 @@ class BasicSpec
           .code() must equal ("ch")
     }
     "handle projections" in {
-      SELECT(COUNT(ci.id)).FROM(ci JOIN co).WHERE(co.code LIKE "ch").unique().get must equal (3l)
+      SELECT(COUNT(ci.id))
+          .FROM(ci JOIN co)
+          .WHERE(co.code LIKE "ch")
+          .unique()
+          .get must equal (3l)
     }
     "handle unions" in {
-      SELECT(ci.name).FROM(ci).UNION(SELECT(co.name).FROM(co)).list().size must equal (10)
+      SELECT(ci.name)
+          .FROM(ci)
+          .UNION(SELECT(co.name).FROM(co))
+          .list().size must equal (10)
     }
     "handle subqueries" in {
-      val q = SELECT(ci.country.field).FROM(ci).WHERE(ci.name LIKE "Lausanne")
-      SELECT(co.*).FROM(co).WHERE(co.code IN q).unique().get.code() must equal ("ch")
+      val q = SELECT(ci.country.field)
+          .FROM(ci)
+          .WHERE(ci.name LIKE "Lausanne")
+      SELECT(co.*)
+          .FROM(co)
+          .WHERE(co.code IN q)
+          .unique()
+          .get.code() must equal ("ch")
     }
     "handle limits, offsets and order-by's" in {
-      SELECT(co.*).FROM(co).LIMIT(1).OFFSET(1).ORDER_BY(co.name ASC).unique().get.code() must equal ("ch")
+      SELECT(co.*)
+          .FROM(co)
+          .LIMIT(1)
+          .OFFSET(1)
+          .ORDER_BY(co.name ASC)
+          .unique()
+          .get
+          .code() must equal ("ch")
     }
     "handle criteria and inverse association merging" in {
       val ch = Country.get("ch").get
@@ -202,9 +222,15 @@ class BasicSpec
     "handle rollbacks" in {
       val pt = new Country("pt", "Portugal")
       pt.INSERT()
-      SELECT(co.*).FROM(co).WHERE(co.code LIKE "pt").unique must equal (Some(pt))
+      SELECT(co.*)
+          .FROM(co)
+          .WHERE(co.code LIKE "pt")
+          .unique must equal (Some(pt))
       ROLLBACK()
-      SELECT(co.*).FROM(co).WHERE(co.code LIKE "pt").unique must equal (None)
+      SELECT(co.*)
+          .FROM(co)
+          .WHERE(co.code LIKE "pt")
+          .unique must equal (None)
     }
     "handle nested transactions" in {
       // we emulate the conditions where only 3 of 10 insert operations are successful
@@ -217,10 +243,20 @@ class BasicSpec
           case _ => "xx"  // already exist => fail
         }
         new Country(code, "Test").INSERT()
-      } catch { case e: Exception => }
-      SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list().size must equal (3)
+      } catch {
+        case e: Exception =>
+      }
+      SELECT(co.*)
+          .FROM(co)
+          .WHERE(co.name LIKE "Test")
+          .list()
+          .size must equal (3)
       ROLLBACK()
-      SELECT(co.*).FROM(co).WHERE(co.name LIKE "Test").list().size must equal (0)
+      SELECT(co.*)
+          .FROM(co)
+          .WHERE(co.name LIKE "Test")
+          .list()
+          .size must equal (0)
     }
   }
 

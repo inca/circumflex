@@ -24,63 +24,68 @@ class RecordValidator[PK, R <: Record[PK, R]] {
   def addForPersisted(validator: R => Option[Msg]): this.type =
     add(r => if (!r.isTransient) validator(r) else None)
 
-  def notNull(f: R => Field[_, R]): this.type = add { r =>
-    val field = f(r)
-    if (field.isEmpty)
-      Some(new Msg(field.uuid + ".null", "record" -> r, "field" -> field))
-    else None
-  }
+  def notNull(f: R => Field[_, R]): this.type =
+    add { r =>
+      val field = f(r)
+      if (field.isEmpty)
+        Some(new Msg(field.uuid + ".null", "record" -> r, "field" -> field))
+      else None
+    }
 
-  def notEmpty(f: R => TextField[R]): this.type = add { r =>
-    val field = f(r)
-    if (field.isEmpty)
-      Some(new Msg(field.uuid + ".null", "record" -> r, "field" -> field))
-    else if (field().trim == "")
-      Some(new Msg(field.uuid + ".empty", "record" -> r, "field" -> field))
-    else None
-  }
+  def notEmpty(f: R => TextField[R]): this.type =
+    add { r =>
+      val field = f(r)
+      if (field.isEmpty)
+        Some(new Msg(field.uuid + ".null", "record" -> r, "field" -> field))
+      else if (field().trim == "")
+        Some(new Msg(field.uuid + ".empty", "record" -> r, "field" -> field))
+      else None
+    }
 
   def pattern(f: R => TextField[R],
               regex: Pattern,
-              key: String = "pattern"): this.type = add { r =>
-    val field = f(r)
-    if (field.isEmpty)
-      None
-    else {
-      val m = regex.matcher(field())
-      if (!m.matches())
-        Some(new Msg(field.uuid + "." + key, "regex" -> regex,
-          "value" -> field(),
-          "record" -> r,
-          "field" -> field))
-      else None
+              key: String = "pattern"): this.type =
+    add { r =>
+      val field = f(r)
+      if (field.isEmpty)
+        None
+      else {
+        val m = regex.matcher(field())
+        if (!m.matches())
+          Some(new Msg(field.uuid + "." + key, "regex" -> regex,
+            "value" -> field(),
+            "record" -> r,
+            "field" -> field))
+        else None
+      }
     }
-  }
 
-  def unique[T](f: R => Field[T, R], key: String = "unique"): this.type = add { r =>
-    val field = f(r)
-    field.value.flatMap { v =>
-      r.relation.criteria.add(field EQ v).unique() match {
-        case Some(a) if (r.isTransient || a != r) =>
-          Some(new Msg(field.uuid + "." + key, "record" -> r, "field" -> field))
+  def unique[T](f: R => Field[T, R], key: String = "unique"): this.type =
+    add { r =>
+      val field = f(r)
+      field.value.flatMap { v =>
+        r.relation.criteria.add(field EQ v).unique() match {
+          case Some(a) if (r.isTransient || a != r) =>
+            Some(new Msg(field.uuid + "." + key, "record" -> r, "field" -> field))
+          case _ => None
+        }
+      }
+    }
+
+  def uniqueAll(f: R => Seq[Field[_, R]],
+                key: String = "unique"): this.type =
+    add { r =>
+      val fields = f(r)
+      val crit = r.relation.criteria
+      fields.foreach {
+        case f: Field[Any, R] => crit.add(f EQ f())
+        case _ =>
+      }
+      crit.unique() match {
+        case Some(a: R) if (r.isTransient || a != r) =>
+          Some(new Msg(r.getClass.getName + "." + key, "record" -> r))
         case _ => None
       }
     }
-  }
-
-  def uniqueAll(f: R => Seq[Field[_, R]],
-                key: String = "unique"): this.type = add { r =>
-    val fields = f(r)
-    val crit = r.relation.criteria
-    fields.foreach {
-      case f: Field[Any, R] => crit.add(f EQ f())
-      case _ =>
-    }
-    crit.unique() match {
-      case Some(a: R) if (r.isTransient || a != r) =>
-        Some(new Msg(r.getClass.getName + "." + key, "record" -> r))
-      case _ => None
-    }
-  }
 
 }

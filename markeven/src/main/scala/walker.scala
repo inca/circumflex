@@ -63,7 +63,7 @@ trait Walker extends CharSequence {
   // Lookahead
 
   // Execute `func`, return its result and revert the position
-  // to the start state.
+  // to the start state
   def lookahead[A](func: Walker => A): A = {
     val oldPos = _pos
     val result = func(this)

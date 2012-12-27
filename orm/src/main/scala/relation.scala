@@ -19,19 +19,23 @@ information. There should be only one relation instance per application, so
 by convention the relations should be the companion objects of corresponding
 records:
 
-    // record definition
-    class Country extends Record[String, Country] {
-      val code = "code".VARCHAR(2).NOT_NULL
-      val name = "name".TEXT.NOT_NULL
 
-      def PRIMARY_KEY = code
-      def relation = Country
-    }
+``` {.scala}
+// Record definition
+class Country extends Record[String, Country] {
+  val code = "code".VARCHAR(2).NOT_NULL
+  val name = "name".TEXT.NOT_NULL
 
-    // corresponding relation definition
-    object Country extends Country with Table[String, Country] {
+  def PRIMARY_KEY = code
+  def relation = Country
+}
 
-    }
+// Corresponding relation definition
+object Country extends Country with Table[String, Country] {
+  // This is a right place for encapsulating queries, adding constraints,
+  // defining validation, etc.
+}
+```
 
 The relation should also inherit the structure of corresponding record so that
 it could be used to compose predicates and other expressions in a DSL-style.
@@ -62,8 +66,9 @@ trait Relation[PK, R <: Record[PK, R]]
   def relationName = _relationName
   def qualifiedName = ormConf.dialect.relationQualifiedName(this)
 
-  /*! Default schema name is configured via the `orm.defaultSchema` configuration property.
-  You may provide different schema for different relations by overriding their `schema` method.
+  /*! Default schema name is configured via the `orm.defaultSchema`
+  configuration property. You may provide different schema for different
+  relations by overriding their `schema` method.
    */
   def schema: Schema = ormConf.defaultSchema
 
@@ -72,17 +77,21 @@ trait Relation[PK, R <: Record[PK, R]]
    */
   def isReadOnly: Boolean
 
-  /*! The `isAutoRefresh` method is used to indicate whether the record should be immediately
-  refreshed after every successful `INSERT` or `UPDATE` operation. By default it returns `false`
-  to maximize performance. However, if the relation contains columns with auto-generated values
-  (e.g. `DEFAULT` clauses, auto-increments, triggers, etc.) then you should override this method.
+  /*! The `isAutoRefresh` method is used to indicate whether the record
+  should be immediately refreshed after every successful `INSERT` or `UPDATE`
+  operation. By default it returns `false` to maximize performance.
+  However, if the relation contains columns with auto-generated values
+  (e.g. `DEFAULT` clauses, auto-increments, triggers, etc.)
+  then you should override this method to return `true`.
    */
   def isAutoRefresh: Boolean = false
 
-  /*! Use the `AS` method to create a relation node from this relation with an explicit alias. */
+  /*! Use the `AS` method to create a relation node from this relation
+  with an explicit alias. */
   def AS(alias: String): RelationNode[PK, R] = new RelationNode(this).AS(alias)
 
-  def findAssociation[T, F <: Record[T, F]](relation: Relation[T, F]): Option[Association[T, R, F]] =
+  def findAssociation[T, F <: Record[T, F]]
+  (relation: Relation[T, F]): Option[Association[T, R, F]] =
     associations.find(_.parentRelation == relation)
         .asInstanceOf[Option[Association[T, R, F]]]
 
@@ -92,9 +101,11 @@ trait Relation[PK, R <: Record[PK, R]]
 
   Following methods will help you perform common querying tasks:
 
-    * `get` retrieves a record either from cache or from database by specified `id`;
+    * `get` retrieves a record either from cache or from database
+      by specified `id`;
+
     * `all` retrieves all records.
-   */
+  */
   def get(id: PK): Option[R] = cache.getOption(id.toString, {
     val r = this.AS("root")
     r.criteria.add(r.PRIMARY_KEY EQ id).unique()
@@ -153,7 +164,12 @@ trait Relation[PK, R <: Record[PK, R]]
   private def findMembers(cl: Class[_]) {
     if (cl != classOf[Any]) findMembers(cl.getSuperclass)
     cl.getDeclaredFields.flatMap { f =>
-      try { Some(cl.getMethod(f.getName)) } catch { case e: Exception => None }
+      try {
+        Some(cl.getMethod(f.getName))
+      } catch {
+        case e: Exception =>
+          None
+      }
     }.foreach(processMember(_))
   }
 
@@ -204,10 +220,12 @@ trait Relation[PK, R <: Record[PK, R]]
         this._initialized = true
       } catch {
         case e: NullPointerException =>
-          throw new ORMException("Failed to initialize " + relationName + ": " +
-              "possible cyclic dependency between relations. " +
-              "Make sure that at least one side uses weak reference to another " +
-              "(change `val` to `lazy val` for fields and to `def` for inverse associations).", e)
+          throw new ORMException(
+            "Failed to initialize " + relationName + ": " +
+                "possible cyclic dependency between relations. " +
+                "Make sure that at least one side uses weak reference to another " +
+                "(change `val` to `lazy val` for fields and " +
+                "to `def` for inverse associations).", e)
         case e: Exception =>
           throw new ORMException("Failed to initialize " + relationName + ".", e)
       }
@@ -235,12 +253,15 @@ trait Relation[PK, R <: Record[PK, R]]
   documentation.
   */
   protected var _prefetchSeq: Seq[Association[_, _, _]] = Nil
+
   def prefetchSeq = _prefetchSeq
-  def prefetch[K, C <: Record[_, C], P <: Record[K, P]](
-                                                           association: Association[K, C, P]): this.type = {
-    this._prefetchSeq ++= List(association)
-    this
-  }
+
+  def prefetch[K, C <: Record[_, C], P <: Record[K, P]]
+  (association: => Association[K, C, P]): this.type =
+    aliasStack.preserve { () =>
+      this._prefetchSeq ++= List(association)
+      this
+    }
 
   /*!## Constraints & Indexes Definition
 
@@ -261,14 +282,18 @@ trait Relation[PK, R <: Record[PK, R]]
   object creation will be delayed until all tables are created.
   */
   protected var _preAux: List[SchemaObject] = Nil
+
   def preAux: Seq[SchemaObject] = _preAux
+
   def addPreAux(objects: SchemaObject*): this.type = {
     objects.foreach(o => if (!_preAux.contains(o)) _preAux ++= List(o))
     this
   }
 
   protected var _postAux: List[SchemaObject] = Nil
+
   def postAux: Seq[SchemaObject] = _postAux
+
   def addPostAux(objects: SchemaObject*): this.type = {
     objects.foreach(o => if (!_postAux.contains(o)) _postAux ++= List(o))
     this
@@ -292,30 +317,35 @@ trait Relation[PK, R <: Record[PK, R]]
     this._beforeInsert ++= List(callback)
     this
   }
+
   protected var _afterInsert: Seq[R => Unit] = Nil
   def afterInsert = _afterInsert
   def afterInsert(callback: R => Unit): this.type = {
     this._afterInsert ++= List(callback)
     this
   }
+
   protected var _beforeUpdate: Seq[R => Unit] = Nil
   def beforeUpdate = _beforeUpdate
   def beforeUpdate(callback: R => Unit): this.type = {
     this._beforeUpdate ++= List(callback)
     this
   }
+
   protected var _afterUpdate: Seq[R => Unit] = Nil
   def afterUpdate = _afterUpdate
   def afterUpdate(callback: R => Unit): this.type = {
     this._afterUpdate ++= List(callback)
     this
   }
+
   protected var _beforeDelete: Seq[R => Unit] = Nil
   def beforeDelete = _beforeDelete
   def beforeDelete(callback: R => Unit): this.type = {
     this._beforeDelete ++= List(callback)
     this
   }
+
   protected var _afterDelete: Seq[R => Unit] = Nil
   def afterDelete = _afterDelete
   def afterDelete(callback: R => Unit): this.type = {
@@ -325,13 +355,16 @@ trait Relation[PK, R <: Record[PK, R]]
 
   /*!## Equality & Others
 
-  Two relations are considered equal if they share the record class and the same name.
+  Two relations are considered equal if they share the record class
+  and the same name.
 
   The `hashCode` method delegates to record class.
 
-  The `canEqual` method indicates that two relations share the same record class.
+  The `canEqual` method indicates that two relations share
+  the same record class.
 
-  Record-specific methods derived from `Record` throw an exception when invoked against relation.
+  Record-manipulation methods derived from `Record` which apply specifically
+  to records throw an exception when invoked against relation.
   */
   override def equals(that: Any) = that match {
     case that: Relation[_, _] =>
@@ -351,15 +384,15 @@ trait Relation[PK, R <: Record[PK, R]]
   }
 
   override def refresh(): Nothing =
-    throw new ORMException("This method cannot be invoked on relation instance.")
+    throw new ORMException("This method cannot be invoked on the relation.")
   override def validate(): Nothing =
-    throw new ORMException("This method cannot be invoked on relation instance.")
+    throw new ORMException("This method cannot be invoked on the relation.")
   override def INSERT_!(fields: Field[_, R]*): Nothing =
-    throw new ORMException("This method cannot be invoked on relation instance.")
+    throw new ORMException("This method cannot be invoked on the relation.")
   override def UPDATE_!(fields: Field[_, R]*): Nothing =
-    throw new ORMException("This method cannot be invoked on relation instance.")
+    throw new ORMException("This method cannot be invoked on the relation.")
   override def DELETE_!(): Nothing =
-    throw new ORMException("This method cannot be invoked on relation instance.")
+    throw new ORMException("This method cannot be invoked on the relation.")
 }
 
 /*!## Implicit Conversions
@@ -369,8 +402,11 @@ the default alias `this` will be assigned to the node. Use `AS` method perform t
 explicit conversion if you need to specify an alias manually.
 */
 object Relation {
-  implicit def toNode[PK, R <: Record[PK, R]](relation: Relation[PK, R]): RelationNode[PK, R] =
+
+  implicit def toNode[PK, R <: Record[PK, R]]
+  (relation: Relation[PK, R]): RelationNode[PK, R] =
     new RelationNode[PK, R](relation)
+
 }
 
 /*!# Table {#table}
@@ -379,12 +415,16 @@ The `Table` class represents plain-old database table which will be created to s
 records.
 */
 trait Table[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
+
   def isReadOnly: Boolean = false
+
   def objectName: String = "TABLE " + qualifiedName
+
   def sqlCreate: String = {
     _init()
     ormConf.dialect.createTable(this)
   }
+
   def sqlDrop: String = {
     _init()
     ormConf.dialect.dropTable(this)
@@ -400,25 +440,30 @@ views on backend somehow (with triggers in Oracle or rules in PostgreSQL),
 override the `isReadOnly` method accordingly.
 */
 trait View[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
+
   def isReadOnly: Boolean = true
+
   def objectName: String = "VIEW " + qualifiedName
+
   def sqlDrop: String = {
     _init()
     ormConf.dialect.dropView(this)
   }
+
   def sqlCreate: String = {
     _init()
     ormConf.dialect.createView(this)
   }
+
   def query: Select[_]
 }
 
 /*!# Application-scoped cache
 
-Circumflex ORM lets you organize application-scope cache (backed by Terracotta Ehcache)
-for any relation of your application: just mix in the `Cacheable` trait into your relation.
+Circumflex ORM lets you organize application-scope cache
+(backed by Terracotta Ehcache) for any relation of your application:
+ just mix in the `Cacheable` trait into your relation.
 */
-
 trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
 
   protected object _cache extends HashMap[String, Cache[_]] {
@@ -444,9 +489,11 @@ trait Cacheable[PK, R <: Record[PK, R]] extends Relation[PK, R] { this: R =>
     cache.evict(r.PRIMARY_KEY().toString)
     cache.put(r.PRIMARY_KEY().toString, r)
   }
+
   afterUpdate { r =>
     cache.evict(r.PRIMARY_KEY().toString)
     cache.put(r.PRIMARY_KEY().toString, r)
   }
+
   afterDelete(r => cache.evict(r.PRIMARY_KEY().toString))
 }

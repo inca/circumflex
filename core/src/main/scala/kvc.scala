@@ -32,7 +32,12 @@ trait KeyValueCoercion {
 
   def get(key: String): Option[_]
 
-  def getAs[C](key: String): Option[C] = get(key).asInstanceOf[Option[C]]
+  def getAs[C](key: String): Option[C] = try {
+    get(key).asInstanceOf[Option[C]]
+  } catch {
+    case e: ClassCastException =>
+      None
+  }
 
   def safeGet[T](key: String)(convert: Any => T): Option[T] =
     get(key).flatMap { v =>

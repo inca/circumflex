@@ -64,13 +64,16 @@ class MySQLDialect extends Dialect {
       case _ => field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
     }
 
-  override def identityLastIdPredicate[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Predicate =
+  override def identityLastIdPredicate[PK, R <: Record[PK, R]]
+  (node: RelationNode[PK, R]): Predicate =
     new SimpleExpression(node.alias + "." + node.relation.PRIMARY_KEY.name + " = LAST_INSERT_ID()", Nil)
 
-  override def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+  override def identityLastIdQuery[PK, R <: Record[PK, R]]
+  (node: RelationNode[PK, R]): SQLQuery[PK] =
     new Select(expr[PK]("LAST_INSERT_ID()"))
 
-  override def sequenceNextValQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+  override def sequenceNextValQuery[PK, R <: Record[PK, R]]
+  (node: RelationNode[PK, R]): SQLQuery[PK] =
     throw new UnsupportedOperationException("This operation is unsupported in MySQL dialect.")
 
   override def createIndex(idx: Index): String = {
@@ -84,7 +87,8 @@ class MySQLDialect extends Dialect {
     result
   }
 
-  override def delete[PK, R <: Record[PK, R]](dml: Delete[PK, R]): String = {
+  override def delete[PK, R <: Record[PK, R]]
+  (dml: Delete[PK, R]): String = {
     var result = "DELETE " + dml.node.alias + " FROM " + dml.node.toSql
     if (dml.whereClause != EmptyPredicate) result += " WHERE " + dml.whereClause.toSql
     result
@@ -121,17 +125,26 @@ class OracleDialect extends Dialect {
     result
   }
 
-  override def defaultExpression[R <: Record[_, R]](field: Field[_, R]): String =
+  override def defaultExpression[R <: Record[_, R]]
+  (field: Field[_, R]): String =
     field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
 
-  override def sequenceNextValQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
+  override def sequenceNextValQuery[PK, R <: Record[PK, R]]
+  (node: RelationNode[PK, R]): SQLQuery[PK] =
     new Select(expr[PK](sequenceName(node.relation.PRIMARY_KEY) + ".nextval FROM dual"))
-  override def identityLastIdPredicate[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): Predicate =
-    throw new UnsupportedOperationException("This operation is unsupported in Oracle dialect.")
-  override def identityLastIdQuery[PK, R <: Record[PK, R]](node: RelationNode[PK, R]): SQLQuery[PK] =
-    throw new UnsupportedOperationException("This operation is unsupported in Oracle dialect.")
+
+  override def identityLastIdPredicate[PK, R <: Record[PK, R]]
+  (node: RelationNode[PK, R]): Predicate =
+    throw new UnsupportedOperationException(
+      "This operation is unsupported in Oracle dialect.")
+
+  override def identityLastIdQuery[PK, R <: Record[PK, R]]
+  (node: RelationNode[PK, R]): SQLQuery[PK] =
+    throw new UnsupportedOperationException(
+      "This operation is unsupported in Oracle dialect.")
 
   override def NOW = "CURRENT_TIMESTAMP"
+
   override def RANDOM = "DBMS_RANDOM.VALUE"
 }
 
@@ -154,7 +167,8 @@ class DB2Dialect extends Dialect {
 
   override def sequenceNextValQuery[PK, R <: Record[PK, R]]
   (node: RelationNode[PK, R]): SQLQuery[PK] =
-    new NativeSQLQuery[PK](expr[PK]("NEXTVAL FOR " + sequenceName(node.relation.PRIMARY_KEY)),
+    new NativeSQLQuery[PK](
+      expr[PK]("NEXTVAL FOR " + sequenceName(node.relation.PRIMARY_KEY)),
       prepareExpr("SELECT {*} FROM SYSIBM.SYSDUMMY1"))
 
   override def identityLastIdPredicate[PK, R <: Record[PK, R]]

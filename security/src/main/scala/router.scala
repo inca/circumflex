@@ -25,7 +25,7 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
   // Try to authenticate the request from session
   auth.doSessionAuth()
 
-  // Try SSO login (this also strips away SSO parameters, if any.
+  // Try SSO login (this also strips away SSO parameters, if any
   auth.trySsoLogin()
 
   // Now try secure routing
