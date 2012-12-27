@@ -62,8 +62,7 @@ class DefaultConfiguration extends Configuration {
   }
   addLoader(new ClassTemplateLoader(getClass, "/"))
 
-  override def getLocale = ctx.getAs[Locale]("cx.locale")
-      .getOrElse(super.getLocale)
+  override def getLocale = msg.locale
 }
 
 object MarkevenDirective extends TemplateDirectiveModel {
