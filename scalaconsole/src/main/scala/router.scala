@@ -76,4 +76,4 @@ class ScalaConsoleRouter(_templatesRoot: String,
 
 class DefaultScalaConsoleRouter
   extends ScalaConsoleRouter(
-    "/scalaconsole", freemarker.DEFAULT_FTL_CONFIGURATION)
+    "/scalaconsole", new DefaultConfiguration)

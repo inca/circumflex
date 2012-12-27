@@ -13,7 +13,9 @@ configuration parameter to provide your own implementation of FreeMarker `Config
 
 You should import this package to use Circumflex FreeMarker Helper in your application:
 
-    import pro.savant.circumflex.freemarker._
+``` {.scala}
+import pro.savant.circumflex.freemarker._
+```
  */
 package object freemarker {
 

@@ -1,12 +1,12 @@
 package pro.savant.circumflex.maven;
 
+import freemarker.template.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
-import org.apache.maven.project.MavenProject;
 import pro.savant.circumflex.core.Circumflex;
 import pro.savant.circumflex.web.StandaloneServer;
 import pro.savant.circumflex.scalaconsole.DefaultScalaConsoleRouter;
@@ -38,8 +38,10 @@ public class ScalaConsoleMojo extends AbstractCircumflexMojo {
    */
   File tempRoot;
 
+  // Embedded Jetty Server
   StandaloneServer server;
 
+  // Shutdown hook
   Thread shutdownHook = new Thread("cx.scalaconsole.shutdownHook") {
 
     public void run() {
@@ -53,11 +55,16 @@ public class ScalaConsoleMojo extends AbstractCircumflexMojo {
 
   public void execute() throws MojoExecutionException, MojoFailureException {
     try {
+      // Populate Circumflex with application configuration
+      Circumflex.reinitWith(buildApplicationClassLoader());
       // Prepare application configuration
       Circumflex.update("application.classpath", getApplicationClasspathString());
       Circumflex.update("cx.router", DefaultScalaConsoleRouter.class);
       Circumflex.update("cx.port", port);
       // Grab scalaconsole JAR and extract it to temporary location
+      if (tempRoot.isDirectory())
+        throw new MojoExecutionException("Temp directory exists at " +
+            tempRoot.getCanonicalPath() + ". Make sure temp directory does not exist.");
       FileUtils.forceMkdir(tempRoot);
       extractJar(getScalaConsoleJar(), tempRoot);
       // The `scalaconsole-webapp` folder should exist in extract location;
@@ -70,6 +77,8 @@ public class ScalaConsoleMojo extends AbstractCircumflexMojo {
       Circumflex.update("cx.webappRoot", webappRoot.getCanonicalPath());
       // Make plugin exit nicely
       Runtime.getRuntime().addShutdownHook(shutdownHook);
+      // Inject application classpath into current plugin class loading
+      prepareClassLoader();
       // Prepare standalone Jetty
       server = new StandaloneServer();
       server.start();

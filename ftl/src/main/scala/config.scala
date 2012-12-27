@@ -52,8 +52,6 @@ class DefaultConfiguration extends Configuration {
   setDefaultEncoding("utf-8")
   setSharedVariable("me", MarkevenDirective)
 
-
-
   try {
     addLoader(new WebappTemplateLoader(servletContext, "/templates"))
   } catch {

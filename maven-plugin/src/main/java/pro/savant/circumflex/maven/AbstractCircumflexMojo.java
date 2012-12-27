@@ -13,6 +13,7 @@ import org.codehaus.plexus.classworlds.realm.ClassRealm;
 
 import java.io.File;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -83,6 +84,11 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
       sb.append(File.pathSeparator);
     }
     return sb.toString();
+  }
+
+  protected ClassLoader buildApplicationClassLoader() throws Exception {
+    List<URL> urls = getApplicationClasspath();
+    return new URLClassLoader(urls.toArray(new URL[urls.size()]));
   }
 
   protected void prepareClassLoader() throws MojoExecutionException {

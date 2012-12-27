@@ -3,7 +3,7 @@ package core
 
 import collection.mutable.{ListBuffer, HashMap}
 import collection.JavaConversions._
-import java.util.{MissingResourceException, ResourceBundle}
+import java.util.{Locale, MissingResourceException, ResourceBundle}
 import java.net.URL
 import java.io.File
 import java.util.jar.JarFile
@@ -41,7 +41,7 @@ without having to fall back to manual sources and resources filtering.
 object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
 
   def locateBundle: Option[ResourceBundle] = try {
-    Some(ResourceBundle.getBundle("cx"))
+    Some(ResourceBundle.getBundle("cx", Locale.getDefault, classLoader))
   } catch {
     case e: MissingResourceException =>
       CX_LOG.error("cx.properties not found in classpath. " +
@@ -49,23 +49,34 @@ object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
       None
   }
 
-  // The configuration object is initialized by reading `cx.properties`
-  try {
-    locateBundle.map { bundle =>
-      val keys = bundle.getKeys
-      while (keys.hasMoreElements) {
-        val k = keys.nextElement
-        this.update(k, bundle.getString(k))
+  def reinit() {
+    // The configuration object is initialized by reading `cx.properties`
+    try {
+      locateBundle.map { bundle =>
+        val keys = bundle.getKeys
+        while (keys.hasMoreElements) {
+          val k = keys.nextElement
+          this.update(k, bundle.getString(k))
+        }
       }
+    } catch {
+      case e: Exception =>
+        CX_LOG.error("Could not read configuration parameters from cx.properties.", e)
     }
-  } catch {
-    case e: Exception =>
-      CX_LOG.error("Could not read configuration parameters from cx.properties.", e)
+    // Initial properties are overridden by System properties
+    System.getProperties.stringPropertyNames.map { name =>
+      this.update(name, System.getProperty(name))
+    }
   }
 
-  // Initial properties are overridden by System properties
-  System.getProperties.stringPropertyNames.map { name =>
-    this.update(name, System.getProperty(name))
+  // Init by default
+  reinit()
+
+  // Init with different classloader
+  def reinitWith(cl: ClassLoader) {
+    withClassLoader(cl) { () =>
+      reinit()
+    }
   }
 
   override def stringPrefix = "cx"
@@ -85,8 +96,21 @@ object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
       `classLoader` method).
   */
 
-  def classLoader = ctx.getAs[ClassLoader]("cx.class.loader")
+  def classLoaderOption = ctx.getAs[ClassLoader]("cx.class.loader")
+
+  def classLoader = classLoaderOption
       .getOrElse(Thread.currentThread.getContextClassLoader)
+
+  def withClassLoader[A](loader: ClassLoader)(actions: () => A): A = {
+    val oldLoader = classLoaderOption
+    ctx.update("cx.class.loader", loader)
+    val result = actions()
+    oldLoader match {
+      case Some(cl) => ctx.update("cx.class.loader", cl)
+      case _ => ctx -= "cx.class.loader"
+    }
+    result
+  }
 
   def searchClasses(url: URL,
                     predicate: String => Boolean): Seq[Class[_]] = {

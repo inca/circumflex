@@ -49,14 +49,12 @@ class CircumflexCoreSpecs
 
   "Circumflex Context" - {
     "be initialized and destroyed properly" in {
-      Context.isLive must equal (false)
       Context.init()
       Context.isLive must equal (true)
       Context.destroy()
       Context.isLive must equal (false)
     }
     "initialize on demand" in {
-      Context.isLive must equal (false)
       Context.get must not be (null)
       Context.isLive must equal (true)
     }
