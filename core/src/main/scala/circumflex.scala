@@ -2,6 +2,7 @@ package pro.savant.circumflex
 package core
 
 import collection.mutable.{ListBuffer, HashMap}
+import collection.JavaConversions._
 import java.util.{MissingResourceException, ResourceBundle}
 import java.net.URL
 import java.io.File
@@ -54,12 +55,17 @@ object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
       val keys = bundle.getKeys
       while (keys.hasMoreElements) {
         val k = keys.nextElement
-        this(k) = bundle.getString(k)
+        this.update(k, bundle.getString(k))
       }
     }
   } catch {
     case e: Exception =>
       CX_LOG.error("Could not read configuration parameters from cx.properties.", e)
+  }
+
+  // Initial properties are overridden by System properties
+  System.getProperties.stringPropertyNames.map { name =>
+    this.update(name, System.getProperty(name))
   }
 
   override def stringPrefix = "cx"

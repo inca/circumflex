@@ -206,7 +206,9 @@ class NumericField[R <: Record[_, R]]
 }
 
 class TextField[R <: Record[_, R]](name: String, record: R, sqlType: String)
-    extends XmlSerializable[String, R](name, record, sqlType) {
+    extends XmlSerializable[String, R](name, record, sqlType)
+    with Coercion {
+
   def this(name: String, record: R, length: Int = -1) =
     this(name, record, ormConf.dialect.varcharType(length))
   def fromString(str: String): Option[String] =

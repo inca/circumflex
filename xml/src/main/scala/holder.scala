@@ -107,6 +107,7 @@ encapsulate mutable `Option[String]`.
 trait StringHolder
     extends Holder
     with Container[String]
+    with Coercion
     with Equals {
 
   addSetter(wrapHtml(_))

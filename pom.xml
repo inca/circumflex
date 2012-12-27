@@ -26,6 +26,7 @@
     <module>mail</module>
     <module>docco</module>
     <module>orm</module>
+    <module>scalaconsole</module>
     <module>maven-plugin</module>
     <module>archetype</module>
   </modules>

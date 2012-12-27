@@ -1,0 +1,216 @@
+body {
+  margin:0;
+  padding:0;
+  background:url("http://cdn.savant.pro/img/misc/cx-bg.png") 0 0 repeat-x,
+             url("http://cdn.savant.pro/img/noise.png") 0 0 repeat #166B36;
+  font-size:16px;
+  font-family: "HelveticaNeueLight", "HelveticaNeue-Light",
+  "Helvetica Neue Light", "HelveticaNeue", "Helvetica Neue",
+  "Segoe UI", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif;
+  font-weight:300;
+  color:#333;
+}
+
+#outer {
+  padding:4%;
+}
+
+#header {
+  display:block;
+  height:96px;
+  background:url("/img/scala-logo.png") top left no-repeat;
+}
+
+#content {
+  background: #fff;
+  padding:4%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.6),
+              0 0 64px rgba(0,0,0,.15) inset;
+}
+
+a, a:hover, a:visited {
+  color: #166B36;
+}
+
+#footer {
+  margin-top:16px;
+  text-align:center;
+  font-size:12px;
+  color:#fff;
+  text-shadow: 0 1px 1px rgba(0,0,0,.6);
+}
+
+#footer a {
+  color:#f7f7cc;
+  text-decoration:none;
+}
+
+span.amp {
+  font-family: Baskerville, Palatino, "Book Antiqua", serif;
+  font-style: italic;
+}
+
+.hidden { display:none }
+
+.loading {
+  height: 64px;
+  background: url(/img/loading.gif) center center no-repeat;
+}
+
+.section-tabs {
+  position:relative;
+  border-bottom:1px solid #ccc;
+}
+
+.section-tabs a {
+  display:inline-block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-decoration: none;
+  padding:8px 16px;
+  margin-bottom:-1px;
+}
+
+.section-tabs a.active {
+  background:#fff;
+  border:1px solid #ccc;
+  border-width:1px 1px 0;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+.section-body {
+  padding:8px;
+  border:1px solid #ccc;
+  border-width:0 1px 1px;
+  margin-bottom:8px;
+}
+
+/* Submission stylesheets */
+
+.submission .field {
+  display: table;
+  width: 100%;
+  border: 1px solid #ccc;
+  box-shadow: 0 1px 1px #ffffff;
+  border-radius: 4px;
+  overflow: hidden;
+  border-collapse: separate !important;
+}
+
+.submission .field a,
+.submission .field .input {
+  display: table-cell !important;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: middle;
+  background: #ffffff;
+  border-left: 1px solid #ccc;
+}
+
+.submission .field *:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-left: 0;
+}
+.submission .field *:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.submission .field a,
+.submission .field label,
+.submission .field .elem {
+  width:32px;
+  background: #f7f7f7;
+  color: #888;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.submission .field .input > input {
+  font-size:16px;
+  font-family: Monaco, Courier New, Courier, monospace;
+  box-sizing: border-box;
+  width: 100%;
+  border: 0;
+  margin: 0;
+  padding: 6px;
+  outline: 0;
+  background: #ffffff;
+  border-radius: 0;
+}
+
+.submission .field-area {
+  position: relative;
+  overflow: hidden;
+  background: #f7f7f7;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding-bottom: 4px;
+}
+.submission .field-area textarea {
+  display: block;
+  box-sizing: border-box;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  font-size: 14px;
+  font-family: Monaco, Courier New, Courier, monospace;
+  width: 100%;
+  padding: 4px;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  border-bottom: 1px solid #ccc;
+  background: #ffffff;
+}
+.submission .field-area textarea:focus {
+  background: #fcfcfc;
+}
+
+
+/* REPL section */
+
+#repl-output > div {
+  padding:2px;
+  font-size: 14px;
+  font-family: Monaco, Courier New, Courier, monospace;
+}
+#repl-output .prompt {
+  color:#777;
+  font-style: italic;
+}
+#repl-output .input {
+  background:#fff;
+}
+#repl-output .success {
+  background:#efe;
+}
+#repl-output .error {
+  background:#fee;
+}
+
+/* Submits */
+
+.submits {
+  text-align:center;
+  margin-top:8px;
+}
+
+.submits button {
+  font-size:16px;
+  font-family: "HelveticaNeueLight", "HelveticaNeue-Light",
+  "Helvetica Neue Light", "HelveticaNeue", "Helvetica Neue",
+  "Segoe UI", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif;
+  font-weight:300;
+  margin:8px;
+  padding: 6px 12px;
+  background:#166B36;
+  border:1px solid #052;
+  border-bottom:1px solid #031;
+  box-shadow:0 1px 1px rgba(255,255,255,.25) inset;
+  color:#fff;
+  text-shadow:0 1px 1px rgba(0,0,0,.85);
+}
