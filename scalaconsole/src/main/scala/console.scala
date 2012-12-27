@@ -7,6 +7,8 @@ import java.io._
 
 class ScalaConsole(val bucketFunc: () => StringWriter) {
 
+  println(cx.classLoader)
+
   val settings = new Settings()
 
   settings.classpath.value +=

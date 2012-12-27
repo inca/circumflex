@@ -13,21 +13,21 @@ class ScalaConsoleRouter(_templatesRoot: String)
 
   get("/?") = ftl(templatesRoot + "index.ftl")
 
-  post("/?").and(request.body.isXHR) = {
+  post("/?").and(request.isXHR) = {
     val cmd = param("cmd").trim
-    var result = "<div class=\"input\">" + escapeHtml(cmd) + "</div>"
+    var result = "<div class=\"input\">" + wrapHtml(cmd) + "</div>"
     val console = getConsole
     dropBucket()
     import scala.tools.nsc._
     console.execute(cmd) match {
       case interpreter.Results.Error =>
         result += "<div class=\"error\">ERROR " +
-            escapeHtml(getBucket.toString) +
+            wrapHtml(getBucket.toString) +
             "</div>"
         dropBucket()
       case interpreter.Results.Success =>
         result += "<div class=\"success\">" +
-            escapeHtml(getBucket.toString) +
+            wrapHtml(getBucket.toString) +
             "</div>"
         dropBucket()
       case _ =>

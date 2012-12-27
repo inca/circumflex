@@ -86,28 +86,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>jetty-maven-plugin</artifactId>
-        <version>7.6.4.v20120524</version>
-        <configuration>
-          <webAppConfig>
-            <contextPath>/</contextPath>
-          </webAppConfig>
-          <connectors>
-            <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
-              <port>18081</port>
-              <maxIdleTime>60000</maxIdleTime>
-            </connector>
-          </connectors>
-          <systemProperties>
-            <systemProperty>
-              <name>cx.router</name>
-              <value>pro.savant.circumflex.scalaconsole.DefaultScalaConsoleRouter</value>
-            </systemProperty>
-          </systemProperties>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
