@@ -44,6 +44,12 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
    */
   protected ArtifactMetadataSource artifactMetaDataSource;
 
+
+  /**
+   * @parameter default-value="${plugin.artifacts}"
+   */
+  protected List pluginArtifacts;
+
   /**
    * @parameter default-value="true"
    */

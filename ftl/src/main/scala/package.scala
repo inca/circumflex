@@ -19,8 +19,12 @@ package object freemarker {
 
   val FTL_LOG = new Logger("pro.savant.circumflex.ftl")
 
-  val ftlConfig: Configuration = cx.instantiate[Configuration](
-    "ftl.configuration", new DefaultConfiguration)
+  val DEFAULT_FTL_CONFIGURATION: Configuration =
+    cx.instantiate[Configuration](
+      "ftl.configuration", new DefaultConfiguration)
+
+  def ftlConfig = ctx.getAs[Configuration]("ftl.configuration")
+      .getOrElse(DEFAULT_FTL_CONFIGURATION)
 
   def ftl(template: String, data: Any = ctx): Nothing =
     response.body { r =>

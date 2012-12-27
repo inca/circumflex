@@ -3,15 +3,20 @@ package scalaconsole
 
 import core._, web._, freemarker._
 import java.io.StringWriter
+import _root_.freemarker.template.Configuration
 
-class ScalaConsoleRouter(_templatesRoot: String)
+class ScalaConsoleRouter(_templatesRoot: String,
+                         val ftlConf: Configuration)
     extends Router {
 
   val templatesRoot =
     if (_templatesRoot.endsWith("/")) _templatesRoot
     else _templatesRoot + "/"
 
-  get("/?") = ftl(templatesRoot + "index.ftl")
+  get("/?") = {
+    ctx.update("ftl.configuration", ftlConf)
+    ftl(templatesRoot + "index.ftl")
+  }
 
   post("/?").and(request.isXHR) = {
     val cmd = param("cmd").trim
@@ -35,13 +40,16 @@ class ScalaConsoleRouter(_templatesRoot: String)
     send(result)
   }
 
-  get("/reset") = ftl(templatesRoot + "reset.ftl")
+  get("/reset") = {
+    ctx.update("ftl.configuration", ftlConf)
+    ftl(templatesRoot + "reset.ftl")
+  }
 
   post("/reset") = {
     getConsole.imain.reset()
     getConsole.imain.close()
     session -= "scala.console"
-    sendRedirect(prefix + "/scalaconsole")
+    sendRedirect(prefix + "/")
   }
 
   def getConsole: ScalaConsole = session.get("scala.console") match {
@@ -67,4 +75,5 @@ class ScalaConsoleRouter(_templatesRoot: String)
 }
 
 class DefaultScalaConsoleRouter
-  extends ScalaConsoleRouter("/scalaconsole")
+  extends ScalaConsoleRouter(
+    "/scalaconsole", freemarker.DEFAULT_FTL_CONFIGURATION)

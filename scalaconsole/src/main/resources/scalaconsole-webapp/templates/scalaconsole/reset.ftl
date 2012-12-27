@@ -20,4 +20,4 @@
 </form>
 [/#assign]
 
-[#include "./layout.ftl"/]
+[#include "layout.ftl"/]

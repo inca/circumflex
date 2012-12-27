@@ -136,7 +136,6 @@ class RecordProjection[PK, R <: Record[PK, R]]
 
   protected def readRecord(rs: ResultSet): R = {
     val record: R = node.relation.recordClass.newInstance
-    println("Instantiated new record " + record)
     _fieldProjections.foreach { p =>
       node.relation
           .getField(record, p.field.asInstanceOf[Field[Any, R]])
