@@ -31,6 +31,10 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
   // Now try secure routing
   if (host == auth.secureDomain) {
 
+    // Check the auth cookies
+    if (auth.isEmpty)
+      auth.doRememberMeAuth()
+
     /*! The default scheme as returned by `web.scheme` method is overriden.
 
     You can find this useful for composing URLs for all static resources

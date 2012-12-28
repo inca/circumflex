@@ -281,9 +281,9 @@ to the `Referer` header.*/
   def setRememberMeCookie() {
     responseOption.map { resp =>
       resp.cookies += HttpCookie(
-        name = "ea-auth",
+        name = "cx-auth",
         value = mkToken(principal, randomString(4)),
-        path = "/auth",
+        path = "/",
         maxAge = 365 * 24 * 60 * 60, // 1 year
         secure = isSecure)
     }
@@ -291,9 +291,9 @@ to the `Referer` header.*/
 
   def dropRememberMeCookie() {
     response.cookies += HttpCookie(
-      name = "ea-auth",
+      name = "cx-auth",
       value = "",
-      path = "/auth",
+      path = "/",
       maxAge = 0,
       secure = isSecure)
   }
