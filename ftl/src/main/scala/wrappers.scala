@@ -39,7 +39,7 @@ class ScalaObjectWrapper extends ObjectWrapper {
 }
 
 class ScalaDateWrapper(val date: Date, wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(date, wrapper) with TemplateDateModel {
+    extends TemplateDateModel {
 
   def getDateType = TemplateDateModel.UNKNOWN
 
@@ -48,7 +48,7 @@ class ScalaDateWrapper(val date: Date, wrapper: ObjectWrapper)
 }
 
 class ScalaSeqWrapper[T](val seq: Seq[T], wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(seq, wrapper) with TemplateSequenceModel {
+    extends TemplateSequenceModel {
 
   def get(index: Int) = wrapper.wrap(seq(index))
 
@@ -57,7 +57,7 @@ class ScalaSeqWrapper[T](val seq: Seq[T], wrapper: ObjectWrapper)
 }
 
 class ScalaArrayWrapper[T](val array: Array[T], wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(array, wrapper) with TemplateSequenceModel {
+    extends TemplateSequenceModel {
 
   def get(index: Int) = wrapper.wrap(array(index))
 
@@ -66,10 +66,9 @@ class ScalaArrayWrapper[T](val array: Array[T], wrapper: ObjectWrapper)
 }
 
 class ScalaMapWrapper(val map: Map[Any, Any], wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(map, wrapper) with TemplateHashModelEx {
+    extends TemplateHashModelEx {
 
-  override def get(key: String) = wrapper.wrap(
-    map.get(key).orElse(Some(super.get(key))))
+  override def get(key: String) = wrapper.wrap(map.get(key))
 
   override def isEmpty = map.isEmpty
 
@@ -82,14 +81,14 @@ class ScalaMapWrapper(val map: Map[Any, Any], wrapper: ObjectWrapper)
 }
 
 class ScalaIterableWrapper[T](val it: Iterable[T], wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(it, wrapper) with TemplateCollectionModel {
+    extends TemplateCollectionModel {
 
   def iterator = new ScalaIteratorWrapper(it.iterator, wrapper)
 
 }
 
 class ScalaIteratorWrapper[T](val it: Iterator[T], wrapper: ObjectWrapper)
-    extends ScalaBaseWrapper(it, wrapper) with TemplateModelIterator with TemplateCollectionModel {
+    extends TemplateModelIterator with TemplateCollectionModel {
 
   def next = wrapper.wrap(it.next())
 
@@ -105,7 +104,7 @@ class ScalaMethodWrapper(val target: Any,
     extends TemplateMethodModel {
 
   def exec(arguments: java.util.List[_]) = {
-    val args = arguments.toArray.asInstanceOf[Array[Object]]
+    val args = arguments.toArray
     val result = try{
       MethodUtils.invokeMethod(target, methodName, args)
     } catch {
