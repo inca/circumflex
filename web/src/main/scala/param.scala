@@ -37,3 +37,20 @@ object param extends Map[String, String] with KeyValueCoercion {
   /*! Use the `list` method to retrieve multi-value parameters from request. */
   def list(key: String): Seq[String] = iterator.filter(_._1 == key).map(_._2).toList
 }
+
+object paramList extends Map[String, Seq[String]] {
+
+  def +=(kv: (String, Seq[String])) = this
+
+  def -=(key: String) = this
+
+  def get(key: String) = requestOption
+      .map(r => r.params.list(key))
+      .orElse(Some(Nil))
+
+  def iterator = requestOption
+      .map(r => r.params.keys.map(k => k -> r.params.list(k)))
+      .getOrElse(Nil)
+      .iterator
+
+}

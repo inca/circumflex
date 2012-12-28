@@ -162,6 +162,7 @@ class CircumflexFilter extends Filter {
   */
   def prepareContext(ctx: Context) {
     'param := param
+    'paramList := paramList
     'request := request
     'session := session
     'flash := flash
