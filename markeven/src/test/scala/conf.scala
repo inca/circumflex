@@ -15,9 +15,16 @@ object testConf extends MarkevenConf {
   }
 
   def resolveFragment(id: String) = id match {
-    case "normal" => Some(new FragmentDef("normal *text* -- <em>process</em> it"))
-    case "code" => Some(new FragmentDef("*code*, <em>a & b</em>", ProcessingMode.CODE))
-    case "plain" => Some(new FragmentDef("*plain*, <em>a & b</em>", ProcessingMode.PLAIN))
+    case "normal" =>
+      Some(new FragmentDef("normal *text* -- <em>process</em> it"))
+    case "code" =>
+      Some(new FragmentDef("*code*, <em>a & b</em>", ProcessingMode.CODE))
+    case "plain" =>
+      Some(new FragmentDef("*plain*, <em>a & b</em>", ProcessingMode.PLAIN))
+    case "cyclic1" =>
+      Some(new FragmentDef("= {{cyclic2}}", ProcessingMode.NORMAL))
+    case "cyclic2" =>
+      Some(new FragmentDef("== {{cyclic1}}", ProcessingMode.NORMAL))
     case _ => None
   }
 }

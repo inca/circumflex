@@ -244,6 +244,12 @@ class MarkevenSpec
       w.toString must equal ("In text: *plain*, <em>a &amp; b</em>\n" +
           "In code: <code>*plain*, <em>a &amp; b</em></code>")
     }
+    "handle cyclic fragments (not resolve fragment twice)" in {
+      val input = "Cyclic: {{cyclic1}} {{cyclic2}}"
+      val w = new StringWriter
+      new InlineProcessor(w, testConf).process(input)
+      w.toString must equal ("Cyclic: = == {{cyclic1}} == = {{cyclic2}}")
+    }
     "process inline links" in {
       var input = "Simple [_inline_ link](/url)."
       var w = new StringWriter

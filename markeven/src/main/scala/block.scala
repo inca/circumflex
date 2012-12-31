@@ -473,31 +473,40 @@ class BlockProcessor(val out: Writer,
       val startIdx = walk.position
       scrollToTerm(walk)
       val p = stripSelector(new SubSeqWalker(walk, startIdx, walk.position))
-      p.atMatch(const.fragmentBlock)
-          .flatMap(m => conf.resolveFragment(m.group(1)))
-          .map { fragDef =>
-        out.write("<div")
-        selector.writeAttrs(out, startIdx)
-        out.write(">")
-        fragDef.mode match {
-          case ProcessingMode.PLAIN => // like triple code span
-            val w = new SubSeqWalker(fragDef.body)
-            while (w.hasCurrent)
-              inline.flushPlain(w)
-          case ProcessingMode.CODE => // like regular code span
-            val w = new SubSeqWalker(fragDef.body)
-            while (w.hasCurrent)
-              inline.flushCode(w)
-          case _ => // like regular blocks
-            run(new SubSeqWalker(fragDef.body))
+      p.atMatch(const.fragmentBlock).map { m =>
+        val id = m.group(1)
+        conf.resolveFragment(id) match {
+          case Some(fragDef) if (!conf.fragmentIds.contains(id)) =>
+            conf.fragmentIds += id
+            flushFragmentBlock(fragDef, startIdx)
+            conf.fragmentIds -= id
+            true
+          case _ => false
         }
-        out.write("</div>")
-        true
       } getOrElse {
         walk.startFrom(startIdx)
         false
       }
     } else false
+
+  def flushFragmentBlock(fragDef: FragmentDef, startIdx: Int) {
+    out.write("<div")
+    selector.writeAttrs(out, startIdx)
+    out.write(">")
+    fragDef.mode match {
+      case ProcessingMode.PLAIN => // like triple code span
+        val w = new SubSeqWalker(fragDef.body)
+        while (w.hasCurrent)
+          inline.flushPlain(w)
+      case ProcessingMode.CODE => // like regular code span
+        val w = new SubSeqWalker(fragDef.body)
+        while (w.hasCurrent)
+          inline.flushCode(w)
+      case _ => // like regular blocks
+        run(new SubSeqWalker(fragDef.body))
+    }
+    out.write("</div>")
+  }
 
   def tryCodeBlock(walk: Walker): Boolean = {
     if (walk.at("```")) {

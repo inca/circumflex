@@ -237,11 +237,11 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
     })
 
   def flushCode(walk: Walker) {
-    if (tryBackslashEscape(walk: Walker)) return
-    if (tryAmp(walk: Walker)) return
-    if (tryEscapeLt(walk: Walker)) return
-    if (tryGt(walk: Walker)) return
-    if (tryFragment(walk: Walker)) return
+    if (tryBackslashEscape(walk)) return
+    if (tryAmp(walk)) return
+    if (tryEscapeLt(walk)) return
+    if (tryGt(walk)) return
+    if (tryFragment(walk)) return
     flushGeneric(walk)
   }
 
@@ -294,9 +294,12 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
       walk.at(const.fragment) match {
         case Some(m) =>
           val s = m.group(0)
-          conf.resolveFragment(m.group(1)) match {
-            case Some(f) =>
+          val id = m.group(1)
+          conf.resolveFragment(id) match {
+            case Some(f) if (!conf.fragmentIds.contains(id)) =>
+              conf.fragmentIds += id
               flushFragment(f)
+              conf.fragmentIds -= id
             case _ =>
               out.write(s)
           }

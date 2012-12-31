@@ -5,7 +5,7 @@ import pro.savant.circumflex._, core._
 import java.io.{StringWriter, Writer}
 import java.lang.StringBuilder
 import java.util.regex.Pattern
-import collection.immutable.HashSet
+import collection.mutable.HashSet
 import java.util.Random
 
 object const {
@@ -62,6 +62,14 @@ trait MarkevenConf {
     cx.getBoolean("markeven.stripInvalidXmlChars")
         .getOrElse(true)
   def stripInvalidXmlChars = _stripInvalidXmlChars
+
+  def fragmentIds = ctx.getAs[HashSet[String]]("markeven.fragmentIds")
+      .getOrElse {
+    val s = new HashSet[String]
+    ctx.update("markeven.fragmentIds", s)
+    s
+  }
+
 }
 
 object EmptyMarkevenConf extends MarkevenConf {
