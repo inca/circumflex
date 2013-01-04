@@ -1,7 +1,8 @@
 package pro.savant.circumflex
 package markeven
 
-object testConf extends MarkevenConf {
+object testRenderer extends MarkevenRenderer {
+
   def resolveMedia(id: String) = id match {
     case "acorn" => Some(
       new LinkDef("http://eduarea.com/img/acorn.png", "EduArea Acorn Logo"))
@@ -27,4 +28,5 @@ object testConf extends MarkevenConf {
       Some(new FragmentDef("== {{cyclic1}}", ProcessingMode.NORMAL))
     case _ => None
   }
+
 }

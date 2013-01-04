@@ -11,9 +11,10 @@ The `InlineProcessor` class represents the inline-level Unit of Work.
 It accepts two parameters:
 
   * `out` is the `Writer` to which the output markup is rendered;
-  * `conf` is the `MarkevenConf` instance.
+  * `renderer` is the `MarkevenRenderer` instance.
 */
-class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenConf)
+class InlineProcessor(val out: Writer,
+                      val renderer: MarkevenRenderer = DefaultMarkevenRenderer)
     extends Processor {
 
   /* The `run` method is an entry point of `InlineProcessor`. */
@@ -43,14 +44,14 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
     if (tryMedia(walk)) return
     if (tryLink(walk)) return
     // Now generic characters
-    out.write(conf.scrambler.getSpan)
+    out.write(renderer.scrambler.getSpan)
     flushGeneric(walk)
   }
 
   /*! Generic characters are spit to the output "as is". */
   def flushGeneric(walk: Walker) {
     val char = walk.current
-    if (!(conf.stripInvalidXmlChars && isInvalidXmlChar(char)))
+    if (!(renderer.stripInvalidXmlChars && isInvalidXmlChar(char)))
       out.write(char)
     walk.skip()
   }
@@ -140,7 +141,7 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
     walk.at(const.refLink) match {
       case Some(m) =>
         val id = m.group(1)
-        conf.resolveLink(id).orElse(conf.resolveMedia(id)) match {
+        renderer.resolveLink(id).orElse(renderer.resolveMedia(id)) match {
           case Some(ld) =>
             out.write(ld.url)
             walk.skip(m.group(0).length)
@@ -295,11 +296,11 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
         case Some(m) =>
           val s = m.group(0)
           val id = m.group(1)
-          conf.resolveFragment(id) match {
-            case Some(f) if (!conf.fragmentIds.contains(id)) =>
-              conf.fragmentIds += id
+          renderer.resolveFragment(id) match {
+            case Some(f) if (!renderer.fragmentIds.contains(id)) =>
+              renderer.fragmentIds += id
               flushFragment(f)
-              conf.fragmentIds -= id
+              renderer.fragmentIds -= id
             case _ =>
               out.write(s)
           }
@@ -334,7 +335,7 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
       resolveLinkDef(walk, false) match {
         case Some((text, linkDef)) =>
           val w = new StringWriter
-          new InlineProcessor(w, conf).process(text)
+          new InlineProcessor(w, renderer).process(text)
           linkDef.writeLink(out, w.toString)
         case _ =>
           out.write("[")
@@ -369,7 +370,7 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
       }
       if (found) {
         val id = walk.subSequence(startIdx, walk.position).toString
-        conf.resolveLink(id) match {
+        renderer.resolveLink(id) match {
           case Some(linkDef) =>
             linkDef.writeLink(out, linkDef.title)
             walk.skip(2)  // skip closing ]]
@@ -407,7 +408,9 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
       walk.at(const.refLink) flatMap { m =>
         val s = m.group(0)
         val id = m.group(1)
-        val ld = if (media) conf.resolveMedia(id) else conf.resolveLink(id)
+        val ld =
+          if (media) renderer.resolveMedia(id)
+          else renderer.resolveLink(id)
         ld match {
           case Some(linkDef) =>
             walk.skip(s.length)
@@ -470,12 +473,12 @@ class InlineProcessor(val out: Writer, val conf: MarkevenConf = EmptyMarkevenCon
     }
     walk.at(const.ty_leftQuote) map { m =>
       walk.startFrom(m.end)
-      out.write(conf.leftQuote)
+      out.write(renderer.leftQuote)
       return true
     }
     walk.at(const.ty_rightQuote) map { m =>
       walk.startFrom(m.end)
-      out.write(conf.rightQuote)
+      out.write(renderer.rightQuote)
       return true
     }
     false

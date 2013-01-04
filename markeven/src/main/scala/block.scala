@@ -11,15 +11,15 @@ The `BlockProcessor` class represents the block-level Unit of Work.
 It accepts two parameters:
 
   * `out` is the `Writer` to which the output markup is rendered;
-  * `conf` is the `MarkevenConf` instance.
+  * `renderer` is the `MarkevenRenderer` instance.
 */
 class BlockProcessor(val out: Writer,
-                     val conf: MarkevenConf = EmptyMarkevenConf)
+                     val renderer: MarkevenRenderer = DefaultMarkevenRenderer)
     extends Processor {
 
-  val inline = new InlineProcessor(out, conf)
+  val inline = new InlineProcessor(out, renderer)
 
-  var selector = new Selector(conf)
+  var selector = new Selector(renderer)
   var blockIndent = 0
 
   /* The `run` method is an entry point of `BlockProcessor`. */
@@ -79,7 +79,7 @@ class BlockProcessor(val out: Writer,
   /*! Selector expression is stripped from each block, if it exists. This may
   result in new walker instantiation.*/
   def stripSelector(walk: Walker): Walker = {
-    selector = new Selector(conf)
+    selector = new Selector(renderer)
     val startIdx = walk.position
     while (walk.hasCurrent && !walk.atNewLine) {
       if (walk.at("{")) {
@@ -90,7 +90,7 @@ class BlockProcessor(val out: Writer,
             if (m.group(2) != null) {
               classes ++= m.group(2).split("\\.").filter(_ != "")
             }
-            selector = new Selector(conf, id, classes)
+            selector = new Selector(renderer, id, classes)
             walk.startFrom(startIdx)
             return walk.exclude(m.start, m.end)
           case _ =>
@@ -475,11 +475,11 @@ class BlockProcessor(val out: Writer,
       val p = stripSelector(new SubSeqWalker(walk, startIdx, walk.position))
       p.atMatch(const.fragmentBlock).map { m =>
         val id = m.group(1)
-        conf.resolveFragment(id) match {
-          case Some(fragDef) if (!conf.fragmentIds.contains(id)) =>
-            conf.fragmentIds += id
+        renderer.resolveFragment(id) match {
+          case Some(fragDef) if (!renderer.fragmentIds.contains(id)) =>
+            renderer.fragmentIds += id
             flushFragmentBlock(fragDef, startIdx)
-            conf.fragmentIds -= id
+            renderer.fragmentIds -= id
             true
           case _ => false
         }

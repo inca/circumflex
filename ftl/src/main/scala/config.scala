@@ -71,7 +71,7 @@ object MarkevenDirective extends TemplateDirectiveModel {
               body: TemplateDirectiveBody) {
     val nested = new StringWriter
     body.render(nested)
-    new markeven.BlockProcessor(env.getOut, markeven.DEFAULT_RENDERER.conf)
+    new markeven.BlockProcessor(env.getOut, markeven.DEFAULT_RENDERER)
         .process(nested.toString)
   }
 

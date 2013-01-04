@@ -34,50 +34,6 @@ object const {
     "p", "pre", "section", "table", "ul")
 }
 
-// Configuration
-
-trait MarkevenConf {
-  def leftQuote = cx.get("markeven.typo.leftQuote")
-      .map(_.toString).getOrElse("&laquo;")
-  def rightQuote = cx.get("markeven.typo.rightQuote")
-      .map(_.toString).getOrElse("&raquo;")
-  def resolveLink(id: String): Option[LinkDef]
-  def resolveMedia(id: String): Option[LinkDef]
-  def resolveFragment(id: String): Option[FragmentDef]
-
-  val scrambler = cx.instantiate[TextScrambler](
-    "markeven.scrambler", EmptyTextScrambler)
-
-  val _includeSourceIndex =
-    cx.getBoolean("markeven.includeSourceIndex")
-        .getOrElse(false)
-  def includeSourceIndex = _includeSourceIndex
-
-  val _autoAssignIdsPrefix =
-    cx.getString("markeven.autoAssignIdsPrefix")
-        .getOrElse("")
-  def autoAssignIdsPrefix = _autoAssignIdsPrefix
-
-  val _stripInvalidXmlChars =
-    cx.getBoolean("markeven.stripInvalidXmlChars")
-        .getOrElse(true)
-  def stripInvalidXmlChars = _stripInvalidXmlChars
-
-  def fragmentIds = ctx.getAs[HashSet[String]]("markeven.fragmentIds")
-      .getOrElse {
-    val s = new HashSet[String]
-    ctx.update("markeven.fragmentIds", s)
-    s
-  }
-
-}
-
-object EmptyMarkevenConf extends MarkevenConf {
-  def resolveLink(id: String) = None
-  def resolveMedia(id: String) = None
-  def resolveFragment(id: String) = None
-}
-
 // Scrambler
 
 class TextScrambler(val alphabet: String,
@@ -105,8 +61,11 @@ object EmptyTextScrambler extends TextScrambler("", 0) {
 // Processor
 
 trait Processor {
+
   def out: Writer
-  def conf: MarkevenConf
+
+  def renderer: MarkevenRenderer
+
   def process(cs: CharSequence) {
     val walk = cs match {
       case w: Walker => w
@@ -114,7 +73,9 @@ trait Processor {
     }
     run(walk)
   }
+
   def run(walk: Walker)
+
 }
 
 // Resolvables
@@ -123,6 +84,7 @@ class FragmentDef(val body: String,
                   val mode: ProcessingMode = ProcessingMode.NORMAL)
 
 trait ProcessingMode
+
 object ProcessingMode {
   object NORMAL extends ProcessingMode
   object CODE extends ProcessingMode
@@ -176,7 +138,7 @@ class LinkDef(_url: String,
 
 // Block selector
 
-class Selector(val conf: MarkevenConf,
+class Selector(val renderer: MarkevenRenderer,
                var id: String = "",
                var classes: Seq[String] = Nil) {
 
@@ -186,8 +148,8 @@ class Selector(val conf: MarkevenConf,
     result
   }
 
-  if (id == "" && conf.autoAssignIdsPrefix != "") {
-    id = conf.autoAssignIdsPrefix + "-" + nextIdCounter()
+  if (id == "" && renderer.autoAssignIdsPrefix != "") {
+    id = renderer.autoAssignIdsPrefix + "-" + nextIdCounter()
   }
 
   def writeAttrs(w: Writer, idx: Int) {
@@ -201,7 +163,7 @@ class Selector(val conf: MarkevenConf,
       w.write(classes.mkString(" "))
       w.write("\"")
     }
-    if (conf.includeSourceIndex) {
+    if (renderer.includeSourceIndex) {
       w.write(" data-source-index=\"")
       w.write(idx.toString)
       w.write("\"")

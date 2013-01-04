@@ -271,9 +271,9 @@ class DoccoBatch { batch =>
     // Generate doccos
     val doccos = sources.flatMap { f =>
       // Prepare renderer
-      val conf = new MarkevenConf {
+      val renderer = new MarkevenRenderer {
 
-        val delegate = markeven.DEFAULT_RENDERER.conf
+        val delegate = markeven.DEFAULT_RENDERER
 
         def resolveLink(id: String) = {
           val f1 = if (id.startsWith("/"))
@@ -299,7 +299,7 @@ class DoccoBatch { batch =>
         def resolveFragment(id: String) = delegate.resolveFragment(id)
 
       }
-      ctx.update("docco.renderer", new MarkevenRenderer(conf))
+      ctx.update("docco.renderer", renderer)
       // Now parse file with docco
       val docco = new Docco(f, stripScaladoc, useScaladoc)
       if (!skipEmpty || docco.sections.size > 1) {

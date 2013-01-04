@@ -156,7 +156,7 @@ class MarkevenSpec
 
   "Selector" - {
     "render attributes string" in {
-      val sel = new Selector(testConf, "renaming", Seq("warning", "centered"))
+      val sel = new Selector(testRenderer, "renaming", Seq("warning", "centered"))
       sel.toString must equal ("{#renaming.warning.centered}")
     }
   }
@@ -229,25 +229,25 @@ class MarkevenSpec
     "resolve fragments" in {
       var input = "In text: {{normal}}\nIn code: `{{normal}}`"
       var w = new StringWriter
-      new InlineProcessor(w, testConf).process(input)
+      new InlineProcessor(w, testRenderer).process(input)
       w.toString must equal ("In text: normal " +
           "<strong>text</strong> &mdash; <em>process</em> it\n" +
           "In code: <code>normal <strong>text</strong> &mdash; <em>process</em> it</code>")
       input = "In text: {{code}}\nIn code: `{{code}}`"
       w = new StringWriter
-      new InlineProcessor(w, testConf).process(input)
+      new InlineProcessor(w, testRenderer).process(input)
       w.toString must equal ("In text: *code*, &lt;em&gt;a &amp; b&lt;/em&gt;\n" +
           "In code: <code>*code*, &lt;em&gt;a &amp; b&lt;/em&gt;</code>")
       input = "In text: {{plain}}\nIn code: `{{plain}}`"
       w = new StringWriter
-      new InlineProcessor(w, testConf).process(input)
+      new InlineProcessor(w, testRenderer).process(input)
       w.toString must equal ("In text: *plain*, <em>a &amp; b</em>\n" +
           "In code: <code>*plain*, <em>a &amp; b</em></code>")
     }
     "handle cyclic fragments (not resolve fragment twice)" in {
       val input = "Cyclic: {{cyclic1}} {{cyclic2}}"
       val w = new StringWriter
-      new InlineProcessor(w, testConf).process(input)
+      new InlineProcessor(w, testRenderer).process(input)
       w.toString must equal ("Cyclic: = == {{cyclic1}} == = {{cyclic2}}")
     }
     "process inline links" in {
@@ -269,7 +269,7 @@ class MarkevenSpec
     "process reference links and images" in {
       val input = "[A & B][ea]\n[Lookup `<a>` in book][cx]\n![][acorn]"
       val w = new StringWriter
-      new InlineProcessor(w, testConf).process(input)
+      new InlineProcessor(w, testRenderer).process(input)
       w.toString must equal ("<a href=\"http://eduarea.com\" " +
           "title=\"EduArea &amp; Friends\">A &amp; B</a>\n" +
           "<a href=\"http://circumflex.ru\">Lookup <code>&lt;a&gt;</code> in book</a>\n" +
@@ -278,7 +278,7 @@ class MarkevenSpec
     "process mixed inline-reference links" in {
       val input = "[A & B](ea)\n[Lookup `<a>` in book][cx]\n[](acorn)"
       val w = new StringWriter
-      new InlineProcessor(w, testConf).process(input)
+      new InlineProcessor(w, testRenderer).process(input)
       w.toString must equal ("<a href=\"ea\">A &amp; B</a>\n" +
           "<a href=\"http://circumflex.ru\">Lookup <code>&lt;a&gt;</code> in book</a>\n" +
           "<a href=\"acorn\"></a>")
@@ -286,7 +286,7 @@ class MarkevenSpec
     "process headless links" in {
       val input = "Headless link to [[ea]]"
       val w = new StringWriter
-      new InlineProcessor(w, testConf).process(input)
+      new InlineProcessor(w, testRenderer).process(input)
       w.toString must equal ("Headless link to " +
           "<a href=\"http://eduarea.com\" title=\"EduArea &amp; Friends\">" +
           "EduArea &amp; Friends</a>")

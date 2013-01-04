@@ -2,29 +2,35 @@ package pro.savant.circumflex
 package markeven
 
 import pro.savant.circumflex._, core._
-import collection.mutable.HashMap
+import collection.mutable.{HashSet, HashMap}
 import java.io.{Writer, StringWriter}
 
 /*! # Markeven Renderer
 
-The `MarkevenRenderer` class is the high-level abstraction over `BlockProcessor`
-and `InlineProcessor`, which can be shared across different rendering tasks
-and threads.
+The `MarkevenRenderer` trait contains configuration parameters and
+high-level methods which delegate to `BlockProcessor` and `InlineProcessor`.
+Renderers are designed to be shared across different rendering tasks and threads.
 
 In other words, `MarkevenRenderer` can be used to convert multiple texts to HTML
-with the same `MarkevenConf`.
+with the same Markeven configuration.
 
 The typical usage is very simple:
 
 ``` {.scala}
 // Define renderer in configuration or package object
-val renderer = new MarkevenRenderer(myConf)
+val renderer = new MarkevenRenderer {
+
+  def resolveLink(id: String) = { ... }
+  def resolveMedia(id: String) = { ... }
+  def resolveFragment(id: String) = { ... }
+
+}
 
 // Render Markeven text
 renderer.toHtml("# Hello")    // Returns <h1>Hello</h1>
 ```
 */
-class MarkevenRenderer(var conf: MarkevenConf) {
+trait MarkevenRenderer { renderer =>
 
   def sanitizer: Sanitizer = DEFAULT_SANITIZER
 
@@ -33,7 +39,7 @@ class MarkevenRenderer(var conf: MarkevenConf) {
   def toInlineHtml(cs: CharSequence): String = finalize(processInlines(cs))
 
   def blockProcessor(out: Writer): BlockProcessor =
-    new BlockProcessor(out, conf)
+    new BlockProcessor(out, renderer)
 
   protected def processBlocks(cs: CharSequence) = {
     val w = new StringWriter
@@ -45,6 +51,45 @@ class MarkevenRenderer(var conf: MarkevenConf) {
     val w = new StringWriter
     blockProcessor(w).inline.process(cs)
     w.toString
+  }
+
+  // Configuration
+
+  def leftQuote = cx.get("markeven.typo.leftQuote")
+      .map(_.toString).getOrElse("&laquo;")
+
+  def rightQuote = cx.get("markeven.typo.rightQuote")
+      .map(_.toString).getOrElse("&raquo;")
+
+  def resolveLink(id: String): Option[LinkDef]
+
+  def resolveMedia(id: String): Option[LinkDef]
+
+  def resolveFragment(id: String): Option[FragmentDef]
+
+  val scrambler = cx.instantiate[TextScrambler](
+    "markeven.scrambler", EmptyTextScrambler)
+
+  val _includeSourceIndex =
+    cx.getBoolean("markeven.includeSourceIndex")
+        .getOrElse(false)
+  def includeSourceIndex = _includeSourceIndex
+
+  val _autoAssignIdsPrefix =
+    cx.getString("markeven.autoAssignIdsPrefix")
+        .getOrElse("")
+  def autoAssignIdsPrefix = _autoAssignIdsPrefix
+
+  val _stripInvalidXmlChars =
+    cx.getBoolean("markeven.stripInvalidXmlChars")
+        .getOrElse(true)
+  def stripInvalidXmlChars = _stripInvalidXmlChars
+
+  def fragmentIds = ctx.getAs[HashSet[String]]("markeven.fragmentIds")
+      .getOrElse {
+    val s = new HashSet[String]
+    ctx.update("markeven.fragmentIds", s)
+    s
   }
 
   // Stashing allows certain snippets to be rendered
@@ -80,8 +125,15 @@ class MarkevenRenderer(var conf: MarkevenConf) {
     unstashAll(sanitizer.sanitize(output))
 }
 
-/*! The default renderer uses `EmptyMarkevenConf` which does not resolve any
-links, media and fragments. This default implementation is used with method
+/*! The default renderer does not resolve any links, media and fragments.
+
+This default implementation is used with method
 `markeven.toHtml` (see [[markeven/src/main/scala/package.scala]]) and can
 be overridden by setting the `markeven.renderer` configuration parameter. */
-object DefaultMarkevenRenderer extends MarkevenRenderer(EmptyMarkevenConf)
+object DefaultMarkevenRenderer extends MarkevenRenderer {
+
+  def resolveLink(id: String) = None
+  def resolveMedia(id: String) = None
+  def resolveFragment(id: String) = None
+
+}
