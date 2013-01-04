@@ -30,36 +30,11 @@ val renderer = new MarkevenRenderer {
 renderer.toHtml("# Hello")    // Returns <h1>Hello</h1>
 ```
 */
-trait MarkevenRenderer { renderer =>
+trait MarkevenRenderer {
 
-  def sanitizer: Sanitizer = DEFAULT_SANITIZER
+  def renderer = this
 
-  def toHtml(cs: CharSequence): String = finalize(processBlocks(cs))
-
-  def toInlineHtml(cs: CharSequence): String = finalize(processInlines(cs))
-
-  def blockProcessor(out: Writer): BlockProcessor =
-    new BlockProcessor(out, renderer)
-
-  protected def processBlocks(cs: CharSequence) = {
-    val w = new StringWriter
-    blockProcessor(w).process(cs)
-    w.toString
-  }
-
-  protected def processInlines(cs: CharSequence) = {
-    val w = new StringWriter
-    blockProcessor(w).inline.process(cs)
-    w.toString
-  }
-
-  // Configuration
-
-  def leftQuote = cx.get("markeven.typo.leftQuote")
-      .map(_.toString).getOrElse("&laquo;")
-
-  def rightQuote = cx.get("markeven.typo.rightQuote")
-      .map(_.toString).getOrElse("&raquo;")
+  // Resolving
 
   def resolveLink(id: String): Option[LinkDef]
 
@@ -67,20 +42,51 @@ trait MarkevenRenderer { renderer =>
 
   def resolveFragment(id: String): Option[FragmentDef]
 
-  val scrambler = cx.instantiate[TextScrambler](
-    "markeven.scrambler", EmptyTextScrambler)
+  // Basic methods
 
-  val _includeSourceIndex =
+  def toHtml(cs: CharSequence): String = finalize(processBlocks(cs))
+
+  def toInlineHtml(cs: CharSequence): String = finalize(processInlines(cs))
+
+  protected def processBlocks(cs: CharSequence) = {
+    val w = new StringWriter
+    new BlockProcessor(w, renderer).process(cs)
+    w.toString
+  }
+
+  protected def processInlines(cs: CharSequence) = {
+    val w = new StringWriter
+    new InlineProcessor(w, renderer).process(cs)
+    w.toString
+  }
+
+  // Configuration
+
+  def sanitizer: Sanitizer = DEFAULT_SANITIZER
+
+  def leftQuote = cx.get("markeven.typo.leftQuote")
+      .map(_.toString)
+      .getOrElse("&laquo;")
+
+  def rightQuote = cx.get("markeven.typo.rightQuote")
+      .map(_.toString)
+      .getOrElse("&raquo;")
+
+  protected val _scrambler = cx.instantiate[TextScrambler](
+    "markeven.scrambler", EmptyTextScrambler)
+  def scrambler = _scrambler
+
+  protected val _includeSourceIndex =
     cx.getBoolean("markeven.includeSourceIndex")
         .getOrElse(false)
   def includeSourceIndex = _includeSourceIndex
 
-  val _autoAssignIdsPrefix =
+  protected val _autoAssignIdsPrefix =
     cx.getString("markeven.autoAssignIdsPrefix")
         .getOrElse("")
   def autoAssignIdsPrefix = _autoAssignIdsPrefix
 
-  val _stripInvalidXmlChars =
+  protected val _stripInvalidXmlChars =
     cx.getBoolean("markeven.stripInvalidXmlChars")
         .getOrElse(true)
   def stripInvalidXmlChars = _stripInvalidXmlChars
@@ -136,4 +142,28 @@ object DefaultMarkevenRenderer extends MarkevenRenderer {
   def resolveMedia(id: String) = None
   def resolveFragment(id: String) = None
 
+}
+
+/*! The `DelegatingMarkevenRenderer` forwards all configuration-related methods
+to specified `delegate`.
+
+It is useful if you wish to override only a couple of specific methods
+of `delegate`, leaving all others intact. */
+class DelegatingMarkevenRenderer(val delegate: MarkevenRenderer)
+    extends MarkevenRenderer {
+
+  def resolveLink(id: String) = delegate.resolveLink(id)
+  def resolveMedia(id: String) = delegate.resolveMedia(id)
+  def resolveFragment(id: String) = delegate.resolveFragment(id)
+
+  override def sanitizer = delegate.sanitizer
+
+  override def leftQuote = delegate.leftQuote
+  override def rightQuote = delegate.rightQuote
+
+  override def scrambler = delegate.scrambler
+
+  override def includeSourceIndex = delegate.includeSourceIndex
+  override def autoAssignIdsPrefix = delegate.autoAssignIdsPrefix
+  override def stripInvalidXmlChars = delegate.stripInvalidXmlChars
 }
