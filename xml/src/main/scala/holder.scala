@@ -233,7 +233,7 @@ val book = new Book().loadString("""
 </book>
 """)
 
-// Sertialization
+// Serialization
 
 book.toXml
 ```
