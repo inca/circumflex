@@ -138,21 +138,25 @@ to the `Referer` header.*/
   the session. */
   def doSessionAuth() {
     sessionOption.map { sess =>
-      val id = sess.getString(KEY).get
-      lookup(id) match {
-        case Some(principal) =>
-          try {
-            val lid = locationId.get
-            if (!principal.checkSession(lid))
-              throw new IllegalStateException
-            set(principal)
-          } catch {
-            case e: Exception =>
-              locationId.map(lid => principalOption.map(_.purgeSessions(lid)))
-              sess.invalidate()
+      sess.getString(KEY) match {
+        case Some(id) =>
+          lookup(id) match {
+            case Some(principal) =>
+              try {
+                val lid = locationId.get
+                if (!principal.checkSession(lid))
+                  throw new IllegalStateException
+                set(principal)
+              } catch {
+                case e: Exception =>
+                  locationId.map(lid => principalOption.map(_.purgeSessions(lid)))
+                  sess.invalidate()
+              }
+            case _ =>
           }
         case _ =>
       }
+
     }
   }
 
