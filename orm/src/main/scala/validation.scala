@@ -76,15 +76,19 @@ class RecordValidator[PK, R <: Record[PK, R]] {
                 key: String = "unique"): this.type =
     add { r =>
       val fields = f(r)
-      val crit = r.relation.criteria
-      fields.foreach {
-        case f: Field[Any, R] => crit.add(f EQ f())
-        case _ =>
-      }
-      crit.unique() match {
-        case Some(a: R) if (r.isTransient || a != r) =>
-          Some(new Msg(r.getClass.getName + "." + key, "record" -> r))
-        case _ => None
+      if (fields.exists(_.isEmpty)) None
+      else {
+        val crit = r.relation.criteria
+        fields.foreach {
+          case f: Field[Any, R] =>
+            crit.add(f EQ f())
+          case _ =>
+        }
+        crit.unique() match {
+          case Some(a: R) if (r.isTransient || a != r) =>
+            Some(new Msg(r.getClass.getName + "." + key, "record" -> r))
+          case _ => None
+        }
       }
     }
 
