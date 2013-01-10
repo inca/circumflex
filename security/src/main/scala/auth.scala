@@ -140,23 +140,19 @@ to the `Referer` header.*/
     sessionOption.map { sess =>
       sess.getString(KEY) match {
         case Some(id) =>
-          lookup(id) match {
-            case Some(principal) =>
-              try {
-                val lid = locationId.get
-                if (!principal.checkSession(lid))
-                  throw new IllegalStateException
-                set(principal)
-              } catch {
-                case e: Exception =>
-                  locationId.map(lid => principalOption.map(_.purgeSessions(lid)))
-                  sess.invalidate()
-              }
-            case _ =>
+          try {
+            val principal = lookup(id).get
+            val lid = locationId.get
+            if (!principal.checkSession(lid))
+              throw new IllegalStateException
+            set(principal)
+          } catch {
+            case e: Exception =>
+              locationId.map(lid => principalOption.map(_.purgeSessions(lid)))
+              sess.invalidate()
           }
         case _ =>
       }
-
     }
   }
 
