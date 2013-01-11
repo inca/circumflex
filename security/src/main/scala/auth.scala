@@ -397,6 +397,7 @@ to the `Referer` header.*/
         val correctToken = sha256(mkToken(principal, nonce) +
             ":" + deadline.toString + ":" + ssoId)
         if (correctToken == token && System.currentTimeMillis <= deadline) {
+          set(principal)
           setSessionAuth(principal, ssoId)
         }
       }
