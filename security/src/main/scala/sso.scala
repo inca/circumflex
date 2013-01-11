@@ -11,7 +11,7 @@ managed on single domains, are logically united with special identifier
 referred to as _SSO id_.
 
 The `SsoManager` trait provides an interface for storing and retrieving
-SSO ids with their last access timestamps, as well as for removing expired SSO ids.
+SSO ids with their last access timestamps.
 
 Each time the session-based authentication occurs, the session is checked
 for validity by retrieving the `ssoId` and ensuring that it is not expired.
@@ -62,7 +62,6 @@ trait SsoManager {
     of specified `ssoId`, or returns `None` if it is not found;
   * `remove(ssoId)` deletes last access time information associated with
     specified `ssoId`;
-  * `removeAllExpired` searches and removes all information on expired SSO ids.
 
   */
 
@@ -71,8 +70,6 @@ trait SsoManager {
   def getLastAccessTime(ssoId: String): Option[Long]
 
   def remove(ssoId: String)
-
-  def removeAllExpired()
 
 }
 
@@ -96,11 +93,4 @@ object DefaultSsoManager extends SsoManager {
     hash -= ssoId
   }
 
-  def removeAllExpired() {
-    val ctime = System.currentTimeMillis
-    hash.foreach { p =>
-      if (p._2 + timeout < ctime)
-        hash -= p._1
-    }
-  }
 }
