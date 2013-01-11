@@ -28,7 +28,7 @@ after successful authentication. The URL is resolved from request parameter,
 falling back to the flash parameter `cx.auth.returnTo` and finally
 to the `Referer` header.*/
   def returnLocationOption = param.get("returnTo")
-      .orElse(flash.getString("cx.auth.returnTo"))
+      .orElse(session.getString("cx.auth.returnTo"))
       .orElse(request.headers.get("Referer"))
       .filter(!_.startsWith(secureOrigin + "/auth"))
 

@@ -19,7 +19,7 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
 
   // Memorize the `returnTo` across requests
   param.get("returnTo").map { loc =>
-    flash.update("cx.auth.returnTo", loc)
+    session.update("cx.auth.returnTo", loc)
   }
 
   // Try to authenticate the request from session
