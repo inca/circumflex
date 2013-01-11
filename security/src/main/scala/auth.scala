@@ -75,17 +75,9 @@ to the `Referer` header.*/
   */
   def secureOrigin = secureScheme + "://" + secureDomain
 
-  /*! ## Sessions and locations
-
-  Current HTTP specifications do not allow cookies from one domain to be passed
-  to another domains (due to security reasons). This fact makes SSO very
-  difficult to implement.
-
-  In order to keep track of different sessions on different domains for the same
-  user we introduce the `locationId` method -- a random string generated
-  at login time and placed in every session.
-  */
-  def locationId = sessionOption.flatMap(_.getString("cx.auth.location"))
+  /*! The `ssoManager` defines SSO manager used with this authentication manager
+  (see [[/security/src/main/scala/sso.scala]]).*/
+  def ssoManager: SsoManager = DefaultSsoManager
 
   /*! ## Retrieving authenticated principal */
 
@@ -125,12 +117,11 @@ to the `Referer` header.*/
   }
 
   /*! The `setSessionAuth` associates specified `principal` with
-  current session and registers this session with specified `locationId`. */
-  def setSessionAuth(principal: U, locationId: String) {
+  current session and registers this session with specified `ssoId`. */
+  def setSessionAuth(principal: U, ssoId: String) {
     sessionOption.map { sess =>
       sess += KEY -> principal.uniqueId
-      sess += "cx.auth.location" -> locationId
-      principal.registerSession(locationId)
+      ssoManager.registerSession(ssoId)
     }
   }
 
@@ -142,14 +133,13 @@ to the `Referer` header.*/
         case Some(id) =>
           try {
             val principal = lookup(id).get
-            val lid = locationId.get
-            if (!principal.checkSession(lid))
+            if (!ssoManager.checkCurrentSession)
               throw new IllegalStateException
             set(principal)
+            ssoManager.touchCurrentSession()
           } catch {
             case e: Exception =>
-              locationId.map(lid => principalOption.map(_.purgeSessions(lid)))
-              sess.invalidate()
+              ssoManager.invalidateCurrentSession()
           }
         case _ =>
       }
@@ -165,13 +155,14 @@ to the `Referer` header.*/
   def login(principal: U, rememberMe: Boolean) {
     principalOption.filter(_.uniqueId != principal.uniqueId).map { u =>
     // Another principal is logged in. Let's log him off
-      locationId.map(lid => u.purgeSessions(lid))
+      ssoManager.invalidateCurrentSession()
       dropRememberMeCookie()
     }
-    // Log the principal in with new locationId
+    // Log the principal in with new SSO id
     set(principal)
-    val loc = randomString(8)
-    setSessionAuth(principal, loc)
+    val ssoId = randomString(8)
+    setSessionAuth(principal, ssoId)
+    // Set remember-me cookie if necessary
     if (rememberMe)
       setRememberMeCookie()
     else dropRememberMeCookie()
@@ -185,12 +176,9 @@ to the `Referer` header.*/
   This method must only be invoked on the secure domain as specified by
   the `secureDomain` method. */
   def logout() {
-    principalOption.map { u =>
-      locationId.map(lid => u.purgeSessions(lid))
-    }
-    ctx -= KEY
-    sessionOption.map(_.invalidate())
+    ssoManager.invalidateCurrentSession()
     dropRememberMeCookie()
+    ctx -= KEY
   }
 
   /*! ## Requiring authentication
@@ -384,13 +372,13 @@ to the `Referer` header.*/
                    timeout: Long = 60000l) = {
     val nonce = randomString(8)
     val deadline = System.currentTimeMillis + timeout
-    val lid = locationId.getOrElse(randomString(8))
+    val ssoId = ssoManager.ssoIdOption.getOrElse(randomString(8))
     val token = sha256(mkToken(principal, nonce) +
-        ":" + deadline.toString + ":" + lid)
+        ":" + deadline.toString + ":" + ssoId)
     appendParams(url, "sso" -> "token",
       "sso_nonce" -> nonce,
       "sso_deadline" -> deadline.toString,
-      "sso_location" -> lid,
+      "sso_id" -> ssoId,
       "sso_principal" -> principal.uniqueId,
       "sso_token" -> token)
   }
@@ -404,12 +392,12 @@ to the `Referer` header.*/
       lookup(id).map { principal =>
         val token = param("sso_token")
         val nonce = param("sso_nonce")
-        val lid = param("sso_location")
+        val ssoId = param("sso_id")
         val deadline = parse.longOption(param("sso_deadline")).getOrElse(0l)
         val correctToken = sha256(mkToken(principal, nonce) +
-            ":" + deadline.toString + ":" + lid)
+            ":" + deadline.toString + ":" + ssoId)
         if (correctToken == token && System.currentTimeMillis <= deadline) {
-          setSessionAuth(principal, lid)
+          setSessionAuth(principal, ssoId)
         }
       }
     }
