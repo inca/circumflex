@@ -397,8 +397,11 @@ to the `Referer` header.*/
         val correctToken = sha256(mkToken(principal, nonce) +
             ":" + deadline.toString + ":" + ssoId)
         if (correctToken == token && System.currentTimeMillis <= deadline) {
+          // Logout another principal, if any
+          principalOption.filter(_ != principal).map(_ => logout())
+          // Set session and context authentication for new principal
+          setSessionAuth(principal, lid)
           set(principal)
-          setSessionAuth(principal, ssoId)
         }
       }
     }
