@@ -400,7 +400,7 @@ to the `Referer` header.*/
           // Logout another principal, if any
           principalOption.filter(_ != principal).map(_ => logout())
           // Set session and context authentication for new principal
-          setSessionAuth(principal, lid)
+          setSessionAuth(principal, ssoId)
           set(principal)
         }
       }
