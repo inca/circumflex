@@ -153,11 +153,10 @@ to the `Referer` header.*/
   This method must only be invoked on the secure domain as specified by
   the `secureDomain` method. */
   def login(principal: U, rememberMe: Boolean) {
-    principalOption.filter(_.uniqueId != principal.uniqueId).map { u =>
-    // Another principal is logged in. Let's log him off
-      ssoManager.invalidateCurrentSession()
-      dropRememberMeCookie()
-    }
+    // Log out another principal, if any
+    principalOption
+        .filter(_.uniqueId != principal.uniqueId)
+        .map(_ => logout())
     // Log the principal in with new SSO id
     set(principal)
     val ssoId = randomString(8)
@@ -372,7 +371,12 @@ to the `Referer` header.*/
                    timeout: Long = 60000l) = {
     val nonce = randomString(8)
     val deadline = System.currentTimeMillis + timeout
-    val ssoId = ssoManager.ssoIdOption.getOrElse(randomString(8))
+    // SSO ID is propagated from currently authenticated principal,
+    // if it matches specified `principal`.
+    val ssoId = principalOption
+        .filter(_.uniqueId == principal.uniqueId)
+        .flatMap(u => ssoManager.ssoIdOption)
+        .getOrElse(randomString(8))
     val token = sha256(mkToken(principal, nonce) +
         ":" + deadline.toString + ":" + ssoId)
     appendParams(url, "sso" -> "token",
@@ -398,7 +402,9 @@ to the `Referer` header.*/
             ":" + deadline.toString + ":" + ssoId)
         if (correctToken == token && System.currentTimeMillis <= deadline) {
           // Logout another principal, if any
-          principalOption.filter(_ != principal).map(_ => logout())
+          principalOption
+              .filter(_.uniqueId != principal.uniqueId)
+              .map(_ => logout())
           // Set session and context authentication for new principal
           setSessionAuth(principal, ssoId)
           set(principal)
