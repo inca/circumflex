@@ -57,13 +57,14 @@ class DefaultSanitizer extends JsoupSanitizer {
     whitelist.addAttributes(t, "align", "valign", "width", "colspan", "rowspan")
   }
   formTags.foreach { t =>
-    whitelist.addAttributes(t, "type", "name", "value", "size",
+    whitelist.addAttributes(t, "type", "name", "value", "size", "form", "autofocus",
       "title", "checked", "disabled", "placeholder", "required", "min", "max",
-      "readonly", "multiple", "maxlength", "src", "selected", "tabindex")
+      "readonly", "multiple", "maxlength", "src", "selected", "tabindex", "maxlength")
   }
   whitelist.addAttributes("a", "href", "rel", "target", "name", "tabindex")
   whitelist.addAttributes("img", "src", "alt", "align", "width", "height", "vspace")
   whitelist.addAttributes("label", "for")
+  whitelist.addAttributes("textarea", "cols", "rows", "wrap")
 
   val cleaner = new Cleaner(whitelist)
 }
