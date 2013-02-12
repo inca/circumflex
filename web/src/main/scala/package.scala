@@ -268,13 +268,20 @@ package object web {
 
   // Escaping
 
-  def escapeHtml(text: String) = StringEscapeUtils.escapeHtml4(text)
-  def unescapeHtml(text: String) = StringEscapeUtils.unescapeHtml4(text)
+  def escapeHtml(text: String) =
+    StringEscapeUtils.escapeHtml4(text)
+        .replaceAll("\'", "&#x27;")
+
+  def unescapeHtml(text: String) =
+    StringEscapeUtils.unescapeHtml4(text)
+        .replaceAll("&apos;", "\'")
 
   def escapeJs(text: String) = StringEscapeUtils.escapeEcmaScript(text)
+
   def unescapeJs(text: String) = StringEscapeUtils.unescapeEcmaScript(text)
 
   def escapeXml(text: String) = StringEscapeUtils.escapeXml(text)
+
   def unescapeXml(text: String) = StringEscapeUtils.unescapeXml(text)
 
   // ECMA-like encode/decode

@@ -87,15 +87,25 @@ package object core {
       .replaceAll(">", "&gt;")
       .replaceAll("<", "&lt;")
       .replaceAll("\"", "&quot;")
-      .replaceAll("\'", "&apos;")
+      .replaceAll("\'", "&#x27;")
       .replaceAll("\\r\\n|\\r", "\n")
 
   def unwrapHtml(s: String) = s
       .replaceAll("&gt;", ">")
+      .replaceAll("&#x3[eE];", ">")
+      .replaceAll("&#62;", ">")
       .replaceAll("&lt;", "<")
+      .replaceAll("&#x3[cC];", "<")
+      .replaceAll("&#60;", "<")
       .replaceAll("&quot;", "\"")
+      .replaceAll("&#x22;", "\"")
+      .replaceAll("&#34;", "\"")
       .replaceAll("&apos;", "\'")
+      .replaceAll("&#x27;", "\'")
+      .replaceAll("&#39;", "\'")
       .replaceAll("&amp;", "&")
+      .replaceAll("&#x26;", "&")
+      .replaceAll("&#38;", "&")
       .replaceAll("\\r\\n|\\r", "\n")
 
 
