@@ -97,6 +97,8 @@ class LinkDef(_url: String,
   val url = ampEscape.matcher(_url).replaceAll("&amp;")
   val title = wrapHtml(_title)
 
+  def customAttrs: String = ""
+
   def writeLink(w: Writer, text: String) {
     w.write("<a href=\"")
     w.write(url)
@@ -106,10 +108,15 @@ class LinkDef(_url: String,
       w.write(title)
       w.write("\"")
     }
+    if (customAttrs != "") {
+      w.write(" ")
+      w.write(customAttrs)
+    }
     w.write(">")
     w.write(text)
     w.write("</a>")
   }
+
   def toLink(text: String) = {
     val w = new StringWriter
     writeLink(w, text)
@@ -127,8 +134,14 @@ class LinkDef(_url: String,
     }
     w.write(" alt=\"")
     w.write(alt)
-    w.write("\"/>")
+    w.write("\"")
+    if (customAttrs != "") {
+      w.write(" ")
+      w.write(customAttrs)
+    }
+    w.write("/>")
   }
+
   def toMedia(alt: String) = {
     val w = new StringWriter
     writeMedia(w, alt)
