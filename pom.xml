@@ -88,6 +88,16 @@
 
   <profiles>
     <profile>
+      <id>oss</id>
+      <distributionManagement>
+        <snapshotRepository>
+          <id>oss.sonatype.org</id>
+          <name>OSS Sonatype Repository</name>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+      </distributionManagement>
+    </profile>
+    <profile>
       <id>release</id>
       <build>
         <plugins>
