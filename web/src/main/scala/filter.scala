@@ -41,7 +41,7 @@ is available throughout your configuration via the `filterConfig` method of the
 class CircumflexFilter extends Filter {
 
   def init(filterConfig: FilterConfig) {
-    WEB_LOG.info("Circumflex 3.0")
+    WEB_LOG.info("Circumflex 3.0-RC1")
     cx("cx.filterConfig") = filterConfig
   }
 

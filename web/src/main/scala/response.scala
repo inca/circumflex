@@ -113,7 +113,7 @@ class HttpResponse(val raw: HttpServletResponse) {
   Circumflex Web Framework lets you access response headers via the `headers` object.
   */
   object headers extends HashMap[String, Any] {
-    update("X-Powered-By", "Circumflex 3.0")
+    update("X-Powered-By", "Circumflex 3.0-RC1")
   }
 
   /*!## Cookies

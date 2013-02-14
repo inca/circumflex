@@ -6,14 +6,14 @@
   <groupId>pro.savant.circumflex</groupId>
   <artifactId>circumflex-docco</artifactId>
   <packaging>jar</packaging>
-  <version>3.0-SNAPSHOT</version>
+  <version>3.0-RC1</version>
   <name>Circumflex Docco</name>
   <description>Scala port of http://jashkenas.github.com/docco.</description>
 
   <parent>
     <groupId>pro.savant.circumflex</groupId>
     <artifactId>circumflex-parent</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0-RC1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -21,12 +21,12 @@
     <dependency>
       <groupId>pro.savant.circumflex</groupId>
       <artifactId>circumflex-ftl</artifactId>
-      <version>3.0-SNAPSHOT</version>
+      <version>3.0-RC1</version>
     </dependency>
     <dependency>
       <groupId>pro.savant.circumflex</groupId>
       <artifactId>circumflex-markeven</artifactId>
-      <version>3.0-SNAPSHOT</version>
+      <version>3.0-RC1</version>
     </dependency>
   </dependencies>
 
