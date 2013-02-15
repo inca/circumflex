@@ -91,7 +91,7 @@
       <id>oss</id>
       <distributionManagement>
         <snapshotRepository>
-          <id>oss.sonatype.org</id>
+          <id>nexus</id>
           <name>OSS Sonatype Repository</name>
           <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
