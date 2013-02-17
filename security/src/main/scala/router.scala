@@ -1,6 +1,8 @@
 package pro.savant.circumflex
 package security
 
+import collection.mutable.ListBuffer
+
 import core._, web._
 
 /*! # Security router
@@ -25,7 +27,7 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
   // Try to authenticate the request from session
   auth.doSessionAuth()
 
-  // Try SSO login (this also strips away SSO parameters, if any
+  // Try SSO login (this also strips away SSO parameters, if any)
   auth.trySsoLogin()
 
   // Now try secure routing
@@ -51,7 +53,7 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
     }
 
     /*! This route appends the security parameters to the location specified
-     in the `to` request parameter, if the user is authenticated, and redirects
+     in the `returnTo` request parameter, if the user is authenticated, and redirects
      him back.
     */
     get("/auth/sso-return") = {
@@ -62,22 +64,30 @@ class SecurityRouter[U <: Principal](val auth: Auth[U])
     }
 
     /*! This route appends the security parameters to the location specified
-     in the `to` request parameter, if the user is authenticated, and redirects
+     in the `returnTo` request parameter, if the user is authenticated, and redirects
      him back. Unlike `sso-return`, the user is redirected to the `loginUrl`
      of the `auth` if no authentication exist.
+
+     All reqiuest parameters are passed to `loginUrl` as well.
     */
     get("/auth/sso-check") = {
       val location = auth.returnLocation
       if (auth.isEmpty)
-        sendRedirect(appendParam(auth.loginUrl, "returnTo", location))
+        sendRedirect(mkLoginUrl(location))
       else sendRedirect(auth.createSsoUrl(location))
     }
 
     get("/auth/sso-check.js") = {
       val location = auth.returnLocation
       if (auth.isEmpty)
-        sendJsRedirect(appendParam(auth.loginUrl, "returnTo", location))
+        sendJsRedirect(mkLoginUrl(location))
       else sendJsRedirect(auth.createSsoUrl(location))
+    }
+
+    def mkLoginUrl(location: String) = {
+      val params = Seq("returnTo" -> location) ++
+          request.params.toSeq.filter(_._1 != "returnTo")
+      auth.loginUrlWith(params: _*)
     }
 
   }

@@ -211,8 +211,13 @@ to the `Referer` header.*/
    is returned from SSO. The `returnTo` parameter will point to the original
    URL from which the `require()` method was invoked. Use `returnLocation` to
    redirect the user there after successful login.
+
+   The `loginUrlWith` just appends specified `parameters` to `loginUrl`
    */
   def loginUrl: String
+
+  def loginUrlWith(params: (String, String)*) =
+    params.foldLeft(loginUrl)((url, p) => appendParam(url, p._1, p._2))
 
   /*! ## Security tokens
 

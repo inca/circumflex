@@ -88,16 +88,6 @@
 
   <profiles>
     <profile>
-      <id>oss</id>
-      <distributionManagement>
-        <snapshotRepository>
-          <id>nexus</id>
-          <name>OSS Sonatype Repository</name>
-          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-      </distributionManagement>
-    </profile>
-    <profile>
       <id>release</id>
       <build>
         <plugins>
@@ -336,9 +326,9 @@
 
   <distributionManagement>
     <snapshotRepository>
-      <id>m2.eduarea.com</id>
-      <name>EduArea Snapshots Repository</name>
-      <url>http://m2.eduarea.com/content/repositories/snapshots</url>
+      <id>nexus</id>
+      <name>OSS Sonatype Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
   </distributionManagement>
 
