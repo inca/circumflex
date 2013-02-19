@@ -398,47 +398,6 @@ class HttpRequest(val raw: HttpServletRequest) {
   if you attempt to add an attribute into it via `update` or `+` method, all other methods
   will return empty values without implicitly creating a session.
   */
-  val session = new Session
-
-  class Session extends Map[String, Any] with KeyValueCoercion {
-
-    def id: Option[String] = {
-      val s = raw.getSession(false)
-      if (s == null) None
-      else Some(s.getId)
-    }
-
-    def +=(kv: (String, Any)): this.type = {
-      raw.getSession(true).setAttribute(kv._1, kv._2)
-      this
-    }
-
-    def -=(key: String): this.type = {
-      val s = raw.getSession(false)
-      if (s != null) s.removeAttribute(key)
-      this
-    }
-
-    def iterator: Iterator[(String, Any)] = {
-      val s = raw.getSession(false)
-      if (s != null)
-        s.getAttributeNames
-            .asInstanceOf[JEnumeration[String]]
-            .map(k => (k -> s.getAttribute(k)))
-      else Iterator.empty
-    }
-
-    def get(key: String): Option[Any] = {
-      val s = raw.getSession(false)
-      if (s != null) any2option(s.getAttribute(key))
-      else None
-    }
-
-    def invalidate(): this.type = {
-      val s = raw.getSession(false)
-      if (s != null) s.invalidate()
-      this
-    }
-  }
+  val session = new HttpSession
 
 }

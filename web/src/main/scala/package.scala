@@ -51,6 +51,8 @@ package object web {
   def sessionOption = requestOption.map(_.session)
   def session = sessionOption.get
 
+  object sessionBin extends HttpSessionBin
+
   def filterChainOption = ctx.getAs[FilterChain]("cx.filterChain")
   def filterChain = filterChainOption.get
 
