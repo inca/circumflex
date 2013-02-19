@@ -464,4 +464,8 @@ trait XmlFile extends ElemHolder with Cached {
     this
   }
 
+  def touch() {
+    FileUtils.touch(descriptorFile)
+  }
+
 }
