@@ -137,6 +137,18 @@ class HttpRequest(val raw: HttpServletRequest) {
     ctx -= "cx.web.uriPrefix"
   }
 
+  /*! The `localUri` method returns "subroute-local URI" -- the request URI
+  stripped from currently set `prefix` as returned by corresponding method.
+
+  If URI does not start with `prefix`, the original `uri` is returned.
+   */
+  def localUri = {
+    val u = uri
+    val p = prefix
+    if (u.startsWith(p)) u.substring(p.length)
+    else u
+  }
+
   /*!## Server information
 
   Following methods provide information about the server:
