@@ -82,9 +82,9 @@ class MatchingMockRouter extends Router {
 class CircumflexWebSpec
   extends FreeSpec
   with MustMatchers
-  with BeforeAndAfter {
+  with BeforeAndAfterAll {
 
-  before {
+  override def beforeAll() {
     cx("cx.router") = classOf[MockRouter]
     var rootPath = System.getProperty("user.dir")
     // Hack to get around different Maven execution locations
@@ -95,7 +95,9 @@ class CircumflexWebSpec
     MockApp.start()
   }
 
-  after { MockApp.stop() }
+  override def afterAll() {
+    MockApp.stop()
+  }
 
   "Router" - {
     "return 404 by default on non-matched requests" in {

@@ -73,15 +73,13 @@ the corresponding `MatchResult`. All other parameters are accessible via the `pa
 method (note that named parameters are groups too, so they appear inside `params`
 and have their index as well).
 */
-class Matcher(val name: String,
-              val value: String,
-              protected var regex: Regex,
-              protected var groupNames: Seq[String] = Nil) {
+trait Matcher {
 
-  def this(name: String, value: String, pattern: String) = {
-    this(name, value, null, Nil)
-    processPattern(pattern)
-  }
+  def name: String
+  def getValue: String
+
+  protected var regex: Regex = null
+  protected var groupNames: Seq[String] = Nil
 
   protected def processPattern(pattern: String) {
     this.groupNames = List("splat")    // for `group(0)`
@@ -97,12 +95,12 @@ class Matcher(val name: String,
     })).r
   }
 
-  def groupName(index: Int): String=
+  def groupName(index: Int): String =
     if (groupNames.indices.contains(index)) groupNames(index)
     else "splat"
 
   def apply: Option[Seq[MatchResult]] = {
-    val m = regex.pattern.matcher(value)
+    val m = regex.pattern.matcher(getValue)
     if (m.matches) {
       val matches = (0 to m.groupCount).map(i => groupName(i) -> m.group(i))
       Some(List(new MatchResult(name, matches: _*)))
@@ -110,37 +108,52 @@ class Matcher(val name: String,
   }
 
   def matchPrefix: Option[(String, Seq[MatchResult])] = {
+    val value = getValue
     val m = regex.pattern.matcher(value)
     if (m.lookingAt) {
       val matches = (0 to m.groupCount).map(i => groupName(i) -> m.group(i))
       Some(value.substring(m.start, m.end) -> Seq(new MatchResult(name, matches: _*)))
     } else None
   }
+
+  override def toString = regex.toString
 }
 
-class UriMatcher(regex: Regex, groupNames: Seq[String] = Nil)
-    extends Matcher("uri", request.uri, regex, groupNames) {
+abstract class AbstractMatcher(_regex: Regex, _groupNames: Seq[String])
+    extends Matcher {
+  this.regex = _regex
+  this.groupNames = _groupNames
+}
+
+class UriMatcher(_regex: Regex, _groupNames: Seq[String] = Nil)
+    extends AbstractMatcher(_regex, _groupNames) {
 
   def this(pattern: String) = {
     this(null, Nil)
     processPattern(pattern)
   }
 
+  def name = "uri"
+
+  def getValue = request.uri
+
 }
 
 /*! `HeaderMatcher` is used to match the requests by contents of their headers. */
-class HeaderMatcher(name: String, regex: Regex, groupNames: Seq[String] = Nil)
-    extends Matcher(name, request.headers.getOrElse(name,""), regex, Nil) {
+class HeaderMatcher(val name: String, _regex: Regex, _groupNames: Seq[String] = Nil)
+    extends AbstractMatcher(_regex, _groupNames) {
 
   def this(name: String, pattern: String) = {
     this(name, null, Nil)
     processPattern(pattern)
   }
 
+  def getValue = request.headers.getOrElse(name,"")
 }
 
-/*! `HeaderMatcherHelper` provides DSL for matching requests by headers. See `matchers` object
-in package `pro.savant.circumflex.web` for more information. */
+/*! `HeaderMatcherHelper` provides DSL for matching requests by headers.
+
+See `matchers` object in package `pro.savant.circumflex.web` for more information. */
 class HeaderMatcherHelper(name: String) {
 
   def apply(regex: Regex) = new HeaderMatcher(name, regex, Nil)

@@ -32,17 +32,17 @@ object Sample {
 class BasicSpec
     extends FreeSpec
     with MustMatchers
-    with BeforeAndAfter {
+    with BeforeAndAfterAll {
 
   val ci = City AS "ci"
   val co = Country AS "co"
 
-  before {
+  override def beforeAll() {
     Sample.createSchema()
     Sample.loadData()
   }
 
-  after {
+  override def afterAll() {
     Sample.dropSchema
   }
 

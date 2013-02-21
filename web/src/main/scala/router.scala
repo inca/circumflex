@@ -4,6 +4,7 @@ package web
 import core._
 import util.matching.Regex
 import scala.xml.Node
+import java.util.regex.Pattern
 
 /*!# Routing
 
@@ -40,12 +41,36 @@ class Router {
     sendError(404)
 
   implicit def string2uriMatcher(str: String): UriMatcher =
-    new UriMatcher(prefix + str)
+    matchers.forUri(prefix + str)
 
   implicit def regex2uriMatcher(regex: Regex): UriMatcher =
-    new UriMatcher(new Regex(prefix + regex.toString))
+    matchers.forUriRegex(Pattern.quote(prefix) + regex.toString)
 
-  // Routes
+  def uri: MatchResult = ctx.getAs[MatchResult]("uri")
+      .getOrElse(new MatchResult("uri", "splat" -> request.uri))
+
+  /*! All routes are instantiated once per application and are used
+by all routers. All routes are thread-safe since they do not maintain any state.
+ */
+
+  def get = routes.get
+  def getOrPost = routes.getOrPost
+  def head = routes.head
+  def post = routes.post
+  def put = routes.put
+  def patch = routes.patch
+  def delete = routes.delete
+  def options = routes.options
+  def any = routes.any
+
+  def filter = routes.filter
+  def rewrite = routes.rewrite
+  def sub = routes.sub
+
+}
+
+object routes {
+
   val get = new Route("get", "head")
   val getOrPost = new Route("get", "post")
   val head = new Route("head")
@@ -56,7 +81,7 @@ class Router {
   val options = new Route("options")
   val any = new Route("*")
 
-  /*! ## Filtering requests
+  /*! ### Filtering requests
 
   The `filter` route performs URI-based matching just like all other routes,
   executes the attached block on successful match and continues router execution.
@@ -66,10 +91,7 @@ class Router {
   */
   val filter = new FilterRoute
 
-  def uri: MatchResult = ctx.getAs[MatchResult]("uri")
-      .getOrElse(new MatchResult("uri", "splat" -> request.uri))
-
-  /*!## URI rewriting
+  /*! ### URI rewriting
 
   Special `rewrite` route allows you to change URI for currently processed request.
   If route has matched successfully, the URI will be set to the value returned by
@@ -88,7 +110,7 @@ class Router {
 
   val rewrite = new RewriteRoute
 
-  /*!## Subroutes
+  /*! ### Subroutes
 
   Subroutes represent an easy and powerful concept which allows nesting
   routes inside each other without creating additional routers or repeating
@@ -117,6 +139,7 @@ class Router {
       }
   */
   val sub = new SubRoute
+
 }
 
 /*! ## Routing internals
@@ -155,7 +178,7 @@ trait RoutingContext[-T] {
 class Route(matchingMethods: String*)
     extends RoutingContext[RouteResponse] {
 
-  val matches = matchingMethods.contains("*") ||
+  def matches = matchingMethods.contains("*") ||
       matchingMethods.contains(request.method)
 
   protected def dispatch(block: => RouteResponse) {

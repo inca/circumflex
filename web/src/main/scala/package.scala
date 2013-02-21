@@ -9,6 +9,8 @@ import java.util.Date
 import java.util.regex.Pattern
 import java.net.{URLDecoder, URLEncoder}
 import org.apache.commons.lang3.StringEscapeUtils
+import collection.concurrent.TrieMap
+import util.matching.Regex
 
 /*!# The `web` package
 
@@ -214,7 +216,7 @@ package object web {
     response.headers += ("Last-Modified" -> lastModified)
   }
 
-  /*!## Headers matching helpers
+  /*!## Matching helpers
 
   The `matchers` helper contains shortcuts for various matchers
   (for example, by known HTTP headers).
@@ -258,6 +260,16 @@ package object web {
     val USER_AGENT = new HeaderMatcherHelper("User-Agent")
     val VIA = new HeaderMatcherHelper("Via")
     val WARNING = new HeaderMatcherHelper("Warning")
+
+    /*! URI matchers are the most common ones in web applications and, therefore,
+    they are cached to improve the routers efficiency.*/
+    private val _uriMap = new TrieMap[String, UriMatcher]
+
+    def forUri(pattern: String) =
+      _uriMap.getOrElseUpdate(pattern, new UriMatcher(pattern))
+
+    def forUriRegex(regex: String) =
+      _uriMap.getOrElseUpdate(regex, new UriMatcher(new Regex(regex)))
   }
 
   /*! ## Utilities
