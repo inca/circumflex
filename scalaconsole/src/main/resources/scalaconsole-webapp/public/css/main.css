@@ -2,7 +2,7 @@ body {
   margin:0;
   padding:0;
   background:url("http://cdn.savant.pro/img/misc/cx-bg.png") 0 0 repeat-x,
-             url("http://cdn.savant.pro/img/noise.png") 0 0 repeat #166B36;
+             url("http://cdn.savant.pro/img/ui/noise.png") 0 0 repeat #166B36;
   font-size:16px;
   font-family: "HelveticaNeueLight", "HelveticaNeue-Light",
   "Helvetica Neue Light", "HelveticaNeue", "Helvetica Neue",
@@ -191,6 +191,18 @@ span.amp {
 #repl-output .error {
   background:#fee;
 }
+#repl-output .output {
+  margin:8px;
+  padding:4px 8px;
+  background: #f7f7fc;
+  border: 1px solid #d3d3d7;
+  border-width: 1px 4px;
+  border-radius: 8px;
+}
+#repl-output .output .line + .line {
+  border-top:1px dotted #ddd;
+}
+
 
 /* Submits */
 

@@ -23,6 +23,7 @@ class ScalaConsoleRouter(_templatesRoot: String,
     var result = "<div class=\"input\">" + wrapHtml(cmd) + "</div>"
     val console = getConsole
     dropBucket()
+    // Execute command
     import scala.tools.nsc._
     console.execute(cmd) match {
       case interpreter.Results.Error =>
@@ -36,6 +37,13 @@ class ScalaConsoleRouter(_templatesRoot: String,
             "</div>"
         dropBucket()
       case _ =>
+    }
+    // Also flush output, if any
+    val output = console.flushOutput()
+    if (output != "") {
+      val lines = output.split("\\n").map(_.trim)
+          .map(line => "<div class=\"line\">" + line + "</div>")
+      result += "<div class=\"output\">" + lines.mkString + "</div>"
     }
     send(result)
   }

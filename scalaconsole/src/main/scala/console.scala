@@ -1,7 +1,7 @@
 package pro.savant.circumflex
 package scalaconsole
 
-import core._
+import core._, web._
 import tools.nsc._, interpreter._
 import java.io._
 
@@ -13,6 +13,15 @@ class ScalaConsole(val bucketFunc: () => StringWriter) {
       File.pathSeparator + System.getProperty("java.class.path") +
           File.pathSeparator + cx.getString("application.classpath").getOrElse("")
   settings.Yreplsync.value = true
+
+  protected var _out = new ByteArrayOutputStream(4096)
+
+  def flushOutput(): String = {
+    val result = new String(_out.toByteArray, "UTF-8")
+    _out.close()
+    _out = new ByteArrayOutputStream(4096)
+    result
+  }
 
   val writer = new PrintWriter(
     new Writer {
@@ -30,44 +39,16 @@ class ScalaConsole(val bucketFunc: () => StringWriter) {
   imain.interpret("import pro.savant._, circumflex._")
   imain.interpret("import core._, web._, orm._, xml._, cache._, diff._, mail._, markeven._")
   imain.interpret("import java.util.Date, java.io._, java.net._")
-  imain.interpret("import scalaconsole.ScalaConsole._")
 
-  def execute(cmd: String): Results.Result = try {
-    ctx += "scalaconsole.out.writer" -> writer
-    imain.interpret(cmd)
-  } finally {
-    ctx -= "scalaconsole.out.writer"
-  }
+  def execute(cmd: String): Results.Result =
+    scala.Console.withOut(_out) {
+      imain.interpret(cmd)
+    }
 
   def reset() {
     imain.reset()
     imain.close()
     imain = new IMain(settings, new PrintWriter(writer))
-  }
-
-}
-
-object ScalaConsole {
-
-  val stdout = new PrintWriter(System.out)
-
-  def getWriter = ctx.getAs[PrintWriter]("scalaconsole.out.writer")
-      .getOrElse(stdout)
-
-  def print(obj: Any) {
-    getWriter.print(obj)
-  }
-
-  def println() {
-    getWriter.println()
-  }
-
-  def println(obj: Any) {
-    getWriter.println(obj)
-  }
-
-  def printf(text: String, xs: Any*) {
-    getWriter.print(text.format(xs: _*))
   }
 
 }
