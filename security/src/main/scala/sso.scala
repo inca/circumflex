@@ -94,3 +94,10 @@ object DefaultSsoManager extends SsoManager {
   }
 
 }
+
+/*! ## SSO Excpetion
+
+`SsoException` is a simple marker for SSO-related exceptions.
+They are considered as non-critical and are subject for forcing the principal logout.
+*/
+class SsoException(msg: String) extends Exception(msg)

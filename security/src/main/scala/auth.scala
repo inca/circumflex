@@ -396,16 +396,23 @@ to the `Referer` header.*/
   and tries to authenticate current session by looking up supplied principal
   and checking his authenticity. */
   def trySsoLogin() {
-    if (param("sso") == "token") {
-      val id = param("sso_principal")
-      lookup(id).map { principal =>
+    if (param("sso") == "token")
+      try {
+        val id = param("sso_principal")
+        val principal = lookup(id).getOrElse(
+          throw new SsoException("Principal " + id + " not found."))
         val token = param("sso_token")
         val nonce = param("sso_nonce")
         val ssoId = param("sso_id")
         val deadline = parse.longOption(param("sso_deadline")).getOrElse(0l)
         val correctToken = sha256(mkToken(principal, nonce) +
             ":" + deadline.toString + ":" + ssoId)
-        if (correctToken == token && System.currentTimeMillis <= deadline) {
+        // Check correctness
+        if (correctToken != token)
+          throw new SsoException("Token " + token + " is incorrect.")
+        // Check for expiry
+        if (System.currentTimeMillis > deadline) {
+          throw new SsoException("Request expired.")
           // Logout another principal, if any
           principalOption
               .filter(_.uniqueId != principal.uniqueId)
@@ -414,8 +421,11 @@ to the `Referer` header.*/
           setSessionAuth(principal, ssoId)
           set(principal)
         }
+      } catch {
+        case e: SsoException =>
+          SECURITY_LOG.warn("SSO login failed: " + e.getMessage)
+          logout()
       }
-    }
     // Drop SSO params from query string
     if (param.contains("sso")) {
       var uri = web.origin + request.originalUri
@@ -433,6 +443,17 @@ to the `Referer` header.*/
     "window.location.replace(\"" + escapeJs(pf) +
         "\" + encodeURIComponent(window.location.href));"
   }.getOrElse("")
+
+  /*! The `ssoScript` tag returns HTML `<script>` tag for embedding it
+  into the `<head>` of every page of SSO-enabled application.
+   */
+  def ssoScript: String = principalOption match {
+    case Some(u) => ""
+    case _ =>
+      "<script type=\"text/javascript\" src=\"" +
+          secureOrigin + "/auth/sso.js?__=" + System.currentTimeMillis +
+          "\"></script>"
+  }
 
 }
 
