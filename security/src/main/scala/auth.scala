@@ -411,16 +411,15 @@ to the `Referer` header.*/
         if (correctToken != token)
           throw new SsoException("Token " + token + " is incorrect.")
         // Check for expiry
-        if (System.currentTimeMillis > deadline) {
+        if (System.currentTimeMillis > deadline)
           throw new SsoException("Request expired.")
-          // Logout another principal, if any
-          principalOption
-              .filter(_.uniqueId != principal.uniqueId)
-              .map(_ => logout())
-          // Set session and context authentication for new principal
-          setSessionAuth(principal, ssoId)
-          set(principal)
-        }
+        // Logout another principal, if any
+        principalOption
+            .filter(_.uniqueId != principal.uniqueId)
+            .map(_ => logout())
+        // Set session and context authentication for new principal
+        setSessionAuth(principal, ssoId)
+        set(principal)
       } catch {
         case e: SsoException =>
           SECURITY_LOG.warn("SSO login failed: " + e.getMessage)
