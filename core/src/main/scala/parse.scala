@@ -26,6 +26,11 @@ object parse {
     case e: Exception => None
   }
 
+  def time(str: => String): Date = timeOption(str).get
+  def timeOption(str: => String): Option[Date] = dateOption("yyyy-MM-dd", str)
+      .orElse(parse.dateOption("yyyy-MM-dd HH:mm:ss", str))
+      .orElse(parse.dateOption("yyyy-MM-dd HH:mm:ss ZZ", str))
+
   def int(str: => String): Int = intOption(str).get
   def intOption(str: => String): Option[Int] = try {
     Some(str.trim.toInt)
