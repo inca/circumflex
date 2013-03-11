@@ -116,7 +116,6 @@ class Transaction {
   def execute[A](sql: String,
                  stActions: PreparedStatement => A,
                  errActions: Throwable => A): A = execute({ conn =>
-    ORM_LOG.debug(ormConf.prefix(": ")  + sql)
     val st =_statementsCache.get(sql).getOrElse {
       val statement = ormConf.dialect.prepareStatement(conn, sql)
       _statementsCache.update(sql, statement)
@@ -131,8 +130,7 @@ class Transaction {
       block
     } catch {
       case e: ControlThrowable =>
-        ORM_LOG.trace(
-          "Escaped nested transaction via ControlThrowable, " +
+        ORM_LOG.trace("Escaped nested transaction via ControlThrowable, " +
               "ROLLBACK is suppressed.")
         throw e
       case e: Exception =>

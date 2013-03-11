@@ -18,7 +18,7 @@ Any exceptions occured inside template will cause a template
 to be omitted.
 
 For example, consider following source directory
-(`templateRoot` = `src/main/resources/templates`, `sourcePath`):
+(`templatesRoot` = `src/main/resources/templates`, `sourcePath` = `/static`):
 
     src/main/resources/templates/static/
     \ errors/

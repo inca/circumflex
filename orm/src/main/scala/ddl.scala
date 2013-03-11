@@ -97,6 +97,7 @@ class DDLUnit {
     objects.reverse.foreach { o =>
       tx.execute(o.sqlDrop, { st =>
         st.executeUpdate()
+        ORM_LOG.debug(ormConf.prefix(": ") + o.sqlDrop)
         _msgs ++= List(new Msg(
           "orm.ddl.info",
           "status" -> ("DROP " + o.objectName + ": OK"),
@@ -118,6 +119,7 @@ class DDLUnit {
     objects.foreach { o =>
       tx.execute(o.sqlCreate, { st =>
         st.executeUpdate()
+        ORM_LOG.debug(ormConf.prefix(": ") + o.sqlCreate)
         _msgs ++= List(new Msg(
           "orm.ddl.info",
           "status" -> ("CREATE " + o.objectName + ": OK"),

@@ -33,6 +33,20 @@ trait Query extends SQLable with Expression with Cloneable {
     "this_" + _aliasCounter
   }
 
+  // Logging
+
+  protected def writeLog() {
+    val msg = new StringBuilder
+    msg.append(ormConf.prefix(": "))
+    msg.append("[")
+    if (_executionTime > 1000)
+      msg.append(_executionTime / 1000 + "s")
+    else msg.append(_executionTime + "ms")
+    msg.append("] ")
+    msg.append(toInlineSql)
+    ORM_LOG.debug(msg.toString)
+  }
+
   // Named parameters
 
   def setParams(st: PreparedStatement, index: Int): Int = {
@@ -95,7 +109,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
 
   def resultSet[A](actions: ResultSet => A): A = {
     if (isUndefinedQueryPlan)
-      ORM_LOG.warn("Warning! Query plan contains ambiguous joins. " +
+      ORM_LOG.warn("Query plan contains ambiguous joins. " +
           "Please recheck the FROM clause.")
     val result = time {
       tx.execute(toSql, { st =>
@@ -109,6 +123,7 @@ abstract class SQLQuery[T](val projection: Projection[T]) extends Query {
       }, { throw _ })
     }
     _executionTime = result._1
+    writeLog()
     ormConf.statisticsManager.executeSql(this)
     result._2
   }
@@ -360,6 +375,7 @@ trait DMLQuery extends Query {
       }, { throw _ })
     }
     _executionTime = result._1
+    writeLog()
     ormConf.statisticsManager.executeDml(this)
     result._2
   }
