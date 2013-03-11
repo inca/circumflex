@@ -36,15 +36,17 @@ trait Query extends SQLable with Expression with Cloneable {
   // Logging
 
   protected def writeLog() {
-    val msg = new StringBuilder
-    msg.append(ormConf.prefix(": "))
-    msg.append("[")
-    if (_executionTime > 1000)
-      msg.append(_executionTime / 1000 + "s")
-    else msg.append(_executionTime + "ms")
-    msg.append("] ")
-    msg.append(toInlineSql)
-    ORM_LOG.debug(msg.toString)
+    if (ORM_LOG.isDebug) {
+      val msg = new StringBuilder
+      msg.append(ormConf.prefix(": "))
+      msg.append("[")
+      if (_executionTime > 1000)
+        msg.append(_executionTime / 1000 + "s")
+      else msg.append(_executionTime + "ms")
+      msg.append("] ")
+      msg.append(toInlineSql)
+      ORM_LOG.debug(msg.toString)
+    }
   }
 
   // Named parameters

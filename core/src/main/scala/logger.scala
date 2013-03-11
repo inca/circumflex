@@ -12,39 +12,49 @@ class Logger(val name: String) {
 
   protected val log = org.slf4j.LoggerFactory.getLogger(name)
 
-  def info(msg: => Any) {
-    if (log.isInfoEnabled) log.info(msg.toString)
-  }
-
-  def warn(msg: => Any) {
-    if (log.isWarnEnabled) log.warn(msg.toString)
-  }
-
-  def warn(msg: => Any, e: Throwable) {
-    if (log.isWarnEnabled) log.warn(msg.toString, e)
-  }
+  def isError = log.isErrorEnabled
 
   def error(msg: => Any, e: Throwable) {
-    if (log.isErrorEnabled) log.error(msg.toString, e)
+    if (isError) log.error(msg.toString, e)
   }
 
   def error(msg: => Any) {
-    if (log.isErrorEnabled) log.error(msg.toString)
+    if (isError) log.error(msg.toString)
   }
 
+  def isWarn = log.isWarnEnabled
+
+  def warn(msg: => Any) {
+    if (isWarn) log.warn(msg.toString)
+  }
+
+  def warn(msg: => Any, e: Throwable) {
+    if (isWarn) log.warn(msg.toString, e)
+  }
+
+  def isInfo = log.isInfoEnabled
+
+  def info(msg: => Any) {
+    if (isInfo) log.info(msg.toString)
+  }
+
+  def isDebug = log.isDebugEnabled
+
   def debug(msg: => Any, e: Throwable) {
-    if (log.isDebugEnabled) log.debug(msg.toString, e)
+    if (isDebug) log.debug(msg.toString, e)
   }
 
   def debug(msg: => Any) {
-    if (log.isDebugEnabled) log.debug(msg.toString)
+    if (isDebug) log.debug(msg.toString)
   }
 
+  def isTrace = log.isTraceEnabled
+
   def trace(msg: => Any, e: Throwable) {
-    if (log.isTraceEnabled) log.trace(msg.toString, e)
+    if (isTrace) log.trace(msg.toString, e)
   }
 
   def trace(msg: => Any) {
-    if (log.isTraceEnabled) log.trace(msg.toString)
+    if (isTrace) log.trace(msg.toString)
   }
 }
