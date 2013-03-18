@@ -426,7 +426,9 @@ to the `Referer` header.*/
     if (param.contains("sso")) {
       sendRedirect(web.origin +
           request.originalUri +
-          request.queryString.replaceAll("&?sso[^=]*=[^&]*", ""))
+          request.queryString
+              .replaceAll("&?sso[^=]*=[^&]*", ""))
+              .replaceAll("^\\?$", "")
     }
   }
 
