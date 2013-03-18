@@ -180,9 +180,9 @@ trait SearchQuery extends Query {
       case EmptyPredicate =>
         this._where = AND(predicates: _*)
       case p: AggregatePredicate if (p.operator == ormConf.dialect.AND) =>
-        p.add(predicates: _*)
+        this._where = p.add(predicates: _*)
       case p =>
-        this._where = _where.AND(predicates: _*)
+        this._where = AND(_where).add(predicates: _*).toPredicate
     }
     this
   }

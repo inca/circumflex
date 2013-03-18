@@ -201,7 +201,7 @@ class Criteria[PK, R <: Record[PK, R]]
   def predicate: Predicate = _restrictions.size match {
     case 0 => EmptyPredicate
     case 1 => _restrictions(0)
-    case _ => orm.AND(_restrictions: _*)
+    case _ => orm.AND(_restrictions: _*).toPredicate
   }
 
   def queryPlan: RelationNode[PK, R] = _joinTree match {
@@ -290,8 +290,8 @@ class Criteria[PK, R <: Record[PK, R]]
       case _ => result._joinTree
     }
     // copy restrictions
-    result._restrictions = List(new AggregatePredicate(
-      operator, List(result.predicate, criteria.predicate)))
+    result._restrictions = Seq(new AggregatePredicate(
+      operator, Seq(result.predicate, criteria.predicate)))
     // copy order specificators
     criteria._orders.foreach { o =>
       if (!result._orders.contains(o))

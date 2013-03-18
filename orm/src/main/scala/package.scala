@@ -126,9 +126,9 @@ package object orm {
   // Predicates DSL
 
   def AND(predicates: Predicate*) =
-    new AggregatePredicate(ormConf.dialect.AND, predicates.toSeq)
+    new AggregatePredicateBuffer(ormConf.dialect.AND).add(predicates: _*)
   def OR(predicates: Predicate*) =
-    new AggregatePredicate(ormConf.dialect.OR, predicates.toSeq)
+    new AggregatePredicateBuffer(ormConf.dialect.OR).add(predicates: _*)
   def NOT(predicate: Predicate) =
     new SimpleExpression(ormConf.dialect.not(predicate.toSql), predicate.parameters)
 

@@ -1,6 +1,8 @@
 package pro.savant.circumflex
 package orm
 
+import collection.mutable.ListBuffer
+
 /*!# Predicates
 
 `Predicate` is essentially a parameterized expression which yields boolean
@@ -33,15 +35,13 @@ class SimpleExpression(val expression: String, val parameters: Seq[Any])
 }
 
 class AggregatePredicate(val operator: String,
-                         protected var _predicates: Seq[Predicate])
+                         protected val _predicates: Seq[Predicate])
     extends Predicate {
 
   def parameters = predicates.flatMap(_.parameters)
 
-  def add(predicate: Predicate*): this.type = {
-    _predicates ++= predicate.toList
-    this
-  }
+  def add(predicate: Predicate*): AggregatePredicate =
+    new AggregatePredicate(operator, _predicates ++ predicate)
 
   def predicates: Seq[Predicate] = _predicates.flatMap {
     case EmptyPredicate => None
@@ -127,5 +127,37 @@ class AggregatePredicateHelper(predicate: Predicate) {
   def AND(predicates: Predicate*) = orm.AND((Seq(predicate) ++ predicates): _*)
 
   def OR(predicates: Predicate*) = orm.OR((Seq(predicate) ++ predicates): _*)
+
+}
+
+/*! `PredicateBuffer` is a mutable helper which accumulates predicates
+via `add` method and emits the immutable `predicate` instance.
+It is useful when multiple criteria are prepared and accumulated
+along the querying method.
+*/
+trait PredicateBuffer {
+
+  protected val _buffer = new ListBuffer[Predicate]
+
+  def add(predicates: Predicate*): this.type = {
+    _buffer ++= predicates
+    this
+  }
+
+  def toPredicate: Predicate
+
+}
+
+object PredicateBuffer {
+
+  implicit def toPredicate(buff: PredicateBuffer) =
+    buff.toPredicate
+
+}
+
+class AggregatePredicateBuffer(val op: String)
+  extends PredicateBuffer {
+
+  def toPredicate = new AggregatePredicate(op, _buffer.toSeq)
 
 }
