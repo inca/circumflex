@@ -48,7 +48,8 @@ class HttpRequest(val raw: HttpServletRequest) {
 
     * `queryString` returns the query string that is contained in the request URL after the path (`?` character included, undecoded);
 
-    * `url` reconstructs an URL the client used to make the request (undecoded);
+    * `url` reconstructs an URL the client used to make the request
+      (host and URI are decoded, query string is undecoded);
 
     * `isSecure` returns `true` if the request was made using a secure channel, such as HTTPS.
 
@@ -88,12 +89,12 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   def uri = ctx.getAs[String]("cx.web.uri").getOrElse(originalUri)
 
-  val queryString = {
+  def queryString = {
     if (raw.getQueryString == null) "" else
       "?" + raw.getQueryString
   }
 
-  val url = raw.getRequestURL.toString
+  def url = web.origin + originalUri + queryString
 
   // Implicitly set request encoding to UTF-8
   raw.setCharacterEncoding("UTF-8")
