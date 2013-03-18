@@ -46,9 +46,9 @@ class HttpRequest(val raw: HttpServletRequest) {
     * `uri` returns the request URI without query string (this URI can be modified by
       certain routes, use `originalUri` to access unmodified original URI);
 
-    * `queryString` returns the query string that is contained in the request URL after the path;
+    * `queryString` returns the query string that is contained in the request URL after the path (`?` character included, undecoded);
 
-    * `url` reconstructs an URL the client used to make the request;
+    * `url` reconstructs an URL the client used to make the request (undecoded);
 
     * `isSecure` returns `true` if the request was made using a secure channel, such as HTTPS.
 
@@ -60,7 +60,7 @@ class HttpRequest(val raw: HttpServletRequest) {
   participate in matching).
 
   Also note that if the method is overriden by the `_method` parameter, the original method is
-  saved in context under the `cx.originalMethod` key.
+  available via the `originalMethod` method.
   */
   def protocol = raw.getProtocol
 
@@ -70,15 +70,14 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   def isXHR: Boolean = headers.getOrElse("X-Requested-With", "") == "XMLHttpRequest"
 
-  lazy val method = params.get("_method") match {
-    case Some(m) =>
-      // store original method in context
-      ctx.update("cx.web.originalMethod", raw.getMethod.toLowerCase)
-      m.trim.toLowerCase
-    case _ => raw.getMethod.toLowerCase
+  val originalMethod = raw.getMethod.toLowerCase
+
+  val method = params.get("_method") match {
+    case Some(m) => m.trim.toLowerCase
+    case _ => originalMethod
   }
 
-  lazy val originalUri = {
+  val originalUri = {
     var u = decodeURI(raw.getRequestURI)
     val sid = ";jsessionid=" + sessionId
     val i = u.indexOf(sid)
@@ -89,10 +88,12 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   def uri = ctx.getAs[String]("cx.web.uri").getOrElse(originalUri)
 
-  lazy val queryString = if (raw.getQueryString == null) "" else
-    decodeURI(raw.getQueryString)
+  val queryString = {
+    if (raw.getQueryString == null) "" else
+      "?" + raw.getQueryString
+  }
 
-  lazy val url = decodeURI(raw.getRequestURL.toString)
+  val url = raw.getRequestURL.toString
 
   // Implicitly set request encoding to UTF-8
   raw.setCharacterEncoding("UTF-8")

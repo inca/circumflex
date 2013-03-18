@@ -195,10 +195,7 @@ to the `Referer` header.*/
   def require() {
     if (!isEmpty) return
     if (request.method == "get") {
-      var url = origin + request.originalUri
-      if (request.queryString != "")
-        url += "?" + encodeURI(request.queryString)
-      redirectUnauthenticated(url)
+      redirectUnauthenticated(web.origin + request.originalUri + request.queryString)
     } else authError("Authentication is required to access this resource.")
   }
 
@@ -427,11 +424,9 @@ to the `Referer` header.*/
       }
     // Drop SSO params from query string
     if (param.contains("sso")) {
-      var uri = web.origin + request.originalUri
-      val qs = encodeURI(request.queryString.replaceAll("&?sso[^=]*=[^&]*", ""))
-      if (qs != "")
-        uri += "?" + qs
-      sendRedirect(uri)
+      sendRedirect(web.origin +
+          request.originalUri +
+          request.queryString.replaceAll("&?sso[^=]*=[^&]*", ""))
     }
   }
 

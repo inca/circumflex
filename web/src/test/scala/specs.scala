@@ -23,7 +23,7 @@ class MockRouter extends Router {
 
   get("/error") = sendError(503)
 
-  get("/redirect") = sendRedirect("/")
+  get("/redirect") = sendRedirect("/decode me")
 
   sub("/sub") = new SubMockRouter
 

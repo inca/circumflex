@@ -148,7 +148,12 @@ package object web {
 
   def sendRedirect(url: String, flashes: (String, Any)*): Nothing = {
     flashes.foreach(kv => flash(kv._1) = kv._2)
-    response.body(r => r.sendRedirect(url)).flush()
+    // Encode URI up to the `?` characeter
+    val i = url.indexOf("?")
+    val location = if (i != -1)
+      encodeURI(url.substring(0, i)) + url.substring(i)
+    else encodeURI(url)
+    response.body(r => r.sendRedirect(location)).flush()
   }
 
   def sendJsRedirect(url: String): Nothing = {
@@ -309,8 +314,9 @@ package object web {
       .replaceAll("%26", "&")
       .replaceAll("%3D", "=")
       .replaceAll("%2B", "+")
-      .replaceAll("%24", "$")
+      .replaceAll("%24", "\\$")
       .replaceAll("%2C", ",")
+      .replaceAll("%23", "#")
 
   def encodeURIComponent(s: String) = {
     URLEncoder.encode(s, "UTF-8")
@@ -323,7 +329,7 @@ package object web {
   }
 
   def decodeURI(s: String) = {
-    val escaped = s.replaceAll("%(3B|2F|3F|3A|40|26|3D|2B|24|2C)", "%25$1")
+    val escaped = s.replaceAll("%(3B|2F|3F|3A|40|26|3D|2B|24|2C|23)", "%25$1")
     decodeURIComponent(escaped)
   }
 
