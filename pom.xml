@@ -29,6 +29,7 @@
     <module>scalaconsole</module>
     <module>maven-plugin</module>
     <module>archetype</module>
+    <module>nm</module>
   </modules>
 
   <properties>
@@ -250,7 +251,6 @@
           </execution>
         </executions>
       </plugin>
-      <!-- surefire -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
