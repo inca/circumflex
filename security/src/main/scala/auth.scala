@@ -185,7 +185,7 @@ to the `Referer` header.*/
   Routes which can only be accessed by authenticated users should be guarded
   by calling the `require()` method.
 
-  It exists quietly if the context is authenticated. Otherwise it redirects
+  It exits quietly if the context is authenticated. Otherwise it redirects
   user to `/auth/sso-check` at the secure domain to obtain authentication
   information with SSO.
 
