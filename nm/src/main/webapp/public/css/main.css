@@ -1,14 +1,25 @@
 body {
   margin:0;
   padding:0;
-  background:url("http://cdn.savant.pro/img/misc/cx-bg.png") 0 0 repeat-x,
-             url("http://cdn.savant.pro/img/ui/noise.png") 0 0 repeat #166B36;
+  background:url("/img/cx-bg.png") 0 0 repeat-x,
+  url("/img/noise.png") 0 0 repeat #166B36;
   font-size:16px;
   font-family: "HelveticaNeueLight", "HelveticaNeue-Light",
   "Helvetica Neue Light", "HelveticaNeue", "Helvetica Neue",
   "Segoe UI", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif;
   font-weight:300;
   color:#333;
+}
+
+body::after {
+  content:'';
+  position:fixed;
+  z-index:-1;
+  bottom:0;
+  left:0;
+  right:0;
+  height:106px;
+  background: url("/img/cx-sw.png") repeat-x;
 }
 
 #outer {
@@ -25,7 +36,7 @@ body {
   background: #fff;
   padding:4%;
   box-shadow: 0 1px 3px rgba(0,0,0,.6),
-              0 0 64px rgba(0,0,0,.15) inset;
+  0 0 64px rgba(0,0,0,.15) inset;
 }
 
 a, a:hover, a:visited {
