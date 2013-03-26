@@ -22,6 +22,8 @@
   <properties>
     <cx.router>pro.savant.circumflex.nm.Main</cx.router>
     <cx.port>33000</cx.port>
+    <nm.root>${user.home}/.nm</nm.root>
+    <nm.domain>localhost</nm.domain>
   </properties>
 
   <dependencies>

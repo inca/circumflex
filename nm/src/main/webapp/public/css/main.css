@@ -182,39 +182,6 @@ span.amp {
 }
 
 
-/* REPL section */
-
-#repl-output > div {
-  padding:2px;
-  font-size: 14px;
-  font-family: Monaco, Courier New, Courier, monospace;
-}
-#repl-output .prompt {
-  color:#777;
-  font-style: italic;
-}
-#repl-output .input {
-  background:#fff;
-}
-#repl-output .success {
-  background:#efe;
-}
-#repl-output .error {
-  background:#fee;
-}
-#repl-output .output {
-  margin:8px;
-  padding:4px 8px;
-  background: #f7f7fc;
-  border: 1px solid #d3d3d7;
-  border-width: 1px 4px;
-  border-radius: 8px;
-}
-#repl-output .output .line + .line {
-  border-top:1px dotted #ddd;
-}
-
-
 /* Submits */
 
 .submits {

@@ -112,7 +112,7 @@ from Java `ResourceBundle` with specified `bundleName`.
 By default, the `PropertyFileResolver` is used.
 You can set `cx.messages` configuration parameter to use your own
 `MessageResolver` implementation as a global resolver.
-It uses property files with base name `Messages` to lookup messages.
+It uses property files with base name `msg` to lookup messages.
 Unlike Java `ResourceBundle` it effectively caches property files and
 allows hot editing (cache is based on last modified dates).
 
@@ -160,7 +160,7 @@ class PropertyFileResolver extends MessageResolver {
   val propsRoot = new File(
     FilenameUtils.separatorsToSystem(
       cx.getOrElse("cx.messages.root", "src/main/resources").toString))
-  val resourceName = cx.getOrElse("cx.messages.name", "Messages").toString
+  val resourceName = cx.getOrElse("cx.messages.name", "msg").toString
   protected val _cache = new HashMap[String, (Properties, Long)]
 
   protected def getFile(suffix: String) =
