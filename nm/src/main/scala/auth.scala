@@ -23,7 +23,7 @@ class User
 }
 
 object Anonymous extends User {
-  override def name = "anoymous"
+  override def name = "anonymous"
   override def password = ""
 }
 
@@ -40,7 +40,7 @@ object auth
 
   def descriptorFile = new File(root, "users.xml")
 
-  def lookup(principalId: String) = children.find(_.name == principalId)
+  def lookup(principalId: String) = children.find(_.uniqueId == principalId)
 
   def defaultReturnLocation = "/"
 
