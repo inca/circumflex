@@ -344,6 +344,13 @@ package object web {
   def validateJSON(s: String): Boolean =
     !jsonRegex.matcher(s.replaceAll("\"(\\\\.|[^\"\\\\])*\"", "")).find
 
+  def toJsonString(map: Map[String, String]): String =
+    toJsonString(map.toSeq: _*)
+
+  def toJsonString(params: (String, String)*): String =
+    params.map(p => "\"" + escapeJs(p._1) +
+        "\":\"" + escapeJs(p._2) + "\"").mkString(",")
+
   // Appending URL parameters
 
   def appendParam(url: String, name: String, value: String): String = {
