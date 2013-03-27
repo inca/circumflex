@@ -31,46 +31,26 @@ to `UTF-8`. Feel free to change it if your application requires so.
 */
 class HttpRequest(val raw: HttpServletRequest) {
 
-  /*!## Request Basics
+  /*!## Request Basics */
 
-  General request information can be accessed using following methods:
-
-    * `protocol` returns the name and version of the protocol the request uses (e.g. `HTTP/1.1`);
-
-    * `method` returns the name of HTTP method with which the request was made, it's value is
-    overriden by request paremeter `_method` to provide a workaround for browsers;
-
-    * `scheme` returns the name of the scheme used to make this request (e.g. "http", "https"
-    or "ftp");
-
-    * `uri` returns the request URI without query string (this URI can be modified by
-      certain routes, use `originalUri` to access unmodified original URI);
-
-    * `queryString` returns the query string that is contained in the request URL after the path (`?` character included, undecoded);
-
-    * `url` reconstructs an URL the client used to make the request
-      (host and URI are decoded, query string is undecoded);
-
-    * `isSecure` returns `true` if the request was made using a secure channel, such as HTTPS.
-
-    * `isXHR` returns true if this request is XMLHttpRequest
-
-  The result of `uri`, `url` and `queryString` is decoded into UTF-8 string using `URLDecoder`.
-
-  Note that JSESSIONID encoded into URI is not reported via method `uri` (thus, it does not
-  participate in matching).
-
-  Also note that if the method is overriden by the `_method` parameter, the original method is
-  available via the `originalMethod` method.
-  */
+  /*!`protocol` returns the name and version of the protocol the request uses (e.g. `HTTP/1.1`). */
   def protocol = raw.getProtocol
 
+  /*! `scheme` returns the name of the scheme used to make this request (e.g. "http", "https"
+    or "ftp") */
   def scheme = raw.getScheme
 
+  /*! `isSecure` returns `true` if the request was made using a secure channel, such as HTTPS. */
   def isSecure = raw.isSecure
 
+  /*! `isXHR` returns true if this request is XMLHttpRequest.*/
   def isXHR: Boolean = headers.getOrElse("X-Requested-With", "") == "XMLHttpRequest"
 
+  /*! `method` returns the name of HTTP method with which the request was made, it's value is
+    overriden by request paremeter `_method` to provide a workaround for browsers.
+
+    Also note that if the method is overriden by the `_method` parameter, the original method is
+    available via the `originalMethod` method. */
   val originalMethod = raw.getMethod.toLowerCase
 
   val method = params.get("_method") match {
@@ -78,6 +58,11 @@ class HttpRequest(val raw: HttpServletRequest) {
     case _ => originalMethod
   }
 
+  /*! `uri` returns the decoded request URI without query string (this URI can be modified by
+      certain routes, use `originalUri` to access unmodified original URI).
+
+      Note that JSESSIONID encoded into URI is not reported via method `uri` (thus, it does not
+  participate in matching).*/
   val originalUri = {
     var u = decodeURI(raw.getRequestURI)
     val sid = ";jsessionid=" + sessionId
@@ -89,14 +74,17 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   def uri = ctx.getAs[String]("cx.web.uri").getOrElse(originalUri)
 
+  /*! `queryString` returns the query string that is contained in the request URL
+  after the path (`?` character included, undecoded). */
   def queryString = {
     if (raw.getQueryString == null) "" else
       "?" + raw.getQueryString
   }
 
+  /*! `url` reconstructs an URL the client used to make the request
+  (host and URI are decoded, query string is undecoded). */
   def url = web.origin + originalUri + queryString
 
-  // Implicitly set request encoding to UTF-8
   raw.setCharacterEncoding("UTF-8")
 
   /*! ## Prefixes
@@ -231,8 +219,8 @@ class HttpRequest(val raw: HttpServletRequest) {
     def -=(key: String): this.type = this
 
     def iterator: Iterator[(String, String)] = raw.getHeaderNames
-            .asInstanceOf[JEnumeration[String]]
-            .map(k => (k -> raw.getHeader(k)))
+        .asInstanceOf[JEnumeration[String]]
+        .map(k => (k -> raw.getHeader(k)))
 
     def get(key: String): Option[String] = any2option(raw.getHeader(key))
 
@@ -265,8 +253,8 @@ class HttpRequest(val raw: HttpServletRequest) {
     def -=(key: String): this.type = this
 
     def iterator: Iterator[(String, String)] = raw.getParameterNames
-            .asInstanceOf[JEnumeration[String]]
-            .flatMap(k => list(k).iterator.map(v => (k -> v)))
+        .asInstanceOf[JEnumeration[String]]
+        .flatMap(k => list(k).iterator.map(v => (k -> v)))
 
     def get(key: String): Option[String] = any2option(raw.getParameter(key))
 
