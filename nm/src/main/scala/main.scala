@@ -10,13 +10,27 @@ class Main extends Router {
     case _ => sendRedirect("/login")
   }
 
-  get("/*.html") = ftl("/pages/" + uri(1) + ".ftl")
-
   get("/login") = ftl("/login.ftl")
 
-  post("/login") = sendError(501)
+  post("/login") = {
+    val l = param("l").trim
+    val p = param("p").trim
+    val rememberMe = param("r") == "true"
 
-  get("/logout") = sendError(501)
+    val u = auth.children
+        .find(_.name == l)
+        .filter(_.password == p).getOrElse {
+      sendRedirect("/login")
+    }
+    auth.login(u, rememberMe)
+
+    sendRedirect("/")
+  }
+
+  get("/logout") = {
+    auth.logout()
+    sendRedirect("/")
+  }
 
   auth.require()
 

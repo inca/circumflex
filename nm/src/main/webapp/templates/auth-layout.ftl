@@ -2,13 +2,18 @@
 [#assign body]
 <div id="outer">
   <a id="header"
+     class="modal"
      href="/">
     <div class="cell">
       <div class="title">${msg['title']}</div>
     </div>
   </a>
-  <div id="content">
-  ${content}
+  <div id="content" class="modal">
+    <div class="letterbox">
+      <div class="wrap pad">
+      ${content}
+      </div>
+    </div>
   </div>
   <div id="footer">
     <div class="powered-by">

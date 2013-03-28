@@ -50,6 +50,8 @@ object auth
 
   def loginUrl = secureOrigin + "/login"
 
+  load()
+
 }
 
 
