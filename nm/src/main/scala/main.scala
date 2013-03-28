@@ -1,9 +1,11 @@
 package pro.savant.circumflex
 package nm
 
-import core._, web._, freemarker._
+import core._, web._, freemarker._, security._
 
 class Main extends Router {
+
+  new SecurityRouter(auth)
 
   get("/") = auth.principalOption match {
     case Some(u) => ftl("/index.ftl")
@@ -20,6 +22,7 @@ class Main extends Router {
     val u = auth.children
         .find(_.name == l)
         .filter(_.password == p).getOrElse {
+      notices.addError("login.failed")
       sendRedirect("/login")
     }
     auth.login(u, rememberMe)
@@ -33,6 +36,7 @@ class Main extends Router {
   }
 
   auth.require()
+
 
   sub("/applications") = {
 
@@ -74,6 +78,5 @@ class Main extends Router {
     }
 
   }
-
 }
 

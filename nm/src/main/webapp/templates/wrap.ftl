@@ -25,6 +25,14 @@
     <title>Scala Web Console</title>
   </head>
   <body>
+    [#assign notices = flash['notices']![]]
+    <div id="notices">
+      [#list notices as n]
+        <div class="notice ${n.kind}">
+          ${n.msg}
+        </div>
+      [/#list]
+    </div>
   ${body}
   </body>
 </html>

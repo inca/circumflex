@@ -11,6 +11,7 @@
           <div class="input">
             <input id="l"
                    type="text"
+                   class="focus"
                    name="l"/>
           </div>
         </div>
@@ -20,7 +21,7 @@
         <div class="field">
           <div class="input">
             <input id="p"
-                   type="text"
+                   type="password"
                    name="p"/>
           </div>
         </div>
