@@ -88,6 +88,9 @@ class OracleDialect extends Dialect {
   override def fkRestrict = "SET NULL"
   override def fkSetDefault = "SET NULL"
 
+  override def prepareStatement(conn: Connection, sql: String): PreparedStatement =
+    conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)
+
   override def numericType(precision: Int, scale: Int): String =
     "NUMBER" + (if (precision == -1) "" else "(" + precision + "," + scale + ")")
   override def textType = "VARCHAR2(4000)"
@@ -107,6 +110,9 @@ class OracleDialect extends Dialect {
           ": predicates are not supported.")
     result
   }
+
+  override def alias(expression: String, alias: String) =
+    expression + " " + alias
 
   override def defaultExpression[R <: Record[_, R]](field: Field[_, R]): String =
     field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
