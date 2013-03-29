@@ -8,11 +8,15 @@
 </div>
 <h2>${msg['apps']}</h2>
 
-[#if applications?size > 0]
-SHOW MORE APPS
-[#else]
-<p class="no-items">${msg['apps.empty']}</p>
-[/#if]
+  [#if applications?size > 0]
+    [#list applications as a]
+    <a href="/applications/${a.name}"
+       class="pill primary"
+       title="${a.title}">${a.title}</a>
+    [/#list]
+  [#else]
+  <p class="no-items">${msg['apps.empty']}</p>
+  [/#if]
 [/#assign]
 
 [#include "layout.ftl"/]

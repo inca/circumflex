@@ -22,7 +22,7 @@
         eaui.init();
       });
     </script>
-    <title>Scala Web Console</title>
+    <title>${msg['title']}</title>
   </head>
   <body>
     [#assign notices = flash['notices']![]]

@@ -35,7 +35,7 @@ class Application(val name: String)
   def elemName = "application"
 
   val title = attr("title")
-  
+
   def read = {
     case "node" => new Node
   }

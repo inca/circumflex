@@ -26,6 +26,13 @@
           </div>
         </div>
       </div>
+      <div class="margin-top">
+        <input id="r"
+               type="checkbox"
+               value="true"
+               name="r"/>
+        <label for="r">${msg['rememberMe']}</label>
+      </div>
       <div class="submits margin-top centered">
         <input type="submit"
                class="btn primary"

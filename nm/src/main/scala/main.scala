@@ -38,45 +38,6 @@ class Main extends Router {
   auth.require()
 
 
-  sub("/applications") = {
-
-    get("/?") = {
-      'applications := Application.all
-      ftl("/applications/index.ftl")
-    }
-
-    get("/~new") = ftl("/applications/new.ftl")
-
-    post("/?") = {
-      // TODO create application
-      sendError(501)
-    }
-
-    sub("/:name") = {
-
-      val application = Application
-          .findByName(param("name"))
-          .getOrElse(sendError(404))
-      'application := application
-
-      get("/?") = ftl("/applications/view.ftl")
-
-      get("/~edit") = ftl("/applications/edit.ftl")
-
-      post("/?") = {
-        // TODO edit application
-        sendError(501)
-      }
-
-      get("/~delete") = ftl("/application/delete.ftl")
-
-      delete("/?") = {
-        // TODO delete application
-        sendError(501)
-      }
-
-    }
-
-  }
+  sub("/applications") = new ApplicationRouter
 }
 
