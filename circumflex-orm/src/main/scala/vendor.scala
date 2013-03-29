@@ -108,6 +108,9 @@ class OracleDialect extends Dialect {
     result
   }
 
+  override def alias(expression: String, alias: String) =
+    expression + " " + alias
+
   override def defaultExpression[R <: Record[_, R]](field: Field[_, R]): String =
     field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
 
