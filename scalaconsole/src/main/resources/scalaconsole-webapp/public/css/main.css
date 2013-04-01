@@ -188,6 +188,8 @@ span.amp {
   padding:2px;
   font-size: 14px;
   font-family: Monaco, Courier New, Courier, monospace;
+  white-space:pre;
+  overflow-x:auto;
 }
 #repl-output .prompt {
   color:#777;
