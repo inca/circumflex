@@ -29,7 +29,6 @@
     <module>scalaconsole</module>
     <module>maven-plugin</module>
     <module>archetype</module>
-    <module>nm</module>
   </modules>
 
   <properties>
