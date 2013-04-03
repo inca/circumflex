@@ -49,7 +49,9 @@ object xml extends XMLStreamConstants {
 
 }
 
-class TagIterator(val reader: XMLStreamReader) extends Iterator[XmlTag] {
+class TagIterator(val reader: XMLStreamReader)
+    extends Iterator[XmlTag] {
+
   protected var currentElem: Option[XmlTag] = None
   protected var lastElem: Option[XmlTag] = None
 
