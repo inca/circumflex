@@ -261,16 +261,17 @@ trait StructHolder extends ElemHolder {
     if (accept(it)) {
       findAttrs.foreach(a => a.readXml(it))
       val elems = findElems
-      it.takeWhile(_ != EndTag(elemName)) foreach {
-        case StartTag(n) =>
-          elems.find(_.accept(it)) match {
-            case Some(elem) =>
-              elem.readXml(Some(this), it)
-            case _ =>
-              it.skip()
-          }
-        case _ => // should only occur if XML contains redundant tags
-      }
+      while (it.hasNext && it.next() != EndTag(elemName))
+        it.current match {
+          case StartTag(n) =>
+            elems.find(_.accept(it)) match {
+              case Some(elem) =>
+                elem.readXml(Some(this), it)
+              case _ =>
+                it.skip()
+            }
+          case _ => // should only occur if XML contains redundant tags
+        }
     } else it.skip()
     this
   }
@@ -381,22 +382,22 @@ trait ListHolder[T <: ElemHolder]
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
-      val tag = it.current
       children.clear()
       findAttrs.foreach(a => a.readXml(it))
-      it.takeWhile(_ != EndTag(tag.name)) foreach {
-        case t: StartTag =>
-          try {
-            val child = read(t.name)
-            child.readXml(it)
-            add(child)
-          } catch {
-            case e: MatchError =>
-              XML_LOG.warn("Unexpected element <" + t.toString + ">. " +
-                  "Please check `readChild` or XML input.")
-          }
-        case _ =>
-      }
+      while (it.hasNext && it.next() != EndTag(elemName))
+        it.current match {
+          case t: StartTag =>
+            try {
+              val child = read(t.name)
+              child.readXml(it)
+              add(child)
+            } catch {
+              case e: MatchError =>
+                XML_LOG.warn("Unexpected element <" + t.toString + ">. " +
+                    "Please check `readChild` or XML input.")
+            }
+          case _ =>
+        }
     } else it.skip()
     this
   }

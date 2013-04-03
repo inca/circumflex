@@ -49,8 +49,7 @@ object xml extends XMLStreamConstants {
 
 }
 
-class TagIterator(val reader: XMLStreamReader)
-    extends Iterator[XmlTag] {
+class TagIterator(val reader: XMLStreamReader) {
 
   protected var currentElem: Option[XmlTag] = None
   protected var lastElem: Option[XmlTag] = None
@@ -83,6 +82,7 @@ class TagIterator(val reader: XMLStreamReader)
   }
 
   def skip() {
+    XML_LOG.debug("Skipping " + current)
     current match {
       case StartTag(name) =>
         var depth = 1
@@ -110,7 +110,7 @@ class TagIterator(val reader: XMLStreamReader)
     else Some(a)
   }
 
-  override def toString() = ""
+  override def toString = currentElem.map(_.toString).getOrElse("---")
 }
 
 sealed trait XmlTag {
