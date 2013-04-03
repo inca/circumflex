@@ -22,4 +22,29 @@ class ClusterConfiguration
 
   }
 
+  val _projects = new ListHolder[ProjectConf] {
+
+    def elemName = "projects"
+
+    def read = {
+      case "project" => new ProjectConf
+    }
+
+  }
+
+  def projects = _projects.children.flatMap(_.project)
+
+  class ProjectConf extends StructHolder {
+
+    def elemName = "project"
+
+    val path = attr("path")
+
+    lazy val project: Option[Project] = path
+        .map(dir => new File(dir))
+        .filter(_.isDirectory)
+        .map(baseDir => new Project(baseDir))
+
+  }
+
 }

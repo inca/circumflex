@@ -20,7 +20,8 @@ trait Artifact extends StructHolder {
 
 }
 
-class Project(val baseDir: File)
+class Project(val baseDir: File,
+              val parentModule: Option[Module] = None)
     extends StructHolder
     with XmlFile
     with Artifact { project =>
@@ -29,9 +30,7 @@ class Project(val baseDir: File)
 
   def elemName = "project"
 
-  val _name = text("name")
-  val _description = text("description")
-  val _url = text("url")
+  def name = baseDir.getName
 
   val modules = new ListHolder[Module] {
 
@@ -41,9 +40,17 @@ class Project(val baseDir: File)
       case "module" => new Module(project)
     }
 
-    def projects = children.flatMap(_.project).map(_.load())
+    lazy val projects = children.flatMap(_.project)
 
   }
+
+  def getModule(name: String) = modules.projects.find(_.name == name)
+
+  def module(name: String) = getModule(name).get
+
+  def parentProject: Option[Project] = parentModule.map(_.parentProject)
+
+  def rootProject: Project = parentProject.map(_.rootProject).getOrElse(this)
 
   def subprojects: Seq[Project] =
     modules.projects.flatMap(p => Seq(p) ++ p.subprojects)
@@ -54,6 +61,14 @@ class Project(val baseDir: File)
 
   override def toString = groupId + ":" + artifactId + ":" + version
 
+  def exec(args: String*): Process =
+    Runtime.getRuntime.exec(args.toArray, Array[String](), baseDir)
+
+  def mvn(args: String*) = exec((Seq("mvn") ++ args): _*)
+
+  // Load on instantiate
+  load()
+
 }
 
 class Module(@transient val parentProject: Project)
@@ -61,11 +76,9 @@ class Module(@transient val parentProject: Project)
 
   def elemName = "module"
 
-  lazy val project: Option[Project] = get.flatMap { name =>
-    val baseDir = new File(parentProject.baseDir, name)
-    if (baseDir.isDirectory)
-      Some(new Project(baseDir))
-    else None
-  }
+  lazy val project: Option[Project] = get
+      .map(dir => new File(parentProject.baseDir, dir))
+      .filter(_.isDirectory)
+      .map(baseDir => new Project(baseDir, Some(this)))
 
 }

@@ -19,4 +19,8 @@ package object cluster {
 
   def conf = _conf.get
 
+  def getProject(name: String) = conf.projects.find(_.name == name)
+
+  def project(name: String) = getProject(name).get
+
 }
