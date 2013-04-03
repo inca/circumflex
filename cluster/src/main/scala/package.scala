@@ -1,6 +1,6 @@
 package pro.savant.circumflex
 
-import core._
+import core._, cache._
 import java.io.File
 
 package object cluster {
@@ -13,5 +13,10 @@ package object cluster {
   }
 
   val domain = cx.getString("cx.cluster.domain").getOrElse("localhost")
+
+  val _conf = new CacheCell[ClusterConfiguration](
+    new ClusterConfiguration().load())
+
+  def conf = _conf.get
 
 }

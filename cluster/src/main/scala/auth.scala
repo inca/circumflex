@@ -28,6 +28,7 @@ class User
 
   def secret = passwdSha256
 
+  override def toString = name
 }
 
 object Anonymous extends User {
@@ -35,20 +36,10 @@ object Anonymous extends User {
   override def passwdSha256 = ""
 }
 
-object auth
-    extends Auth[User]
-    with ListHolder[User]
-    with XmlFile {
+object auth extends Auth[User] {
 
-  def elemName = "users"
-
-  def read = {
-    case "user" => new User
-  }
-
-  def descriptorFile = new File(root, "users.xml")
-
-  def lookup(principalId: String) = children.find(_.uniqueId == principalId)
+  def lookup(principalId: String) = conf.users.children
+      .find(_.uniqueId == principalId)
 
   def defaultReturnLocation = "/"
 
@@ -59,7 +50,5 @@ object auth
   def loginUrl = secureOrigin + "/login"
 
   override def secureScheme = "http"
-
-  load()
 
 }

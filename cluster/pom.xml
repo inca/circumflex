@@ -51,6 +51,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>pro.savant.circumflex</groupId>
+        <artifactId>maven-cx-plugin</artifactId>
+        <version>3.0-SNAPSHOT</version>
+      </plugin>
     </plugins>
   </build>
 
