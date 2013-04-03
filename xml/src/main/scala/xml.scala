@@ -82,6 +82,22 @@ class TagIterator(val reader: XMLStreamReader)
     case None => false
   }
 
+  def skip() {
+    current match {
+      case StartTag(name) =>
+        var depth = 1
+        do {
+          next() match {
+            case StartTag(_) =>
+              depth += 1
+            case EndTag(_) =>
+              depth -= 1
+          }
+        } while (depth > 0)
+      case _ =>
+    }
+  }
+
   def text: String = {
     currentElem = lastElem
     lastElem = None
@@ -97,7 +113,7 @@ class TagIterator(val reader: XMLStreamReader)
   override def toString() = ""
 }
 
-trait XmlTag {
+sealed trait XmlTag {
   def name: String
 }
 

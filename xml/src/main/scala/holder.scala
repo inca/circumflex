@@ -197,7 +197,7 @@ trait TextHolder
     if (accept(it)) {
       findAttrs.foreach(a => a.readXml(it))
       set(it.text)
-    }
+    } else it.skip()
     this
   }
 
@@ -263,10 +263,15 @@ trait StructHolder extends ElemHolder {
       val elems = findElems
       it.takeWhile(_ != EndTag(elemName)) foreach {
         case StartTag(n) =>
-          elems.find(_.accept(it)).map(_.readXml(Some(this), it))
+          elems.find(_.accept(it)) match {
+            case Some(elem) =>
+              elem.readXml(Some(this), it)
+            case _ =>
+              it.skip()
+          }
         case _ => // should only occur if XML contains redundant tags
       }
-    }
+    } else it.skip()
     this
   }
 
@@ -392,7 +397,7 @@ trait ListHolder[T <: ElemHolder]
           }
         case _ =>
       }
-    }
+    } else it.skip()
     this
   }
 
