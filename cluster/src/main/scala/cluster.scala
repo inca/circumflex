@@ -25,25 +25,18 @@ class Cluster(val project: Project)
 
   }
 
-  val mainNodes = new ListHolder[Node] {
+  def getServer(id: String) = servers.children.find(_.id == id)
 
-    def elemName = "main-nodes"
+  def server(id: String) = getServer(id).get
 
-    def read = {
-      case "node" => new Node(cluster)
-    }
+  def getNode(id: String) = servers
+      .children
+      .find(s => id.startsWith(s.id + ":"))
+      .flatMap(s => s.children.find(_.toString == id))
 
-  }
+  def node(id: String) = getNode(id).get
 
-  val backupNodes = new ListHolder[Node] {
-
-    def elemName = "backup-nodes"
-
-    def read = {
-      case "node" => new Node(cluster)
-    }
-
-  }
+  def baseDir = project.baseDir
 
   override def toString = id
 
@@ -53,11 +46,14 @@ class Cluster(val project: Project)
 }
 
 class Server(val cluster: Cluster)
-    extends StructHolder {
+    extends ListHolder[Node] { server =>
 
   def elemName = "server"
 
   def project = cluster.project
+
+  val _id = attr("id")
+  def id = _id.get.orElse(address.get).getOrElse("")
 
   val address = attr("address")
 
@@ -65,19 +61,37 @@ class Server(val cluster: Cluster)
 
   val dir = attr("dir")
 
+  def read = {
+    case "node" => new Node(server)
+  }
+
+  def getNode(name: String) = children.find(_.name == name)
+
+  def node(name: String) = getNode(name).get
+
   override def toString = user() + "@" + address() + ":" + dir()
 
 }
 
-class Node(val cluster: Cluster)
+class Node(val server: Server)
     extends PropsHolder("node") {
+
+  def cluster = server.cluster
 
   def project = cluster.project
 
   val name = attr("name")
 
-  def properties = project.properties ++ toMap
+  val backup = attr("backup")
 
-  override def toString = cluster.toString + ":" + name()
+  def isBackup = backup.getOrElse("false") == "true"
+
+  def properties = project.properties ++
+      toMap ++
+      Seq("node.address" -> server.address)
+
+  def uuid = sha256(cluster.baseDir.getAbsolutePath + ":" + toString)
+
+  override def toString = server.id + ":" + name()
 
 }

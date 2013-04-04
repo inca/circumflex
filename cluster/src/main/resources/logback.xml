@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+  <appender name="STDOUT"
+            class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36}: %msg %ex{short}%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="pro.savant.circumflex"
+          level="DEBUG"/>
+
+  <logger name="pro.savant.circumflex.cache"
+          level="TRACE"/>
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </root>
+
+</configuration>

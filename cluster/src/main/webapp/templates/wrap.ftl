@@ -1,0 +1,39 @@
+[#ftl]
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet"
+          type="text/css"
+          media="screen"
+          href="http://cdn.savant.pro/css/themes/cx.css"/>
+    <link rel="stylesheet"
+          type="text/css"
+          media="screen"
+          href="/css/app.css"/>
+    <link rel="shortcut icon"
+          href="/img/cx16.png"
+          type="image/x-icon">
+    <script type="text/javascript"
+            src="http://cdn.savant.pro/js/jquery.js">
+    </script>
+    <script type="text/javascript"
+            src="http://cdn.savant.pro/js/ea.ui.js">
+    </script>
+    <script type="text/javascript"
+            src="http://cdn.savant.pro/js/highlight.js">
+    </script>
+    <script type="text/javascript">
+      $(function() {
+        eaui.init();
+      });
+    </script>
+    <title>Circumflex Cluster Manager</title>
+  </head>
+  <body>
+    <div id="outer">
+    ${main}
+    </div>
+  </body>
+</html>

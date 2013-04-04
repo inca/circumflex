@@ -71,8 +71,11 @@ class Project(val baseDir: File,
 
   override def toString = groupId + ":" + artifactId + ":" + version
 
-  def exec(args: String*): Process =
-    Runtime.getRuntime.exec(args.toArray, Array[String](), baseDir)
+  def exec(args: String*): ProcessMonitor = new ProcessMonitor({
+    val b = new ProcessBuilder(args: _*)
+    b.directory(baseDir)
+    b
+  })
 
   def mvn(args: String*) = exec((Seq("mvn") ++ args): _*)
 
