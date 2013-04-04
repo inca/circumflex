@@ -47,7 +47,7 @@ object auth extends Auth[User] {
 
   def secureDomain = domain
 
-  def loginUrl = secureOrigin + "/login"
+  def loginUrl = secureOrigin + "/auth/login"
 
   override def secureScheme = "http"
 

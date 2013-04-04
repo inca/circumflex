@@ -1,11 +1,15 @@
 [#ftl]
-{.super-title}
+{.super-title.medium}
 Welcome to Circumflex Cluster Manager!
 
 [#if conf.users.children?size > 0]
+Your cluster configuration appears to be intact.
+
+Proceed to login to begin your work.
+
 <div class="centered">
-  <a href="/login"
-     class="btn primary inverse">Begin your work!</a>
+  <a href="/auth/login"
+     class="btn primary inverse">Login</a>
 </div>
 [/#if]
 

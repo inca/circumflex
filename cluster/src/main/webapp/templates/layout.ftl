@@ -4,15 +4,15 @@
 <a id="header"
    class="heavy"
    href="/">
-  <div class="cell logo">
+  <div class="cell logo no-mobile">
     <img src="/img/cx96.png"
          width="96"
          height="96"/>
   </div>
   <div class="cell">
-    <div class="title">Circumflex Cluster Manager</div>
+    <div class="title">${msg['title']}</div>
     <div class="subtitle">
-      <span>${conf.clusters?size} cluster(s) configured</span>
+      <span>${conf.clusters?size} ${msg['clusters.configured']}</span>
     </div>
   </div>
 </a>

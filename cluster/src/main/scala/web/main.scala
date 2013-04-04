@@ -11,6 +11,12 @@ class Main extends Router {
 
   get("/") = ftl("/index.ftl")
 
+  get("/locale.js") = {
+    serveLastModified(msg.lastModified)
+    response.contentType("application/javascript")
+    ftl("/locale.js.ftl")
+  }
+
   sub("/auth") = new AuthRouter
 
   auth.require()

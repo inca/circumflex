@@ -8,30 +8,31 @@
           type="text/css"
           media="screen"
           href="http://cdn.savant.pro/css/themes/cx.css"/>
-    <link rel="stylesheet"
-          type="text/css"
-          media="screen"
-          href="/css/app.css"/>
     <link rel="shortcut icon"
           href="/img/cx16.png"
           type="image/x-icon">
     <script type="text/javascript"
+            src="/locale.js">
+    </script>
+    <script type="text/javascript"
             src="http://cdn.savant.pro/js/jquery.js">
     </script>
     <script type="text/javascript"
-            src="http://cdn.savant.pro/js/ea.ui.js">
+            src="http://cdn.savant.pro/js/highlight.js">
     </script>
     <script type="text/javascript"
-            src="http://cdn.savant.pro/js/highlight.js">
+            src="http://cdn.savant.pro/js/ea.ui.js">
     </script>
     <script type="text/javascript">
       $(function() {
         eaui.init();
       });
     </script>
-    <title>Circumflex Cluster Manager</title>
+    <title>${msg['title']}</title>
   </head>
   <body>
+    <div id="notices">
+    </div>
     <div id="outer">
     ${main}
     </div>

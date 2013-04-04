@@ -100,6 +100,7 @@ trait MessageResolver extends Map[String, String] {
 
   def format(key: String, params: AnyRef*): String =
     MessageFormat.format(getOrElse(key, key), params: _*)
+
 }
 
 /*! ## Resolver implementations
@@ -132,35 +133,50 @@ Custom `MessageResolver` implementations are only required to implement
 the `resolve` method, which is responsible for acquiring a message
 by specified `key` from some storage.
 */
-class ResourceBundleMessageResolver(val bundleName: String) extends MessageResolver {
+class ResourceBundleMessageResolver(val bundleName: String)
+    extends MessageResolver {
+
   protected def bundle = ResourceBundle.getBundle(bundleName)
+
   def iterator: Iterator[(String, String)] = bundle.getKeys
       .map(k => (k -> bundle.getString(k)))
+
   protected def resolve(key: String): Option[String] =
     try { Some(bundle.getString(key)) } catch { case e: Exception => None }
+
 }
 
-class DelegatingMessageResolver(initialResolvers: MessageResolver*) extends MessageResolver {
+class DelegatingMessageResolver(initialResolvers: MessageResolver*)
+    extends MessageResolver {
+
   protected var _resolvers: Seq[MessageResolver] = initialResolvers
+
   def resolvers = _resolvers
+
   def addResolver(r: MessageResolver): this.type = {
     _resolvers ++= List(r)
     _lastModified = new Date()
     this
   }
+
   def iterator: Iterator[(String, String)] =
     resolvers.map(_.iterator).reduceLeft((a, b) => a ++ b)
+
   protected def resolve(key: String): Option[String] = {
     resolvers.foreach(r => r.get(key).map(msg => return Some(msg)))
     None
   }
+
 }
 
 class PropertyFileResolver extends MessageResolver {
+
   val propsRoot = new File(
     FilenameUtils.separatorsToSystem(
       cx.getOrElse("cx.messages.root", "src/main/resources").toString))
+
   val resourceName = cx.getOrElse("cx.messages.name", "msg").toString
+
   protected val _cache = new HashMap[String, (Properties, Long)]
 
   protected def getFile(suffix: String) =

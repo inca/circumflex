@@ -1,12 +1,15 @@
 [#ftl]
 
 [#assign main]
-<div class="letterbox">
-  <div class="wrap content-output content-box">
-    [#if !auth.principalOption??]
-    [@me][#include "welcome.me.ftl"/][/@me]
+<div id="content">
+  <div class="letterbox">
+    <div class="wrap content-output content-box">
+      [#if !auth.principalOption??]
+    [@me][#include "/locale/welcome.me.ftl"/][/@me]
     [#else]
-    [/#if]
+        [@me][#include "/locale/dashboard.me.ftl"/][/@me]
+      [/#if]
+    </div>
   </div>
 </div>
 [/#assign]
