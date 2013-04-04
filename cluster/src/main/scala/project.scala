@@ -1,7 +1,7 @@
 package pro.savant.circumflex
 package cluster
 
-import xml._
+import xml._, cache._
 import java.io.File
 
 trait Artifact extends StructHolder {
@@ -32,6 +32,12 @@ class Project(val baseDir: File,
 
   def name = baseDir.getName
 
+  val _properties = new PropsHolder("properties")
+
+  def properties: Map[String, String] =
+    parentProject.map(_.properties).getOrElse(Map()) ++
+        _properties.toMap
+
   val modules = new ListHolder[Module] {
 
     def elemName = "modules"
@@ -52,8 +58,12 @@ class Project(val baseDir: File,
 
   def rootProject: Project = parentProject.map(_.rootProject).getOrElse(this)
 
-  def subprojects: Seq[Project] =
-    modules.projects.flatMap(p => Seq(p) ++ p.subprojects)
+  def subprojects: Seq[Project] = modules.projects.flatMap(_.flat)
+
+  def flat: Seq[Project] = Seq(this) ++ subprojects
+
+  val _cluster = new CacheCell[Cluster](new Cluster(project))
+  def cluster = _cluster.get
 
   def getArtifactPath = groupId.replaceAll("\\.", "/") + "/" +
       version + "/" +

@@ -32,7 +32,7 @@ class ClusterConfiguration
 
   }
 
-  def projects = _projects.children.flatMap(_.project)
+  lazy val projects = _projects.children.flatMap(_.project)
 
   class ProjectConf extends StructHolder {
 
@@ -46,5 +46,7 @@ class ClusterConfiguration
         .map(baseDir => new Project(baseDir))
 
   }
+
+  def clusters = projects.flatMap(_.flat).map(_.cluster).filter(_.exists)
 
 }

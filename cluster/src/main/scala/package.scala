@@ -23,4 +23,8 @@ package object cluster {
 
   def project(name: String) = getProject(name).get
 
+  def getCluster(id: String) = conf.clusters.find(_.id == id)
+
+  def cluster(id: String) = getCluster(id).get
+
 }
