@@ -8,8 +8,6 @@ Welcome, ${auth.principal.name}!
 {.remark}
 ${cluster.project.baseDir}
 
-${cluster.resources.dir.getAbsolutePath}
-
   [#list cluster.servers.children as server]
   ### ${server.address}
   

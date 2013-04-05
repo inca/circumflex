@@ -1,8 +1,9 @@
 package pro.savant.circumflex
 package cluster
 
-import java.io.File
+import java.io._
 import org.apache.commons.io.FileUtils
+import java.util.regex.Pattern
 
 class FileCopy(val srcDir: File,
                val dstDir: File) {
@@ -50,6 +51,36 @@ class FileCopy(val srcDir: File,
       val src = new File(srcDir, p)
       val dst = new File(dstDir, p)
       FileUtils.copyFile(src, dst, true)
+    }
+  }
+  
+  def filteredCopy(filenameRegex: Pattern,
+                   props: Map[String, String]) {
+    flatPaths(srcDir).foreach { p =>
+      val src = new File(srcDir, p)
+      val dst = new File(dstDir, p)
+      if (filenameRegex.matcher(src.getName).matches) {
+        val in = new BufferedReader(new FileReader(src))
+        val out = new FileWriter(dst)
+        try {
+          var line = in.readLine()
+          while (line != null) {
+            val sb = new StringBuffer
+            val m = FILTER_TOKEN_PATTERN.matcher(line)
+            while (m.find()) {
+              val token = m.group(1)
+              val replacement = props.get(token).getOrElse("${" + token + "}")
+              m.appendReplacement(sb, replacement)
+            }
+            m.appendTail(sb)
+            out.write(sb.toString + "\n")
+            line = in.readLine()
+          }
+        } finally {
+          in.close()
+          out.close()
+        }
+      } else FileUtils.copyFile(src, dst)
     }
   }
 

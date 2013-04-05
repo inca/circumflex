@@ -32,7 +32,7 @@ class Cluster(val project: Project)
     }
 
   }
-  
+
   def getServer(id: String) = servers.children.find(_.id == id)
 
   def server(id: String) = getServer(id).get
@@ -141,12 +141,22 @@ class Node(val server: Server)
     
   Properties from each step will overwrite the onces defined earlier.
 
-  Three special properties are added for each node:
+  Some special properties are added for each node:
   
     * `node.address` specifies the server address of the node (typically, the
       internal address is used);  
+    
     * `node.name` specifies the name of this node;
-    * `node.backup` specifies, if the node is marked backup.
+    
+    * `node.backup` specifies, if the node is marked backup;
+    
+    * `node.uuid` resolves to SHA256 hash of following string:
+     
+      ```
+      ${cluster.id}:${server.address}:${node.name}
+      ```
+      
+    * `node.shortUuid` is 8 first letters of `node.uuid`.
 
   */
   def properties: Map[String, String] = {
@@ -158,10 +168,22 @@ class Node(val server: Server)
     result += "node.address" -> server.address()
     result += "node.name" -> this.name()
     result += "node.backup" -> this.isBackup.toString
+    result += "node.uuid" -> this.uuid
+    result += "node.shortUuid" -> this.shortUuid
     result.toMap
   }
 
-  def uuid = sha256(cluster.baseDir.getAbsolutePath + ":" + toString)
+  /*! Cluster resources are copied to work directory with filtering
+  during build.
+  */
+  def copyResources() {
+    new FileCopy(cluster.resources.dir, cluster.workDir)
+      .filteredCopy(cluster.resources.filterPattern, properties)
+  }
+
+  def uuid = sha256(cluster.id + ":" + toString)
+
+  def shortUuid = uuid.substring(0, 8)
 
   override def toString = server.id + ":" + name()
 
