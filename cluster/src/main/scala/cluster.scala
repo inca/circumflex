@@ -4,7 +4,9 @@ package cluster
 import java.io._
 import core._, xml._, cache._
 import collection.mutable.HashMap
+import collection.JavaConversions._
 import java.util.regex.Pattern
+import java.util.Properties
 
 class Cluster(val project: Project)
     extends StructHolder
@@ -179,6 +181,18 @@ class Node(val server: Server)
   def copyResources() {
     new FileCopy(cluster.resources.dir, cluster.workDir)
       .filteredCopy(cluster.resources.filterPattern, properties)
+  }
+  
+  /*! Properties are saved to `cx.properties` at work directory during build. */
+  def saveProperties() {
+    val out = new FileOutputStream(new File(cluster.workDir, "cx.properties"))
+    try {
+      val _p = new Properties
+      _p.putAll(mapAsJavaMap(properties))
+      _p.store(out, this.toString)
+    } finally {
+      out.close()
+    }
   }
 
   def uuid = sha256(cluster.id + ":" + toString)
