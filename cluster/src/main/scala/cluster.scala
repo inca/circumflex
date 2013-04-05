@@ -2,15 +2,20 @@ package pro.savant.circumflex
 package cluster
 
 import java.io._
-import core._, xml._
+import core._, xml._, cache._
+import collection.mutable.HashMap
 
 class Cluster(val project: Project)
     extends StructHolder
     with XmlFile { cluster =>
 
-  def descriptorFile = new File(project.baseDir, "src/cluster/cluster.xml")
-
   def elemName = "cluster"
+
+  def baseDir = project.baseDir
+
+  val clusterDir = new File(baseDir, "src/cluster")
+
+  def descriptorFile = new File(clusterDir, "cluster.xml")
 
   val _id = attr("id")
   def id = _id.getOrElse("")
@@ -36,9 +41,17 @@ class Cluster(val project: Project)
 
   def node(id: String) = getNode(id).get
 
-  def baseDir = project.baseDir
-
   override def toString = id
+
+  val classesDir = new File(baseDir, "target/classes")
+
+  val mainCxPropsFile = new File(classesDir, "cx.properties")
+  val _mainCxProps = new CacheCell[PropsFile](new PropsFile(mainCxPropsFile))
+  def mainCxProps = _mainCxProps.get.toMap
+
+  val clusterCxPropsFile = new File(clusterDir, "cx.properties")
+  val _clusterCxProps = new CacheCell[PropsFile](new PropsFile(clusterCxPropsFile))
+  def clusterCxProps = _clusterCxProps.get.toMap
 
   // Load on instantiate
   load()
@@ -86,9 +99,32 @@ class Node(val server: Server)
 
   def isBackup = backup.getOrElse("false") == "true"
 
-  def properties = project.properties ++
-      toMap ++
-      Seq("node.address" -> server.address)
+  /*! ### Node properties evaluation
+
+  Each node evaluates its set of properties (which are subsequently
+  written into `cx.properties` of each assembled jar) by
+  reading them from following locations in specified order:
+
+    * Project POM, including its ancestors, if any
+    * `cx.properties` in `target/classes`
+    * `cx.properties` in `src/cluster`
+    * node properties in `src/cluster/cluster.xml` of corresponding node.
+
+  Special property `node.address` is added above previously defined onces.
+  It specifies the address of the server it works on (typically the internal
+  address is used).
+
+  Properties from each step will overwrite the onces defined earlier.
+  */
+  def properties: Map[String, String] = {
+    val result = new HashMap[String, String]
+    result ++= project.properties
+    result ++= cluster.mainCxProps
+    result ++= cluster.clusterCxProps
+    result ++= this.toMap
+    result += "node.address" -> server.address()
+    result.toMap
+  }
 
   def uuid = sha256(cluster.baseDir.getAbsolutePath + ":" + toString)
 

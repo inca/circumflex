@@ -8,18 +8,28 @@ Welcome, ${auth.principal.name}!
 {.remark}
 ${cluster.project.baseDir}
 
-<table class="bordered rows" width="100%">
-  <tbody>
-    [#list cluster.servers.children as server]
-      <tr>
-        <th>${server.address}</th>
-      </tr>
-      [#list server.children as node]
+  [#list cluster.servers.children as server]
+  ### ${server.address}
+
+    [#list server.children as node]
+    <table class="bordered rows">
+      <tbody>
         <tr>
-          <td>${node.name}</td>
+          <th colspan="2">${node.name}</th>
         </tr>
-      [/#list]
+        [#list node.properties?keys?sort as k]
+          <tr>
+            <td>
+              ${k}
+            </td>
+            <td>
+              <em>${node.properties[k]}</em>
+            </td>
+          </tr>
+        [/#list]
+      </tbody>
+    </table>
     [/#list]
-  </tbody>
-</table>
+  [/#list]
+
 [/#list]

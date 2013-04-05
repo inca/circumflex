@@ -213,14 +213,20 @@ class PropertyFileResolver extends MessageResolver {
   protected def loadProps(file: File): Option[Properties] = {
     if (!file.isFile) None
     else {
-      val is = new FileInputStream(file)
       val props = new Properties
+      val is = new FileInputStream(file)
+      val buf = new BufferedInputStream(is)
       try {
-        props.load(is)
+        props.load(buf)
+        Some(props)
+      } catch {
+        case e: Exception =>
+          CX_LOG.error("Error reading " + file.getAbsolutePath, e)
+          None
       } finally {
         is.close()
+        buf.close()
       }
-      Some(props)
     }
   }
 
