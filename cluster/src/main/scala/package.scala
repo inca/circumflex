@@ -2,10 +2,13 @@ package pro.savant.circumflex
 
 import core._, cache._
 import java.io.File
+import java.util.regex.Pattern
 
 package object cluster {
 
   val CL_LOG = new Logger("pro.savant.circumflex.cluster")
+  
+  val DEFAULT_FILTER_PATTERN = Pattern.compile("^.*\\.(?:xml|properties)$")
 
   val root = cx.getString("cx.cluster.root") match {
     case Some(path) => new File(path)

@@ -4,6 +4,7 @@ package cluster
 import java.io._
 import core._, xml._, cache._
 import collection.mutable.HashMap
+import java.util.regex.Pattern
 
 class Cluster(val project: Project)
     extends StructHolder
@@ -20,6 +21,8 @@ class Cluster(val project: Project)
   val _id = attr("id")
   def id = _id.getOrElse("")
 
+  val resources = new ClusterResources(this)
+
   val servers = new ListHolder[Server] {
 
     def elemName = "servers"
@@ -29,7 +32,7 @@ class Cluster(val project: Project)
     }
 
   }
-
+  
   def getServer(id: String) = servers.children.find(_.id == id)
 
   def server(id: String) = getServer(id).get
@@ -58,11 +61,29 @@ class Cluster(val project: Project)
   /*! Classes are copied to work directory to perform node JAR
   processing and packaging. */
   def copyClasses() {
-
+    new FileCopy(classesDir, workDir).copyIfNewer()
   }
 
   // Load on instantiate
   load()
+
+}
+
+class ClusterResources(val cluster: Cluster)
+    extends StructHolder { res =>
+
+  def elemName = "resources"
+
+  val _dir = attr("dir")
+  val dir = new File(cluster.clusterDir, _dir.getOrElse("resources"))
+
+  val _filter = attr("filter")
+  val filterPattern = try {
+    Pattern.compile(_filter())
+  } catch {
+    case e: Exception =>
+      DEFAULT_FILTER_PATTERN
+  }
 
 }
 
@@ -113,16 +134,20 @@ class Node(val server: Server)
   written into `cx.properties` of each assembled jar) by
   reading them from following locations in specified order:
 
-    * Project POM, including its ancestors, if any
-    * `cx.properties` in `target/classes`
-    * `cx.properties` in `src/cluster`
+    * project POM, including its ancestors, if any;
+    * `cx.properties` in `target/classes`;
+    * `cx.properties` in `src/cluster`;
     * node properties in `src/cluster/cluster.xml` of corresponding node.
-
-  Special property `node.address` is added above previously defined onces.
-  It specifies the address of the server it works on (typically the internal
-  address is used).
-
+    
   Properties from each step will overwrite the onces defined earlier.
+
+  Three special properties are added for each node:
+  
+    * `node.address` specifies the server address of the node (typically, the
+      internal address is used);  
+    * `node.name` specifies the name of this node;
+    * `node.backup` specifies, if the node is marked backup.
+
   */
   def properties: Map[String, String] = {
     val result = new HashMap[String, String]
@@ -131,6 +156,8 @@ class Node(val server: Server)
     result ++= cluster.clusterCxProps
     result ++= this.toMap
     result += "node.address" -> server.address()
+    result += "node.name" -> this.name()
+    result += "node.backup" -> this.isBackup.toString
     result.toMap
   }
 
