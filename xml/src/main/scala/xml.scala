@@ -82,7 +82,7 @@ class TagIterator(val reader: XMLStreamReader) {
   }
 
   def skip() {
-    XML_LOG.debug("Skipping " + current)
+    XML_LOG.trace("Skipping " + current)
     current match {
       case StartTag(name) =>
         var depth = 1

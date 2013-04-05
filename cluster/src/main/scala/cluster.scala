@@ -44,14 +44,22 @@ class Cluster(val project: Project)
   override def toString = id
 
   val classesDir = new File(baseDir, "target/classes")
+  val targetDir = new File(baseDir, "target/cluster")
+  val workDir = new File(targetDir, "work")
 
-  val mainCxPropsFile = new File(classesDir, "cx.properties")
-  val _mainCxProps = new CacheCell[PropsFile](new PropsFile(mainCxPropsFile))
+  val _mainCxProps = new CacheCell[PropsFile](
+    new PropsFile(new File(classesDir, "cx.properties")))
   def mainCxProps = _mainCxProps.get.toMap
 
-  val clusterCxPropsFile = new File(clusterDir, "cx.properties")
-  val _clusterCxProps = new CacheCell[PropsFile](new PropsFile(clusterCxPropsFile))
+  val _clusterCxProps = new CacheCell[PropsFile](
+    new PropsFile(new File(clusterDir, "cx.properties")))
   def clusterCxProps = _clusterCxProps.get.toMap
+
+  /*! Classes are copied to work directory to perform node JAR
+  processing and packaging. */
+  def copyClasses() {
+
+  }
 
   // Load on instantiate
   load()

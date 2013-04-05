@@ -12,7 +12,7 @@ ${cluster.project.baseDir}
   ### ${server.address}
 
     [#list server.children as node]
-    <table class="bordered rows">
+    <table class="bordered rows stripped">
       <tbody>
         <tr>
           <th colspan="2">${node.name}</th>
