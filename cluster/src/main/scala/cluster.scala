@@ -39,10 +39,15 @@ class Cluster(val project: Project)
 
   def server(id: String) = getServer(id).get
 
-  def getNode(id: String) = servers
-      .children
-      .find(s => id.startsWith(s.id + ":"))
-      .flatMap(s => s.children.find(_.toString == id))
+  def getNode(id: String) = {
+    var _id = id
+    if (_id.startsWith(cluster.id + "-"))
+      _id = _id.substring(cluster.id.length + 1)
+    servers
+        .children
+        .find(s => _id.startsWith(s.id + "-"))
+        .flatMap(s => s.children.find(_.toString == cluster.id + "-" + _id))
+  }
 
   def node(id: String) = getNode(id).get
 
@@ -109,7 +114,7 @@ class Server(val cluster: Cluster)
     case "node" => new Node(server)
   }
 
-  def getNode(name: String) = children.find(_.name == name)
+  def getNode(name: String) = children.find(_.name() == name)
 
   def node(name: String) = getNode(name).get
 
@@ -129,6 +134,12 @@ class Node(val server: Server)
   val backup = attr("backup")
 
   def isBackup = backup.getOrElse("false") == "true"
+  
+  def workDir = cluster.workDir
+  
+  def rootDir = new File(cluster.targetDir, if (isBackup) "backup" else "main")
+  
+  def jarFile = new File(rootDir, toString + ".jar")
 
   /*! ### Node properties evaluation
 
@@ -179,13 +190,13 @@ class Node(val server: Server)
   during build.
   */
   def copyResources() {
-    new FileCopy(cluster.resources.dir, cluster.workDir)
+    new FileCopy(cluster.resources.dir, workDir)
       .filteredCopy(cluster.resources.filterPattern, properties)
   }
   
   /*! Properties are saved to `cx.properties` at work directory during build. */
   def saveProperties() {
-    val out = new FileOutputStream(new File(cluster.workDir, "cx.properties"))
+    val out = new FileOutputStream(new File(workDir, "cx.properties"))
     try {
       val _p = new Properties
       _p.putAll(mapAsJavaMap(properties))
@@ -195,10 +206,10 @@ class Node(val server: Server)
     }
   }
 
-  def uuid = sha256(cluster.id + ":" + toString)
+  def uuid = sha256(toString)
 
   def shortUuid = uuid.substring(0, 8)
 
-  override def toString = server.id + ":" + name()
+  override def toString = cluster.id + "-" + server.id + "-" + name()
 
 }
