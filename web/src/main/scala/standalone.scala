@@ -3,7 +3,7 @@ package web
 
 import core._
 import org.eclipse.jetty.webapp.WebAppContext
-import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.{Handler, Server}
 import java.net.{InetAddress, InetSocketAddress}
 
 /*!# Standalone Server
@@ -52,21 +52,21 @@ class StandaloneServer {
     case _ => "/"
   }
 
-  protected var _server: Server = _
+  lazy val server = cx.instantiate[Server](
+    "cx.jetty.server", prepareDefaultServer)
 
-  def server: Server = {
-    if (_server == null) {
-      _server = cx.instantiate[Server]("cx.jetty.server", prepareDefaultServer())
-    }
-    _server
-  }
-
-  def prepareDefaultServer(): Server = {
+  protected def prepareDefaultServer: Server = {
     val handler = new WebAppContext(webappRoot, contextPath)
     val srv = new Server(new InetSocketAddress(listenAddress, port))
     srv.setHandler(handler)
     srv
   }
+
+  lazy val handler = cx.instantiate[Handler](
+    "cx.jetty.handler", prepareDefaultHandler)
+
+  protected def prepareDefaultHandler: Handler =
+    new WebAppContext(webappRoot, contextPath)
 
   def start() {
     server.start()
