@@ -133,10 +133,12 @@ Custom `MessageResolver` implementations are only required to implement
 the `resolve` method, which is responsible for acquiring a message
 by specified `key` from some storage.
 */
-class ResourceBundleMessageResolver(val bundleName: String)
+class ResourceBundleMessageResolver
     extends MessageResolver {
 
-  protected def bundle = ResourceBundle.getBundle(bundleName)
+  val resourceName = cx.getString("cx.messages.name").getOrElse("msg")
+
+  protected def bundle = ResourceBundle.getBundle(resourceName)
 
   def iterator: Iterator[(String, String)] = bundle.getKeys
       .map(k => (k -> bundle.getString(k)))
@@ -175,7 +177,7 @@ class PropertyFileResolver extends MessageResolver {
     FilenameUtils.separatorsToSystem(
       cx.getOrElse("cx.messages.root", "src/main/resources").toString))
 
-  val resourceName = cx.getOrElse("cx.messages.name", "msg").toString
+  val resourceName = cx.getString("cx.messages.name").getOrElse("msg")
 
   protected val _cache = new HashMap[String, (Properties, Long)]
 
