@@ -59,7 +59,7 @@ class Cluster(val project: Project)
   override def toString = id
 
   val classesDir = new File(baseDir, "target/classes")
-  val dependencyDir = new File(baseDir, "target/dependency")
+  val dependencyDir = new File(baseDir, "target/lib")
   val targetDir = new File(baseDir, "target/cluster")
   val mainDir = new File(targetDir, "main")
   val mainLibDir = new File(mainDir, "lib")
