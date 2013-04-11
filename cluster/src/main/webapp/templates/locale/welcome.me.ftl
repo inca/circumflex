@@ -33,3 +33,14 @@ to begin your work.
   </projects>
 </cluster>
 ```
+
+### SSH keys
+
+Please make sure that all your servers accept Node Manager via SSH with
+key-based authentication.
+
+1. Generate SSH keypair on this computer.
+
+2. Copy your public key from `~/.ssh/id_rsa.pub` (or `id_dsa.pub`).
+
+3. Paste this key to each server into their `~/.ssh/authorized_keys`.
