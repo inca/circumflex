@@ -272,13 +272,13 @@ class Node(val server: Server)
       return
     val relPath = path.substring(prefix.length)
         .replaceAll("^/|/$", "")
-    if (relPath == "")
-      return
     if (file.isDirectory) {
-      val e = new JarEntry(relPath + "/")
-      jar.putNextEntry(e)
-      jar.closeEntry()
-      file.listFiles.foreach(f => addToJar(jar, file))
+      if (relPath != "") {
+        val e = new JarEntry(relPath + "/")
+        jar.putNextEntry(e)
+        jar.closeEntry()
+      }
+      file.listFiles.foreach(f => addToJar(jar, f))
     } else {
       val e = new JarEntry(relPath)
       e.setTime(file.lastModified)
