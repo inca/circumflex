@@ -87,7 +87,10 @@ class Cluster(val project: Project)
   def copyDependencies(runMvn: Boolean) {
     if (runMvn) {
       CL_LOG.info("Copying dependencies from Maven.")
-      project.mvn("dependency:copy-dependencies").execute().join()
+      project.mvn(
+        "dependency:copy-dependencies",
+        "-DoutputDirectory=" + dependencyDir.getCanonicalPath
+      ).execute().join()
       CL_LOG.info("Dependencies copied from Maven Repository.")
     }
     new FileCopy(dependencyDir, mainLibDir).copyIfNewer()
