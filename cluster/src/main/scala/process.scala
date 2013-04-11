@@ -10,6 +10,11 @@ class ProcessMonitor(val builder: ProcessBuilder)
 
   protected val dir = builder.directory
 
+  def execute(): this.type = {
+    start()
+    this
+  }
+
   override def run() {
     val process = builder.start()
     val result = time {

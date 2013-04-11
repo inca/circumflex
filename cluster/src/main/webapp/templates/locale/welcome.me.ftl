@@ -16,7 +16,7 @@ Proceed to login to begin your work.
 ### Configuring Cluster Manager
 
 Create cluster configuration file at
-<code>${conf.descriptorFile.getAbsolutePath}</code>
+<code>${conf.descriptorFile.getCanonicalPath}</code>
 to begin your work.
 
 ``` {.hl.xml}

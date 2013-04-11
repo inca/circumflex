@@ -39,7 +39,7 @@ class PropsFile(val file: File)
         props.load(buf)
       } catch {
         case e: Exception =>
-          CL_LOG.error("Error reading " + file.getAbsolutePath, e)
+          CL_LOG.error("Error reading " + file.getCanonicalPath, e)
       } finally {
         is.close()
         buf.close()

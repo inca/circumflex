@@ -3,10 +3,12 @@ package cluster
 
 import java.io._
 import core._, xml._, cache._
-import collection.mutable.HashMap
+import scala.collection.mutable.HashMap
 import collection.JavaConversions._
 import java.util.regex.Pattern
 import java.util.Properties
+import java.util.jar._
+import org.apache.commons.io.{IOUtils, FileUtils}
 
 class Cluster(val project: Project)
     extends StructHolder
@@ -22,6 +24,10 @@ class Cluster(val project: Project)
 
   val _id = attr("id")
   def id = _id.getOrElse("")
+
+  val _mainClass = text("main-class")
+  def mainClass = _mainClass.getOrElse(
+    throw new IllegalArgumentException("<main-class> tag not specified."))
 
   val resources = new ClusterResources(this)
 
@@ -39,14 +45,13 @@ class Cluster(val project: Project)
 
   def server(id: String) = getServer(id).get
 
+  def nodes: Seq[Node] = servers.children.flatMap(_.children)
+
   def getNode(id: String) = {
     var _id = id
     if (_id.startsWith(cluster.id + "-"))
       _id = _id.substring(cluster.id.length + 1)
-    servers
-        .children
-        .find(s => _id.startsWith(s.id + "-"))
-        .flatMap(s => s.children.find(_.toString == cluster.id + "-" + _id))
+    nodes.find(_.toString == cluster.id + "-" + _id)
   }
 
   def node(id: String) = getNode(id).get
@@ -54,7 +59,12 @@ class Cluster(val project: Project)
   override def toString = id
 
   val classesDir = new File(baseDir, "target/classes")
+  val dependencyDir = new File(baseDir, "target/dependency")
   val targetDir = new File(baseDir, "target/cluster")
+  val mainDir = new File(targetDir, "main")
+  val mainLibDir = new File(mainDir, "lib")
+  val backupDir = new File(targetDir, "backup")
+  val backupLibDir = new File(backupDir, "lib")
   val workDir = new File(targetDir, "work")
 
   val _mainCxProps = new CacheCell[PropsFile](
@@ -69,6 +79,36 @@ class Cluster(val project: Project)
   processing and packaging. */
   def copyClasses() {
     new FileCopy(classesDir, workDir).copyIfNewer()
+  }
+
+  /*! Dependencies (as acquired by executing `mvn dependency:copy-dependencies`)
+  are copied twice: in `target/cluster/main/lib` and in `target/cluster/backup/lib`.
+  */
+  def copyDependencies(runMvn: Boolean) {
+    if (runMvn) {
+      CL_LOG.info("Copying dependencies from Maven.")
+      project.mvn("dependency:copy-dependencies").execute().join()
+      CL_LOG.info("Dependencies copied from Maven Repository.")
+    }
+    new FileCopy(dependencyDir, mainLibDir).copyIfNewer()
+    new FileCopy(dependencyDir, backupLibDir).copyIfNewer()
+  }
+
+  /*! All nodes are built one by one, using work directory as the root of their
+  classes. */
+  def buildAll(runMvn: Boolean) {
+    if (runMvn) {
+      CL_LOG.info("Rebuilding the project with Maven.")
+      project.rootProject.mvn("clean", "compile").execute().join()
+      CL_LOG.info("Project built successfully.")
+    }
+    copyClasses()
+    copyDependencies(true)
+    nodes.foreach { node =>
+      node.copyResources()
+      node.saveProperties()
+      node.buildJar()
+    }
   }
 
   // Load on instantiate
@@ -134,11 +174,13 @@ class Node(val server: Server)
   val backup = attr("backup")
 
   def isBackup = backup.getOrElse("false") == "true"
-  
+
   def workDir = cluster.workDir
-  
-  def rootDir = new File(cluster.targetDir, if (isBackup) "backup" else "main")
-  
+
+  def rootDir = if (isBackup) cluster.backupDir else cluster.mainDir
+
+  def libDir = new File(rootDir, "lib")
+
   def jarFile = new File(rootDir, toString + ".jar")
 
   /*! ### Node properties evaluation
@@ -151,24 +193,24 @@ class Node(val server: Server)
     * `cx.properties` in `target/classes`;
     * `cx.properties` in `src/cluster`;
     * node properties in `src/cluster/cluster.xml` of corresponding node.
-    
+
   Properties from each step will overwrite the onces defined earlier.
 
   Some special properties are added for each node:
-  
+
     * `node.address` specifies the server address of the node (typically, the
-      internal address is used);  
-    
+      internal address is used);
+
     * `node.name` specifies the name of this node;
-    
+
     * `node.backup` specifies, if the node is marked backup;
-    
+
     * `node.uuid` resolves to SHA256 hash of following string:
-     
+
       ```
       ${cluster.id}:${server.address}:${node.name}
       ```
-      
+
     * `node.shortUuid` is 8 first letters of `node.uuid`.
 
   */
@@ -193,7 +235,7 @@ class Node(val server: Server)
     new FileCopy(cluster.resources.dir, workDir)
       .filteredCopy(cluster.resources.filterPattern, properties)
   }
-  
+
   /*! Properties are saved to `cx.properties` at work directory during build. */
   def saveProperties() {
     val out = new FileOutputStream(new File(workDir, "cx.properties"))
@@ -204,6 +246,65 @@ class Node(val server: Server)
     } finally {
       out.close()
     }
+  }
+
+  /*! Jar must be built only if all resources, properties are copied to work
+  directory and dependencies are inplace. */
+  def buildJar() {
+    val f = jarFile
+    CL_LOG.info("Building " + f.getName)
+    val out = new FileOutputStream(f)
+    val jar = new JarOutputStream(out, prepareManifest)
+    try {
+      jar.setLevel(9)
+      addToJar(jar, workDir)
+    } finally {
+      jar.close()
+      out.close()
+    }
+    CL_LOG.info("Sucessfully built " + f.getName)
+  }
+
+  protected def addToJar(jar: JarOutputStream, file: File) {
+    val prefix = workDir.getCanonicalPath
+    val path = file.getCanonicalPath
+    if (!path.startsWith(prefix))
+      return
+    val relPath = path.substring(prefix.length)
+        .replaceAll("^/|/$", "")
+    if (relPath == "")
+      return
+    if (file.isDirectory) {
+      val e = new JarEntry(relPath + "/")
+      jar.putNextEntry(e)
+      jar.closeEntry()
+      file.listFiles.foreach(f => addToJar(jar, file))
+    } else {
+      val e = new JarEntry(relPath)
+      e.setTime(file.lastModified)
+      jar.putNextEntry(e)
+      val fin = new FileInputStream(file)
+      try {
+        IOUtils.copy(fin, jar)
+      }
+      fin.close()
+      jar.closeEntry()
+    }
+  }
+
+  protected def prepareManifest: Manifest = {
+    val libPrefix = libDir.getCanonicalPath
+    val paths = libDir.listFiles.flatMap { f =>
+      val p = f.getCanonicalPath
+      if (p.startsWith(libPrefix))
+        Some("lib/" + p.substring(libPrefix.length).replaceAll("^/", ""))
+      else None
+    }
+    val manifest = new Manifest
+    manifest.getMainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0")
+    manifest.getMainAttributes.put(Attributes.Name.MAIN_CLASS, cluster.mainClass)
+    manifest.getMainAttributes.put(Attributes.Name.CLASS_PATH, paths.mkString(" "))
+    manifest
   }
 
   def uuid = sha256(toString)
