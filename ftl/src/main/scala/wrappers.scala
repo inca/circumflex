@@ -125,7 +125,8 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper)
     cl.getMethods.toList.find { m =>
       m.getName.equals(name) && Modifier.isPublic(m.getModifiers)
     } match {
-      case None if cl != classOf[Object] => findMethod(cl.getSuperclass, name)
+      case None if cl != classOf[Object] =>
+        findMethod(cl.getSuperclass, name)
       case other => other
     }
 
@@ -139,6 +140,8 @@ class ScalaBaseWrapper(val obj: Any, val wrapper: ObjectWrapper)
 
   def get(key: String): TemplateModel = {
     val o = obj.asInstanceOf[Object]
+    if (key.startsWith("$"))
+      return wrapper.wrap(null)
     if (resolveFields)
       findField(objectClass, key) match {
         case Some(field) => return wrapper.wrap(field.get(o))
