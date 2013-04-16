@@ -138,7 +138,7 @@ class ResourceBundleMessageResolver
 
   val resourceName = cx.getString("cx.messages.name").getOrElse("msg")
 
-  protected def bundle = ResourceBundle.getBundle(resourceName)
+  protected def bundle = ResourceBundle.getBundle(resourceName, locale)
 
   def iterator: Iterator[(String, String)] = bundle.getKeys
       .map(k => (k -> bundle.getString(k)))
