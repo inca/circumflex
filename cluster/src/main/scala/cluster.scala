@@ -61,10 +61,6 @@ class Cluster(val project: Project)
   val classesDir = new File(baseDir, "target/classes")
   val dependencyDir = new File(baseDir, "target/lib")
   val targetDir = new File(baseDir, "target/cluster")
-  val mainDir = new File(targetDir, "main")
-  val mainLibDir = new File(mainDir, "lib")
-  val backupDir = new File(targetDir, "backup")
-  val backupLibDir = new File(backupDir, "lib")
   val workDir = new File(targetDir, "work")
 
   val _mainCxProps = new CacheCell[PropsFile](
@@ -81,37 +77,16 @@ class Cluster(val project: Project)
     new FileCopy(classesDir, workDir).copyIfNewer()
   }
 
-  /*! Dependencies (as acquired by executing `mvn dependency:copy-dependencies`)
-  are copied twice: in `target/cluster/main/lib` and in `target/cluster/backup/lib`.
-  */
-  def copyDependencies(runMvn: Boolean) {
-    if (runMvn) {
-      CL_LOG.info("Copying dependencies from Maven.")
-      project.mvn(
-        "dependency:copy-dependencies",
-        "-DoutputDirectory=" + dependencyDir.getCanonicalPath
-      ).execute().join()
-      CL_LOG.info("Dependencies copied from Maven Repository.")
-    }
-    new FileCopy(dependencyDir, mainLibDir).copyIfNewer()
-    new FileCopy(dependencyDir, backupLibDir).copyIfNewer()
-  }
-
   /*! All nodes are built one by one, using work directory as the root of their
   classes. */
-  def buildAll(runMvn: Boolean) {
-    if (runMvn) {
+  def buildAll() {
+    if (!classesDir.isDirectory) {
       CL_LOG.info("Rebuilding the project with Maven.")
-      project.rootProject.mvn("clean", "compile").execute().join()
+      project.rootProject.mvn("clean", "install").execute().join()
       CL_LOG.info("Project built successfully.")
     }
     copyClasses()
-    copyDependencies(true)
-    nodes.foreach { node =>
-      node.copyResources()
-      node.saveProperties()
-      node.buildJar()
-    }
+    servers.children.foreach(_.buildAll())
   }
 
   // Load on instantiate
@@ -163,6 +138,41 @@ class Server(val cluster: Cluster)
 
   override def toString = user() + "@" + address() + ":" + dir()
 
+  def targetDir = new File(cluster.targetDir, id)
+
+  def mainDir = new File(targetDir, "main")
+  def mainLibDir = new File(mainDir, "lib")
+
+  def backupDir = new File(targetDir, "backup")
+  def backupLibDir = new File(backupDir, "lib")
+
+  /*! Dependencies (as acquired by executing `mvn dependency:copy-dependencies`)
+  are copied twice: in `target/cluster/:server/main/lib` and in
+  `target/cluster/:server/backup/lib`.
+  */
+  def copyDependencies() {
+    val libDir = cluster.dependencyDir
+    if (!libDir.isDirectory) {
+      CL_LOG.info("Copying dependencies from Maven.")
+      project.mvn(
+        "dependency:copy-dependencies",
+        "-DoutputDirectory=" + libDir.getCanonicalPath
+      ).execute().join()
+      CL_LOG.info("Dependencies copied from Maven Repository.")
+    }
+    new FileCopy(libDir, mainLibDir).copyIfNewer()
+    new FileCopy(libDir, backupLibDir).copyIfNewer()
+  }
+
+  def buildAll() {
+    copyDependencies()
+    children.foreach { node =>
+      node.copyResources()
+      node.saveProperties()
+      node.buildJar()
+    }
+  }
+
 }
 
 class Node(val server: Server)
@@ -180,7 +190,7 @@ class Node(val server: Server)
 
   def workDir = cluster.workDir
 
-  def rootDir = if (isBackup) cluster.backupDir else cluster.mainDir
+  def rootDir = if (isBackup) server.backupDir else server.mainDir
 
   def libDir = new File(rootDir, "lib")
 
