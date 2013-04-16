@@ -56,7 +56,6 @@ class StandaloneServer {
     "cx.jetty.server", prepareDefaultServer)
 
   protected def prepareDefaultServer: Server = {
-    val handler = new WebAppContext(webappRoot, contextPath)
     val srv = new Server(new InetSocketAddress(listenAddress, port))
     srv.setHandler(handler)
     srv
