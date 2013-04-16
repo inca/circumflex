@@ -3,7 +3,7 @@ package cluster
 
 import java.io._
 import org.apache.commons.io.FileUtils
-import java.util.regex.Pattern
+import java.util.regex.{Matcher, Pattern}
 
 class FileCopy(val srcDir: File,
                val dstDir: File) {
@@ -73,7 +73,7 @@ class FileCopy(val srcDir: File,
             while (m.find()) {
               val token = m.group(1)
               val replacement = props.get(token).getOrElse("${" + token + "}")
-              m.appendReplacement(sb, replacement)
+              m.appendReplacement(sb, Matcher.quoteReplacement(replacement))
             }
             m.appendTail(sb)
             out.write(sb.toString + "\n")
