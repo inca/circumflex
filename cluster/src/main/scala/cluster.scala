@@ -71,12 +71,6 @@ class Cluster(val project: Project)
     new PropsFile(new File(clusterDir, "cx.properties")))
   def clusterCxProps = _clusterCxProps.get.toMap
 
-  /*! Classes are copied to work directory to perform node JAR
-  processing and packaging. */
-  def copyClasses() {
-    new FileCopy(classesDir, workDir).copyIfNewer()
-  }
-
   /*! All nodes are built one by one, using work directory as the root of their
   classes. */
   def buildAll() {
@@ -85,7 +79,6 @@ class Cluster(val project: Project)
       project.rootProject.mvn("clean", "install").execute().join()
       CL_LOG.info("Project built successfully.")
     }
-    copyClasses()
     servers.children.foreach(_.buildAll())
   }
 
@@ -138,6 +131,7 @@ class Server(val cluster: Cluster)
 
   override def toString = user() + "@" + address() + ":" + dir()
 
+  def workDir = cluster.workDir
   def targetDir = new File(cluster.targetDir, id)
 
   def mainDir = new File(targetDir, "main")
@@ -164,7 +158,14 @@ class Server(val cluster: Cluster)
     new FileCopy(libDir, backupLibDir).copyIfNewer()
   }
 
+  /*! Classes are copied to work directory to perform node JAR
+  processing and packaging. */
+  def copyClasses() {
+    new FileCopy(cluster.classesDir, workDir).copyIfNewer()
+  }
+
   def buildAll() {
+    copyClasses()
     copyDependencies()
     children.foreach { node =>
       node.copyResources()

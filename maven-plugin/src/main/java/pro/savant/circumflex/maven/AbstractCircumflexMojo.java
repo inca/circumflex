@@ -107,7 +107,6 @@ public abstract class AbstractCircumflexMojo extends AbstractMojo {
   protected Properties collectProps() {
     Properties result = new Properties();
     copyProps(project.getProperties(), result);
-    copyProps(System.getProperties(), result);
     return result;
   }
 
