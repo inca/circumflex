@@ -39,8 +39,37 @@ is initialized or before the context is destroyed.
 Context is initialized either explicitly or when it is first
 accessed via the `Context.get` method.
 */
-class Context extends HashMap[String, Any] with KeyValueCoercion {
+class Context
+    extends HashMap[String, Any]
+    with KeyValueCoercion {
+
+  def executeWith[R](params: (String, Any)*)
+                    (actions: => R): R = {
+    // Remember old params
+    val oldParams = new ListBuffer[(String, Option[Any])]
+    params.foreach { p =>
+      val k = p._1
+      oldParams += k -> this.get(k)
+      this.update(k, p._2)
+    }
+    // Evaluate result with new params
+    val result = actions
+    // Restore old params
+    oldParams.foreach { p =>
+      val k = p._1
+      p._2 match {
+        case Some(v) =>
+          this.update(k, v)
+        case _ =>
+          this -= k
+      }
+    }
+    // Return result
+    result
+  }
+
   override def stringPrefix = "ctx"
+
 }
 
 object Context {
