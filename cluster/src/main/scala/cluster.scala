@@ -119,8 +119,6 @@ class Server(val cluster: Cluster)
 
   val user = attr("user")
 
-  val dir = attr("dir")
-
   def read = {
     case "node" => new Node(server)
   }
@@ -129,7 +127,7 @@ class Server(val cluster: Cluster)
 
   def node(name: String) = getNode(name).get
 
-  override def toString = user() + "@" + address() + ":" + dir()
+  override def toString = user() + "@" + address()
 
   def workDir = cluster.workDir
   def targetDir = new File(cluster.targetDir, id)
