@@ -193,7 +193,7 @@ class Node(val server: Server)
 
   def libDir = new File(rootDir, "lib")
 
-  def jarFile = new File(rootDir, toString + ".jar")
+  def jarFile = new File(rootDir, toString + "-" + shortUuid + ".jar")
 
   /*! ### Node properties evaluation
 
