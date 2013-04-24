@@ -11,6 +11,9 @@
     <link rel="shortcut icon"
           href="/img/cx16.png"
           type="image/x-icon">
+    <link rel="stylesheet"
+          href="/css/main.css"
+          type="text/css">
     <script type="text/javascript"
             src="/locale.js">
     </script>

@@ -81,7 +81,7 @@ package object web {
       .getOrElse("http")
 
   def host = ctx.getString("cx.host")
-      .orElse(requestOption.map(_.serverHost))
+      .orElse(requestOption.map(_.host))
       .getOrElse("localhost")
 
   def origin = scheme + "://" + host

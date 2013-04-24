@@ -16,6 +16,8 @@ class Cluster(val project: Project)
 
   def elemName = "cluster"
 
+  def status = pro.savant.circumflex.cluster.status.get(cluster)
+
   def baseDir = project.baseDir
 
   val clusterDir = new File(baseDir, "src/cluster")

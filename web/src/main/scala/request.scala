@@ -156,6 +156,7 @@ class HttpRequest(val raw: HttpServletRequest) {
 
     * `localPort` returns the IP port on which the request was received.
   */
+  def host = headers.get("Host").getOrElse(serverHost)
   def serverHost: String = raw.getServerName
   def serverPort: Int = raw.getServerPort
   def localIp: String = raw.getLocalAddr
@@ -174,7 +175,16 @@ class HttpRequest(val raw: HttpServletRequest) {
 
     * `sessionId` returns session identifier specified by the client;
   */
-  def remoteIp: String = raw.getRemoteAddr
+  def remoteIp: String = Seq("X-Forwarded-For", "X-Real-Ip",
+    "X-Client-Ip", "Proxy-Client-Ip", "WL-Proxy-Client-Ip",
+    "Http-Client-Ip", "Http-X-Forwarded-For")
+      .flatMap(key =>
+    headers.find(p => p._1.equalsIgnoreCase(key) ||
+        p._1.equalsIgnoreCase(key.replace('-', '_'))))
+      .headOption
+      .map(_._2)
+      .getOrElse(raw.getRemoteAddr)
+
   def remoteHost: String = raw.getRemoteHost
   def sessionId = raw.getRequestedSessionId
 

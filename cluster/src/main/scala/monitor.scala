@@ -2,27 +2,33 @@ package pro.savant.circumflex
 package cluster
 
 import collection.JavaConversions._
+import collection.mutable.ListBuffer
 import java.io.{InputStreamReader, BufferedReader}
-import java.util.concurrent.LinkedBlockingQueue
 
-class ProcessMonitor(val builder: ProcessBuilder)
-    extends Thread(builder.command.mkString(" ")) {
+trait Monitor extends Thread {
 
-  protected val dir = builder.directory
+  def out: Seq[String]
 
-  protected var _out: String = ""
-  def out = _out
-
-  protected var _err: String = ""
-  def err = _err
-
-  val outQueue = new LinkedBlockingQueue[String]
-  val errQueue = new LinkedBlockingQueue[String]
+  def err: Seq[String]
 
   def execute(): this.type = {
     start()
     this
   }
+
+}
+
+class ProcessMonitor(val builder: ProcessBuilder)
+    extends Thread(builder.command.mkString(" "))
+    with Monitor {
+
+  protected val dir = builder.directory
+
+  protected var _out = new ListBuffer[String]
+  def out = _out.toSeq
+
+  protected var _err = new ListBuffer[String]
+  def err = _err.toSeq
 
   override def run() {
     val process = builder.start()
@@ -57,15 +63,13 @@ class ProcessMonitor(val builder: ProcessBuilder)
     // STDOUT
     var line = out.readLine()
     while (line != null) {
-      _out += line + "\n"
-      outQueue.put(line)
+      _out += line
       line = out.readLine()
     }
     // STDERR
     line = err.readLine()
     while (line != null) {
-      _err += line + "\n"
-      errQueue.put(line)
+      _err += line
       line = err.readLine()
     }
   }

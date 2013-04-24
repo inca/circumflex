@@ -1,0 +1,15 @@
+#job-output {
+  overflow-x:auto;
+  overflow-y:scroll;
+  font:12px Monaco, Courier New, Courier, monospace;
+  height:480px;
+}
+
+#job-output div {
+  white-space:pre-wrap;
+  line-height:16px;
+}
+
+#job-output .err {
+  color:#a00;
+}

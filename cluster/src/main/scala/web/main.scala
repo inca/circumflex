@@ -21,6 +21,47 @@ class Main extends Router {
 
   auth.require()
 
+  sub("/cluster/([^/]+)".r) = {
+
+    val cluster = getCluster(uri(1)).getOrElse(sendError(404))
+    'cluster := cluster
+    val status = pro.savant.circumflex.cluster.status.get(cluster)
+    'status := status
+
+    get("/?") = ftl("/cluster/view.ftl")
+
+    get("/~job-progress").and(request.isXHR) = {
+      var outFrom = param.getInt("outFrom").getOrElse(0)
+      var errFrom = param.getInt("errFrom").getOrElse(0)
+      val lines = status.currentJob.map { job =>
+        val outLines = job.outLines.drop(outFrom)
+        outFrom += outLines.size
+        val errLines = job.errLines.drop(errFrom)
+        errFrom += errLines.size
+        outLines ++ errLines
+      } getOrElse Nil
+      'lines := lines
+      'outFrom := outFrom
+      'errFrom := errFrom
+      ftl("/cluster/job-progress.p.ftl")
+    }
+
+    post("/~module-mci") = partial {
+      val pm = cluster.project.mvn("clean", "compile")
+      val job = new Job("module-mci", pm)
+      status.runJob(job)
+      'redirect := prefix
+    }
+
+    post("/~root-mci") = partial {
+      val pm = cluster.project.rootProject.mvn("clean", "compile")
+      val job = new Job("root-mci", pm)
+      status.runJob(job)
+      'redirect := prefix
+    }
+
+  }
+
 }
 
 class AuthRouter extends Router {
