@@ -31,32 +31,24 @@ class Main extends Router {
     get("/?") = ftl("/cluster/view.ftl")
 
     get("/~job-progress").and(request.isXHR) = {
-      var outFrom = param.getInt("outFrom").getOrElse(0)
-      var errFrom = param.getInt("errFrom").getOrElse(0)
+      var from = param.getInt("from").getOrElse(0)
       val lines = status.currentJob.map { job =>
-        val outLines = job.outLines.drop(outFrom)
-        outFrom += outLines.size
-        val errLines = job.errLines.drop(errFrom)
-        errFrom += errLines.size
-        outLines ++ errLines
+        val lines = job.output.drop(from)
+        from += lines.size
+        lines
       } getOrElse Nil
       'lines := lines
-      'outFrom := outFrom
-      'errFrom := errFrom
+      'from := from
       ftl("/cluster/job-progress.p.ftl")
     }
 
     post("/~module-mci") = partial {
-      val pm = cluster.project.mvn("clean", "compile")
-      val job = new Job("module-mci", pm)
-      status.runJob(job)
+      status.runJob(new ModuleBuildJob(cluster))
       'redirect := prefix
     }
 
-    post("/~root-mci") = partial {
-      val pm = cluster.project.rootProject.mvn("clean", "compile")
-      val job = new Job("root-mci", pm)
-      status.runJob(job)
+    post("/~project-mci") = partial {
+      status.runJob(new ProjectBuildJob(cluster))
       'redirect := prefix
     }
 

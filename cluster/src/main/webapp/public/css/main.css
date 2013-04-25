@@ -13,3 +13,7 @@
 #job-output .err {
   color:#a00;
 }
+
+#job-output .finish {
+  color:#37a;
+}

@@ -1,36 +1,43 @@
 package pro.savant.circumflex
 package cluster
 
+import core._
 import collection.JavaConversions._
 import collection.mutable.ListBuffer
 import java.io.{InputStreamReader, BufferedReader}
 
 trait Monitor extends Thread {
 
-  def out: Seq[String]
-
-  def err: Seq[String]
+  protected var _output = new ListBuffer[String]
+  def output = _output.toSeq
 
   def execute(): this.type = {
     start()
     this
   }
 
+  def println(line: String, cssClass: String = "out") {
+    _output += "<div class\"" + cssClass + "\">" + wrapHtml(line) + "</div>"
+  }
+
+  def key: String
+
+  def title = msg.get("job." + key).getOrElse(key)
+
+  override def toString = title
+
 }
 
-class ProcessMonitor(val builder: ProcessBuilder)
-    extends Thread(builder.command.mkString(" "))
+trait ProcessMonitor
+    extends Thread
     with Monitor {
 
   protected val dir = builder.directory
 
-  protected var _out = new ListBuffer[String]
-  def out = _out.toSeq
-
-  protected var _err = new ListBuffer[String]
-  def err = _err.toSeq
+  def builder: ProcessBuilder
 
   override def run() {
+    setName(builder.command.mkString(" "))
     val process = builder.start()
     // Prepare readers
     val stdout = new BufferedReader(
@@ -51,6 +58,9 @@ class ProcessMonitor(val builder: ProcessBuilder)
           case e: InterruptedException =>
             interrupt()
         }
+      if (!isInterrupted) {
+        println("Exit status: " + process.exitValue, "finish")
+      }
     } finally {
       process.getInputStream.close()
       process.getErrorStream.close()
@@ -63,13 +73,13 @@ class ProcessMonitor(val builder: ProcessBuilder)
     // STDOUT
     var line = out.readLine()
     while (line != null) {
-      _out += line
+      println(line)
       line = out.readLine()
     }
     // STDERR
     line = err.readLine()
     while (line != null) {
-      _err += line
+      println(line, "err")
       line = err.readLine()
     }
   }

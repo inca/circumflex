@@ -4,44 +4,27 @@ package cluster
 import core._
 import scala.collection.mutable.HashMap
 
-class Job(val key: String,
-          val monitor: Monitor) {
-
-  def isEnded = !monitor.isAlive
-
-  def outLines =
-    monitor.out.map(l => "<div class=\"out\">" + wrapHtml(l) + "</div>")
-
-  def errLines =
-    monitor.err.map(l => "<div class=\"err\">" + wrapHtml(l) + "</div>")
-
-  def title = msg.get("job." + key).getOrElse(key)
-
-  override def toString = title
-
-}
-
 class ClusterStatus(val clusterId: String) {
 
   def cluster = getCluster(clusterId)
       .getOrElse(throw new IllegalStateException(
     "Cluster " + clusterId + " not found."))
 
-  protected var _currentJob: Option[Job] = None
+  protected var _currentJob: Option[Monitor] = None
 
-  def lastJob: Option[Job] = synchronized {
+  def lastJob: Option[Monitor] = synchronized {
     _currentJob
   }
 
-  def currentJob: Option[Job] = synchronized {
-    _currentJob.filter(!_.isEnded)
+  def currentJob: Option[Monitor] = synchronized {
+    _currentJob.filter(_.isAlive)
   }
 
-  def runJob(job: Job) {
+  def runJob(job: Monitor) {
     synchronized {
       if (currentJob.isEmpty) {
         _currentJob = Some(job)
-        job.monitor.execute()
+        job.execute()
       } else throw new ValidationException("job.exists")
     }
   }

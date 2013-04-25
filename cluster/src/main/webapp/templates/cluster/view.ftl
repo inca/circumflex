@@ -2,9 +2,7 @@
 
 [#assign main]
   [#if status.currentJob??]
-    [#assign lines = status.currentJob.outLines + status.currentJob.errLines/]
-    [#assign outFrom = status.currentJob.outLines?size/]
-    [#assign errFrom = status.currentJob.errLines?size/]
+    [#assign lines = status.currentJob.output/]
   <h3>${status.currentJob}</h3>
   <div id="job-output">
     [#include "job-progress.p.ftl"/]
@@ -22,13 +20,13 @@
     </a>
   </form>
   <form class="submission partial margin-top"
-        action="/cluster/${cluster.id}/~root-mci"
+        action="/cluster/${cluster.id}/~project-mci"
         method="post">
     <a href="javascript:;"
        class="pill primary submit">
       <img class="glyph"
            src="http://cdn.savant.pro/img/glyph/32/check.png"/>
-      <span>${msg['job.root-mci']}</span>
+      <span>${msg['job.project-mci']}</span>
     </a>
   </form>
   [/#if]

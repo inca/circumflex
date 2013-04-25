@@ -78,7 +78,7 @@ class Cluster(val project: Project)
   def buildAll() {
     if (!classesDir.isDirectory) {
       CL_LOG.info("Rebuilding the project with Maven.")
-      project.rootProject.mvn("clean", "install").execute().join()
+      project.rootProject.mvn("clean", "install").start().waitFor()
       CL_LOG.info("Project built successfully.")
     }
     servers.children.foreach(_.buildAll())
@@ -151,7 +151,7 @@ class Server(val cluster: Cluster)
       project.mvn(
         "dependency:copy-dependencies",
         "-DoutputDirectory=" + libDir.getCanonicalPath
-      ).execute().join()
+      ).start().waitFor()
       CL_LOG.info("Dependencies copied from Maven Repository.")
     }
     new FileCopy(libDir, mainLibDir).copyIfNewer()
