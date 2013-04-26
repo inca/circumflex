@@ -3,6 +3,7 @@ package orm
 
 import java.sql.{ResultSet, PreparedStatement}
 import core._
+import scala.collection.mutable.ListBuffer
 
 /*!# Querying
 
@@ -442,27 +443,38 @@ class Update[PK, R <: Record[PK, R]](val node: RelationNode[PK, R])
   if (relation.isReadOnly)
     throw new ORMException("The relation " + relation.qualifiedName + " is read-only.")
 
-  private var _setClause: Seq[(Field[_, R], Option[Any])] = Nil
+  private var _setClause = new ListBuffer[String]
+  private var _setParameters = new ListBuffer[Option[Any]]
 
-  def setClause = _setClause
+  def setClause = _setClause.toSeq
 
-  def SET[T](field: Field[T, R], value: T): Update[PK, R] = {
-    _setClause ++= List(field -> Some(value))
+  protected def addSet[T](field: Field[T, R], value: Option[T]): this.type = {
+    _setClause += field.name + " = " + field.placeholder
+    _setParameters += value
     this
   }
 
-  def SET[K, P <: Record[K, P]](association: Association[K, R, P], value: P): Update[PK, R]=
-    SET(association.field.asInstanceOf[Field[Any, R]], value.PRIMARY_KEY.value)
+  def SET[T](field: Field[T, R], value: T): this.type =
+    addSet(field, Some(value))
 
-  def SET_NULL[T](field: Field[T, R]): Update[PK, R] = {
-    _setClause ++= List(field -> None)
-    this
-  }
+  def SET[K, P <: Record[K, P]](association: Association[K, R, P],
+                                value: P): this.type =
+    if (value.isTransient) SET_NULL(association)
+    else SET(association.field.asInstanceOf[Field[Any, R]], value.PRIMARY_KEY.value)
 
-  def SET_NULL[K, P <: Record[K, P]](association: Association[K, R, P]): Update[PK, R] =
+  def SET_NULL[T](field: Field[T, R]): this.type =
+    addSet(field, None)
+
+  def SET_NULL[K, P <: Record[K, P]](association: Association[K, R, P]): this.type =
     SET_NULL(association.field)
 
-  def parameters = _setClause.map(_._2) ++ _where.parameters
+  def SET(expr: String, params: Any*): this.type = {
+    _setClause += expr
+    _setParameters ++= params.map(v => any2option(v))
+    this
+  }
+
+  def parameters = _setParameters.toSeq ++ _where.parameters
 
   def toSql = ormConf.dialect.update(this)
 

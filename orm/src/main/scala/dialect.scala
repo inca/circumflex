@@ -321,8 +321,7 @@ class Dialect {
         dml.relation.fields.map(_.name).mkString(", ") + ") " + dml.query.toSql
 
   def update[PK, R <: Record[PK, R]](dml: Update[PK, R]): String = {
-    var result = "UPDATE " + dml.node.toSql + " SET " +
-        dml.setClause.map(f => f._1.name + " = " + f._1.placeholder).mkString(", ")
+    var result = "UPDATE " + dml.node.toSql + " SET " + dml.setClause.mkString(", ")
     if (dml.whereClause != EmptyPredicate) result += " WHERE " + dml.whereClause.toSql
     result
   }
