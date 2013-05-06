@@ -52,6 +52,11 @@ class Main extends Router {
       'redirect := prefix
     }
 
+    post("/~build-cluster") = partial {
+      status.runJob(new BuildClusterJob(cluster))
+      'redirect := prefix
+    }
+
   }
 
 }

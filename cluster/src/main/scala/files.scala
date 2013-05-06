@@ -45,7 +45,7 @@ class FileCopy(val srcDir: File,
       val dst = new File(dstDir, p)
       predicate(src, dst)
     }
-    CL_LOG.info("Copying " + toCopy.size + " files from " +
+    currentMonitor.println("Copying " + toCopy.size + " files from " +
         srcDir + " to " + dstDir)
     toCopy.foreach { p =>
       val src = new File(srcDir, p)
@@ -57,7 +57,7 @@ class FileCopy(val srcDir: File,
   def filteredCopy(filenameRegex: Pattern,
                    props: Map[String, String]) {
     val toCopy = flatPaths(srcDir)
-    CL_LOG.info("Copying " + toCopy.size + " files from " +
+    currentMonitor.println("Copying " + toCopy.size + " files from " +
         srcDir + " to " + dstDir)
     toCopy.foreach { p =>
       val src = new File(srcDir, p)

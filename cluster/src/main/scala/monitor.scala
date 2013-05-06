@@ -8,21 +8,42 @@ import java.io.{InputStreamReader, BufferedReader}
 
 trait Monitor extends Thread {
 
+  private var _mainMonitor: Monitor = this
+
   protected var _output = new ListBuffer[String]
-  def output = _output.toSeq
+  def output = getCurrentMonitor.getOrElse(this)._output.toSeq
+
+  def println(line: String, cssClass: String = "out") {
+    getCurrentMonitor.getOrElse(this)._output += formatLine(line, cssClass)
+  }
+
+  def formatLine(line: String, cssClass: String = "out") =
+    "<div class\"" + cssClass + "\">" + wrapHtml(line) + "</div>"
 
   def execute(): this.type = {
     start()
     this
   }
 
-  def println(line: String, cssClass: String = "out") {
-    _output += "<div class\"" + cssClass + "\">" + wrapHtml(line) + "</div>"
+  override final def start() {
+    Thread.currentThread() match {
+      case m: Monitor =>
+        _mainMonitor = m
+      case _ =>
+    }
+    super.start()
+  }
+
+  override final def run() {
+    ctx.update("monitor", _mainMonitor)
+    process()
   }
 
   def key: String
 
   def title = msg.get("job." + key).getOrElse(key)
+
+  def process()
 
   override def toString = title
 
@@ -30,13 +51,13 @@ trait Monitor extends Thread {
 
 trait ProcessMonitor
     extends Thread
-    with Monitor {
+    with Monitor { monitor =>
 
   protected val dir = builder.directory
 
   def builder: ProcessBuilder
 
-  override def run() {
+  def process() {
     setName(builder.command.mkString(" "))
     val process = builder.start()
     // Prepare readers
@@ -91,4 +112,19 @@ trait ProcessMonitor
     case e: Exception => true
   }
 
+}
+
+object EmptyMonitor extends Monitor {
+
+  def key = "untitled"
+
+  override def execute() = this
+
+  override def output = Nil
+
+  override def println(line: String, cssClass: String) {
+    CL_LOG.info(cssClass + ": " + line)
+  }
+
+  def process() {}
 }

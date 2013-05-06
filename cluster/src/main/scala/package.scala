@@ -7,7 +7,7 @@ import java.util.regex.Pattern
 package object cluster {
 
   val CL_LOG = new Logger("pro.savant.circumflex.cluster")
-  
+
   val DEFAULT_FILTER_PATTERN = Pattern.compile("^.*\\.(?:xml|properties)$")
   val FILTER_TOKEN_PATTERN = Pattern.compile("\\$\\{(.*?)\\}")
 
@@ -30,5 +30,9 @@ package object cluster {
   def getCluster(id: String) = conf.clusters.find(_.id == id)
 
   def cluster(id: String) = getCluster(id).get
-  
+
+  def getCurrentMonitor = ctx.getAs[Monitor]("monitor")
+
+  def currentMonitor = getCurrentMonitor.getOrElse(EmptyMonitor)
+
 }

@@ -8,7 +8,7 @@ import collection.JavaConversions._
 import java.util.regex.Pattern
 import java.util.Properties
 import java.util.jar._
-import org.apache.commons.io.{IOUtils, FileUtils}
+import org.apache.commons.io.IOUtils
 
 class Cluster(val project: Project)
     extends StructHolder
@@ -73,20 +73,7 @@ class Cluster(val project: Project)
     new PropsFile(new File(clusterDir, "cx.properties")))
   def clusterCxProps = _clusterCxProps.get.toMap
 
-  /*! All nodes are built one by one, using work directory as the root of their
-  classes. */
-  def buildAll() {
-    if (!classesDir.isDirectory) {
-      CL_LOG.info("Rebuilding the project with Maven.")
-      project.rootProject.mvn("clean", "install").start().waitFor()
-      CL_LOG.info("Project built successfully.")
-    }
-    servers.children.foreach(_.buildAll())
-  }
-
-  // Load on instantiate
   load()
-
 }
 
 class ClusterResources(val cluster: Cluster)
@@ -147,12 +134,12 @@ class Server(val cluster: Cluster)
   def copyDependencies() {
     val libDir = cluster.dependencyDir
     if (!libDir.isDirectory) {
-      CL_LOG.info("Copying dependencies from Maven.")
+      currentMonitor.println("Copying dependencies from Maven.")
       project.mvn(
         "dependency:copy-dependencies",
         "-DoutputDirectory=" + libDir.getCanonicalPath
       ).start().waitFor()
-      CL_LOG.info("Dependencies copied from Maven Repository.")
+      currentMonitor.println("Dependencies copied from Maven Repository.")
     }
     new FileCopy(libDir, mainLibDir).copyIfNewer()
     new FileCopy(libDir, backupLibDir).copyIfNewer()
@@ -162,16 +149,6 @@ class Server(val cluster: Cluster)
   processing and packaging. */
   def copyClasses() {
     new FileCopy(cluster.classesDir, workDir).copyIfNewer()
-  }
-
-  def buildAll() {
-    copyClasses()
-    copyDependencies()
-    children.foreach { node =>
-      node.copyResources()
-      node.saveProperties()
-      node.buildJar()
-    }
   }
 
 }
@@ -266,7 +243,7 @@ class Node(val server: Server)
   directory and dependencies are inplace. */
   def buildJar() {
     val f = jarFile
-    CL_LOG.info("Building " + f.getName)
+    currentMonitor.println("Building " + f.getName)
     val out = new FileOutputStream(f)
     val jar = new JarOutputStream(out, prepareManifest)
     try {
@@ -276,7 +253,7 @@ class Node(val server: Server)
       jar.close()
       out.close()
     }
-    CL_LOG.info("Sucessfully built " + f.getName)
+    currentMonitor.println("Sucessfully built " + f.getName)
   }
 
   protected def addToJar(jar: JarOutputStream, file: File) {
