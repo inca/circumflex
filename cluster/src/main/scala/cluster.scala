@@ -277,9 +277,10 @@ class Node(val server: Server)
       val fin = new FileInputStream(file)
       try {
         IOUtils.copy(fin, jar)
+      } finally {
+        fin.close()
+        jar.closeEntry()
       }
-      fin.close()
-      jar.closeEntry()
     }
   }
 
