@@ -60,6 +60,11 @@ class Main extends Router {
       'redirect := baseUrl
     }
 
+    post("/~deploy-cluster") = partial {
+      status.runJob(new DeployClusterJob(cluster))
+      'redirect := baseUrl
+    }
+
     sub("/server/:uuid") = {
 
       val server = cluster.servers.children
@@ -69,6 +74,16 @@ class Main extends Router {
 
       post("/~build-server") = partial {
         status.runJob(new BuildServerJob(server))
+        'redirect := baseUrl
+      }
+
+      post("/~deploy-server-main") = partial {
+        status.runJob(new DeployServerJob(server, false))
+        'redirect := baseUrl
+      }
+
+      post("/~deploy-server-backup") = partial {
+        status.runJob(new DeployServerJob(server, true))
         'redirect := baseUrl
       }
 

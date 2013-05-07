@@ -73,6 +73,13 @@ class Cluster(val project: Project)
     new PropsFile(new File(clusterDir, "cx.properties")))
   def clusterCxProps = _clusterCxProps.get.toMap
 
+  def classesTimestamp: Option[Date] = {
+    val f = new File(baseDir, "target/classes.timestamp")
+    if (f.isFile)
+      Some(new Date(f.lastModified))
+    else None
+  }
+
   load()
 }
 
@@ -107,6 +114,8 @@ class Server(val cluster: Cluster)
   val address = attr("address")
 
   val user = attr("user")
+
+  val dir = attr("dir")
 
   def read = {
     case "node" => new Node(server)

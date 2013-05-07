@@ -1,5 +1,36 @@
 [#ftl]
 
+<div class="pill primary">
+[#if cluster.classesTimestamp??]
+  <span>${msg['cluster.built']}</span>
+  <em>${cluster.classesTimestamp?datetime}</em>
+[#else]
+  <span>${msg['cluster.notBuilt']}</span>
+[/#if]
+  <div class="ctls">
+    <form class="submission partial inline"
+          action="/cluster/${cluster.id}/~module-mci"
+          method="post">
+      <a href="javascript:;"
+         class="btn primary submit"
+         title="${msg['job.module-mci']}">
+        <img class="glyph"
+             src="http://cdn.savant.pro/img/glyph/32/check_partial.png"/>
+      </a>
+    </form>
+    <form class="submission partial inline"
+          action="/cluster/${cluster.id}/~project-mci"
+          method="post">
+      <a href="javascript:;"
+         class="btn primary submit"
+         title="${msg['job.project-mci']}">
+        <img class="glyph"
+             src="http://cdn.savant.pro/img/glyph/32/check.png"/>
+      </a>
+    </form>
+  </div>
+</div>
+
 <table width="100%"
        class="rows">
 [#list cluster.servers.children as server]
@@ -23,8 +54,28 @@
             <a href="javascript:;"
                class="submit">
               <img class="glyph"
-                   src="http://cdn.savant.pro/img/glyph/32/check.png"/>
+                   src="http://cdn.savant.pro/img/glyph/32/cogs.png"/>
               <span>${msg['job.build-server']}</span>
+            </a>
+          </form>
+          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~deploy-server-main"
+                method="post"
+                class="submission partial">
+            <a href="javascript:;"
+               class="submit">
+              <img class="glyph"
+                   src="http://cdn.savant.pro/img/glyph/32/check.png"/>
+              <span>${msg['job.deploy-server-main']}</span>
+            </a>
+          </form>
+          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~deploy-server-backup"
+                method="post"
+                class="submission partial">
+            <a href="javascript:;"
+               class="submit">
+              <img class="glyph"
+                   src="http://cdn.savant.pro/img/glyph/32/check_partial.png"/>
+              <span>${msg['job.deploy-server-backup']}</span>
             </a>
           </form>
         </div>
@@ -74,29 +125,21 @@
       action="/cluster/${cluster.id}/~build-cluster"
       method="post">
   <a href="javascript:;"
-     class="pill primary submit">
+     class="pill primary small submit">
     <img class="glyph"
          src="http://cdn.savant.pro/img/glyph/32/settings.png"/>
     <span>${msg['job.build-cluster']}</span>
   </a>
 </form>
+
 <form class="submission partial margin-top"
-      action="/cluster/${cluster.id}/~module-mci"
+      action="/cluster/${cluster.id}/~deploy-cluster"
       method="post">
   <a href="javascript:;"
-     class="pill primary submit">
+     class="pill primary small submit">
     <img class="glyph"
-         src="http://cdn.savant.pro/img/glyph/32/check_partial.png"/>
-    <span>${msg['job.module-mci']}</span>
+         src="http://cdn.savant.pro/img/glyph/32/warning.png"/>
+    <span>${msg['job.deploy-cluster']}</span>
   </a>
 </form>
-<form class="submission partial margin-top"
-      action="/cluster/${cluster.id}/~project-mci"
-      method="post">
-  <a href="javascript:;"
-     class="pill primary submit">
-    <img class="glyph"
-         src="http://cdn.savant.pro/img/glyph/32/check.png"/>
-    <span>${msg['job.project-mci']}</span>
-  </a>
-</form>
+
