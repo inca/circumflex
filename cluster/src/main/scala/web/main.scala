@@ -96,6 +96,11 @@ class Main extends Router {
           .getOrElse(sendError(404))
       'node := node
 
+      get("/~status").and(request.isXHR) = {
+        'pid := node.getRemotePid
+        ftl("/node/status.p.ftl")
+      }
+
     }
 
   }

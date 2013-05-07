@@ -85,8 +85,10 @@
   [#list server.children as node]
     <tr>
       <td width="32">
-        <img title="${msg['status.unchecked']}"
-             src="http://cdn.savant.pro/img/icons/32/orange_button.png"/>
+        <div data-check-url="/cluster/${cluster.id}/node/${node.shortUuid}/~status">
+          <img title="${msg['status.unchecked']}"
+               src="http://cdn.savant.pro/img/icons/32/orange_button.png"/>
+        </div>
       </td>
       <td>
         <div class="kicker">${node.name}</div>
@@ -142,4 +144,37 @@
     <span>${msg['job.deploy-cluster']}</span>
   </a>
 </form>
+
+<script type="text/javascript">
+
+  (function() {
+
+    var placeholder = $("[data-check-url]").first().html();
+
+    function doCheck() {
+      $("[data-check-url]").each(function() {
+        var e = $(this);
+        var url = e.attr("data-check-url");
+        $.ajax({
+          type: "GET",
+          url: url,
+          dataType: "html",
+          success: function(data) {
+            e.empty().append(data);
+          },
+          error: function() {
+            e.empty().append(placeholder);
+          }
+        });
+      });
+    }
+
+    $(function() {
+      doCheck();
+      setInterval(doCheck, 10000);
+    });
+
+  })();
+
+</script>
 

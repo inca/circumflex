@@ -9,6 +9,7 @@ import java.util.regex.Pattern
 import java.util.{Date, Properties}
 import java.util.jar._
 import org.apache.commons.io.IOUtils
+import scala.sys.process._
 
 class Cluster(val project: Project)
     extends StructHolder
@@ -162,7 +163,9 @@ class Server(val cluster: Cluster)
 
   def shortUuid = uuid.substring(0, 8)
 
-  override def toString = user() + "@" + address()
+  def location = user() + "@" + address()
+
+  override def toString = location
 
 }
 
@@ -237,7 +240,7 @@ class Node(val server: Server)
   */
   def copyResources() {
     new FileCopy(cluster.resources.dir, workDir)
-      .filteredCopy(cluster.resources.filterPattern, properties)
+        .filteredCopy(cluster.resources.filterPattern, properties)
   }
 
   /*! Properties are saved to `cx.properties` at work directory during build. */
@@ -315,6 +318,18 @@ class Node(val server: Server)
   def isJarBuilt = jarFile.isFile
 
   def jarBuiltDate = new Date(jarFile.lastModified)
+
+  /*! Remote process PID is recovered by issuing `ps` command via `ssh`. */
+  def getRemotePid: Option[String] =
+    Seq("ssh", server.location, "-C", "ps -A -o pid,args")
+        .lines_!
+        .find(_.contains(shortUuid))
+        .map(_.trim)
+        .flatMap { line =>
+      val i = line.indexOf(" ")
+      if (i == -1) None
+      else Some(line.substring(0, i))
+    }
 
   def uuid = sha256(toString)
 

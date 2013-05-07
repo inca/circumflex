@@ -71,9 +71,7 @@ class DeployServerJob(val server: Server,
 
   def targetDir: File = new File(server.dir())
 
-  def location: String = server.user() + "@" +
-      server.address() + ":" +
-      targetDir.getPath
+  def location: String = server.location + ":" + targetDir.getPath
 
   def builder = new ProcessBuilder(
     "rsync", "-vrlptzh",
