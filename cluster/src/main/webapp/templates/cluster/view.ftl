@@ -8,37 +8,7 @@
     [#include "job-progress.p.ftl"/]
   </div>
   [#else]
-  <p class="no-items">${msg['job.empty']}</p>
-  <form class="submission partial margin-top"
-        action="/cluster/${cluster.id}/~build-cluster"
-        method="post">
-    <a href="javascript:;"
-       class="pill primary submit">
-      <img class="glyph"
-           src="http://cdn.savant.pro/img/glyph/32/settings.png"/>
-      <span>${msg['job.build-cluster']}</span>
-    </a>
-  </form>
-  <form class="submission partial margin-top"
-        action="/cluster/${cluster.id}/~module-mci"
-        method="post">
-    <a href="javascript:;"
-       class="pill primary submit">
-      <img class="glyph"
-           src="http://cdn.savant.pro/img/glyph/32/check_partial.png"/>
-      <span>${msg['job.module-mci']}</span>
-    </a>
-  </form>
-  <form class="submission partial margin-top"
-        action="/cluster/${cluster.id}/~project-mci"
-        method="post">
-    <a href="javascript:;"
-       class="pill primary submit">
-      <img class="glyph"
-           src="http://cdn.savant.pro/img/glyph/32/check.png"/>
-      <span>${msg['job.project-mci']}</span>
-    </a>
-  </form>
+    [#include "status.p.ftl"/]
   [/#if]
 [/#assign]
 

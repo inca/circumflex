@@ -25,8 +25,8 @@
   <a href="javascript:location.reload();"
      class="btn primary inverse">
     <img class="glyph"
-         src="http://cdn.savant.pro/img/glyph/32-inv/refresh.png"/>
-    <span>${msg['refresh']}</span>
+         src="http://cdn.savant.pro/img/glyph/32-inv/ok.png"/>
+    <span>${msg['done']}</span>
   </a>
 </div>
 [/#if]

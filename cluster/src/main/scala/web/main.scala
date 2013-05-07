@@ -28,6 +28,9 @@ class Main extends Router {
     val status = pro.savant.circumflex.cluster.status.get(cluster)
     'status := status
 
+    val baseUrl = prefix
+    'baseUrl := baseUrl
+
     get("/?") = ftl("/cluster/view.ftl")
 
     get("/~job-progress").and(request.isXHR) = {
@@ -44,17 +47,40 @@ class Main extends Router {
 
     post("/~module-mci") = partial {
       status.runJob(new ModuleBuildJob(cluster))
-      'redirect := prefix
+      'redirect := baseUrl
     }
 
     post("/~project-mci") = partial {
       status.runJob(new ProjectBuildJob(cluster))
-      'redirect := prefix
+      'redirect := baseUrl
     }
 
     post("/~build-cluster") = partial {
       status.runJob(new BuildClusterJob(cluster))
-      'redirect := prefix
+      'redirect := baseUrl
+    }
+
+    sub("/server/:uuid") = {
+
+      val server = cluster.servers.children
+         .find(_.shortUuid == param("uuid"))
+          .getOrElse(sendError(404))
+      'server := server
+
+      post("/~build-server") = partial {
+        status.runJob(new BuildServerJob(server))
+        'redirect := baseUrl
+      }
+
+    }
+
+    sub("/node/:uuid") = {
+
+      val node = cluster.nodes
+          .find(_.shortUuid == param("uuid"))
+          .getOrElse(sendError(404))
+      'node := node
+
     }
 
   }

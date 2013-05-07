@@ -6,7 +6,7 @@ import core._, xml._, cache._
 import scala.collection.mutable.HashMap
 import collection.JavaConversions._
 import java.util.regex.Pattern
-import java.util.Properties
+import java.util.{Date, Properties}
 import java.util.jar._
 import org.apache.commons.io.IOUtils
 
@@ -116,8 +116,6 @@ class Server(val cluster: Cluster)
 
   def node(name: String) = getNode(name).get
 
-  override def toString = user() + "@" + address()
-
   def workDir = cluster.workDir
   def targetDir = new File(cluster.targetDir, id)
 
@@ -150,6 +148,12 @@ class Server(val cluster: Cluster)
   def copyClasses() {
     new FileCopy(cluster.classesDir, workDir).copyIfNewer()
   }
+
+  def uuid = sha256(toString)
+
+  def shortUuid = uuid.substring(0, 8)
+
+  override def toString = user() + "@" + address()
 
 }
 
@@ -298,6 +302,10 @@ class Node(val server: Server)
     manifest.getMainAttributes.put(Attributes.Name.CLASS_PATH, paths.mkString(" "))
     manifest
   }
+
+  def isJarBuilt = jarFile.isFile
+
+  def jarBuiltDate = new Date(jarFile.lastModified)
 
   def uuid = sha256(toString)
 
