@@ -10,6 +10,7 @@ import java.util.{Date, Properties}
 import java.util.jar._
 import org.apache.commons.io.IOUtils
 import scala.sys.process._
+import java.net.{InetSocketAddress, Socket}
 
 class Cluster(val project: Project)
     extends StructHolder
@@ -367,6 +368,34 @@ class Node(val server: Server)
         case _ =>
           currentMonitor.println("Node " + node.toString + " is not running.", "error")
       }
+    }
+
+    def port: Int = parse.intOption(node.properties("cx.port"))
+        .getOrElse(throw new IllegalStateException(
+      "Node port unspecified (set `cx.port` property)."))
+
+    /*! The `checkOnline_!` method attempts to bind to remote socket
+    to ensure that the node is up. It performs 10 bind attempts every 6 seconds
+    (60 seconds totally) and throws an exception indicating that node startup
+    failed. Exits quietly if node is online.
+    */
+    def checkOnline_!() {
+      (0 until 10).foreach { i =>
+        currentMonitor.println(
+          "Trying to connect to " + node.toString + " (" + (i + 1) + ")")
+        val sock = new Socket()
+        try {
+          sock.connect(new InetSocketAddress(server.address(), port), 6000)
+          currentMonitor.println("Node " + node.toString + " is online.")
+          return
+        } catch {
+          case e: Exception =>
+        } finally {
+          sock.close()
+        }
+        Thread.sleep(6000)
+      }
+      throw new IllegalStateException("Node " + node.toString + " did not start.")
     }
 
   }

@@ -35,7 +35,7 @@ class Main extends Router {
 
     get("/~job-progress").and(request.isXHR) = {
       var from = param.getInt("from").getOrElse(0)
-      val lines = status.currentJob.map { job =>
+      val lines = status.lastJob.map { job =>
         val lines = job.output.drop(from)
         from += lines.size
         lines
@@ -55,13 +55,13 @@ class Main extends Router {
       'redirect := baseUrl
     }
 
-    post("/~build-cluster") = partial {
+    post("/~build") = partial {
       status.runJob(new BuildClusterJob(cluster))
       'redirect := baseUrl
     }
 
-    post("/~deploy-cluster") = partial {
-      status.runJob(new DeployClusterJob(cluster))
+    post("/~restart") = partial {
+      status.runJob(new RestartClusterJob(cluster))
       'redirect := baseUrl
     }
 
@@ -72,18 +72,23 @@ class Main extends Router {
           .getOrElse(sendError(404))
       'server := server
 
-      post("/~build-server") = partial {
+      post("/~build") = partial {
         status.runJob(new BuildServerJob(server))
         'redirect := baseUrl
       }
 
-      post("/~deploy-server-main") = partial {
+      post("/~deploy-main") = partial {
         status.runJob(new DeployServerJob(server, false))
         'redirect := baseUrl
       }
 
-      post("/~deploy-server-backup") = partial {
+      post("/~deploy-backup") = partial {
         status.runJob(new DeployServerJob(server, true))
+        'redirect := baseUrl
+      }
+
+      post("/~restart") = partial {
+        status.runJob(new RestartServerJob(server))
         'redirect := baseUrl
       }
 

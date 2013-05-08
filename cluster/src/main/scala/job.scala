@@ -81,21 +81,50 @@ class DeployServerJob(val server: Server,
 
 }
 
-class DeployClusterJob(cluster: Cluster)
+
+class RestartServerJob(server: Server)
     extends Monitor {
 
-  def key = "deploy-cluster"
+  def key = "restart-server"
+
+  def process() {
+    println("===================================")
+    println("Redeploying on " + server)
+    println("===================================")
+    println(">>>> main -> " + server)
+    server.children.filter(!_.isBackup).foreach(_.remote.stop())
+    new DeployServerJob(server, false).execute().join()
+    server.children.filter(!_.isBackup).foreach(_.remote.run())
+    println("==== Allowing nodes to startup ====")
+    Thread.sleep(6000)
+    server.children.filter(!_.isBackup).foreach { node =>
+      try {
+        node.remote.checkOnline_!()
+      } catch {
+        case e: Exception =>
+          println(e.getMessage, "error")
+          return
+      }
+    }
+    println("====== Main nodes are online ======")
+    println(">>>> backup -> " + server)
+    server.children.filter(_.isBackup).foreach(_.remote.stop())
+    new DeployServerJob(server, true).execute().join()
+    server.children.filter(_.isBackup).foreach(_.remote.run())
+  }
+
+}
+
+class RestartClusterJob(cluster: Cluster)
+    extends Monitor {
+
+  def key = "restart-cluster"
 
   def process() {
     cluster.servers.children.foreach { server =>
-      println("===================================")
-      println("Deploying " + server)
-      println("===================================")
-      println(">>>> main -> " + server)
-      new DeployServerJob(server, false).execute().join()
-      println(">>>> backup -> " + server)
-      new DeployServerJob(server, true).execute().join()
+      new RestartServerJob(server)
     }
   }
 
 }
+

@@ -48,7 +48,7 @@
         <div id="server-${server.shortUuid}"
              class="dropdown-menu primary">
           <div class="title">${msg['menu']}</div>
-          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~build-server"
+          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~build"
                 method="post"
                 class="submission partial">
             <a href="javascript:;"
@@ -58,7 +58,7 @@
               <span>${msg['job.build-server']}</span>
             </a>
           </form>
-          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~deploy-server-main"
+          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~deploy-main"
                 method="post"
                 class="submission partial">
             <a href="javascript:;"
@@ -68,7 +68,7 @@
               <span>${msg['job.deploy-server-main']}</span>
             </a>
           </form>
-          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~deploy-server-backup"
+          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~deploy-backup"
                 method="post"
                 class="submission partial">
             <a href="javascript:;"
@@ -78,12 +78,23 @@
               <span>${msg['job.deploy-server-backup']}</span>
             </a>
           </form>
+          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~restart"
+                method="post"
+                class="submission partial">
+            <a href="javascript:;"
+               class="submit">
+              <img class="glyph"
+                   src="http://cdn.savant.pro/img/glyph/32/repeat.png"/>
+              <span>${msg['job.restart-server']}</span>
+            </a>
+          </form>
         </div>
       </div>
     </td>
   </tr>
   [#list server.children as node]
-    <tr data-check-url="/cluster/${cluster.id}/node/${node.shortUuid}/~status">
+    <tr id="node-${node.shortUuid}"
+        data-check-url="/cluster/${cluster.id}/node/${node.shortUuid}/~status">
       [#assign unchecked = "true"/]
     [#include "/node/status.p.ftl"/]
     </tr>
@@ -92,7 +103,7 @@
 </table>
 
 <form class="submission partial margin-top"
-      action="/cluster/${cluster.id}/~build-cluster"
+      action="/cluster/${cluster.id}/~build"
       method="post">
   <a href="javascript:;"
      class="pill primary small submit">
@@ -102,14 +113,14 @@
   </a>
 </form>
 
-<form class="submission partial margin-top"
-      action="/cluster/${cluster.id}/~deploy-cluster"
-      method="post">
+<form action="/cluster/${cluster.id}/~restart"
+      method="post"
+      class="submission partial">
   <a href="javascript:;"
      class="pill primary small submit">
     <img class="glyph"
-         src="http://cdn.savant.pro/img/glyph/32/warning.png"/>
-    <span>${msg['job.deploy-cluster']}</span>
+         src="http://cdn.savant.pro/img/glyph/32/repeat.png"/>
+    <span>${msg['job.restart-cluster']}</span>
   </a>
 </form>
 
@@ -117,12 +128,16 @@
 
   (function() {
 
-    var placeholder = $("[data-check-url]").first().html();
+    var placeholders = {};
 
     function doCheck() {
       $("[data-check-url]").each(function() {
         var e = $(this);
         var url = e.attr("data-check-url");
+        var id = e.attr("id");
+        if (!placeholders[id])
+          placeholders[id] = e.html();
+        var placeholder = placeholders[id];
         $.ajax({
           type: "GET",
           url: url,
