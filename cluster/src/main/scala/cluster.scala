@@ -118,6 +118,9 @@ class Server(val cluster: Cluster)
 
   val dir = attr("dir")
 
+  val _jvmArgs = attr("jvm-args")
+  def jvmArgs = _jvmArgs.getOrElse("-Xms256m -Xmx2g")
+
   def read = {
     case "node" => new Node(server)
   }
@@ -170,7 +173,7 @@ class Server(val cluster: Cluster)
 }
 
 class Node(val server: Server)
-    extends PropsHolder("node") {
+    extends PropsHolder("node") { node =>
 
   def cluster = server.cluster
 
@@ -319,17 +322,54 @@ class Node(val server: Server)
 
   def jarBuiltDate = new Date(jarFile.lastModified)
 
-  /*! Remote process PID is recovered by issuing `ps` command via `ssh`. */
-  def getRemotePid: Option[String] =
-    Seq("ssh", server.location, "-C", "ps -A -o pid,args")
-        .lines_!
-        .find(_.contains(shortUuid))
-        .map(_.trim)
-        .flatMap { line =>
-      val i = line.indexOf(" ")
-      if (i == -1) None
-      else Some(line.substring(0, i))
+  def classifier = if (isBackup) "backup" else "main"
+
+  /*! Remote commands are executed via `ssh`. */
+  object remote {
+
+    /*! Process PID is discovered by issuing `ps` command via `ssh`. */
+    def getPid: Option[String] =
+      Seq("ssh", server.location, "-C", "ps -A -o pid,args")
+          .lines_!
+          .find(_.contains(shortUuid))
+          .map(_.trim)
+          .flatMap { line =>
+        val i = line.indexOf(" ")
+        if (i == -1) None
+        else Some(line.substring(0, i))
+      }
+
+    def location = new File(server.dir(), classifier + "/" + jarFile.getName).getPath
+
+    def runCommand = "java -jar " + location + " " + server.jvmArgs
+
+    def run() {
+      getPid match {
+        case Some(_) =>
+          currentMonitor.println("Node " + node.toString + " already running.", "error")
+        case _ =>
+          currentMonitor.println("Starting node " + node.toString)
+          val p = new java.lang.ProcessBuilder("ssh", server.location, "-C", runCommand)
+              .start()
+          p.getInputStream.close()
+          p.getOutputStream.close()
+          p.getErrorStream.close()
+      }
     }
+
+    def stop() {
+      getPid match {
+        case Some(pid) =>
+          currentMonitor.println("Stopping node " + node.toString)
+          new java.lang.ProcessBuilder("ssh", server.location, "-C", "kill " + pid)
+              .start()
+              .waitFor()
+        case _ =>
+          currentMonitor.println("Node " + node.toString + " is not running.", "error")
+      }
+    }
+
+  }
 
   def uuid = sha256(toString)
 

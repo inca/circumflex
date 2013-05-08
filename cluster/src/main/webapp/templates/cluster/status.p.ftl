@@ -83,41 +83,9 @@
     </td>
   </tr>
   [#list server.children as node]
-    <tr>
-      <td width="32">
-        <div data-check-url="/cluster/${cluster.id}/node/${node.shortUuid}/~status">
-          <img title="${msg['status.unchecked']}"
-               src="http://cdn.savant.pro/img/icons/32/orange_button.png"/>
-        </div>
-      </td>
-      <td>
-        <div class="kicker">${node.name}</div>
-        <div class="subtle">
-          [#if node.isJarBuilt]
-            <span>${msg['node.built']}</span>
-            <em>${node.jarBuiltDate?datetime}</em>
-          [#else]
-            <span>${msg['node.notBuilt']}</span>
-          [/#if]
-        </div>
-      </td>
-      <td width="48"
-          class="right-align">
-        <div class="relative">
-          <a href="javascript:;"
-             class="btn primary"
-             data-switch="#nodemenu-${node.shortUuid}">
-            <img src="http://cdn.savant.pro/img/glyph/32/cog.png"
-                 class="glyph"/>
-            <span class="caret"></span>
-          </a>
-          <div id="nodemenu-${node.shortUuid}"
-               class="dropdown-menu primary right">
-            <div class="title">${msg['menu']}</div>
-          [#-- TODO --]
-          </div>
-        </div>
-      </td>
+    <tr data-check-url="/cluster/${cluster.id}/node/${node.shortUuid}/~status">
+      [#assign unchecked = "true"/]
+    [#include "/node/status.p.ftl"/]
     </tr>
   [/#list]
 [/#list]
@@ -161,6 +129,7 @@
           dataType: "html",
           success: function(data) {
             e.empty().append(data);
+            eaui.init(e);
           },
           error: function() {
             e.empty().append(placeholder);

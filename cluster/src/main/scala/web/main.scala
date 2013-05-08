@@ -97,8 +97,18 @@ class Main extends Router {
       'node := node
 
       get("/~status").and(request.isXHR) = {
-        'pid := node.getRemotePid
+        'pid := node.remote.getPid
         ftl("/node/status.p.ftl")
+      }
+
+      post("/~run") = partial {
+        node.remote.run()
+        'redirect := baseUrl
+      }
+
+      post("/~stop") = partial {
+        node.remote.stop()
+        'redirect := baseUrl
       }
 
     }
