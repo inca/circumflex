@@ -143,7 +143,7 @@ class AuthRouter extends Router {
 
   get("/logout") = {
     auth.logout()
-    auth.returnLocation
+    sendRedirect(auth.returnLocation)
   }
 
 }

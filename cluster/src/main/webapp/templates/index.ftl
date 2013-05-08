@@ -32,13 +32,13 @@
         [#else]
           <p class="no-items">${msg['clusters.empty']}</p>
         [/#if]
+        <div class="margin-top centered">
+          <a href="/auth/logout"
+             class="btn important inverse">
+            <span>${msg['logout']}</span>
+          </a>
+        </div>
       [/#if]
-      <div class="margin-top centered">
-        <a href="/logout"
-           class="btn important inverse">
-          <span>${msg['logout']}</span>
-        </a>
-      </div>
     </div>
   </div>
 </div>
