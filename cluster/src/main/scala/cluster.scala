@@ -35,7 +35,7 @@ class Cluster(val project: Project)
 
   val resources = new ClusterResources(this)
 
-  val servers = new ListHolder[Server] {
+  val _servers = new ListHolder[Server] {
 
     def elemName = "servers"
 
@@ -45,11 +45,13 @@ class Cluster(val project: Project)
 
   }
 
-  def getServer(id: String) = servers.children.find(_.id == id)
+  def servers = _servers.children.toSeq
+
+  def getServer(id: String) = servers.find(_.id == id)
 
   def server(id: String) = getServer(id).get
 
-  def nodes: Seq[Node] = servers.children.flatMap(_.children)
+  def nodes: Seq[Node] = servers.flatMap(_.nodes)
 
   def getNode(id: String) = {
     var _id = id
@@ -104,7 +106,7 @@ class ClusterResources(val cluster: Cluster)
 }
 
 class Server(val cluster: Cluster)
-    extends ListHolder[Node] { server =>
+    extends StructHolder { server =>
 
   def elemName = "server"
 
@@ -122,16 +124,24 @@ class Server(val cluster: Cluster)
   val _jvmArgs = attr("jvm-args")
   def jvmArgs = _jvmArgs.getOrElse("-Xms256m -Xmx2g")
 
-  def read = {
-    case "node" => new Node(server)
+  val _nodes = new ListHolder[Node] {
+
+    def elemName = "nodes"
+
+    def read = {
+      case "node" => new Node(server)
+    }
+
   }
 
-  def getNode(name: String) = children.find(_.name() == name)
+  def nodes = _nodes.children.toSeq
+
+  def getNode(name: String) = nodes.find(_.name() == name)
 
   def node(name: String) = getNode(name).get
 
   def workDir = cluster.workDir
-  def targetDir = new File(cluster.targetDir, id)
+  def targetDir = new File(cluster.targetDir, address())
 
   def mainDir = new File(targetDir, "main")
   def mainLibDir = new File(mainDir, "lib")
@@ -404,6 +414,6 @@ class Node(val server: Server)
 
   def shortUuid = uuid.substring(0, 8)
 
-  override def toString = cluster.id + "-" + server.id + "-" + name()
+  override def toString = cluster.id + "-" + server.address() + "-" + name()
 
 }

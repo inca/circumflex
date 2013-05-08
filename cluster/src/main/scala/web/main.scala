@@ -67,7 +67,7 @@ class Main extends Router {
 
     sub("/server/:uuid") = {
 
-      val server = cluster.servers.children
+      val server = cluster.servers
          .find(_.shortUuid == param("uuid"))
           .getOrElse(sendError(404))
       'server := server

@@ -34,7 +34,6 @@
     </a>
     <div id="nodemenu-${node.shortUuid}"
          class="dropdown-menu primary right">
-      <div class="title">${msg['menu']}</div>
     [#if pid??]
       <form action="/cluster/${cluster.id}/node/${node.shortUuid}/~stop"
             method="post"

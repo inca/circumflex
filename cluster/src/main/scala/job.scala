@@ -31,7 +31,7 @@ class BuildClusterJob(val cluster: Cluster)
       println("Full project rebuild required.")
       new ProjectBuildJob(cluster).execute().join()
     }
-    cluster.servers.children.foreach { s =>
+    cluster.servers.foreach { s =>
       new BuildServerJob(s).execute().join()
     }
     println("Cluster build complete.")
@@ -50,7 +50,7 @@ class BuildServerJob(val server: Server)
     println("================================")
     server.copyClasses()
     server.copyDependencies()
-    server.children.foreach { node =>
+    server.nodes.foreach { node =>
       println(">>>> Node " + node.name())
       node.copyResources()
       node.saveProperties()
@@ -92,12 +92,12 @@ class RestartServerJob(server: Server)
     println("Redeploying on " + server)
     println("===================================")
     println(">>>> main -> " + server)
-    server.children.filter(!_.isBackup).foreach(_.remote.stop())
+    server.nodes.filter(!_.isBackup).foreach(_.remote.stop())
     new DeployServerJob(server, false).execute().join()
-    server.children.filter(!_.isBackup).foreach(_.remote.run())
+    server.nodes.filter(!_.isBackup).foreach(_.remote.run())
     println("==== Allowing nodes to startup ====")
     Thread.sleep(6000)
-    server.children.filter(!_.isBackup).foreach { node =>
+    server.nodes.filter(!_.isBackup).foreach { node =>
       try {
         node.remote.checkOnline_!()
       } catch {
@@ -108,9 +108,9 @@ class RestartServerJob(server: Server)
     }
     println("====== Main nodes are online ======")
     println(">>>> backup -> " + server)
-    server.children.filter(_.isBackup).foreach(_.remote.stop())
+    server.nodes.filter(_.isBackup).foreach(_.remote.stop())
     new DeployServerJob(server, true).execute().join()
-    server.children.filter(_.isBackup).foreach(_.remote.run())
+    server.nodes.filter(_.isBackup).foreach(_.remote.run())
   }
 
 }
@@ -121,7 +121,7 @@ class RestartClusterJob(cluster: Cluster)
   def key = "restart-cluster"
 
   def process() {
-    cluster.servers.children.foreach { server =>
+    cluster.servers.foreach { server =>
       new RestartServerJob(server)
     }
   }

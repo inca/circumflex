@@ -33,7 +33,7 @@
 
 <table width="100%"
        class="rows">
-[#list cluster.servers.children as server]
+[#list cluster.servers as server]
   <tr>
     <td colspan="3">
       <div class="relative">
@@ -47,7 +47,6 @@
         </h3>
         <div id="server-${server.shortUuid}"
              class="dropdown-menu primary">
-          <div class="title">${msg['menu']}</div>
           <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~build"
                 method="post"
                 class="submission partial">
@@ -92,7 +91,7 @@
       </div>
     </td>
   </tr>
-  [#list server.children as node]
+  [#list server.nodes as node]
     <tr id="node-${node.shortUuid}"
         data-check-url="/cluster/${cluster.id}/node/${node.shortUuid}/~status">
       [#assign unchecked = "true"/]
@@ -115,7 +114,7 @@
 
 <form action="/cluster/${cluster.id}/~restart"
       method="post"
-      class="submission partial">
+      class="submission partial margin-top">
   <a href="javascript:;"
      class="pill primary small submit">
     <img class="glyph"
@@ -148,6 +147,7 @@
           },
           error: function() {
             e.empty().append(placeholder);
+            eaui.init(e);
           }
         });
       });

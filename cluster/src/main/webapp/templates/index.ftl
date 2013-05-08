@@ -18,7 +18,7 @@
                   <div class="btn blank">
                     <img class="glyph"
                          src="http://cdn.savant.pro/img/glyph/32/computer.png"/>
-                    <strong>${cluster.servers.children?size}</strong>
+                    <strong>${cluster.servers?size}</strong>
                   </div>
                   <div class="btn blank">
                     <img class="glyph"
