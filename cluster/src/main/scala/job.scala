@@ -91,6 +91,8 @@ class RestartServerJob(server: Server)
     println("===================================")
     println("Redeploying on " + server)
     println("===================================")
+    println(">>>> tasks @ " + server)
+    server.tasks.foreach(_.process())
     println(">>>> main -> " + server)
     server.nodes.filter(!_.isBackup).foreach(_.remote.stop())
     new DeployServerJob(server, false).execute().join()
@@ -127,4 +129,3 @@ class RestartClusterJob(cluster: Cluster)
   }
 
 }
-

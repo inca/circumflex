@@ -140,6 +140,19 @@ class Server(val cluster: Cluster)
 
   def node(name: String) = getNode(name).get
 
+  val _tasks = new ListHolder[ServerTask] {
+
+    def elemName = "tasks"
+
+    def read = {
+      case "copy" => new CopyTask(server)
+    }
+
+  }
+
+  def tasks = _tasks.children.toSeq
+
+  /*! Local directories to perform configuration, packaging and installation.*/
   def workDir = cluster.workDir
   def targetDir = new File(cluster.targetDir, address())
 
