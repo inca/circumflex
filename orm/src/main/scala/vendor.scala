@@ -125,6 +125,9 @@ class OracleDialect extends Dialect {
     result
   }
 
+  override def alias(expression: String, alias: String) =
+    expression + " " + alias
+
   override def defaultExpression[R <: Record[_, R]]
   (field: Field[_, R]): String =
     field.defaultExpression.map(" DEFAULT " + _).getOrElse("")
@@ -142,6 +145,9 @@ class OracleDialect extends Dialect {
   (node: RelationNode[PK, R]): SQLQuery[PK] =
     throw new UnsupportedOperationException(
       "This operation is unsupported in Oracle dialect.")
+
+  override def prepareStatement(conn: Connection, sql: String): PreparedStatement =
+    conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)
 
   override def NOW = "CURRENT_TIMESTAMP"
 
