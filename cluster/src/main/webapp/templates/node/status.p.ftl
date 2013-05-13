@@ -12,8 +12,9 @@
 [/#if]
 </td>
 <td>
-  <div class="kicker">${node.name}</div>
+  <div class="kicker code">${node.name}:${node.remote.port?c}</div>
   <div class="subtle">
+  <code>${node.shortUuid}</code>
   [#if node.isJarBuilt]
     <span>${msg['node.built']}</span>
     <em>${node.jarBuiltDate?datetime}</em>

@@ -366,7 +366,8 @@ class Node(val server: Server)
 
     def location = new File(server.dir(), classifier + "/" + jarFile.getName).getPath
 
-    def runCommand = "java -jar " + location + " " + server.jvmArgs
+    def runCommand = "nohup java -jar " + location + " " +
+        server.jvmArgs + " > /dev/null 2>&1"
 
     def run() {
       getPid match {
