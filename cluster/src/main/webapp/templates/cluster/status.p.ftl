@@ -57,26 +57,6 @@
               <span>${msg['job.build-server']}</span>
             </a>
           </form>
-          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~deploy-main"
-                method="post"
-                class="submission partial">
-            <a href="javascript:;"
-               class="submit">
-              <img class="glyph"
-                   src="http://cdn.savant.pro/img/glyph/32/check.png"/>
-              <span>${msg['job.deploy-server-main']}</span>
-            </a>
-          </form>
-          <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~deploy-backup"
-                method="post"
-                class="submission partial">
-            <a href="javascript:;"
-               class="submit">
-              <img class="glyph"
-                   src="http://cdn.savant.pro/img/glyph/32/check_partial.png"/>
-              <span>${msg['job.deploy-server-backup']}</span>
-            </a>
-          </form>
           <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~restart"
                 method="post"
                 class="submission partial">

@@ -77,16 +77,6 @@ class Main extends Router {
         'redirect := baseUrl
       }
 
-      post("/~deploy-main") = partial {
-        status.runJob(new DeployServerJob(server, false))
-        'redirect := baseUrl
-      }
-
-      post("/~deploy-backup") = partial {
-        status.runJob(new DeployServerJob(server, true))
-        'redirect := baseUrl
-      }
-
       post("/~restart") = partial {
         status.runJob(new RestartServerJob(server))
         'redirect := baseUrl
