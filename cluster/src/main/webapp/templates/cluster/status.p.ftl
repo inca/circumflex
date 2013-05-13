@@ -1,36 +1,5 @@
 [#ftl]
 
-<div class="pill primary">
-[#if cluster.classesTimestamp??]
-  <span>${msg['cluster.built']}</span>
-  <em>${cluster.classesTimestamp?datetime}</em>
-[#else]
-  <span>${msg['cluster.notBuilt']}</span>
-[/#if]
-  <div class="ctls">
-    <form class="submission partial inline"
-          action="/cluster/${cluster.id}/~module-mci"
-          method="post">
-      <a href="javascript:;"
-         class="btn primary submit"
-         title="${msg['job.module-mci']}">
-        <img class="glyph"
-             src="http://cdn.savant.pro/img/glyph/32/check_partial.png"/>
-      </a>
-    </form>
-    <form class="submission partial inline"
-          action="/cluster/${cluster.id}/~project-mci"
-          method="post">
-      <a href="javascript:;"
-         class="btn primary submit"
-         title="${msg['job.project-mci']}">
-        <img class="glyph"
-             src="http://cdn.savant.pro/img/glyph/32/check.png"/>
-      </a>
-    </form>
-  </div>
-</div>
-
 <table width="100%"
        class="rows">
 [#list cluster.servers as server]
@@ -100,6 +69,40 @@
     <img class="glyph"
          src="http://cdn.savant.pro/img/glyph/32/repeat.png"/>
     <span>${msg['job.restart-cluster']}</span>
+  </a>
+</form>
+
+[#if cluster.classesTimestamp??]
+<p>
+  <span>${msg['cluster.built']}</span>
+  <em>${cluster.classesTimestamp?datetime}</em>
+</p>
+[#else]
+<p>
+  <span>${msg['cluster.notBuilt']}</span>
+</p>
+[/#if]
+
+<form class="submission partial margin-top"
+      action="/cluster/${cluster.id}/~module-mci"
+      method="post">
+  <a href="javascript:;"
+     class="pill primary small submit"
+     title="${msg['job.module-mci']}">
+    <img class="glyph"
+         src="http://cdn.savant.pro/img/glyph/32/check_partial.png"/>
+    <code>${cluster.project.baseDir.getAbsolutePath} $ mvn clean install</code>
+  </a>
+</form>
+<form class="submission partial margin-top"
+      action="/cluster/${cluster.id}/~project-mci"
+      method="post">
+  <a href="javascript:;"
+     class="pill primary small submit"
+     title="${msg['job.project-mci']}">
+    <img class="glyph"
+         src="http://cdn.savant.pro/img/glyph/32/check.png"/>
+    <code>${cluster.project.rootProject.baseDir.getAbsolutePath} $ mvn clean install</code>
   </a>
 </form>
 

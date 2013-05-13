@@ -117,7 +117,8 @@ class Server(val cluster: Cluster)
 
   val address = attr("address")
 
-  val user = attr("user")
+  val _user = attr("user")
+  def user = _user.getOrElse(System.getProperty("user.name"))
 
   val dir = attr("dir")
 
@@ -190,7 +191,7 @@ class Server(val cluster: Cluster)
 
   def shortUuid = uuid.substring(0, 8)
 
-  def location = user() + "@" + address()
+  def location = user + "@" + address()
 
   override def toString = location
 
