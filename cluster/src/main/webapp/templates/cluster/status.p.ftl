@@ -36,6 +36,21 @@
               <span>${msg['job.restart-server']}</span>
             </a>
           </form>
+          [#if server.tasks?size > 0]
+            <hr/>
+            [#list server.tasks as task]
+              <form action="/cluster/${cluster.id}/server/${server.shortUuid}/~execute-${task_index?c}"
+                    method="post"
+                    class="submission partial">
+                <a href="javascript:;"
+                   class="submit">
+                  <img class="glyph"
+                       src="http://cdn.savant.pro/img/glyph/32/play.png"/>
+                  <span>${task.title}</span>
+                </a>
+              </form>
+            [/#list]
+          [/#if]
         </div>
       </div>
     </td>

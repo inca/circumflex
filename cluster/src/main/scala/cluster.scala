@@ -143,6 +143,7 @@ class Server(val cluster: Cluster)
 
     def read = {
       case "copy" => new CopyTask(server)
+      case "lessc" => new LesscTask(server)
     }
 
   }

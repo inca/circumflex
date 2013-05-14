@@ -82,6 +82,18 @@ class Main extends Router {
         'redirect := baseUrl
       }
 
+      post("/~execute-:n") = partial {
+        val task = server.tasks(param("n").toInt)
+        status.runJob(new Monitor {
+          def key = ""
+          def process() {
+            task.process()
+          }
+          override def toString = task.title
+        })
+        'redirect := baseUrl
+      }
+
     }
 
     sub("/node/:uuid") = {
