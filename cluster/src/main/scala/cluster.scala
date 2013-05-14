@@ -73,10 +73,6 @@ class Cluster(val project: Project)
     new PropsFile(new File(classesDir, "cx.properties")))
   def mainCxProps = _mainCxProps.get.toMap
 
-  val _clusterCxProps = new CacheCell[PropsFile](
-    new PropsFile(new File(clusterDir, "cx.properties")))
-  def clusterCxProps = _clusterCxProps.get.toMap
-
   def classesTimestamp: Option[Date] = {
     val f = new File(baseDir, "target/classes.timestamp")
     if (f.isFile)
@@ -153,6 +149,17 @@ class Server(val cluster: Cluster)
 
   def tasks = _tasks.children.toSeq
 
+  val _props = new PropsHolder("properties", project.baseDir)
+
+  def properties: Map[String, String] = {
+    val result = new HashMap[String, String]
+    result ++= project.properties
+    result ++= cluster.mainCxProps
+    result += "node.address" -> server.address()
+    result ++= _props.toMap
+    result.toMap
+  }
+
   /*! Local directories to perform configuration, packaging and installation.*/
   def workDir = cluster.workDir
   def targetDir = new File(cluster.targetDir, address())
@@ -198,7 +205,7 @@ class Server(val cluster: Cluster)
 }
 
 class Node(val server: Server)
-    extends PropsHolder("node") { node =>
+    extends PropsHolder("node", server.project.baseDir) { node =>
 
   def cluster = server.cluster
 
@@ -226,8 +233,11 @@ class Node(val server: Server)
 
     * project POM, including its ancestors, if any;
     * `cx.properties` in `target/classes`;
-    * `cx.properties` in `src/cluster`;
+    * server properties in `src/cluster/cluster.xml` of corresponding node.
     * node properties in `src/cluster/cluster.xml` of corresponding node.
+
+  Additionally, every property with key starting with `include.` are
+  resolved as property files.
 
   Properties from each step will overwrite the onces defined earlier.
 
@@ -251,11 +261,8 @@ class Node(val server: Server)
   */
   def properties: Map[String, String] = {
     val result = new HashMap[String, String]
-    result ++= project.properties
-    result ++= cluster.mainCxProps
-    result ++= cluster.clusterCxProps
+    result ++= server.properties
     result ++= this.toMap
-    result += "node.address" -> server.address()
     result += "node.name" -> this.name()
     result += "node.backup" -> this.isBackup.toString
     result += "node.uuid" -> this.uuid

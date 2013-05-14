@@ -32,7 +32,7 @@ class Project(val baseDir: File,
 
   def name = baseDir.getName
 
-  val _properties = new PropsHolder("properties")
+  val _properties = new PropsHolder("properties", baseDir)
 
   def properties: Map[String, String] =
     parentProject.map(_.properties).getOrElse(Map()) ++
