@@ -80,6 +80,7 @@ trait ContextTaskManager extends TaskManager {
     }
 
   override def enqueue(op: () => Unit) {
+    initCtxFinalizer()
     getOps += op
   }
 
@@ -95,19 +96,21 @@ trait ContextTaskManager extends TaskManager {
     }
   }
 
-  Context.addDestroyListener { ctx =>
-    val ops = getOps
-    if (!ops.isEmpty)
-      _queue.add({ () =>
-        Context.executeInNew { ctx =>
-          try {
-            processOps(ops)
-          } catch {
-            case e: Exception =>
-              CX_LOG.debug("Failed to process context operations.", e)
+  protected def initCtxFinalizer() {
+    ctx.enqueueFinalizer(KEY, { () =>
+      val ops = getOps
+      if (!ops.isEmpty)
+        _queue.add({ () =>
+          Context.executeInNew { ctx =>
+            try {
+              processOps(ops)
+            } catch {
+              case e: Exception =>
+                CX_LOG.debug("Failed to process context operations.", e)
+            }
           }
-        }
-      })
+        })
+    })
   }
 
 }

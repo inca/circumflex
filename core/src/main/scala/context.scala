@@ -33,8 +33,8 @@ It is done by using `Context.init` and `Context.destroy` methods.
 
 ## Events
 
-You can add event listeners which will be executed after the context
-is initialized or before the context is destroyed.
+You can add event listeners (finalizers) which will be executed
+before the context is destroyed.
 
 Context is initialized either explicitly or when it is first
 accessed via the `Context.get` method.
@@ -42,6 +42,23 @@ accessed via the `Context.get` method.
 class Context
     extends HashMap[String, Any]
     with KeyValueCoercion {
+
+  def finalizers = getAs[Seq[() => Unit]](
+    "finalizers").getOrElse(Nil)
+
+  def enqueueFinalizer(key: String, fn: () => Unit) {
+    if (!contains("finalizers." + key)) {
+      update("finalizers." + key, true)
+      update("finalizers", finalizers ++ Seq(fn))
+    }
+  }
+
+  def pushFinalizer(key: String, fn: () => Unit) {
+    if (!contains("finalizers." + key)) {
+      update("finalizers." + key, true)
+      update("finalizers", Seq(fn) ++ finalizers)
+    }
+  }
 
   def executeWith[R](params: (String, Any)*)
                     (actions: => R): R = {
@@ -76,24 +93,6 @@ object Context {
 
   protected val threadLocal = new ThreadLocal[Context]
 
-  protected val _initListeners = new ListBuffer[Context => Unit]
-  def initListeners = _initListeners
-  def addInitListener(listener: Context => Unit) {
-    _initListeners += listener
-  }
-  def insertInitListener(index: Int, listener: Context => Unit) {
-    _initListeners.insert(index, listener)
-  }
-
-  protected val _destroyListeners = new ListBuffer[Context => Unit]
-  def destroyListeners = _destroyListeners
-  def addDestroyListener(listener: Context => Unit) {
-    _destroyListeners += listener
-  }
-  def insertDestroyListener(index: Int, listener: Context => Unit) {
-    _destroyListeners.insert(index, listener)
-  }
-
   def get(): Context = {
     if (!isLive) init()
     threadLocal.get
@@ -103,12 +102,11 @@ object Context {
 
   def init() {
     threadLocal.set(new Context)
-    initListeners.foreach(l => l.apply(get()))
   }
 
   def destroy() {
     if (isLive) {
-      destroyListeners.foreach(_.apply(get()))
+      get().finalizers.foreach(_.apply())
       threadLocal.set(null)
     }
   }

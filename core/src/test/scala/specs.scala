@@ -58,23 +58,21 @@ class CircumflexCoreSpecs
       Context.get must not be (null)
       Context.isLive must equal (true)
     }
-    "process events" in {
-      var inits = 0
-      var destroys = 0
-      Context.addInitListener(c => inits += 1)
-      Context.addDestroyListener(c => destroys += 1)
-      Context.init()
-      Context.destroy()
-      Context.init()
-      Context.destroy()
-      Context.init()
-      Context.destroy()
-      inits must equal (3)
-      destroys must equal (3)
-    }
     "provide DSL for setting and getting context variables" in {
       'test := "preved"
       ctx.get("test") must equal (Some("preved"))
+    }
+    "process finalizers" in {
+      var i = 1
+      Context.executeInNew { ctx =>
+        i = 4
+        ctx.enqueueFinalizer("key1", () => i += 1)
+        ctx.enqueueFinalizer("key1", () => i += 1)
+        ctx.enqueueFinalizer("key2", () => i += 1)
+        ctx.pushFinalizer("first", () => i *= 2)
+        ctx.pushFinalizer("first", () => i *= 2)
+      }
+      i must equal(10)
     }
   }
 

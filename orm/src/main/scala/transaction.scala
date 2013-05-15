@@ -131,7 +131,7 @@ class Transaction {
     } catch {
       case e: ControlThrowable =>
         ORM_LOG.trace("Escaped nested transaction via ControlThrowable, " +
-              "ROLLBACK is suppressed.")
+            "ROLLBACK is suppressed.")
         throw e
       case e: Exception =>
         getConnection.rollback(sp)
@@ -149,29 +149,34 @@ trait TransactionManager {
 
 class DefaultTransactionManager extends TransactionManager {
 
-  Context.addDestroyListener(c => try {
-    get.commit()
-    ORM_LOG.trace("Committed current transaction.")
-  } catch {
-    case e1: Exception =>
-      ORM_LOG.error("Could not commit current transaction", e1)
-      try {
-        get.rollback()
-        ORM_LOG.trace("Rolled back current transaction.")
-      } catch {
-        case e2: Exception =>
-          ORM_LOG.error("Could not roll back current transaction", e2)
-      }
-  } finally {
-    get.close()
-  })
-
   def get: Transaction = ctx.get("orm.transaction") match {
     case Some(t: Transaction) if (t.isLive) => t
     case _ =>
       val t = cx.instantiate[Transaction]("orm.transaction", new Transaction)
       ctx.update("orm.transaction", t)
+      initCtxTransactionDemarcation()
       t
+  }
+
+  protected def initCtxTransactionDemarcation() {
+    ctx.pushFinalizer("finalizer.orm.transaction", { () =>
+      try {
+        get.commit()
+        ORM_LOG.trace("Committed current transaction.")
+      } catch {
+        case e1: Exception =>
+          ORM_LOG.error("Could not commit current transaction", e1)
+          try {
+            get.rollback()
+            ORM_LOG.trace("Rolled back current transaction.")
+          } catch {
+            case e2: Exception =>
+              ORM_LOG.error("Could not roll back current transaction", e2)
+          }
+      } finally {
+        get.close()
+      }
+    })
   }
 
 }
