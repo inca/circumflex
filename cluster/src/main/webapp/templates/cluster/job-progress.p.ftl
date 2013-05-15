@@ -14,8 +14,11 @@
       $.get("/cluster/${cluster.id}/~job-progress",
           { from: from },
           function(data) {
-            $("#process-placeholder").replaceWith(data);
-            $("#job-output").scrollTop(100000);
+            var ph = $("#process-placeholder");
+            var scroll = ph.is(":visible");
+            ph.replaceWith(data);
+            if (scroll)
+              $("#job-output").scrollTop(100000);
           });
     }, 1000);
   </script>
