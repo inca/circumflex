@@ -41,24 +41,8 @@ accessed via the `Context.get` method.
 */
 class Context
     extends HashMap[String, Any]
-    with KeyValueCoercion {
-
-  def finalizers = getAs[Seq[() => Unit]](
-    "finalizers").getOrElse(Nil)
-
-  def enqueueFinalizer(key: String, fn: () => Unit) {
-    if (!contains("finalizers." + key)) {
-      update("finalizers." + key, true)
-      update("finalizers", finalizers ++ Seq(fn))
-    }
-  }
-
-  def pushFinalizer(key: String, fn: () => Unit) {
-    if (!contains("finalizers." + key)) {
-      update("finalizers." + key, true)
-      update("finalizers", Seq(fn) ++ finalizers)
-    }
-  }
+    with KeyValueCoercion
+    with Finalizable {
 
   def executeWith[R](params: (String, Any)*)
                     (actions: => R): R = {
@@ -106,7 +90,7 @@ object Context {
 
   def destroy() {
     if (isLive) {
-      get().finalizers.foreach(_.apply())
+      get().doFinalize()
       threadLocal.set(null)
     }
   }

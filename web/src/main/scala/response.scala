@@ -1,6 +1,7 @@
 package pro.savant.circumflex
 package web
 
+import core._
 import javax.servlet.http.HttpServletResponse
 import collection.mutable.{ListBuffer, HashMap}
 import java.lang.String
@@ -17,7 +18,8 @@ actual `HttpServletResponse` using the `flush` method.
 Since Circumflex is UTF-friendly it will implicitly set character encoding of
 response body to `UTF-8`. Feel free to change it if your application requires so.
 */
-class HttpResponse(val raw: HttpServletResponse) {
+class HttpResponse(val raw: HttpServletResponse)
+    extends Finalizable {
 
   def flush(): Nothing = {
     if (!raw.isCommitted) {
@@ -33,6 +35,8 @@ class HttpResponse(val raw: HttpServletResponse) {
       }
       // apply cookies
       cookies.foreach(c => raw.addCookie(c.convert()))
+      // perform finalization before writing body response
+      doFinalize()
       // write response body
       body(raw)
       // flush
