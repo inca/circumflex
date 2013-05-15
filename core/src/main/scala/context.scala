@@ -44,6 +44,8 @@ class Context
     with KeyValueCoercion
     with Finalizable {
 
+  protected def baseName = "ctx"
+
   def executeWith[R](params: (String, Any)*)
                     (actions: => R): R = {
     // Remember old params

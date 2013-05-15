@@ -9,21 +9,23 @@ The implementation then decides when to perform such finalization
 */
 trait Finalizable {
 
-  protected def baseName = "finalizers"
+  protected def baseName: String
 
-  def finalizers = ctx.getAs[Seq[() => Unit]](baseName).getOrElse(Nil)
+  private def _fnkey = baseName + ".finalizers"
+
+  def finalizers = ctx.getAs[Seq[() => Unit]](_fnkey).getOrElse(Nil)
 
   def enqueueFinalizer(key: String, fn: () => Unit) {
-    if (!ctx.contains(baseName + "." + key)) {
-      ctx.update(baseName + "." + key, true)
-      ctx.update(baseName, finalizers ++ Seq(fn))
+    if (!ctx.contains(_fnkey + "." + key)) {
+      ctx.update(_fnkey + "." + key, true)
+      ctx.update(_fnkey, finalizers ++ Seq(fn))
     }
   }
 
   def pushFinalizer(key: String, fn: () => Unit) {
-    if (!ctx.contains(baseName + "." + key)) {
-      ctx.update(baseName + "." + key, true)
-      ctx.update(baseName, Seq(fn) ++ finalizers)
+    if (!ctx.contains(_fnkey + "." + key)) {
+      ctx.update(_fnkey + "." + key, true)
+      ctx.update(_fnkey, Seq(fn) ++ finalizers)
     }
   }
 

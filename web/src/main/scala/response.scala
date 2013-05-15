@@ -21,8 +21,13 @@ response body to `UTF-8`. Feel free to change it if your application requires so
 class HttpResponse(val raw: HttpServletResponse)
     extends Finalizable {
 
+  protected def baseName = "cx.response"
+
   def flush(): Nothing = {
     if (!raw.isCommitted) {
+      // perform finalization before writing body response
+      doFinalize()
+      // update response fields
       if (statusCode != -1)
         raw.setStatus(statusCode)
       if (contentLength != -1)
@@ -35,8 +40,6 @@ class HttpResponse(val raw: HttpServletResponse)
       }
       // apply cookies
       cookies.foreach(c => raw.addCookie(c.convert()))
-      // perform finalization before writing body response
-      doFinalize()
       // write response body
       body(raw)
       // flush
