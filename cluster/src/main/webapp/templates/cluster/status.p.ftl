@@ -1,5 +1,10 @@
 [#ftl]
 
+<h1>${cluster.id}</h1>
+<p class="remark">${cluster.project.baseDir.getAbsolutePath}</p>
+
+<pre><code>${cluster.project.lastCommitLog}</code></pre>
+
 <table width="100%"
        class="rows">
 [#list cluster.servers as server]

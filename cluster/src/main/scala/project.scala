@@ -62,6 +62,15 @@ class Project(val baseDir: File,
 
   def flat: Seq[Project] = Seq(this) ++ subprojects
 
+  def lastCommitLog = {
+    import scala.sys.process._
+    try {
+      "git log -n 1".!!
+    } catch {
+      case e: Exception => "No git repository initialized."
+    }
+  }
+
   val _cluster = new CacheCell[Cluster](new Cluster(project))
   def cluster = _cluster.get
 
