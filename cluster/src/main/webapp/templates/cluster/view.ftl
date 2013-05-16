@@ -4,7 +4,7 @@
   [#if status.currentJob??]
     [#assign lines = status.currentJob.output/]
   <h3>${status.currentJob}</h3>
-  <div id="job-output">
+  <div id="job-output" class="relative">
     [#include "job-progress.p.ftl"/]
   </div>
   [#else]
