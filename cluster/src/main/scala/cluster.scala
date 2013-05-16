@@ -351,9 +351,13 @@ class Node(val server: Server)
     manifest
   }
 
+  def jarBuiltDate = new Date(jarFile.lastModified)
+
   def isJarBuilt = jarFile.isFile
 
-  def jarBuiltDate = new Date(jarFile.lastModified)
+  def isJarUpToDate = cluster.classesTimestamp
+      .map(t => isJarBuilt && jarBuiltDate.getTime > t.getTime)
+      .getOrElse(false)
 
   def classifier = if (isBackup) "backup" else "main"
 

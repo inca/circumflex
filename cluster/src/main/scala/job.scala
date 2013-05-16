@@ -91,8 +91,13 @@ class RestartServerJob(server: Server)
     println("===================================")
     println("Redeploying on " + server)
     println("===================================")
+    // Make sure that all jars are built
+    if (!server.nodes.forall(_.isJarUpToDate))
+      new BuildServerJob(server).execute().join()
+    // Execute tasks
     println(">>>> tasks @ " + server)
     server.tasks.foreach(_.process())
+    // Restart main nodes
     println(">>>> main -> " + server)
     server.nodes.filter(!_.isBackup).foreach(_.remote.stop())
     new DeployServerJob(server, false).execute().join()
@@ -109,6 +114,7 @@ class RestartServerJob(server: Server)
       }
     }
     println("====== Main nodes are online ======")
+    // Restart backup nodes
     println(">>>> backup -> " + server)
     server.nodes.filter(_.isBackup).foreach(_.remote.stop())
     new DeployServerJob(server, true).execute().join()
