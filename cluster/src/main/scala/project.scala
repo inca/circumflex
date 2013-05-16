@@ -65,7 +65,9 @@ class Project(val baseDir: File,
   def lastCommitLog = {
     import scala.sys.process._
     try {
-      "git log -n 1".!!
+      val pb = new java.lang.ProcessBuilder("git", "log", "-n", "1")
+      pb.directory(baseDir)
+      pb.!!
     } catch {
       case e: Exception => "No git repository initialized."
     }
