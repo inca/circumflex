@@ -153,7 +153,7 @@ class Server(val cluster: Cluster)
   def properties: Map[String, String] = {
     val result = new HashMap[String, String]
     result ++= project.properties
-    result ++= cluster.mainCxProps
+    result ++= cluster.mainCxProps.toMap
     result += "node.address" -> server.address()
     result ++= _props.toMap
     result.toMap
