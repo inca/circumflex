@@ -17,7 +17,7 @@
             var cnt = $("#job-output");
             var ph = $("#process-placeholder");
             var scroll = ph.position().top <
-                (cnt.scrollTop() + cnt.height());
+                (cnt.position().top + cnt.height());
             ph.replaceWith(data);
             if (scroll)
               cnt.scrollTop(100000);
