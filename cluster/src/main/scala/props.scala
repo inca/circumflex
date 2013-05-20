@@ -38,10 +38,7 @@ class PropsHolder(val elemName: String,
 
 }
 
-class PropsFile(val file: File)
-    extends Cached {
-
-  def expired = file.lastModified > createdAt.getTime
+class PropsFile(val file: File) {
 
   def toMap: Map[String, String] = {
     val result = new HashMap[String, String]
