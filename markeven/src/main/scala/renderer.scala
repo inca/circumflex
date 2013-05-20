@@ -48,13 +48,13 @@ trait MarkevenRenderer {
 
   def toInlineHtml(cs: CharSequence): String = finalize(processInlines(cs))
 
-  protected def processBlocks(cs: CharSequence) = {
+  def processBlocks(cs: CharSequence) = {
     val w = new StringWriter
     new BlockProcessor(w, renderer).process(cs)
     w.toString
   }
 
-  protected def processInlines(cs: CharSequence) = {
+  def processInlines(cs: CharSequence) = {
     val w = new StringWriter
     new InlineProcessor(w, renderer).process(cs)
     w.toString
