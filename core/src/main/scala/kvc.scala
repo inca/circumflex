@@ -28,7 +28,7 @@ The methods are:
 
 */
 
-trait KeyValueCoercion {
+trait KeyValueCoercion extends Serializable {
 
   def get(key: String): Option[_]
 

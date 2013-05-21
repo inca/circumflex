@@ -43,7 +43,8 @@ object Slice {
 }
 
 class Slice[K, +V](val key: K, val elems: Seq[V])
-    extends SeqLike[V, Slice[K, V]] { self =>
+    extends SeqLike[V, Slice[K, V]]
+    with Serializable { self =>
 
   protected[this] def newBuilder = new Builder[V, Slice[K, V]] {
 

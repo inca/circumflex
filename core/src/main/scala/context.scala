@@ -137,7 +137,9 @@ import the implicit conversion methods from
 the `pro.savant.circumflex.core` package.
 */
 class ContextVarHelper(val sym: Symbol) {
+
   def :=(value: Any) {
     ctx.update(sym.name, value)
   }
+
 }

@@ -90,7 +90,7 @@ DataCache.get("myData", {
 })
 ```
 */
-trait Cache[T <: Cached] {
+trait Cache[T <: Cached] extends Serializable {
 
   private val _lock = new Object
 
@@ -196,7 +196,7 @@ trait NoLock[T <: Cached] extends Cache[T] {
   }
 }
 
-class CacheCell[A](initializer: => A) {
+class CacheCell[A <: Serializable](initializer: => A) {
   protected var _value: A = _
   protected var _valid: Boolean = false
 
@@ -217,7 +217,7 @@ class CacheCell[A](initializer: => A) {
 
   def get: A = {
     if (!isValid)
-      synchronized {
+      this.synchronized {
         if (!isValid)
           reinit()
       }
@@ -245,7 +245,9 @@ Set the `cx.ehcacheManager` configuration parameter to override the default
 cache manager.
 
 */
-class Ehcache[T <: Cached](val name: String) extends Cache[T] {
+class Ehcache[T <: Cached](val name: String)
+    extends Cache[T]
+    with NoLock[T] {
 
   val ehcache = ehcacheManager.addCacheIfAbsent(name)
 

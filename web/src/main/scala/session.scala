@@ -46,34 +46,3 @@ class HttpSession extends Map[String, Any] with KeyValueCoercion {
   }
 
 }
-
-class HttpSessionBin
-    extends Map[String, Any]
-    with ConcurrentBin[Any]
-    with KeyValueCoercion {
-
-  protected def retrieve(key: String): Option[Any] =
-    sessionOption.flatMap(_.get(key))
-
-  protected def store(key: String, value: Any) {
-    sessionOption.map(s => s += key -> value)
-  }
-
-  def +=(kv: (String, Any)): this.type = lock {
-    sessionOption.map(s => s += kv)
-    this
-  }
-
-  def -=(key: String): this.type = lock {
-    sessionOption.map(s => s -= key)
-    this
-  }
-
-  def get(key: String): Option[Any] = lock {
-    retrieve(key)
-  }
-
-  def iterator: Iterator[(String, Any)] = lock {
-    sessionOption.map(_.iterator).getOrElse(Iterator.empty)
-  }
-}

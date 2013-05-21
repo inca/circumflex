@@ -9,7 +9,7 @@ Circumflex introduces two parameterized wrapper clases
 — `Wrapper` and `Container` — to keep certain components
 weakly coupled with each other.
 */
-trait Wrapper[T] {
+trait Wrapper[T] extends Serializable {
   def item: T
 }
 
@@ -25,7 +25,7 @@ attributes (like name, identifier, etc.), **but not their internal value**.
 Implementations should provide sensible `canEqual`, `equal` and `hashCode`
 methods, but internal value should not be taken into consideration.
 */
-trait Container[T] {
+trait Container[T] extends Serializable {
   protected var _value: Option[T] = None
 
   /*! ### Setters
@@ -127,52 +127,5 @@ trait Coercion extends Container[String] {
 
   def bigDecimalOption: Option[BigDecimal] =
     value.flatMap(v => parse.bigDecimalOption(v))
-
-}
-
-/*!### Concurrent bin
-
-The `ConcurrentBin` interface defines abstract key-value storage methods
-`retrieve`, `store`, which are protected and free of
-any kind of synchronization code, and provides functionality for retrieving
-and storing key-value data with optional double-checked locking.
-
-This interface provides only incremental storage (with no delete functionality),
-so implementations which add storage-related methods must use the `lock` method.
-*/
-trait ConcurrentBin[T] {
-
-  private val _lock = new Object
-
-  protected def retrieve(key: String): Option[T]
-
-  protected def store(key: String, value: T)
-
-  def lock[A](actions: => A): A = _lock.synchronized { actions }
-
-  def get[E <: T](key: String, default: => E): E =
-    getChecked(key, default)(e => true)
-
-  def getChecked[E <: T](key: String, default: => E)
-                        (conditions: E => Boolean): E =
-    retrieve(key) match {
-      case Some(e: E) if (conditions(e)) => e
-      case _ =>
-        lock {
-          retrieve(key) match {
-            case Some(e: E) if (conditions(e)) => e
-            case _ =>
-              val e = default
-              store(key, e)
-              e
-          }
-        }
-    }
-
-  def put[E <: T](key: String, value: E) {
-    lock {
-      store(key, value)
-    }
-  }
 
 }

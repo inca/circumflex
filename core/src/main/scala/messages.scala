@@ -68,7 +68,10 @@ empty
 ```
 */
 
-trait MessageResolver extends Map[String, String] {
+trait MessageResolver
+    extends Map[String, String]
+    with Serializable {
+
   protected var _lastModified = new Date()
   def lastModified = _lastModified
 
@@ -273,8 +276,13 @@ a localized message by specified key and format it using specified parameters.
 
 This class is actively used with validation in certain Circumflex components.
 */
-case class Msg(key: String, params: (String, Any)*) {
+case class Msg(key: String, params: (String, Any)*)
+    extends Serializable {
+
   def param(key: String): Option[Any] = params.find(_._1 == key).map(_._2)
+
   def hasParam(key: String): Boolean = !params.find(_._1 == key).isEmpty
+
   override def toString: String = msg.fmt(key, params: _*)
+
 }

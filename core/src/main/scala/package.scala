@@ -26,7 +26,8 @@ package object core {
   */
   val cx = Circumflex
   def ctx = Context.get()
-  lazy val msg = cx.instantiate[MessageResolver]("cx.messages", new PropertyFileResolver)
+  lazy val msg = cx.instantiate[MessageResolver](
+    "cx.messages", new PropertyFileResolver)
 
   /*! Circumflex Core package also includes helpers for various common tasks like
   random generation of UUIDs and alphanumeric strings, converting between camelCase and

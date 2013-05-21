@@ -19,7 +19,7 @@ a correspondence between two sequences: `original` and `revised`.
   * `EqualChunk` designates that elements have not been changed
     (the two sequences are equal).
 */
-sealed trait Chunk[T]{
+sealed trait Chunk[T] extends Serializable {
   def original: Seq[T]
   def revised: Seq[T]
 }
@@ -51,7 +51,9 @@ class EqualChunk[T](val original: Seq[T], val revised: Seq[T])
       original.mkString(", ") + "]"
 }
 
-class Difference[T](val chunks: Seq[Chunk[T]]) extends Seq[Chunk[T]] {
+class Difference[T](val chunks: Seq[Chunk[T]])
+    extends Seq[Chunk[T]]
+    with Serializable {
   def length = chunks.size
   def apply(idx: Int) = chunks(idx)
   def iterator = chunks.iterator
