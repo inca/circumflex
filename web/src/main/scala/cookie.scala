@@ -1,6 +1,7 @@
 package pro.savant.circumflex
 package web
 
+import java.io.Serializable
 import javax.servlet.http.Cookie
 
 /*!# HTTP Cookies
@@ -19,7 +20,8 @@ case class HttpCookie(var name: String,
                       var path: String = null,
                       var comment: String = null,
                       var secure: Boolean = false,
-                      var maxAge: Int = -1) {
+                      var maxAge: Int = -1)
+    extends Serializable {
 
   /*! You can convert `HttpCookie` back to `javax.servlet.Cookie` using `convert` method. */
   def convert(): Cookie = {

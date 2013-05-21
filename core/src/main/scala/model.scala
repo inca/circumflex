@@ -2,6 +2,7 @@ package pro.savant.circumflex
 package core
 
 import java.util.Date
+import java.io.Serializable
 
 /*! # Data model support
 

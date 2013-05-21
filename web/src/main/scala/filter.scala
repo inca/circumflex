@@ -153,7 +153,6 @@ class CircumflexFilter extends Filter {
   * `session` -- the `session` object;
   * `cookies` -- the `cookies` object;
   * `headers` -- the `headers` object;
-  * `flash` -- the `flash` object;
   * `cfg` -- the `cx` object;
   * `msg` -- the `msg` object.
 
@@ -165,7 +164,6 @@ class CircumflexFilter extends Filter {
     'paramList := paramList
     'request := request
     'session := session
-    'flash := flash
     'cfg := cx
     'msg := msg
   }

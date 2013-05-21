@@ -1,6 +1,8 @@
 package pro.savant.circumflex
 package security
 
+import java.io.Serializable
+
 /*! # Principal
 
 The `Principal` trait should be implemented in your application
@@ -11,7 +13,7 @@ retrieving users, but your application may choose different technology
 for managing authentication data. The `Principal` trait in this sense is
 agnostic to storage technology.
 */
-trait Principal {
+trait Principal extends Serializable {
 
   /*! A unique ID is used to lookup the user from the storage and to associate
   it with session on current domain. The `uniqueId` method should return string

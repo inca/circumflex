@@ -2,30 +2,35 @@ package pro.savant.circumflex
 package web
 
 import core._
-import collection.mutable.ListBuffer
+import scala.collection.mutable.HashSet
+import java.io.Serializable
+
+case class Notice(kind: String, msg: Msg) extends Serializable {
+  def key = msg.key
+}
 
 object notices {
 
-  case class Notice(kind: String, msg: Msg) {
-    def key = msg.key
-  }
+  protected val KEY = "cx.notices"
 
-  def buffer: ListBuffer[Notice] = {
-    val b = flash.getAs[ListBuffer[Notice]]("notices")
-        .getOrElse(new ListBuffer[Notice])
-    flash.update("notices", b)
-    b
-  }
+  protected def hashSet: Option[HashSet[Notice]] =
+    sessionOption.map { sess =>
+      sess.getAs[HashSet[Notice]](KEY) getOrElse {
+        val s = new HashSet[Notice]
+        sess += KEY -> s
+        s
+      }
+    }
 
-  def get: Seq[Notice] = flash.getAs[Seq[Notice]]("notices").getOrElse(Nil)
+  def get: Set[Notice] = hashSet.getOrElse(HashSet.empty).toSet
 
   protected def add(kind: String, msg: Msg): this.type = {
-    buffer += Notice(kind, msg)
+    hashSet.map(_ += Notice(kind, msg))
     this
   }
 
   protected def add(kind: String, msgs: Seq[Msg]): this.type = {
-    msgs.foreach(m => add(kind, m))
+    hashSet.map(s => msgs.foreach(m => s += Notice(kind, m)))
     this
   }
 

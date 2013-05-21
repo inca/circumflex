@@ -3,6 +3,7 @@ package core
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.io.Serializable
 
 /*!# Key-value coercion
 

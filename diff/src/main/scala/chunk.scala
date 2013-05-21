@@ -1,6 +1,8 @@
 package pro.savant.circumflex
 package diff
 
+import java.io.Serializable
+
 /*! # Chunks
 
 Diff results are reported as a sequence of chunks. Each chunk defines

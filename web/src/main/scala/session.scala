@@ -7,8 +7,11 @@ import collection.Iterator
 import collection.JavaConversions._
 import java.util.{Enumeration => JEnumeration}
 import javax.servlet.http.{HttpSession => ServletSession}
+import java.io.Serializable
 
-class HttpSession extends Map[String, Any] with KeyValueCoercion {
+class HttpSession
+    extends Map[String, Serializable]
+    with KeyValueCoercion {
 
   def rawSession: Option[ServletSession] = requestOption.flatMap { req =>
     val s = req.raw.getSession(false)
@@ -18,7 +21,7 @@ class HttpSession extends Map[String, Any] with KeyValueCoercion {
 
   def id: Option[String] = rawSession.map(_.getId)
 
-  def +=(kv: (String, Any)): this.type = {
+  def +=(kv: (String, Serializable)): this.type = {
     requestOption.map(_.raw.getSession(true).setAttribute(kv._1, kv._2))
     this
   }
@@ -28,17 +31,21 @@ class HttpSession extends Map[String, Any] with KeyValueCoercion {
     this
   }
 
-  def iterator: Iterator[(String, Any)] = {
+  def iterator: Iterator[(String, Serializable)] = {
     rawSession.map(s =>
       s.getAttributeNames
           .asInstanceOf[JEnumeration[String]]
-          .map(k => (k -> s.getAttribute(k)))
-          .toIterator)
-        .getOrElse(Iterator.empty)
+          .flatMap(k => s.getAttribute(k) match {
+        case s: Serializable => Some(k -> s)
+        case _ => None
+      }).toIterator).getOrElse(Iterator.empty)
   }
 
-  def get(key: String): Option[Any] =
-    rawSession.flatMap(s => any2option(s.getAttribute(key)))
+  def get(key: String): Option[Serializable] =
+    rawSession.flatMap(sess => any2option(sess.getAttribute(key))) match {
+      case Some(s: Serializable) => Some(s)
+      case _ => None
+    }
 
   def invalidate(): this.type = {
     rawSession.map(_.invalidate())

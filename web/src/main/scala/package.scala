@@ -95,8 +95,7 @@ package object web {
     * `sendError` sends an error to the client using specified `statusCode` and
       `message`;
 
-    * `sendRedirect` sends `302 MOVED TEMPORARILY` to the client using specified
-      `url` and optional `flashes`;
+    * `sendRedirect` sends `302 MOVED TEMPORARILY` to the client using specified `url`;
 
     * `sendFile` sends specified `file` to the client; if `filename` is provided,
       `Content-Disposition: attachment` is also added to the response with specified
@@ -144,8 +143,7 @@ package object web {
   def sendError(statusCode: Int, message: String = "No message available."): Nothing =
     response.body(r => r.sendError(statusCode, message)).flush()
 
-  def sendRedirect(url: String, flashes: (String, Any)*): Nothing = {
-    flashes.foreach(kv => flash(kv._1) = kv._2)
+  def sendRedirect(url: String): Nothing = {
     // Encode URI up to the `?` characeter
     val i = url.indexOf("?")
     val location = if (i != -1)

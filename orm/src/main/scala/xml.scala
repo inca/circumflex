@@ -3,6 +3,7 @@ package orm
 
 import scala.xml._
 import java.io.File
+import java.io.Serializable
 
 /*!# XML (de)serialization
 
@@ -16,7 +17,8 @@ Every `Field` capable of (de)serializing itself (from)into XML should extend the
 */
 abstract class XmlSerializable[T, R <: Record[_, R]](
     name: String, record: R, sqlType: String)
-    extends Field[T, R](name, record, sqlType) {
+    extends Field[T, R](name, record, sqlType)
+    with Serializable {
 
   def fromString(str: String): Option[T]
 

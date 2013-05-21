@@ -5,6 +5,7 @@ import core._
 import java.util.Date
 import java.sql.ResultSet
 import scala.math.BigDecimal._
+import java.io.Serializable
 
 /*!# Field
 
@@ -17,6 +18,7 @@ class Field[T, R <: Record[_, R]](val name: String,
                                   val record: R,
                                   val sqlType: String)
     extends ValueHolder[T, R]
+    with Serializable
     with SQLable {
 
   def uuid = record.getClass.getName + "." + name

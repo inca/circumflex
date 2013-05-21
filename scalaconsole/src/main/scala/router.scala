@@ -68,10 +68,10 @@ class ScalaConsoleRouter(_templatesRoot: String,
       c
   }
 
-  def getBucket: StringWriter = session.get("scala.console.bucket") match {
-    case Some(w: StringWriter) => w
+  def getBucket: StringBucket = session.get("scala.console.bucket") match {
+    case Some(w: StringBucket) => w
     case _ =>
-      val w = new StringWriter
+      val w = new StringBucket
       session += "scala.console.bucket" -> w
       w
   }

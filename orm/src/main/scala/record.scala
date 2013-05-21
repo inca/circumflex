@@ -2,6 +2,7 @@ package pro.savant.circumflex
 package orm
 
 import core._, cache._
+import java.io.Serializable
 
 /*!# Record
 
@@ -26,7 +27,9 @@ class Country extends Record[String, Country] {
 
 */
 abstract class Record[PK, R <: Record[PK, R]]
-    extends Equals with Cached { this: R =>
+    extends Equals
+    with Serializable
+    with Cached { this: R =>
 
   def expired = false
 
@@ -221,7 +224,7 @@ abstract class Record[PK, R <: Record[PK, R]]
         .map(f => relation.getField(this, f))
 
   /*!## Field Compositions
-  
+
   Fields can be grouped into field compositions using the `composition` method.
   Compositions can be used as primary keys and participate in simple queries.
   Circumflex ORM currently supports only composition with arity of 2. A pair
@@ -242,7 +245,7 @@ abstract class Record[PK, R <: Record[PK, R]]
     new InverseMany[PK, C, R](this, association)
 
   /*!## Equality & Others
-  
+
   Two record are considered equal if they share the same type and have same primary keys.
   Transient records are never equal to each other.
 

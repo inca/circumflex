@@ -2,7 +2,7 @@ package pro.savant.circumflex
 package markeven
 
 import pro.savant.circumflex._, core._
-import java.io.{StringWriter, Writer}
+import java.io.{StringWriter, Writer, Serializable}
 import java.lang.StringBuilder
 import java.util.regex.Pattern
 import collection.mutable.HashSet
@@ -82,8 +82,9 @@ trait Processor {
 
 class FragmentDef(val body: String,
                   val mode: ProcessingMode = ProcessingMode.NORMAL)
+    extends Serializable
 
-trait ProcessingMode
+trait ProcessingMode extends Serializable
 
 object ProcessingMode {
   object NORMAL extends ProcessingMode
@@ -92,7 +93,8 @@ object ProcessingMode {
 }
 
 class LinkDef(_url: String,
-              _title: String = "") {
+              _title: String = "")
+    extends Serializable {
 
   val url = ampEscape.matcher(_url).replaceAll("&amp;")
   val title = wrapHtml(_title)

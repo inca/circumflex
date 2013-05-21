@@ -5,7 +5,10 @@ import core._, web._
 import tools.nsc._, interpreter._
 import java.io._
 
-class ScalaConsole(val bucketFunc: () => StringWriter) {
+class StringBucket extends StringWriter with Serializable
+
+class ScalaConsole(val bucketFunc: () => StringBucket)
+    extends Serializable {
 
   val settings = new Settings()
 

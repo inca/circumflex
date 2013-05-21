@@ -4,6 +4,7 @@ package core
 import collection.mutable.{ListBuffer, Builder}
 import collection.generic.CanBuildFrom
 import collection.SeqLike
+import java.io.Serializable
 
 /*! # Slices API
 

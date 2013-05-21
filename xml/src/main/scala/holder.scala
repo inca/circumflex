@@ -34,7 +34,7 @@ It contains:
 
     * `readXml` and `writeXml` methods, implemented in `ElemHolder` and `AttrHolder`.
 */
-trait Holder {
+trait Holder extends Serializable {
 
   def elemName: String
 

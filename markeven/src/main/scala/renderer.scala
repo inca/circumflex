@@ -3,7 +3,7 @@ package markeven
 
 import pro.savant.circumflex._, core._
 import collection.mutable.{HashSet, HashMap}
-import java.io.{Writer, StringWriter}
+import java.io.{StringWriter, Serializable}
 
 /*! # Markeven Renderer
 
@@ -30,7 +30,7 @@ val renderer = new MarkevenRenderer {
 renderer.toHtml("# Hello")    // Returns <h1>Hello</h1>
 ```
 */
-trait MarkevenRenderer {
+trait MarkevenRenderer extends Serializable {
 
   def renderer = this
 
