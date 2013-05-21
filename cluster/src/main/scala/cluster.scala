@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package cluster
 
 import java.io._
@@ -18,7 +18,7 @@ class Cluster(val project: Project)
 
   def elemName = "cluster"
 
-  def status = pro.savant.circumflex.cluster.status.get(cluster)
+  def status = circumflex.cluster.status.get(cluster)
 
   def baseDir = project.baseDir
 

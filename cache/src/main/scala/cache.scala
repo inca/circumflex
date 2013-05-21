@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package cache
 
 import core._
@@ -240,7 +240,7 @@ There are several cache storage implementations available for you to use:
     synchronization is omitted there.
 
 Ehcache uses `ehcacheManager` method of package object
-`pro.savant.circumflex.cache` to obtain the `CacheManager` instance.
+`circumflex.cache` to obtain the `CacheManager` instance.
 Set the `cx.ehcacheManager` configuration parameter to override the default
 cache manager.
 

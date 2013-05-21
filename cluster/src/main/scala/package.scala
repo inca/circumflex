@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 
 import core._, cache._
 import java.io.File
@@ -6,7 +6,7 @@ import java.util.regex.Pattern
 
 package object cluster {
 
-  val CL_LOG = new Logger("pro.savant.circumflex.cluster")
+  val CL_LOG = new Logger("circumflex.cluster")
 
   val DEFAULT_FILTER_PATTERN = Pattern.compile("^.*\\.(?:xml|properties)$")
   val FILTER_TOKEN_PATTERN = Pattern.compile("\\$\\{(.*?)\\}")

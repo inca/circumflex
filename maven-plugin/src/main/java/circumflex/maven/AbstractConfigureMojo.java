@@ -1,4 +1,4 @@
-package pro.savant.circumflex.maven;
+package circumflex.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import java.io.File;

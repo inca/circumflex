@@ -4,7 +4,7 @@
 package ${package}
 
 
-import pro.savant.circumflex._, core._, web._
+import circumflex._, core._, web._
 
 import org.scalatest._
 import org.junit.runner.RunWith

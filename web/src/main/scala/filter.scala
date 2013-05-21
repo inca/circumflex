@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package web
 
 import java.lang.reflect.InvocationTargetException
@@ -20,7 +20,7 @@ To setup your web application place following snippet into your `WEB-INF/web.xml
 ``` {.xml}
 <filter>
   <filter-name>Circumflex Filter</filter-name>
-  <filter-class>pro.savant.circumflex.web.CircumflexFilter</filter-class>
+  <filter-class>circumflex.web.CircumflexFilter</filter-class>
 </filter>
 
 <filter-mapping>
@@ -36,7 +36,7 @@ serve error pages with Circumflex; beware of infinite loops, however).
 
 The filter configuration is saved into the `cx.filterConfig` configuration parameter and
 is available throughout your configuration via the `filterConfig` method of the
-`pro.savant.circumflex.web` package.
+`circumflex.web` package.
 */
 class CircumflexFilter extends Filter {
 

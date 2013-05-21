@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package markeven
 
 import collection.mutable.ListBuffer

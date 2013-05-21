@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package scalaconsole
 
 import core._, web._, freemarker._

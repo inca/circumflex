@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package orm
 
 import core._, cache._
@@ -118,7 +118,7 @@ trait Relation[PK, R <: Record[PK, R]]
   Caches are used to temporarily store records at transaction-scoped cache
   to avoid unnecessary selects (particularly, when consequently using `get(id)`
   method or accessing associatios).
-  
+
   By mixing in `Cacheable` trait, transaction-level caches are turned into
   application-level caches.
   */

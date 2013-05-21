@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package cluster
 
 import xml._, cache._

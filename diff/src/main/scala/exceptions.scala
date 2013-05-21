@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package diff
 
 class DiffException(msg: String) extends Exception(msg)

@@ -36,13 +36,12 @@
         <div class="powered-by">
           <span>Powered by</span>
           <a class="circumflex"
-             href="http://circumflex.savant.pro">Circumflex Application Framework</a>
+             href="http://github.com/inca/circumflex">Circumflex Application Framework</a>
         </div>
         <div class="copyright">
-          <span class="year">2012</span>
+          <span class="year">2013</span>
           <span class="copy">&copy;</span>
-          <a class="savantpro"
-             href="http://savant.pro">SAVANT.PRO</a>
+          <a href="http://github.com/inca">Boris Okunskiy</a>
         </div>
       </div>
     </div>

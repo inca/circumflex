@@ -10,7 +10,7 @@
 
   <filter>
     <filter-name>Circumflex Filter</filter-name>
-    <filter-class>pro.savant.circumflex.web.CircumflexFilter</filter-class>
+    <filter-class>circumflex.web.CircumflexFilter</filter-class>
   </filter>
 
   <filter-mapping>

@@ -1,4 +1,4 @@
-package pro.savant.circumflex.maven;
+package circumflex.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;

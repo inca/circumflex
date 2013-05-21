@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package docco
 
 import core._, freemarker._, markeven._

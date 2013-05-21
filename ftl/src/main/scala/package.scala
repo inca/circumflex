@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 
 import core._, web._
 import java.io._
@@ -14,12 +14,12 @@ configuration parameter to provide your own implementation of FreeMarker `Config
 You should import this package to use Circumflex FreeMarker Helper in your application:
 
 ``` {.scala}
-import pro.savant.circumflex.freemarker._
+import circumflex.freemarker._
 ```
  */
 package object freemarker {
 
-  val FTL_LOG = new Logger("pro.savant.circumflex.ftl")
+  val FTL_LOG = new Logger("circumflex.ftl")
 
   val DEFAULT_FTL_CONFIGURATION: Configuration =
     cx.instantiate[Configuration](

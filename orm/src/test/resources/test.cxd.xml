@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <deployments>
   <deployment id="test1"
-              prefix="pro.savant.circumflex.orm"
+              prefix="circumflex.orm"
               onExist="overwrite">
     <Country code="ch">
       <name>Switzerland</name>
@@ -29,14 +29,14 @@
     </City>
   </deployment>
   <deployment id="test2"
-              prefix="pro.savant.circumflex.orm"
+              prefix="circumflex.orm"
               onExist="update">
     <City name="St. Petersburg">
       <name>Saint Petersburg</name>
     </City>
   </deployment>
   <deployment id="test3"
-              prefix="pro.savant.circumflex.orm">
+              prefix="circumflex.orm">
     <Capital>
       <city>
         <City name="Moscow"/>
@@ -55,7 +55,7 @@
     </Capital>
   </deployment>
   <deployment id="test4"
-              prefix="pro.savant.circumflex.orm">
+              prefix="circumflex.orm">
     <Developer login="joe"/>
     <Developer login="bob"/>
     <Developer login="greg"/>
@@ -67,7 +67,7 @@
     <Membership name="heal'em" login="greg"/>
   </deployment>
   <deployment id="test5"
-              prefix="pro.savant.circumflex.orm">
+              prefix="circumflex.orm">
     <Person name="Bob">
       <devices>
         <Device/>

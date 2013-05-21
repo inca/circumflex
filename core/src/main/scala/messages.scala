@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package core
 
 import collection.{Iterator, Map}
@@ -23,7 +23,7 @@ hot-reloading.
 
 ## Usage
 
-The `msg` method of package object `pro.savant.circumflex.core` returns
+The `msg` method of package object `circumflex.core` returns
 an implementation of `MessageResolver`, which is used to retrieve messages.
 This instance is also referred to as _global messages resolver_.
 

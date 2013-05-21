@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package web
 
 import util.matching.Regex
@@ -153,7 +153,7 @@ class HeaderMatcher(val name: String, _regex: Regex, _groupNames: Seq[String] = 
 
 /*! `HeaderMatcherHelper` provides DSL for matching requests by headers.
 
-See `matchers` object in package `pro.savant.circumflex.web` for more information. */
+See `matchers` object in package `circumflex.web` for more information. */
 class HeaderMatcherHelper(name: String) {
 
   def apply(regex: Regex) = new HeaderMatcher(name, regex, Nil)

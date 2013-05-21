@@ -1,7 +1,7 @@
-package pro.savant.circumflex
+package circumflex
 package markeven
 
-import pro.savant.circumflex._, core._
+import core._
 import collection.mutable.{HashSet, HashMap}
 import java.io.{StringWriter, Serializable}
 

@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package freemarker
 
 import core._, web._

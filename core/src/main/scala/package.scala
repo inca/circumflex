@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 
 import java.security.MessageDigest
 import java.util.{UUID, Random}
@@ -10,12 +10,12 @@ Package object `core` contains different shortcuts, utilities and implicits.
 You should import this package if you intend to use Circumflex API:
 
 ``` {.scala}
-import pro.savant.circumflex.core._
+import circumflex.core._
 ````
 */
 package object core {
 
-  val CX_LOG = new Logger("pro.savant.circumflex.core")
+  val CX_LOG = new Logger("circumflex.core")
 
   /*! Common Circumflex helpers imported into the namespace are:
 

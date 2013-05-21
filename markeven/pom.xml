@@ -59,7 +59,7 @@
         <version>1.2</version>
         <configuration>
           <classpathScope>test</classpathScope>
-          <mainClass>pro.savant.circumflex.markeven.MarkevenTesterMain</mainClass>
+          <mainClass>circumflex.markeven.MarkevenTesterMain</mainClass>
         </configuration>
       </plugin>
     </plugins>

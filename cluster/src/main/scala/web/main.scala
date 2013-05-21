@@ -1,8 +1,8 @@
-package pro.savant.circumflex
+package circumflex
 package cluster
 
 import core._, web._, freemarker._
-import pro.savant.circumflex.security.SecurityRouter
+import security.SecurityRouter
 
 class Main extends Router {
   new SecurityRouter(auth)
@@ -25,7 +25,7 @@ class Main extends Router {
 
     val cluster = getCluster(uri(1)).getOrElse(sendError(404))
     'cluster := cluster
-    val status = pro.savant.circumflex.cluster.status.get(cluster)
+    val status = circumflex.cluster.status.get(cluster)
     'status := status
 
     val baseUrl = prefix

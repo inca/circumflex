@@ -3,7 +3,7 @@
 #set( $symbol_escape = '\' )
 package ${package}
 
-import pro.savant.circumflex._, core._, web._, freemarker._
+import circumflex._, core._, web._, freemarker._
 import java.util.Date
 
 class Main extends Router {

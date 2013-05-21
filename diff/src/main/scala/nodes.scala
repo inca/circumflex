@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package diff
 
 abstract class PathNode(val i: Int,

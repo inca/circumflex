@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 
 import core._
 import javax.servlet.{FilterChain, FilterConfig}
@@ -20,20 +20,20 @@ the basis of routing DSL of Circumflex Web Framework.
 You should import this package to use Circumflex Web Framework in your application:
 
 ``` {.scala}
-import pro.savant.circumflex.web._
+import circumflex.web._
 ```
 
 If you don't wish to import all helpers into global scope, then import this
 package under an alias:
 
 ``` {.scala}
-import pro.savant.circumflex.{web => cx} // import under alias "cx"
+import circumflex.{web => cx} // import under alias "cx"
 cx.request                               // access members
 ```
 */
 package object web {
 
-  val WEB_LOG = new Logger("pro.savant.circumflex.web")
+  val WEB_LOG = new Logger("circumflex.web")
 
   /*!## Accessing web context
 
@@ -225,7 +225,7 @@ package object web {
   You should import this object if you want to use it:
 
   ``` {.scala
-  import pro.savant.circumflex.web.{matchers => m}
+  import circumflex.web.{matchers => m}
 
   get("/").and(m.ACCEPT(":mime")) = "You are accepting " + param("mime")
   ```

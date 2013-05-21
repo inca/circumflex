@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package core
 
 import collection.mutable.{ListBuffer, HashMap}
@@ -11,8 +11,7 @@ bound to the executing thread. Such logical scope could be anything:
  database transaction, HTTP request, user session within GUI form, etc.
 
 Within this scope you can obtain current context by calling
-`Context.get` method (or using `ctx` method of package
-`pro.savant.circumflex.core`).
+`Context.get` method (or using `ctx` method of package `circumflex.core`).
 
 Most Circumflex components depend on context and, therefore,
 can only be run inside context-aware code. Your application is
@@ -134,7 +133,7 @@ Following syntax is used for setting context variables:
 
 In order to be able to use such DSL in your application you should
 import the implicit conversion methods from
-the `pro.savant.circumflex.core` package.
+the `circumflex.core` package.
 */
 class ContextVarHelper(val sym: Symbol) {
 

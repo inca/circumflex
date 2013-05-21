@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package web
 
 import scala.collection.Iterator
@@ -252,7 +252,7 @@ class HttpRequest(val raw: HttpServletRequest) {
 
   Request parameters can be accessed via the `params` object.
 
-  Unlike the `params` object of `pro.savant.circumflex.web` package,
+  Unlike the `params` object of `circumflex.web` package,
   this object does not report match results -- only request parameters
   as specified in query string, form fields, etc.
   */

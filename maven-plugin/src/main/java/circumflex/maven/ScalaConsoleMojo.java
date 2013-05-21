@@ -1,4 +1,4 @@
-package pro.savant.circumflex.maven;
+package circumflex.maven;
 
 import freemarker.template.Configuration;
 import org.apache.commons.io.FileUtils;
@@ -7,9 +7,9 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
-import pro.savant.circumflex.core.Circumflex;
-import pro.savant.circumflex.web.StandaloneServer;
-import pro.savant.circumflex.scalaconsole.DefaultScalaConsoleRouter;
+import circumflex.core.Circumflex;
+import circumflex.web.StandaloneServer;
+import circumflex.scalaconsole.DefaultScalaConsoleRouter;
 
 import java.io.File;
 import java.io.FileOutputStream;

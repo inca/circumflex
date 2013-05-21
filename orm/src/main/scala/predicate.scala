@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package orm
 
 import collection.mutable.ListBuffer

@@ -8,10 +8,10 @@
     </encoder>
   </appender>
 
-  <logger name="pro.savant.circumflex"
+  <logger name="circumflex"
           level="DEBUG"/>
 
-  <logger name="pro.savant.circumflex.cache"
+  <logger name="circumflex.cache"
           level="TRACE"/>
 
   <root level="INFO">

@@ -1,4 +1,4 @@
-package pro.savant.circumflex
+package circumflex
 package scalaconsole
 
 import core._, web._
@@ -39,7 +39,7 @@ class ScalaConsole(val bucketFunc: () => StringBucket)
 
   // Make default imports
 
-  imain.interpret("import pro.savant._, circumflex._")
+  imain.interpret("import circumflex._")
   imain.interpret("import core._, web._, orm._, xml._, cache._, diff._, mail._, markeven._")
   imain.interpret("import java.util.Date, java.io._, java.net._")
 

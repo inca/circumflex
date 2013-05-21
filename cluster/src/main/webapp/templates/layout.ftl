@@ -21,7 +21,7 @@ ${main}
   <div class="centered">
     <span>2008-2013</span>
     <span>&copy;</span>
-    <a href="http://circumflex.savant.pro"
+    <a href="http://github.com/inca/circumflex"
        target="_blank">
       Circumflex Application Framework
     </a>
