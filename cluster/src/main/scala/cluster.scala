@@ -69,7 +69,7 @@ class Cluster(val project: Project)
   val targetDir = new File(baseDir, "target/cluster")
   val workDir = new File(targetDir, "work")
 
-  def mainCxProps = new PropsFile(new File(classesDir, "cx.properties"))
+  def mainCxProps = new PropertiesFile(new File(classesDir, "cx.properties"))
 
   def classesTimestamp: Option[Date] = {
     val f = new File(baseDir, "target/classes.timestamp")
@@ -153,7 +153,7 @@ class Server(val cluster: Cluster)
   def properties: Map[String, String] = {
     val result = new HashMap[String, String]
     result ++= project.properties
-    result ++= cluster.mainCxProps.toMap
+    result ++= cluster.mainCxProps
     result += "node.address" -> server.address()
     result ++= _props.toMap
     result.toMap

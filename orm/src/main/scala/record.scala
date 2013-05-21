@@ -70,7 +70,7 @@ abstract class Record[PK, R <: Record[PK, R]]
     if (!isTransient) {
       val key = PRIMARY_KEY().toString
       relation.cache.evict(key)
-      CACHE_LOG.debug("Evicting " + relation.qualifiedName + " #" + key)
+      ORM_LOG.debug("Evicting " + relation.qualifiedName + " #" + key)
     }
     this
   }

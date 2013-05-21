@@ -30,11 +30,6 @@
       <version>3.1-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>pro.savant.circumflex</groupId>
-      <artifactId>circumflex-cache</artifactId>
-      <version>3.1-SNAPSHOT</version>
-    </dependency>
-    <dependency>
       <groupId>c3p0</groupId>
       <artifactId>c3p0</artifactId>
       <version>0.9.1.2</version>

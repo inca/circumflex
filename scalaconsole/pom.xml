@@ -22,11 +22,6 @@
   <dependencies>
     <dependency>
       <groupId>pro.savant.circumflex</groupId>
-      <artifactId>circumflex-cache</artifactId>
-      <version>3.1-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>pro.savant.circumflex</groupId>
       <artifactId>circumflex-web</artifactId>
       <version>3.1-SNAPSHOT</version>
     </dependency>

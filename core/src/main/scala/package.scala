@@ -1,5 +1,6 @@
 package circumflex
 
+import _root_.net.sf.ehcache.CacheManager
 import java.security.MessageDigest
 import java.util.{UUID, Random}
 import java.util.regex.Pattern
@@ -28,6 +29,14 @@ package object core {
   def ctx = Context.get()
   lazy val msg = cx.instantiate[MessageResolver](
     "cx.messages", new PropertyFileResolver)
+
+  /*! Ehcache manager is configured via the `cx.ehcacheManager` configuration
+  parameter. While this is not an absolute requirement to use Ehcache for
+  caching, this instance is needed whenever you stick with `Ehcache`
+  cache implementation.
+  */
+  val ehcacheManager = cx.instantiate[CacheManager](
+    "cx.ehcacheManager", CacheManager.create())
 
   /*! Circumflex Core package also includes helpers for various common tasks like
   random generation of UUIDs and alphanumeric strings, converting between camelCase and

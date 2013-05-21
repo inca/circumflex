@@ -3,9 +3,9 @@ package cache
 
 import core._
 import net.sf.ehcache.Element
-import java.io.Serializable
-import collection.mutable.HashMap
+import java.io.{Serializable, File}
 import java.util.Date
+import collection.mutable.HashMap
 import collection.JavaConversions
 
 /*! # Cache API
@@ -31,7 +31,7 @@ to cache to provide them with following features:
 */
 trait Cached extends Serializable {
   protected var _createdAt = new Date(System.currentTimeMillis)
-  CACHE_LOG.trace("Instantiated new " + this.getClass.getSimpleName)
+  CX_LOG.trace("Instantiated new " + this.getClass.getSimpleName)
 
   protected var _invalidated = false
 
@@ -311,5 +311,20 @@ class ContextCache[T <: Cached](val key: String)
       ctx += (key -> m)
       m
   }
+
+}
+
+/*! ## File-based cache
+
+Trait `CachedFile` implements the `expired` method by reading the last modified
+timestamp of specified `cachedFile`. It is handy for caches which rely on file
+changes (e.g. hot-reloading of configuration files). */
+trait CachedFile extends Cached {
+
+  def cachedFile: File
+
+  def exists = cachedFile.isFile
+
+  def expired = exists && (cachedFile.lastModified > createdAt.getTime)
 
 }

@@ -451,13 +451,11 @@ is checked for modifications using its last modified date, making configuration
 hot-reloadable without any additional efforts.
 ```
 */
-trait XmlFile extends ElemHolder with Cached {
+trait XmlFile extends ElemHolder with CachedFile {
 
   def descriptorFile: File
 
-  def exists = descriptorFile.isFile
-
-  def expired = exists && (descriptorFile.lastModified > createdAt.getTime)
+  def cachedFile = descriptorFile
 
   def save() {
     saveTo(descriptorFile)

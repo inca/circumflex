@@ -17,7 +17,6 @@
   <modules>
     <module>core</module>
     <module>diff</module>
-    <module>cache</module>
     <module>xml</module>
     <module>web</module>
     <module>security</module>
