@@ -70,6 +70,7 @@ class Cluster(val project: Project)
   val workDir = new File(targetDir, "work")
 
   def mainCxProps = new PropertiesFile(new File(classesDir, "cx.properties"))
+  def clusterCxProps = new PropertiesFile(new File(clusterDir, "cx.properties"))
 
   def classesTimestamp: Option[Date] = {
     val f = new File(baseDir, "target/classes.timestamp")
