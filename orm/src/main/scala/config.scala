@@ -171,11 +171,15 @@ class SimpleConnectionProvider(val driverClass: String,
         ds
     }
 
+  @volatile
   protected var _ds: DataSource = null
 
   def dataSource: DataSource = {
     if (_ds == null)
-      _ds = createDataSource
+      this.synchronized {
+        if (_ds == null)
+          _ds = createDataSource
+      }
     _ds
   }
 
