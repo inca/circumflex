@@ -70,7 +70,6 @@ class Cluster(val project: Project)
   val workDir = new File(targetDir, "work")
 
   def mainCxProps = new PropertiesFile(new File(classesDir, "cx.properties"))
-  def clusterCxProps = new PropertiesFile(new File(clusterDir, "cx.properties"))
 
   def classesTimestamp: Option[Date] = {
     val f = new File(baseDir, "target/classes.timestamp")
@@ -155,7 +154,6 @@ class Server(val cluster: Cluster)
     val result = new HashMap[String, String]
     result ++= project.properties
     result ++= cluster.mainCxProps
-    result ++= cluster.clusterCxProps
     result += "node.address" -> server.address()
     result ++= _props.toMap
     result.toMap
@@ -368,7 +366,10 @@ class Node(val server: Server)
     def getPid: Option[String] =
       Seq("ssh", server.location, "-C", "ps -A -o pid,args")
           .lines_!
-          .find(_.contains(shortUuid))
+          .find(s =>
+        s.contains(shortUuid + ".jar") &&
+            s.contains("java") &&
+            s.contains("-jar"))
           .map(_.trim)
           .flatMap { line =>
         val i = line.indexOf(" ")
