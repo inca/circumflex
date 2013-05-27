@@ -22,7 +22,11 @@ object notices {
       }
     }
 
-  def get: Set[Notice] = hashSet.getOrElse(HashSet.empty).toSet
+  def get: Set[Notice] = {
+    val result = hashSet.getOrElse(HashSet.empty).toSet
+    sessionOption.map(_ -= KEY)
+    result
+  }
 
   protected def add(kind: String, msg: Msg): this.type = {
     hashSet.map(_ += Notice(kind, msg))
