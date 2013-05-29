@@ -65,10 +65,10 @@ to the `Referer` header.*/
   You can override it to return `http` for development scenario (without SSL
   certificate).
   */
-  def secureScheme: String = "https"
+  def secureScheme: String = if (isSecure) "https" else "http"
 
   /*! The `isSecure` method returns `true` if `secureScheme` is `https`. */
-  def isSecure = secureScheme == "https"
+  def isSecure = isSslEnabled
 
   /*! The `secureOrigin` method just concatenates `secureScheme`
   and `secureDomain` to form secure URL prefix.
