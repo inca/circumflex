@@ -29,6 +29,7 @@ object MailWorker {
   val smtpUser = cx("mail.user").toString
   val smtpPassword = cx("mail.password").toString
   val useTLS = cx.get("mail.tls").map(_.toString.toBoolean).getOrElse(false)
+  val trustSSL = cx.get("mail.ssl.trust").map(_.toString.toBoolean).getOrElse(true)
 
   val props = new Properties
   props.put("mail.smtp.host", smtpHost)
@@ -38,6 +39,9 @@ object MailWorker {
   props.put("mail.smtp.password", smtpPassword)
   if (useTLS) {
     props.put("mail.smtp.starttls.enable","true")
+  }
+  if (!trustSSL) {
+    props.put("mail.smtp.ssl.trust", "*")
   }
   val session = MailSession.getInstance(props, null)
 
