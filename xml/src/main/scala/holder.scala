@@ -259,9 +259,10 @@ trait StructHolder extends ElemHolder {
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
+      val _elemName = it.current.name
       findAttrs.foreach(a => a.readXml(it))
       val elems = findElems
-      while (it.hasNext && it.next() != EndTag(elemName))
+      while (it.hasNext && it.next() != EndTag(_elemName))
         it.current match {
           case StartTag(n) =>
             elems.find(_.accept(it)) match {
@@ -382,9 +383,10 @@ trait ListHolder[T <: ElemHolder]
 
   def readXml(it: TagIterator): this.type = {
     if (accept(it)) {
+      val _elemName = it.current.name
       children.clear()
       findAttrs.foreach(a => a.readXml(it))
-      while (it.hasNext && it.next() != EndTag(elemName))
+      while (it.hasNext && it.next() != EndTag(_elemName))
         it.current match {
           case t: StartTag =>
             try {
