@@ -1,12 +1,13 @@
 package circumflex
 package core
 
-import collection.mutable.{ListBuffer, HashMap}
+import collection.mutable.{ListBuffer, Map}
 import collection.JavaConversions._
 import java.util.{Locale, MissingResourceException, ResourceBundle}
 import java.net.URL
 import java.io.File
 import java.util.jar.JarFile
+import scala.collection.concurrent.TrieMap
 
 /*!# Configuration API
 
@@ -38,7 +39,23 @@ application `pom.xml` or in `settings.xml`) and system properties
 because it allows different configurations in different environments
 without having to fall back to manual sources and resources filtering.
 */
-object Circumflex extends HashMap[String, Any] with KeyValueCoercion {
+object Circumflex extends Map[String, Any] with KeyValueCoercion {
+
+  private val _map = new TrieMap[String, Any]
+
+  def +=(kv: (String, Any)) = {
+    _map += kv
+    this
+  }
+
+  def -=(key: String) = {
+    _map -= key
+    this
+  }
+
+  def get(key: String) = _map.get(key)
+
+  def iterator = _map.iterator
 
   def locateBundle: Option[ResourceBundle] = try {
     Some(ResourceBundle.getBundle("cx", Locale.getDefault, classLoader))
